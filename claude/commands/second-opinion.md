@@ -1,0 +1,176 @@
+# Second Opinion Command
+
+Get input from Gemini and Codex on the current problem or question. By default, iterates if responses lack confidence.
+
+## Usage
+
+```
+/second-opinion <question or context>
+/second-opinion --quick <question>   # Single pass, no iteration
+/second-opinion                      # Uses current conversation context
+```
+
+## How It Works
+
+### Default Flow (Iterative)
+
+1. Summarize the current problem/question from the conversation (or use what the user provides)
+2. Query both Gemini and Codex in parallel for their perspectives
+3. Evaluate confidence in both responses
+4. If confidence is LOW for either advisor, re-query with additional context (up to 2 iterations)
+5. Present final results with your synthesis
+
+### Quick Mode (`--quick`)
+
+1. Query both advisors once
+2. Present results immediately without iteration
+3. Useful when you just want fast input without refinement
+
+## Execution
+
+### Step 1: Prepare the Context
+
+Extract or use the user's question/problem. If not explicitly provided, summarize:
+- What is the current task or problem?
+- What approaches are being considered?
+- Any relevant file paths or code context
+
+### Step 2: Query Advisors (in parallel)
+
+**Gemini** (run from project root, read-only sandbox):
+```bash
+cd "{project_root}" && gemini -s --approval-mode default "I need a second opinion on this problem:
+
+IMPORTANT: This is a READ-ONLY consultation. Do NOT:
+- Create, modify, or delete any files
+- Run any commands that change state
+- Make any changes to the codebase
+
+Only analyze and provide your perspective.
+
+If you need more context to give a confident answer, say so clearly
+and specify what additional information would help.
+
+---
+
+{problem_summary}
+
+{relevant_file_context_if_any}
+
+Give me your perspective in 200 words or less. Focus on:
+- Key considerations I might be missing
+- Potential issues with the current approach
+- Alternative approaches worth considering"
+```
+
+**Codex** (run from project root, read-only sandbox):
+```bash
+cd "{project_root}" && codex exec -s read-only "I need a second opinion on this problem:
+
+IMPORTANT: This is a READ-ONLY consultation. Do NOT:
+- Create, modify, or delete any files
+- Run any commands that change state
+- Make any changes to the codebase
+
+Only analyze and provide your perspective.
+
+If you need more context to give a confident answer, say so clearly
+and specify what additional information would help.
+
+---
+
+{problem_summary}
+
+{relevant_file_context_if_any}
+
+Give me your perspective in 200 words or less. Focus on:
+- Key considerations I might be missing
+- Potential issues with the current approach
+- Alternative approaches worth considering"
+```
+
+### Step 3: Evaluate Confidence
+
+After receiving responses, evaluate each for confidence level:
+
+**High Confidence Indicators:**
+- Direct, specific recommendations
+- References to specific code, files, or patterns
+- Clear reasoning with concrete examples
+- Definitive statements about approach
+
+**Low Confidence Indicators:**
+- Hedging language: "It depends", "possibly", "might", "could be"
+- Requests for more context: "I'd need to see", "without more context"
+- Very generic advice that could apply to any situation
+- Uncertainty markers: "I'm not sure", "hard to say"
+- Questions back to you about the problem
+
+### Step 4: Iterate If Needed (Default Mode Only)
+
+If confidence is LOW for either advisor:
+
+1. Identify what context is missing based on their feedback
+2. Gather additional context (read relevant files, clarify requirements)
+3. Re-query the low-confidence advisor with enhanced context
+4. Can iterate up to 2 times per advisor
+
+Skip this step entirely if `--quick` flag was used.
+
+### Step 5: Present Results
+
+Format the responses for the user:
+
+```markdown
+## Second Opinions
+
+### Gemini
+{gemini_response}
+
+### Codex
+{codex_response}
+
+### My Take
+{your brief synthesis - where they agree, disagree, and your recommendation}
+```
+
+If iteration occurred, note it:
+```markdown
+*Note: Re-queried {advisor} with additional context after initial response lacked confidence.*
+```
+
+## Timeouts
+
+| Advisor | Timeout |
+|---------|---------|
+| Gemini | 60s |
+| Codex | 120s |
+
+## Error Handling
+
+- If one advisor fails, continue with the other
+- If both fail, inform the user and offer to retry
+- Don't create any files or state - this is a read-only consultation
+
+## Key Differences from /debate
+
+| Aspect | /second-opinion | /debate |
+|--------|-----------------|---------|
+| Rounds | 1-3 (with iteration) | 1-10 |
+| Quick mode | Yes (`--quick`) | No |
+| State files | None | Full state tracking |
+| Session mgmt | No sessions | UUID tracking |
+| Output files | None | rounds/, synthesis.md |
+| Purpose | Quick check | Deep analysis |
+| Speed | ~1-3 min | 5-30 min |
+| Read-only | Yes (enforced) | Configurable |
+
+## Examples
+
+```
+/second-opinion Should I use useCallback here or is it premature optimization?
+/second-opinion Is this the right place to add error handling?
+/second-opinion Review my approach to implementing this feature
+/second-opinion --quick Just tell me if this pattern looks right
+/second-opinion  # Uses current context from conversation
+```
