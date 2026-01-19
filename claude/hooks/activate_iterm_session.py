@@ -1,7 +1,25 @@
 #!/usr/bin/env python3
+import asyncio
 import iterm2
 import subprocess
 import sys
+
+
+async def flash_tab(session, duration=5.0):
+    """Highlight the tab color to draw attention."""
+    # Turn on highlight - bright orange
+    change = iterm2.LocalWriteOnlyProfile()
+    change.set_tab_color(iterm2.Color(255, 165, 0))
+    change.set_use_tab_color(True)
+    await session.async_set_profile_properties(change)
+
+    # Keep highlighted
+    await asyncio.sleep(duration)
+
+    # Turn off highlight
+    reset = iterm2.LocalWriteOnlyProfile()
+    reset.set_use_tab_color(False)
+    await session.async_set_profile_properties(reset)
 
 async def main(connection):
     app = await iterm2.async_get_app(connection)
@@ -16,6 +34,8 @@ async def main(connection):
         # First bring iTerm2 to foreground, then select the session
         await app.async_activate(raise_all_windows=False, ignoring_other_apps=True)
         await session.async_activate(select_tab=True, order_window_front=True)
+        # Flash the tab to draw attention
+        await flash_tab(session)
     else:
         # Session not found (closed or invalid), fall back to activating iTerm2
         activate_iterm_fallback()

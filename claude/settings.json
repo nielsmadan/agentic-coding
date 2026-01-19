@@ -132,7 +132,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/on_waiting_for_input.sh",
+            "command": "~/.claude/hooks/on_task_complete.sh",
             "timeout": 5000
           }
         ]
@@ -144,7 +144,7 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/on_prompt_submit.sh",
-            "timeout": 1000
+            "timeout": 60
           }
         ]
       }
