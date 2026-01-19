@@ -1,7 +1,34 @@
 #!/bin/bash
 
-# macOS notification when Claude is waiting for input
-osascript -e 'display notification "Claude is waiting for your input" with title "Claude Code" sound name "Ping"'
+SCRIPT_DIR="$(dirname "$0")"
 
-# Terminal bell as backup
+# Get the full path to python3 (works with pyenv, homebrew, system python)
+PYTHON3_PATH="$(command -v python3)"
+if command -v pyenv &> /dev/null; then
+    PYTHON3_PATH="$(pyenv which python3 2>/dev/null || echo "$PYTHON3_PATH")"
+fi
+
+if command -v terminal-notifier &> /dev/null && [ -n "$ITERM_SESSION_ID" ] && [ -n "$PYTHON3_PATH" ]; then
+    # Extract the UUID part (after the colon)
+    SESSION_UUID="${ITERM_SESSION_ID#*:}"
+
+    # Use printf %q to properly escape paths with spaces or special characters
+    ESCAPED_SCRIPT="$(printf '%q' "$SCRIPT_DIR/activate_iterm_session.py")"
+    ESCAPED_UUID="$(printf '%q' "$SESSION_UUID")"
+
+    terminal-notifier \
+        -title "Claude Code" \
+        -message "Claude is waiting for your input" \
+        -sound Ping \
+        -execute "$PYTHON3_PATH $ESCAPED_SCRIPT $ESCAPED_UUID"
+elif command -v terminal-notifier &> /dev/null; then
+    terminal-notifier \
+        -title "Claude Code" \
+        -message "Claude is waiting for your input" \
+        -sound Ping \
+        -activate com.googlecode.iterm2
+else
+    osascript -e 'display notification "Claude is waiting for your input" with title "Claude Code" sound name "Ping"'
+fi
+
 echo -e "\a"

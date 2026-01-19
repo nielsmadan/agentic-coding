@@ -1,0 +1,5 @@
+# Codex CLI configuration
+# Replicates Claude Code read-only git policy
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
