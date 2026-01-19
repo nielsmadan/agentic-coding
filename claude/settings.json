@@ -62,6 +62,8 @@
       "Bash(node --version)",
       "Bash(python --version)",
       "Bash(ruby --version)",
+      "Bash(gemini -p:*)",
+      "Bash(codex exec --sandbox read-only:*)",
       "WebSearch",
       "WebFetch",
       "mcp__context7__resolve-library-id",
@@ -132,6 +134,17 @@
             "type": "command",
             "command": "~/.claude/hooks/on_waiting_for_input.sh",
             "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/on_prompt_submit.sh",
+            "timeout": 1000
           }
         ]
       }

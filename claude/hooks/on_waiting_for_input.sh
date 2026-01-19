@@ -12,6 +12,19 @@ if command -v terminal-notifier &> /dev/null && [ -n "$ITERM_SESSION_ID" ] && [ 
     # Extract the UUID part (after the colon)
     SESSION_UUID="${ITERM_SESSION_ID#*:}"
 
+    # Add session to queue (if not already present)
+    QUEUE_FILE="$HOME/.claude_session_queue"
+    if ! grep -qxF "$SESSION_UUID" "$QUEUE_FILE" 2>/dev/null; then
+        echo "$SESSION_UUID" >> "$QUEUE_FILE"
+    fi
+
+    # Check if session is already active (focused) - skip notification if so
+    if "$PYTHON3_PATH" "$SCRIPT_DIR/check_session_active.py" "$SESSION_UUID" 2>/dev/null; then
+        # Session already focused, just ring the bell
+        echo -e "\a"
+        exit 0
+    fi
+
     # Use printf %q to properly escape paths with spaces or special characters
     ESCAPED_SCRIPT="$(printf '%q' "$SCRIPT_DIR/activate_iterm_session.py")"
     ESCAPED_UUID="$(printf '%q' "$SESSION_UUID")"
@@ -19,16 +32,16 @@ if command -v terminal-notifier &> /dev/null && [ -n "$ITERM_SESSION_ID" ] && [ 
     terminal-notifier \
         -title "Claude Code" \
         -message "Claude is waiting for your input" \
-        -sound Ping \
+        -sound Glass \
         -execute "$PYTHON3_PATH $ESCAPED_SCRIPT $ESCAPED_UUID"
 elif command -v terminal-notifier &> /dev/null; then
     terminal-notifier \
         -title "Claude Code" \
         -message "Claude is waiting for your input" \
-        -sound Ping \
+        -sound Glass \
         -activate com.googlecode.iterm2
 else
-    osascript -e 'display notification "Claude is waiting for your input" with title "Claude Code" sound name "Ping"'
+    osascript -e 'display notification "Claude is waiting for your input" with title "Claude Code" sound name "Glass"'
 fi
 
 echo -e "\a"
