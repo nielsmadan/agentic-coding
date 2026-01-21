@@ -21,6 +21,11 @@ async def flash_tab(session, duration=5.0):
     reset.set_use_tab_color(False)
     await session.async_set_profile_properties(reset)
 
+def extract_uuid(session_id: str) -> str:
+    """Extract UUID from 'w0t0p0:UUID' format."""
+    return session_id.split(':', 1)[1] if ':' in session_id else session_id
+
+
 async def main(connection):
     app = await iterm2.async_get_app(connection)
     session_id = sys.argv[1] if len(sys.argv) > 1 else None
@@ -29,7 +34,9 @@ async def main(connection):
         activate_iterm_fallback()
         return
 
-    session = app.get_session_by_id(session_id)
+    # get_session_by_id expects just UUID, not w0t0p0:UUID format
+    uuid = extract_uuid(session_id)
+    session = app.get_session_by_id(uuid)
     if session:
         # First bring iTerm2 to foreground, then select the session
         await app.async_activate(raise_all_windows=False, ignoring_other_apps=True)
