@@ -35,3 +35,7 @@ Available in `claude/commands/`:
 The Claude settings enforce a read-only git policy:
 - **Allowed**: All read-only git commands, file inspection, web search/fetch
 - **Denied**: All git commands that modify state (commit, push, merge, reset, checkout, etc.)
+
+## Keyword Triggers
+
+When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
