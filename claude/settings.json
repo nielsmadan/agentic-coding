@@ -114,14 +114,15 @@
       "Bash(git clone:*)"
     ]
   },
+  "model": "opus",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/on_session_start.sh",
-            "timeout": 5000
+            "command": "~/.claude/hooks/juggler/notify.sh start",
+            "timeout": 5
           }
         ]
       }
@@ -131,8 +132,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/on_stop.sh",
-            "timeout": 5000
+            "command": "~/.claude/hooks/juggler/notify.sh stop",
+            "timeout": 5
           }
         ]
       }
@@ -143,8 +144,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/on_waiting_for_input.sh",
-            "timeout": 5000
+            "command": "~/.claude/hooks/juggler/notify.sh idle",
+            "timeout": 5
           }
         ]
       }
@@ -154,8 +155,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/on_prompt_submit.sh",
-            "timeout": 60
+            "command": "~/.claude/hooks/juggler/notify.sh working",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh end",
+            "timeout": 5
           }
         ]
       }
@@ -163,12 +175,12 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "input=$(cat); model_name=$(echo \"$input\" | jq -r '.model.display_name // \"Unknown Model\"'); output_style=$(echo \"$input\" | jq -r '.output_style.name // \"default\"'); current_dir=$(echo \"$input\" | jq -r '.workspace.current_dir // .cwd'); current_time=$(date +%H:%M:%S); dir_name=$(basename \"$current_dir\"); git_info=\"\"; if git rev-parse --git-dir >/dev/null 2>&1; then branch=$(git branch --show-current 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || \"detached\"); git_status=\"\"; if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then git_status=\"●\"; else git_status=\"✓\"; fi; untracked_count=$(git ls-files --others --exclude-standard | wc -l | xargs); if [ \"$untracked_count\" -gt 0 ]; then git_status=\"${git_status}+${untracked_count}\"; fi; ahead_behind=\"\"; upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null); if [ -n \"$upstream\" ]; then ahead=$(git rev-list --count HEAD..@{u} 2>/dev/null || echo 0); behind=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo 0); if [ \"$ahead\" -gt 0 ] && [ \"$behind\" -gt 0 ]; then ahead_behind=\"↕${behind}↑${ahead}↓\"; elif [ \"$ahead\" -gt 0 ]; then ahead_behind=\"↑${ahead}\"; elif [ \"$behind\" -gt 0 ]; then ahead_behind=\"↓${behind}\"; fi; fi; git_info=\"⎇ ${branch} ${git_status}${ahead_behind:+ $ahead_behind}\"; fi; project_type=\"\"; if [ -f \"$current_dir/pubspec.yaml\" ]; then if grep -q \"flutter:\" \"$current_dir/pubspec.yaml\" 2>/dev/null; then project_type=\"📱\"; else project_type=\"🎯\"; fi; fi; printf \"\\033[2m\"; printf \"\\033[36m%s\\033[0m\" \"$current_time\"; printf \"\\033[2m │ \"; printf \"\\033[34m📁 %s\\033[0m\" \"$dir_name\"; printf \"\\033[2m │ \"; if [ -n \"$git_info\" ]; then printf \"\\033[32m%s\\033[0m\" \"$git_info\"; printf \"\\033[2m │ \"; fi; if [ -n \"$project_type\" ]; then printf \"\\033[35m%s Flutter\\033[0m\" \"$project_type\"; printf \"\\033[2m │ \"; fi; printf \"\\033[33m🤖 %s\\033[0m\" \"$model_name\"; printf \"\\033[2m │ \"; printf \"\\033[37m✨ %s\\033[0m\" \"$output_style\"; if [ -n \"$ITERM_SESSION_ID\" ]; then session_short=\"${ITERM_SESSION_ID%%:*}\"; printf \"\\033[2m │ \"; printf \"\\033[90m%s\\033[0m\" \"$session_short\"; fi; printf \"\\033[0m\""
-  },
-  "feedbackSurveyState": {
-    "lastShownTime": 1754048282688
+    "command": "input=$(cat); model_name=$(echo \"$input\" | jq -r '.model.display_name // \"Unknown Model\"'); output_style=$(echo \"$input\" | jq -r '.output_style.name // \"default\"'); current_dir=$(echo \"$input\" | jq -r '.workspace.current_dir // .cwd'); current_time=$(date +%H:%M:%S); dir_name=$(basename \"$current_dir\"); git_info=\"\"; if git rev-parse --git-dir >/dev/null 2>&1; then branch=$(git branch --show-current 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || \"detached\"); git_status=\"\"; if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then git_status=\"\u25cf\"; else git_status=\"\u2713\"; fi; untracked_count=$(git ls-files --others --exclude-standard | wc -l | xargs); if [ \"$untracked_count\" -gt 0 ]; then git_status=\"${git_status}+${untracked_count}\"; fi; ahead_behind=\"\"; upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null); if [ -n \"$upstream\" ]; then ahead=$(git rev-list --count HEAD..@{u} 2>/dev/null || echo 0); behind=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo 0); if [ \"$ahead\" -gt 0 ] && [ \"$behind\" -gt 0 ]; then ahead_behind=\"\u2195${behind}\u2191${ahead}\u2193\"; elif [ \"$ahead\" -gt 0 ]; then ahead_behind=\"\u2191${ahead}\"; elif [ \"$behind\" -gt 0 ]; then ahead_behind=\"\u2193${behind}\"; fi; fi; git_info=\"\u2387 ${branch} ${git_status}${ahead_behind:+ $ahead_behind}\"; fi; project_type=\"\"; if [ -f \"$current_dir/pubspec.yaml\" ]; then if grep -q \"flutter:\" \"$current_dir/pubspec.yaml\" 2>/dev/null; then project_type=\"\ud83d\udcf1\"; else project_type=\"\ud83c\udfaf\"; fi; fi; printf \"\\033[2m\"; printf \"\\033[36m%s\\033[0m\" \"$current_time\"; printf \"\\033[2m \u2502 \"; printf \"\\033[34m\ud83d\udcc1 %s\\033[0m\" \"$dir_name\"; printf \"\\033[2m \u2502 \"; if [ -n \"$git_info\" ]; then printf \"\\033[32m%s\\033[0m\" \"$git_info\"; printf \"\\033[2m \u2502 \"; fi; if [ -n \"$project_type\" ]; then printf \"\\033[35m%s Flutter\\033[0m\" \"$project_type\"; printf \"\\033[2m \u2502 \"; fi; printf \"\\033[33m\ud83e\udd16 %s\\033[0m\" \"$model_name\"; printf \"\\033[2m \u2502 \"; printf \"\\033[37m\u2728 %s\\033[0m\" \"$output_style\"; if [ -n \"$ITERM_SESSION_ID\" ]; then session_short=\"${ITERM_SESSION_ID%%:*}\"; printf \"\\033[2m \u2502 \"; printf \"\\033[90m%s\\033[0m\" \"$session_short\"; fi; printf \"\\033[0m\""
   },
   "enabledPlugins": {
     "swift-lsp@claude-plugins-official": true
+  },
+  "feedbackSurveyState": {
+    "lastShownTime": 1754048282688
   }
 }

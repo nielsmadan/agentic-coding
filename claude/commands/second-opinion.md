@@ -143,8 +143,8 @@ If iteration occurred, note it:
 
 | Advisor | Timeout |
 |---------|---------|
-| Gemini | 60s |
-| Codex | 120s |
+| Gemini | 180s |
+| Codex | 180s |
 
 ## Error Handling
 

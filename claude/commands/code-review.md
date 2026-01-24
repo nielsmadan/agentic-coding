@@ -97,8 +97,8 @@ Provide a focused code review in 300 words or less covering:
 
 | Advisor | Timeout |
 |---------|---------|
-| Gemini | 60s |
-| Codex | 120s |
+| Gemini | 180s |
+| Codex | 180s |
 
 ### Error Handling
 - If one external advisor fails, continue with the other
