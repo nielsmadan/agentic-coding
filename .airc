@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+#  AI Tools Configuration (Claude, etc.)
+# ---------------------------------------------------------------------------
+
+# Claude Code
+alias claude="~/.local/bin/claude"
+alias clco="claude --continue"
+
+_ccone() { claude -p "$*"; }
+alias ccone="noglob _ccone"
+
+_ccli() {
+  local result
+  result=$(claude -p "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
+  print -z "$result"
+}
+alias ccli="noglob _ccli"
+
+# Disable Claude Code feedback prompts
+export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
