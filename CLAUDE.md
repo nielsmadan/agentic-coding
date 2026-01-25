@@ -20,6 +20,7 @@ Available in `claude/skills/`:
 | Skill | Purpose |
 |-------|---------|
 | `/code-review` | Code review workflow |
+| `/debug-log` | Add debug logging to trace code execution |
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/read-docs` | Search docs/ folder |
 | `/research-online` | Research a topic online using parallel agents |
