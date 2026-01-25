@@ -171,6 +171,17 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh precompact",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

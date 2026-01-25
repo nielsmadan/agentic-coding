@@ -4,31 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This repository contains shared configuration for agentic coding tools. It includes custom commands, hooks, and permission settings that can be used across multiple projects.
+This repository contains shared configuration for agentic coding tools. It includes skills, hooks, and permission settings that can be used across multiple projects.
 
 ## Structure
 
 - `claude/` - Claude Code specific configuration
   - `settings.json` - Permissions (allowed/denied commands), hooks, and status line config
-  - `commands/` - Custom slash commands (skills) in markdown format
+  - `skills/` - Custom skills in `<skill-name>/SKILL.md` format
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 
-## Custom Slash Commands
+## Skills
 
-Available in `claude/commands/`:
+Available in `claude/skills/`:
 
-| Command | Purpose |
-|---------|---------|
+| Skill | Purpose |
+|-------|---------|
 | `/code-review` | Code review workflow |
-| `/debate` | AI debate hub |
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/read-docs` | Search docs/ folder |
+| `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-comments` | Review code comments |
 | `/review-comments-changed` | Review comments on changed files |
 | `/review-docs` | Documentation review |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |
+| `/skill-creator` | Guide for creating skills |
 
 ## Permissions Policy
 
@@ -39,3 +40,5 @@ The Claude settings enforce a read-only git policy:
 ## Keyword Triggers
 
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
+
+When the user's prompt contains "research online", automatically invoke the `/research-online` skill to search documentation, GitHub issues, and web resources in parallel.

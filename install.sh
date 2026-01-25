@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Define symlinks: "source:destination"
 SYMLINKS=(
   # Claude
-  "$SCRIPT_DIR/claude/commands:$HOME/.claude/commands"
+  "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
   "$SCRIPT_DIR/claude/settings.json:$HOME/.claude/settings.json"
   # Codex
