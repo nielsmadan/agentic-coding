@@ -1,6 +1,6 @@
 ---
 name: research-online
-description: Research a programming topic online using parallel agents. Searches documentation (via Context7), GitHub issues, general solutions, and specific errors. Use when debugging issues, learning new libraries, or investigating error messages.
+description: Research a programming topic online using parallel agents. Searches documentation (via Context7), GitHub issues, general solutions, and specific errors. Use when implementing features, learning new libraries, or debugging issues.
 argument-hint: <topic or error message>
 ---
 
@@ -11,9 +11,11 @@ Research a programming topic from multiple angles using parallel sub-agents, wit
 ## Usage
 
 ```
-/research-online <library> <problem description>
+/research-online <library> <what you want to do>
 /research-online "<error message>" <library>
 /research-online how to implement auth in react-navigation v7
+/research-online best practices for state management in React
+/research-online Redux vs Zustand for large app
 ```
 
 ## Workflow
@@ -24,18 +26,22 @@ Extract from the user's query:
 - **Library/framework name** (e.g., "react-navigation", "prisma", "next.js")
 - **Error message** (if any, usually in quotes)
 - **Version** (if mentioned, e.g., "v7", "version 14")
-- **Problem description** (what they're trying to do or what's broken)
+- **Goal/intent** (what they're trying to build or achieve)
+- **Problem description** (if debugging: what's broken or unexpected)
+- **Comparison targets** (if comparing: "X vs Y", "X or Y")
 
 ### Step 2: Determine Which Agents to Spawn
 
 | Agent | Spawn When | Purpose |
 |-------|------------|---------|
 | **Docs** | Library/framework mentioned | Context7 documentation lookup |
-| **GitHub** | Library with known repository | Search issues for similar problems |
+| **GitHub** | Library with known repository | Search issues AND discussions |
 | **General** | Always | Broad "how to" web search |
 | **Specific** | Error message provided | Search for exact error text |
-| **StackOverflow** | Common problem pattern | Community Q&A solutions |
+| **StackOverflow** | Common problem/implementation pattern | Community Q&A solutions |
 | **Changelog** | Version mentioned OR "stopped working" / "after upgrade" | Breaking changes, migration guides |
+| **Best Practices** | Feature implementation (no error message) | Architecture patterns, recommended approaches |
+| **Comparison** | Query contains "vs", "or", "compare", "which", "best library" | Compare options, pros/cons |
 
 ### Step 3: Spawn Agents in Parallel
 
@@ -54,11 +60,11 @@ Prompt template:
 ---
 Use Context7 to look up documentation for {library_name}.
 
-1. First call resolve-library-id with libraryName="{library_name}" and query="{problem_description}"
-2. Then call query-docs with the resolved library ID and query="{problem_description}"
+1. First call resolve-library-id with libraryName="{library_name}" and query="{goal_or_problem}"
+2. Then call query-docs with the resolved library ID and query="{goal_or_problem}"
 
 Focus on finding:
-- API usage relevant to: {problem_description}
+- API usage relevant to: {goal_or_problem}
 - Configuration options
 - Common patterns and examples
 
@@ -71,28 +77,34 @@ Return a concise summary of relevant documentation findings with source metadata
 ---
 ```
 
-#### GitHub Issues Agent
+#### GitHub Agent
 ```
 Spawn when: Library with known GitHub repo
 Subagent type: general-purpose
 Prompt template:
 ---
-Search for GitHub issues related to this problem.
+Search GitHub for issues AND discussions related to this topic.
 
-Use WebSearch to search: site:github.com {library_name} issues "{key_problem_terms}"
+Use WebSearch to search: site:github.com {library_name} "{key_terms}"
 
-If you find relevant issues:
-1. Use WebFetch to read the top 2-3 most relevant issues
-2. Extract: problem description, any solutions posted, workarounds mentioned
+Look for:
+- Issues (bugs, feature requests)
+- Discussions (implementation questions, best practices)
+- Pull requests with relevant changes
 
-For each issue, note:
-- Issue URL
+If you find relevant results:
+1. Use WebFetch to read the top 2-3 most relevant
+2. Extract: problem/question, any solutions posted, recommended approaches
+
+For each result, note:
+- URL
 - Date opened/last updated
-- Status (open/closed)
+- Type (issue/discussion/PR)
+- Status (open/closed/merged)
 - Whether maintainer responded
-- Source type: GitHub issue (maintainer) or GitHub issue (community)
+- Source type: GitHub issue (maintainer) / GitHub issue (community) / GitHub discussion
 
-Return a summary of relevant issues and any solutions found with metadata.
+Return a summary of relevant findings with metadata.
 ---
 ```
 
@@ -102,12 +114,13 @@ Spawn when: Always
 Subagent type: general-purpose
 Prompt template:
 ---
-Search for general solutions to this problem.
+Search for general solutions and guides for this topic.
 
-Use WebSearch to search: how to {problem_description} {library_name}
+Use WebSearch to search: how to {goal_or_problem} {library_name}
 
 Focus on:
 - Tutorial articles
+- Implementation guides
 - Blog posts with solutions
 - Official guides
 
@@ -148,13 +161,13 @@ Return findings with the most common causes and fixes, including source metadata
 
 #### Stack Overflow Agent
 ```
-Spawn when: Common programming problem pattern
+Spawn when: Common programming problem or implementation pattern
 Subagent type: general-purpose
 Prompt template:
 ---
-Search Stack Overflow for solutions.
+Search Stack Overflow for solutions and implementations.
 
-Use WebSearch to search: site:stackoverflow.com {library_name} {problem_keywords}
+Use WebSearch to search: site:stackoverflow.com {library_name} {keywords}
 
 For the top 2-3 relevant questions:
 1. Use WebFetch to read the accepted/top answers
@@ -191,7 +204,61 @@ For each source, note:
 - Date/version it covers
 - Source type: official changelog / migration guide / release notes
 
-Return relevant version changes that might affect: {problem_description}
+Return relevant version changes that might affect: {goal_or_problem}
+---
+```
+
+#### Best Practices Agent
+```
+Spawn when: Feature implementation query (no error message present)
+Subagent type: general-purpose
+Prompt template:
+---
+Search for best practices and recommended patterns.
+
+Use WebSearch to search: {library_name} best practices {goal_description}
+Also search: {library_name} recommended architecture {goal_description}
+
+Focus on:
+- Official style guides and recommendations
+- Architecture patterns from experienced developers
+- Common pitfalls to avoid
+- Production-ready patterns
+
+For each source, note:
+- Source URL
+- Publication date
+- Source type: official guide / architecture blog / tutorial
+- Author credibility (core team, recognized expert, unknown)
+
+Return a summary of recommended approaches with source metadata.
+---
+```
+
+#### Comparison Agent
+```
+Spawn when: Query contains "vs", "or", "compare", "which", "best library/package"
+Subagent type: general-purpose
+Prompt template:
+---
+Search for comparisons between the options mentioned.
+
+Use WebSearch to search: {option_A} vs {option_B} {context}
+Also search: {option_A} or {option_B} which is better {context}
+
+Find:
+- Direct comparison articles
+- Pros and cons of each option
+- Performance benchmarks if relevant
+- Use case recommendations (when to use which)
+
+For each source, note:
+- Source URL
+- Publication date (crucial for comparisons - libraries change fast)
+- Source type: comparison article / benchmark / discussion
+- Whether it covers recent versions
+
+Return a balanced summary of each option's strengths and weaknesses with source metadata.
 ---
 ```
 
@@ -219,18 +286,21 @@ Before synthesizing, evaluate each source using these criteria:
 | Official docs | High | Authoritative but may lag features |
 | GitHub issues (maintainer response) | High | Direct from source |
 | Official changelog/release notes | High | Definitive for version info |
+| Core team blog posts | High | Authoritative for patterns |
 | GitHub issues (community) | Medium | Verify with other sources |
 | Recent blog (known author) | Medium | Good for tutorials |
 | Stack Overflow (accepted, high votes) | Medium | Community validated |
+| Comparison articles (recent) | Medium | Useful but check bias |
 | Stack Overflow (low votes) | Low | Unverified |
 | Old blog posts | Low | Often outdated |
+| Old comparisons | Low | Libraries change significantly |
 | Random forums | Very Low | Last resort |
 
 #### Relevance Score
 | Match Type | Score |
 |------------|-------|
-| Exact error/problem match | High |
-| Same library, similar problem | Medium |
+| Exact error/goal match | High |
+| Same library, similar task | Medium |
 | Related library/concept | Low |
 
 #### Conflict Resolution
@@ -254,13 +324,13 @@ Format the output with source evaluation.
 - Source: {url}
 - Authority: High (official docs)
 
-### GitHub Issues
-| Issue | Date | Status | Authority | Relevance |
-|-------|------|--------|-----------|-----------|
-| [#123: {title}]({url}) | 2024-01-15 | Closed | High (maintainer) | High |
-| [#456: {title}]({url}) | 2022-03-01 | Open | Medium | Medium |
+### GitHub Issues & Discussions
+| Item | Date | Type | Authority | Relevance |
+|------|------|------|-----------|-----------|
+| [#123: {title}]({url}) | 2024-01-15 | Issue | High (maintainer) | High |
+| [{title}]({url}) | 2024-02-01 | Discussion | Medium | High |
 
-{summary of solutions found}
+{summary of solutions/approaches found}
 
 ### General Solutions
 | Source | Date | Authority | Relevance |
@@ -268,6 +338,30 @@ Format the output with source evaluation.
 | [{title}]({url}) | {date} | {score} | {score} |
 
 {summary of approaches}
+
+### Best Practices
+(only if feature implementation query)
+| Source | Date | Authority |
+|--------|------|-----------|
+| [{title}]({url}) | {date} | {score} |
+
+{recommended patterns and approaches}
+
+### Comparison
+(only if comparison query)
+| Source | Date | Authority | Covers Current Versions |
+|--------|------|-----------|------------------------|
+| [{title}]({url}) | {date} | {score} | Yes/No |
+
+**{Option A}:**
+- Pros: {list}
+- Cons: {list}
+- Best for: {use cases}
+
+**{Option B}:**
+- Pros: {list}
+- Cons: {list}
+- Best for: {use cases}
 
 ### Specific Error Matches
 (only if error was provided)
@@ -307,7 +401,7 @@ Format the output with source evaluation.
 
 ## Synthesis
 
-**Problem:** {one-line summary of what user is trying to solve}
+**Goal:** {one-line summary of what user is trying to achieve}
 
 **Key Findings (weighted by credibility):**
 - {finding from high-credibility source}
@@ -324,23 +418,35 @@ Format the output with source evaluation.
 
 ## Examples
 
-### Example 1: Library + Problem
+### Example 1: Feature Implementation
 ```
-/research-online auth navigation not working in react-navigation v7
+/research-online how to implement authentication in Next.js 14
 ```
-Spawns: Docs, GitHub, General, Changelog (version mentioned)
+Spawns: Docs, GitHub, General, Best Practices, StackOverflow
 
-### Example 2: Specific Error
+### Example 2: Comparison Query
+```
+/research-online Redux vs Zustand for large React app
+```
+Spawns: Docs (both), General, Comparison, StackOverflow
+
+### Example 3: Specific Error
 ```
 /research-online "Cannot read property 'navigate' of undefined" react-navigation
 ```
 Spawns: Docs, GitHub, General, Specific, StackOverflow
 
-### Example 3: How-to Query
+### Example 4: Version-Specific
 ```
-/research-online how to implement dark mode in tailwind
+/research-online auth navigation not working in react-navigation v7
 ```
-Spawns: Docs, General, StackOverflow
+Spawns: Docs, GitHub, General, Changelog, StackOverflow
+
+### Example 5: Best Practices
+```
+/research-online best practices for folder structure in Express API
+```
+Spawns: Docs, General, Best Practices, StackOverflow
 
 ## Notes
 
@@ -350,3 +456,4 @@ Spawns: Docs, General, StackOverflow
 - Always capture source metadata for critical evaluation
 - Weight findings by credibility in synthesis - a recent GitHub issue from a maintainer outweighs a 5-year-old blog post
 - Explicitly note when relying on older sources and flag potential staleness
+- For comparisons, be especially careful about recency - library landscapes change quickly
