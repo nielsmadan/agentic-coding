@@ -22,9 +22,11 @@ Available in `claude/skills/`:
 | `/code-review` | Code review workflow |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/flutter-upgrade` | Flutter upgrade workflow |
+| `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/read-docs` | Search docs/ folder |
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
+| `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review code comments |
 | `/review-comments-changed` | Review comments on changed files |
 | `/review-docs` | Documentation review |
