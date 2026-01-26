@@ -29,7 +29,7 @@ Available in `claude/skills/`:
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review code comments (--all, --staged, --changed) |
-| `/review-docs` | Documentation review |
+| `/review-doc` | Documentation review (--staged, --all) |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
