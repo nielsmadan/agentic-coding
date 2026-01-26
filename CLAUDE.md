@@ -27,8 +27,7 @@ Available in `claude/skills/`:
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-history` | Analyze git history and past issue logs |
-| `/review-comments` | Review code comments |
-| `/review-comments-changed` | Review comments on changed files |
+| `/review-comments` | Review code comments (--all, --staged, --changed) |
 | `/review-docs` | Documentation review |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |

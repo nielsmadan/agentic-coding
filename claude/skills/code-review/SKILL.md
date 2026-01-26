@@ -45,6 +45,12 @@ Launch the following review perspectives IN PARALLEL:
 - Check for TODO/FIXME comments that need addressing
 - Identify code that may be stale or unused
 
+### Agent 5: Comment Quality Review
+Invoke `/review-comments --staged --changed` to review comment quality in changed files.
+- Identify "what" comments that should be "why" comments
+- Flag comments that could be replaced with better naming
+- Ensure comments add value, not noise
+
 ## Step 3.5: External Advisor Reviews (--multi only)
 
 If `--multi` flag is present in $ARGUMENTS, also query Gemini and Codex in parallel:
