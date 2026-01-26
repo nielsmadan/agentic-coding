@@ -5,7 +5,7 @@ Review the code related to: **$ARGUMENTS**
 ## Usage
 
 ```
-/code-review <target>           # Claude-only review (4 parallel agents)
+/code-review <target>           # Claude-only review (6 parallel agents)
 /code-review --multi <target>   # Also get reviews from Gemini and Codex
 ```
 
@@ -50,6 +50,13 @@ Invoke `/review-comments --staged --changed` to review comment quality in change
 - Identify "what" comments that should be "why" comments
 - Flag comments that could be replaced with better naming
 - Ensure comments add value, not noise
+
+### Agent 6: Test Quality Review
+Invoke `/review-tests --staged` to review test quality in changed test files.
+- Check for missing edge cases and coverage gaps
+- Identify brittle or flaky test patterns
+- Flag over-mocking and testing implementation instead of behavior
+- Ensure tests have meaningful assertions
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 
