@@ -23,6 +23,7 @@ Available in `claude/skills/`:
 | `/debug-log` | Add debug logging to trace code execution |
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
+| `/plan-review` | Multi-agent review of implementation plans |
 | `/read-docs` | Search docs/ folder |
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
@@ -44,3 +45,9 @@ The Claude settings enforce a read-only git policy:
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
 
 When the user's prompt contains "research online", automatically invoke the `/research-online` skill to search documentation, GitHub issues, and web resources in parallel.
+
+When the user's prompt contains "review plan", "review the plan", or "review my plan", automatically invoke the `/plan-review` skill to get multi-agent feedback before implementation.
+
+When the user's prompt contains "add debug logs" or "debug logging", automatically invoke the `/debug-log` skill to instrument code with tracing.
+
+When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
