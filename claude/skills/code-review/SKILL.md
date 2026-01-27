@@ -52,7 +52,7 @@ Invoke `/review-comments --staged --changed` to review comment quality in change
 - Ensure comments add value, not noise
 
 ### Agent 6: Test Quality Review
-Invoke `/review-tests --staged` to review test quality in changed test files.
+Invoke `/test --review --staged` to review test quality in changed test files.
 - Check for missing edge cases and coverage gaps
 - Identify brittle or flaky test patterns
 - Flag over-mocking and testing implementation instead of behavior

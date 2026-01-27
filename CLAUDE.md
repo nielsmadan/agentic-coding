@@ -30,7 +30,7 @@ Available in `claude/skills/`:
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review code comments (--all, --staged, --changed) |
 | `/doc` | Documentation review and generation (--review, --generate) |
-| `/review-tests` | Review test quality (--staged, --all) |
+| `/test` | Test review and generation (--review, --generate) |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
