@@ -18,19 +18,31 @@ Comprehensive investigation workflow for bugs that resist normal debugging.
 
 ## Workflow
 
-### Phase 0: Pre-Check Past Issues
+### Phase 0: Pre-Check Internal Documentation
 
-Before full investigation, check if we've solved this before:
+Before full investigation, check internal docs for known issues and gotchas:
 
+**Check past issues:**
 ```bash
 grep -ri "<keywords>" docs/log/ 2>/dev/null | head -10
 ls -la docs/log/ 2>/dev/null | grep -i "<related_terms>"
 ```
 
+**Check project documentation:**
+```bash
+grep -ri "<keywords>" docs/ *.md 2>/dev/null | head -10
+```
+
+Look for documented gotchas, known issues, or patterns related to the problem area.
+
 **If a matching past issue is found:**
 1. Read the full log file
 2. Present the previous solution to the user
 3. Ask: "We encountered this before. Should I apply the previous solution, or run a fresh investigation?"
+
+**If relevant documentation is found:**
+1. Read the relevant sections
+2. Check if documented patterns/gotchas apply to this issue
 
 If no match or user wants fresh investigation, continue.
 

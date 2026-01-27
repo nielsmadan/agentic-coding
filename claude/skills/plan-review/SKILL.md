@@ -17,12 +17,18 @@ Comprehensive review of implementation plans using parallel specialized agents.
 
 ## Workflow
 
-### Step 1: Extract Plan
+### Step 1: Extract Plan and Check Internal Docs
 
 Get the plan to review:
 - If path provided, read the file
 - Otherwise, use the plan from current conversation context
 - Summarize: problem statement, proposed solution, key implementation steps
+
+**Check internal documentation:**
+```bash
+grep -ri "<relevant_keywords>" docs/ *.md 2>/dev/null | head -10
+```
+Look for documented patterns, architectural guidelines, or gotchas related to the plan's area.
 
 ### Step 2: Determine Review Scope
 

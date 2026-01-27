@@ -1,15 +1,71 @@
 ---
-allowed-tools: Bash(find*), Bash(ls*), Read, Grep
-description: Search and read documentation files matching keywords from docs/ folder
-argument-hint: <keywords...>
+name: read-docs
+description: Search and read internal project documentation. Use proactively when needing project-specific patterns, conventions, architecture, or domain knowledge. Searches docs/, README.md, CLAUDE.md, and other .md files. Invoke before planning features, when entering new code areas, or when debugging.
+argument-hint: <keywords or topic>
 ---
 
-I'll search for and read documentation files related to your keywords: $ARGUMENTS
+# Read Docs
 
-Let me find all relevant documentation:
+Search internal documentation for project-specific information.
 
-1. First, I'll search the docs/ folder for files matching your keywords
-2. Then I'll read each matching file to provide you with the relevant information
-3. If multiple files match, I'll read all of them to give you comprehensive context
+## Usage
 
-Searching for documentation now...
+```
+/read-docs auth                    # Search for auth-related docs
+/read-docs database schema         # Search for database/schema docs
+/read-docs                         # List available documentation
+```
+
+## Search Strategy
+
+1. **Check for docs/ folder** - Primary documentation location
+2. **Search filenames** - Glob for keyword matches in file names
+3. **Search contents** - Grep for keyword matches in file contents
+4. **Prioritize results**:
+   - Exact filename match (e.g., "auth" → `docs/auth.md`)
+   - Filename contains keyword (e.g., "auth" → `docs/authentication-guide.md`)
+   - Content matches (e.g., "auth" mentioned in `docs/architecture.md`)
+
+## Locations Searched
+
+In order of priority:
+
+1. `docs/**/*.md` - Primary documentation
+2. `CLAUDE.md` - Project conventions
+3. `README.md` - Project overview
+4. `*.md` in project root - Other documentation
+
+## Workflow
+
+### With keywords:
+```bash
+# Search filenames
+find docs/ -iname "*{keyword}*" 2>/dev/null
+
+# Search contents
+grep -ril "{keyword}" docs/ *.md 2>/dev/null | head -10
+```
+
+Read the most relevant matches and summarize findings.
+
+### Without keywords:
+```bash
+# List available docs
+ls -la docs/ 2>/dev/null
+ls *.md 2>/dev/null
+```
+
+Present an overview of available documentation.
+
+## Output
+
+Summarize findings:
+1. **Documents found** - List with brief description of each
+2. **Key information** - Relevant excerpts for the query
+3. **Related docs** - Other documents that may be useful
+
+## Notes
+
+- This skill is for internal project docs, not external library docs
+- For external library documentation, use `/research-online`
+- If no docs/ folder exists, search root .md files only

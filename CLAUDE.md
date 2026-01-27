@@ -24,11 +24,13 @@ Available in `claude/skills/`:
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/plan-review` | Multi-agent review of implementation plans |
-| `/read-docs` | Search docs/ folder |
+| `/read-docs` | Search internal project documentation (proactive) |
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review code comments (--all, --staged, --changed) |
+| `/review-perf` | Performance analysis (--staged, --all) |
+| `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |
 | `/test` | Test review and generation (--review, --generate) |
 | `/rn-upgrade` | React Native upgrade workflow |
@@ -52,3 +54,15 @@ When the user's prompt contains "review plan", "review the plan", or "review my 
 When the user's prompt contains "add debug logs" or "debug logging", automatically invoke the `/debug-log` skill to instrument code with tracing.
 
 When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
+
+## Internal Documentation
+
+When a `docs/` folder exists, proactively check internal documentation using `/read-docs`:
+
+**Automatic triggers:**
+- Before planning a new feature or significant change
+- When entering a new area of the codebase for the first time
+- When debugging issues (check for documented gotchas)
+- When the user asks about conventions, patterns, or architecture
+
+This supplements CLAUDE.md with detailed project-specific knowledge. For external library docs, use `/research-online` instead.

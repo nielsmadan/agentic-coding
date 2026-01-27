@@ -29,6 +29,7 @@ Launch the following review perspectives IN PARALLEL:
 
 ### Agent 2: Architecture & Patterns Review
 - Check compliance with CLAUDE.md rules
+- Search `docs/` for documented patterns related to this code area
 - Verify code follows existing codebase patterns
 - Assess separation of concerns
 - Identify code duplication

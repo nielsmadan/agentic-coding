@@ -30,7 +30,17 @@ Extract from the user's query:
 - **Problem description** (if debugging: what's broken or unexpected)
 - **Comparison targets** (if comparing: "X vs Y", "X or Y")
 
-### Step 2: Determine Which Agents to Spawn
+### Step 2: Check Internal Documentation First
+
+Before external research, check if the project has relevant internal docs:
+
+```bash
+grep -ri "<relevant_keywords>" docs/ *.md 2>/dev/null | head -10
+```
+
+If found, read and include internal patterns/conventions in the synthesis. Internal docs often contain project-specific decisions that external research won't cover.
+
+### Step 3: Determine Which Agents to Spawn
 
 | Agent | Spawn When | Purpose |
 |-------|------------|---------|
@@ -43,7 +53,7 @@ Extract from the user's query:
 | **Best Practices** | Feature implementation (no error message) | Architecture patterns, recommended approaches |
 | **Comparison** | Query contains "vs", "or", "compare", "which", "best library" | Compare options, pros/cons |
 
-### Step 3: Spawn Agents in Parallel
+### Step 4: Spawn Agents in Parallel
 
 Use the Task tool to spawn ALL relevant agents in a single message (parallel execution).
 
@@ -262,11 +272,11 @@ Return a balanced summary of each option's strengths and weaknesses with source 
 ---
 ```
 
-### Step 4: Collect Results
+### Step 5: Collect Results
 
 Wait for all agents to complete and gather their findings with metadata.
 
-### Step 5: Critical Evaluation
+### Step 6: Critical Evaluation
 
 Before synthesizing, evaluate each source using these criteria:
 
@@ -310,7 +320,7 @@ When sources conflict:
 3. Note the conflict in synthesis
 4. If official docs conflict with recent issues, the issue may reveal a bug or undocumented behavior
 
-### Step 6: Present Results
+### Step 7: Present Results
 
 Format the output with source evaluation.
 
