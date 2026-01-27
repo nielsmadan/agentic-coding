@@ -23,6 +23,7 @@ Available in `claude/skills/`:
 | `/debug-log` | Add debug logging to trace code execution |
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
+| `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/plan-review` | Multi-agent review of implementation plans |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-online` | Research a topic online using parallel agents |
