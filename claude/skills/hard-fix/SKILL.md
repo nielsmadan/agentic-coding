@@ -53,6 +53,7 @@ Launch ALL of these simultaneously using the Task tool:
 | **Research** | `/research-online` | External solutions, known issues, library bugs |
 | **Debug** | `/debug-log` | Add logging to trace the actual execution path |
 | **History** | `/review-history` | Git blame, recent changes, past issue logs |
+| **Library Source** | Read library code | Undocumented behavior, actual implementation |
 | **Opinion 1** | `/second-opinion` | Fresh perspective on the problem |
 
 **Task prompts:**
@@ -76,6 +77,37 @@ Add comprehensive logging to trace the exact execution path and state
 /review-history {affected_files_or_area}
 
 Look for: recent changes, when it last worked, who touched it, past similar issues
+```
+
+**Library source agent:**
+```
+Subagent type: general-purpose
+Prompt:
+---
+Investigate the source code of libraries involved in this issue:
+
+Problem: {description}
+Libraries involved: {library_names}
+
+1. Find the library source code:
+   - node_modules/{library}/ for JS/TS
+   - Look for .dart files in pub cache for Flutter
+   - site-packages/{library}/ for Python
+   - vendor/ or go modules for Go
+
+2. Locate the relevant functions/classes being used
+
+3. Read the actual implementation and look for:
+   - Undocumented behavior or edge cases
+   - Default values that might cause issues
+   - Error handling that swallows errors
+   - Race conditions or timing assumptions
+   - Version-specific behavior
+
+4. Check if our usage matches what the library expects
+
+Return findings about how the library actually works vs how we're using it.
+---
 ```
 
 **Second opinion agent:**
@@ -106,6 +138,9 @@ Wait for all agents. Combine findings into:
 
 **From History:**
 {relevant changes, when it broke, past issues}
+
+**From Library Source:**
+{how the library actually works, undocumented behavior, usage mismatches}
 
 **From Second Opinion:**
 {fresh perspectives, things we might have missed}
@@ -148,6 +183,7 @@ Present to user:
 - Research: {key finding}
 - Debug: {key finding}
 - History: {key finding}
+- Library Source: {key finding}
 - Opinions: {consensus or disagreement}
 
 ### Recommended Fix
@@ -162,9 +198,19 @@ Present to user:
 
 Ask user: "Should I proceed with the recommended fix?"
 
-### Phase 6: Log for Future Reference
+### Phase 6: Implement and Verify
 
-After resolution (or even partial progress), write to docs/log:
+1. Implement the recommended fix
+2. Ask user to test/verify
+3. **Wait for user confirmation** that the fix worked
+
+**Do NOT proceed to logging until user confirms the fix is working.**
+
+### Phase 7: Log for Future Reference (after user confirms fix)
+
+**Only write to docs/log after the user confirms the fix worked.**
+
+When user says the fix is confirmed/working, write to docs/log:
 
 **File:** `docs/log/YYYY-MM-DD-{IssueDescription}.md`
 
@@ -172,7 +218,7 @@ After resolution (or even partial progress), write to docs/log:
 # {Issue Title}
 
 **Date:** {date}
-**Status:** Resolved / Partially Resolved / Unresolved
+**Status:** Resolved
 **Affected Area:** {files/components}
 
 ## Problem
@@ -206,5 +252,5 @@ mkdir -p docs/log
 
 - This is a heavyweight process - use for genuinely stuck problems
 - The parallel investigation is key - each source provides different insights
-- Always log the outcome, even if unresolved - future you will thank you
+- Only log confirmed fixes - don't log until user verifies it works
 - Past issue logs are gold - check them first
