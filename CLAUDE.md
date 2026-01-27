@@ -38,11 +38,9 @@ Available in `claude/skills/`:
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
 
-## Permissions Policy
+## Git Policy
 
-The Claude settings enforce a read-only git policy:
-- **Allowed**: All read-only git commands, file inspection, web search/fetch
-- **Denied**: All git commands that modify state (commit, push, merge, reset, checkout, etc.)
+**Read-only.** Do not run git commands that modify state (add, commit, push, etc.) - they will fail. Ask the user to run these manually.
 
 ## Keyword Triggers
 
