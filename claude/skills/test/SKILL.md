@@ -163,6 +163,37 @@ Default mode. Checks tests against the principles above.
 - [ ] No file system dependencies without cleanup
 - [ ] No environment variable assumptions
 
+**Completeness (for code being reviewed):**
+- [ ] All public functions/methods have tests
+- [ ] All exported components have tests
+- [ ] Error paths are tested, not just happy paths
+- [ ] Edge cases identified in code have corresponding tests
+
+**Pattern Conformance (for --staged/new tests):**
+- [ ] File naming matches project convention
+- [ ] Test organization matches existing tests (describe/it structure)
+- [ ] Setup/teardown patterns match (beforeEach, fixtures, factories)
+- [ ] Mocking approach consistent (manual mocks, jest.mock, dependency injection)
+- [ ] Assertion style matches (expect vs assert, matchers used)
+
+### Coverage Check
+
+If a coverage script exists, run it to identify gaps:
+
+```bash
+# Check for coverage scripts
+grep -E "coverage|test:cov" package.json 2>/dev/null
+cat pyproject.toml 2>/dev/null | grep -A5 "pytest"
+```
+
+**Common coverage commands:**
+- `npm run test:coverage` or `npm run coverage`
+- `pytest --cov`
+- `go test -cover`
+- `flutter test --coverage`
+
+Report uncovered lines/branches for files in scope.
+
 ### Output Format
 
 ```markdown
@@ -171,8 +202,20 @@ Default mode. Checks tests against the principles above.
 ### Critical Issues
 - {file}:{test} - {issue}
 
-### Coverage Gaps
-- {code_file/function} - missing test for {scenario}
+### Completeness Gaps
+- {code_file}:{function} - no tests found
+- {code_file}:{function} - missing test for error case
+- {code_file}:{function} - missing test for edge case: {scenario}
+
+### Coverage Report
+(if coverage script available)
+- Overall: {X}% statements, {Y}% branches
+- Uncovered in scope:
+  - {file}:{lines} - {description}
+
+### Pattern Violations (--staged)
+- {test_file} - setup pattern differs from existing tests
+- {test_file} - mocking approach inconsistent with {example_file}
 
 ### Test Smells
 - {file}:{test} - {smell}
@@ -197,10 +240,16 @@ Create tests for code following the principles above.
 ### Workflow
 
 1. **Detect framework** - Jest, pytest, go test, vitest, etc. from project
-2. **Find conventions** - test file location, naming patterns
+2. **Analyze existing test patterns** - read 2-3 existing test files to learn:
+   - File naming and location conventions
+   - Describe/it structure and nesting style
+   - Setup/teardown patterns (beforeEach, fixtures, factories)
+   - Mocking approach (jest.mock, manual mocks, DI)
+   - Assertion style and common matchers
+   - Test data patterns (inline, fixtures, builders)
 3. **Read the code** - understand what needs testing
 4. **Check existing tests** - avoid duplicates, extend if needed
-5. **Generate tests** following the principles
+5. **Generate tests** following both principles AND project patterns
 
 ### Framework Detection
 
@@ -288,11 +337,27 @@ describe('{ServiceName}', () => {
 
 ### Output
 
-Generate test files directly, following project conventions:
-- Place in appropriate location
-- Use correct framework syntax
-- Include setup/teardown if needed
+Generate test files directly, matching project patterns:
+- Place in location matching existing test file structure
+- Use same describe/it nesting style as other tests
+- Match setup/teardown patterns (beforeEach, fixtures, etc.)
+- Use same mocking approach as existing tests
+- Match assertion style and matchers
+- Use consistent test data patterns (inline, fixtures, builders)
 - Add brief comments for non-obvious test cases
+
+**Before generating, show the patterns found:**
+```markdown
+## Detected Test Patterns
+
+**Location:** `__tests__/` alongside source
+**Structure:** `describe` per class/module, `it` per behavior
+**Setup:** `beforeEach` with factory functions
+**Mocking:** jest.mock for external, DI for internal
+**Assertions:** jest matchers, testing-library queries
+
+Generating tests following these patterns...
+```
 
 ---
 
