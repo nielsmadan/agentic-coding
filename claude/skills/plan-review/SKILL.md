@@ -37,22 +37,24 @@ Based on plan complexity, decide:
 - **Medium** (few files, new feature): All agents, 3 alternatives
 - **Complex** (architectural, multi-system): All agents + research, 4 alternatives
 
-### Step 3: Spawn Review Agents in Parallel
+### Step 3: Spawn ALL Review Agents in Parallel
 
-Launch ALL relevant agents simultaneously:
+**CRITICAL:** Launch ALL 5 agents below in a SINGLE message with multiple tool calls.
+Do NOT invoke skills one at a time. Do NOT stop after the first agent.
 
-| Agent | Purpose | Always Run |
-|-------|---------|------------|
-| **External Opinions** | Gemini + Codex via `/second-opinion` | Yes |
-| **Alternatives** | Propose 2-4 other solutions | Yes |
-| **Robustness** | Check for fragile patterns | Yes |
-| **Adversarial** | Maximally critical review | Yes |
-| **Research** | `/research-online` for relevant info | If warranted |
+| Agent | Purpose | Tool |
+|-------|---------|------|
+| **External Opinions** | Get Gemini + Codex input | Skill: `second-opinion` |
+| **Alternatives** | Propose 2-4 other solutions | Task: general-purpose |
+| **Robustness** | Check for fragile patterns | Task: general-purpose |
+| **Adversarial** | Maximally critical review | Task: general-purpose |
+| **Research** | Best practices online | Skill: `research-online` |
 
 #### External Opinions Agent
-```
-/second-opinion
 
+Use the **Skill tool** to invoke `second-opinion` with this prompt:
+
+```
 Review this implementation plan:
 
 {plan_summary}
@@ -173,9 +175,12 @@ Do not soften criticism. If something is bad, say it's bad.
 ---
 ```
 
-#### Research Agent (if warranted)
+#### Research Agent
+
+Use the **Skill tool** to invoke `research-online` with relevant topic:
+
 ```
-/research-online {library/technology mentioned} {core problem}
+{library/technology mentioned} {core problem} best practices
 
 Focus on:
 - Known issues with proposed approach
@@ -183,10 +188,24 @@ Focus on:
 - Recent changes that affect the plan
 ```
 
-Trigger research when:
-- Plan involves unfamiliar library/API
-- Implementing a pattern that might have established best practices
-- Error messages or specific symptoms mentioned
+#### Spawning All Agents (Example)
+
+In a **SINGLE message**, spawn all 5 agents:
+
+1. **Skill tool** → `second-opinion` with plan summary
+2. **Task tool** → general-purpose agent for alternatives
+3. **Task tool** → general-purpose agent for robustness
+4. **Task tool** → general-purpose agent for adversarial
+5. **Skill tool** → `research-online` with relevant topic
+
+Wait for ALL to complete before proceeding.
+
+**Verify before Step 4:**
+- [ ] External Opinions agent spawned (second-opinion)
+- [ ] Alternatives agent spawned
+- [ ] Robustness agent spawned
+- [ ] Adversarial agent spawned
+- [ ] Research agent spawned (research-online)
 
 ### Step 4: Synthesize Findings
 
@@ -316,8 +335,10 @@ const user = await db.transaction(async (tx) => {
 
 ## Notes
 
-- All review agents run in parallel for speed
-- External opinions via `/second-opinion` provide model diversity
+- **ALL 5 agents must spawn in a single message** - do not invoke one at a time
+- Use the Skill tool for `second-opinion` and `research-online` - do not write slash commands directly
+- External opinions provide model diversity (Gemini + Codex)
 - The adversarial agent should be harsh - that's its job
 - Robustness review catches patterns that "work in testing, fail in prod"
-- Always synthesize into actionable improvements
+- Research agent finds best practices and known issues online
+- Always synthesize all agent results into actionable improvements

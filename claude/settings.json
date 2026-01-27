@@ -69,15 +69,23 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Skill(code-review)",
+      "Skill(debug-log)",
+      "Skill(doc)",
       "Skill(flutter-upgrade)",
+      "Skill(hard-fix)",
+      "Skill(perf-test)",
+      "Skill(plan-review)",
       "Skill(read-docs)",
+      "Skill(research-online)",
       "Skill(resolve-conflicts)",
-      "Skill(review-comments-changed)",
       "Skill(review-comments)",
-      "Skill(review-docs)",
+      "Skill(review-history)",
+      "Skill(review-perf)",
+      "Skill(review-security)",
       "Skill(rn-upgrade)",
-      "Skill(debate)",
-      "Skill(second-opinion)"
+      "Skill(second-opinion)",
+      "Skill(skill-creator)",
+      "Skill(test)"
     ],
     "deny": [
       "Bash(git add:*)",
@@ -140,11 +148,21 @@
     ],
     "Notification": [
       {
-        "matcher": "idle_prompt|permission_prompt",
+        "matcher": "idle_prompt",
         "hooks": [
           {
             "type": "command",
             "command": "~/.claude/hooks/juggler/notify.sh idle",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh permission",
             "timeout": 5
           }
         ]
