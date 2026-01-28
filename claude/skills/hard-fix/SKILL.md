@@ -145,82 +145,51 @@ Symptoms: {what's happening}
 What are we missing?
 ```
 
-### Phase 3: Collect and Synthesize
+### Phase 3: Synthesize Findings
 
-Wait for all agents. Combine findings into:
+Wait for all agents. Combine into a root cause theory with evidence.
 
-```markdown
-## Investigation Summary
-
-### What We Found
-
-**From Research:**
-{external findings - known issues, solutions, library bugs}
-
-**From Debug Logs:**
-{what the execution trace revealed}
-
-**From History:**
-{relevant changes, when it broke, past issues}
-
-**From Library Source:**
-{how the library actually works, undocumented behavior, usage mismatches}
-
-**From Second Opinion:**
-{fresh perspectives, things we might have missed}
-
-### Conflicts or Gaps
-{where sources disagree or information is missing}
-
-### Emerging Theory
-{what the combined evidence suggests is the root cause}
+**BAD synthesis (superficial):**
+```
+Root Cause: The API call is failing.
+Evidence: Got a 500 error in the logs.
+Fix: Add a try-catch.
 ```
 
-### Phase 4: Validate with Second Opinion
-
-Run `/second-opinion` again with the synthesis:
-
+**GOOD synthesis (investigative):**
 ```
-/second-opinion
-
-We investigated a persistent bug. Here's what we found:
-
-{summary from Phase 3}
-
-Our current theory: {root cause hypothesis}
-Proposed fix: {what we plan to try}
-
-Does this make sense? What might we still be missing?
+Root Cause: Race condition between auth token refresh and API call.
+Evidence:
+- Debug logs: Token refresh starts at T+0, API call at T+50ms, refresh completes T+200ms
+- History: Started after PR #234 moved token refresh to background
+- Library source: axios doesn't queue requests during refresh by default
+- Research: Known issue axios#4193, recommended fix is axios-auth-refresh
+Fix: Add request queuing during token refresh using axios-auth-refresh interceptor.
 ```
 
-### Phase 5: Present Findings
+The difference: superficial stops at symptoms, good traces to mechanism.
 
-Present to user:
+### Phase 4: Validate Theory
+
+Run `/second-opinion` with your synthesis and proposed fix. Check for blind spots.
+
+### Phase 5: Present to User
 
 ```markdown
 ## Hard Fix Analysis: {problem}
 
-### Root Cause (Confidence: High/Medium/Low)
-{what we believe is causing this}
+**Root Cause** (Confidence: High/Medium/Low): {mechanism, not symptom}
 
-### Evidence
-- Research: {key finding}
-- Debug: {key finding}
-- History: {key finding}
-- Library Source: {key finding}
-- Opinions: {consensus or disagreement}
+**Evidence**: {one key finding per source}
 
-### Recommended Fix
-{specific steps to resolve}
+**Recommended Fix**: {specific steps}
 
-### Alternative Approaches
-{if main fix doesn't work}
+**Alternatives**: {if main fix fails}
 
-### Validation Plan
-{how to verify the fix worked}
+**Validation**: {how to verify}
 ```
 
-Ask user: "Should I proceed with the recommended fix?"
+Ask: "Should I proceed with the recommended fix?"
 
 ### Phase 6: Implement and Verify
 
@@ -232,44 +201,24 @@ Ask user: "Should I proceed with the recommended fix?"
 
 ### Phase 7: Log for Future Reference (after user confirms fix)
 
-**Only write to docs/log after the user confirms the fix worked.**
-
-When user says the fix is confirmed/working, write to docs/log:
-
-**File:** `docs/log/YYYY-MM-DD-{IssueDescription}.md`
+**Only after user confirms fix works**, write to `docs/log/YYYY-MM-DD-{Issue}.md`:
 
 ```markdown
 # {Issue Title}
 
-**Date:** {date}
-**Status:** Resolved
-**Affected Area:** {files/components}
+**Date:** {date} | **Area:** {files/components}
 
-## Problem
-{description of the issue}
-
-## Symptoms
-{what was observed}
+## Problem & Symptoms
+{what was happening}
 
 ## Root Cause
-{what was actually wrong}
+{what was actually wrong - the mechanism}
 
 ## Solution
-{what fixed it, with code snippets if relevant}
-
-## Investigation Notes
-{key findings from research, history, debug logs}
+{what fixed it, with code if relevant}
 
 ## Prevention
-{how to avoid this in the future, if applicable}
-
-## Related
-{links to issues, PRs, or other log entries}
-```
-
-Create the docs/log directory if it doesn't exist:
-```bash
-mkdir -p docs/log
+{how to avoid in future}
 ```
 
 ## Notes
