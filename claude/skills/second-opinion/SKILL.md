@@ -1,3 +1,9 @@
+---
+name: second-opinion
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Gemini and Codex.
+argument-hint: [--quick] <question or context>
+---
+
 # Second Opinion Command
 
 Get input from Gemini and Codex on the current problem or question. By default, iterates if responses lack confidence.

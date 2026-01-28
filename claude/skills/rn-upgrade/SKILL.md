@@ -1,3 +1,9 @@
+---
+name: rn-upgrade
+description: React Native upgrade workflow. Use when upgrading a React Native application to a new version.
+argument-hint: <target version>
+---
+
 # React Native Upgrade Command
 
 You are tasked with upgrading a React Native application to version $1 (or the latest version if not specified).

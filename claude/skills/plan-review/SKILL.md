@@ -1,6 +1,6 @@
 ---
 name: plan-review
-description: Rigorous multi-agent review of implementation plans before execution. Spawns parallel agents for external opinions (Gemini/Codex), alternative solutions, robustness analysis, and adversarial critique. Use after creating a plan but before implementing, especially for complex or risky changes.
+description: Multi-agent review of implementation plans. Use after creating a plan but before implementing, especially for complex or risky changes.
 argument-hint: [path to plan file or use current plan context]
 ---
 
@@ -36,6 +36,11 @@ Based on plan complexity, decide:
 - **Simple** (single file, minor change): Skip research, 2 alternatives
 - **Medium** (few files, new feature): All agents, 3 alternatives
 - **Complex** (architectural, multi-system): All agents + research, 4 alternatives
+
+**Do NOT shortcut this workflow:**
+- "The plan is simple enough, I'll just get a second opinion" -- ALL 5 agents are required regardless of complexity
+- "I already know the issues" -- External perspectives find blind spots you can't see
+- "This will take too long" -- Parallel agents run simultaneously, the time cost is minimal
 
 ### Step 3: Spawn ALL Review Agents in Parallel
 

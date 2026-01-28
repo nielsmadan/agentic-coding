@@ -16,6 +16,17 @@ Add targeted debug logging to trace execution flow and variable state.
 /debug-log the checkout process
 ```
 
+## Debugging Discipline
+
+**One-Variable Rule:**
+- Make ONE change at a time
+- Test after EACH individual change
+- If a change doesn't help, REVERT it before trying the next
+- Never stack untested changes
+
+**Circuit Breaker:**
+If 3 sequential attempts fail to isolate the issue, STOP. Document findings and escalate to `/hard-fix` for parallel investigation.
+
 ## Workflow
 
 1. **Identify target** - Use provided topic or infer from recent conversation

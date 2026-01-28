@@ -200,6 +200,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh working",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

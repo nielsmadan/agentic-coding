@@ -1,6 +1,6 @@
 ---
 name: hard-fix
-description: Escalation workflow for stubborn bugs that persist after multiple fix attempts. Combines parallel investigation (research-online, debug-log, review-history, second-opinion), synthesizes findings, validates with second-opinion, and logs everything to docs/log for future reference. Use when a bug won't go away, you've tried several approaches, or you're stuck.
+description: Escalation workflow for stubborn bugs. Use when a bug persists after multiple fix attempts, you've tried several approaches, or you're stuck.
 argument-hint: <description of the persistent problem>
 ---
 
@@ -15,6 +15,18 @@ Comprehensive investigation workflow for bugs that resist normal debugging.
 /hard-fix race condition in checkout - tried 3 fixes already
 /hard-fix                              # Uses recent conversation context
 ```
+
+**Do NOT shortcut this workflow:**
+- "I think I already know the fix" -- If you knew, you wouldn't need this skill
+- "Let me just try one more thing first" -- You've already tried. Follow the systematic process
+- "I only need one of these investigation methods" -- Parallel investigation is the point, run ALL agents
+
+**Circuit Breaker Rule:**
+If 3 sequential fix attempts have failed for the same issue:
+1. STOP attempting more fixes
+2. Document what was tried and why each failed
+3. This signals a systemic/architectural issue, not a localized bug
+4. Recommend architectural review rather than continuing to patch
 
 ## Workflow
 

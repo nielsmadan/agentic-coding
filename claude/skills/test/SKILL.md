@@ -230,6 +230,18 @@ Report uncovered lines/branches for files in scope.
 
 Create tests for code following the principles above.
 
+### Red-Green Verification (for bug fixes)
+
+When generating tests for a bug fix, verify the test actually catches the bug:
+
+1. Run the new test with the fix applied -- confirm PASS (green)
+2. Temporarily revert the fix
+3. Run the test again -- confirm FAIL (red)
+4. Re-apply the fix
+5. Run the test -- confirm PASS again (green)
+
+Only claim the test is valid if it fails without the fix and passes with it. This prevents tests that pass for unrelated reasons.
+
 ### Scope
 
 | Flag | Scope | Method |

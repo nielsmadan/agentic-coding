@@ -1,6 +1,6 @@
 ---
 name: review-security
-description: Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP Top 10, hardcoded secrets, dependency vulnerabilities, and auth/authz patterns. Use before releases, after adding auth code, or when reviewing third-party integrations.
+description: Security audit for vulnerabilities, secrets, and unsafe patterns. Use before releases, after adding auth code, or when reviewing third-party integrations.
 argument-hint: [--staged | --all]
 ---
 
@@ -23,6 +23,11 @@ Security audit for common vulnerabilities and unsafe patterns.
 | (none) | Context-related code | Files from recent conversation |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
+
+**Do NOT skip checks:**
+- "This code is internal only" -- Internal code gets compromised too
+- "This is just a prototype" -- Prototypes become production code
+- "I already checked for the obvious issues" -- The non-obvious ones are the dangerous ones
 
 ## Workflow
 

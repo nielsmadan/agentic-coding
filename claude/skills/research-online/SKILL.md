@@ -1,6 +1,6 @@
 ---
 name: research-online
-description: Research a programming topic online using parallel agents. Searches documentation (via Context7), GitHub issues, general solutions, and specific errors. Use when implementing features, learning new libraries, or debugging issues.
+description: Research a programming topic online from multiple sources. Use when implementing features, learning new libraries, or debugging issues.
 argument-hint: <topic or error message>
 ---
 

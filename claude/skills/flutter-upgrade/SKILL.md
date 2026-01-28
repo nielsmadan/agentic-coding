@@ -1,3 +1,8 @@
+---
+name: flutter-upgrade
+description: Flutter upgrade workflow. Use when upgrading Flutter SDK and dependencies.
+---
+
 # Flutter Upgrade Workflow
 
 Please upgrade Flutter and all dependencies following best practices:

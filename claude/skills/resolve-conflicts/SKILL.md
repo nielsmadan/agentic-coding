@@ -1,6 +1,6 @@
 ---
 name: resolve-conflicts
-description: Help resolve git conflicts from any operation (merge, rebase, cherry-pick, stash, revert). Detects conflict type, analyzes conflicted files, provides resolution guidance, and instructs on proper continuation/abort commands.
+description: Resolve git conflicts from any operation (merge, rebase, cherry-pick, stash, revert). Use when encountering conflicted files during git operations.
 argument-hint: [file path]
 ---
 

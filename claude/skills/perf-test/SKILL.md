@@ -1,6 +1,6 @@
 ---
 name: perf-test
-description: Set up and run performance tests (profiling or load testing). Takes a target (file, function, endpoint), asks clarifying questions, proposes a test plan, implements it, runs tests, analyzes results, and recommends optimizations. Includes improvement cycle to implement fixes and compare before/after.
+description: Set up and run performance tests (profiling, load testing, or E2E scenarios). Use when measuring code or endpoint performance, or before/after optimization work.
 argument-hint: <target: file, function, endpoint, or service>
 ---
 
@@ -48,6 +48,11 @@ Ask clarifying questions:
    ls go.mod 2>/dev/null && echo "go"
    ls Cargo.toml 2>/dev/null && echo "rust"
    ```
+
+**Do NOT skip phases:**
+- "I can skip the proposal and just write the test" -- The proposal ensures we measure the right things
+- "The results look fine, no need to analyze" -- Subtle regressions hide in apparently fine results
+- "One iteration is enough" -- Statistical significance requires multiple runs
 
 ### Phase 2: Proposal
 
