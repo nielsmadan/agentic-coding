@@ -42,6 +42,17 @@ Available in `claude/skills/`:
 
 **Read-only.** Do not run git commands that modify state (add, commit, push, etc.) - they will fail. Ask the user to run these manually.
 
+## Verification Policy
+
+Never claim "best practice", "recommended", "accepted solution", or "community consensus" without a cited source. If you haven't verified something, say "I believe" or "this might work" - not "this is the way."
+
+**Do NOT say:**
+- "This is the accepted approach" → without a source, you don't know this
+- "The community recommends" → find a citation or don't claim consensus
+- "This is best practice" → according to whom?
+
+When unsure, be explicit: "I think this will work, but I haven't verified it's the recommended approach."
+
 ## Keyword Triggers
 
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
