@@ -29,7 +29,7 @@ Available in `claude/skills/`:
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-history` | Analyze git history and past issue logs |
-| `/review-comments` | Review code comments (--all, --staged, --changed) |
+| `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
 | `/review-perf` | Performance analysis (--staged, --all) |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |

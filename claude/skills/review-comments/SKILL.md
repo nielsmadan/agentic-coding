@@ -1,7 +1,7 @@
 ---
 name: review-comments
 description: Review and clean up low-quality code comments. Use when you notice "what" comments that should be "why" comments, or want to clean up comment noise before a PR.
-argument-hint: [--all | --staged | --changed]
+argument-hint: [--all | --staged | --changed | --fix]
 ---
 
 # Review Comments
@@ -13,6 +13,7 @@ Review code comments for quality, then offer to fix issues found.
 - `--staged` - git staged files
 - `--changed` - git unstaged changes
 - `--all` - entire codebase (parallel agents)
+- `--fix` - auto-apply fixes (remove + refactor) without prompting
 - Default: `--staged --changed` combined
 
 ## Usage
@@ -20,6 +21,7 @@ Review code comments for quality, then offer to fix issues found.
 ```
 /review-comments              # staged + changed (default)
 /review-comments --all        # entire codebase
+/review-comments --fix        # review and auto-fix
 ```
 
 ## Workflow
@@ -108,7 +110,9 @@ Return findings in this format:
 
 ### Step 5: Offer to Fix
 
-If issues were found, ask the user:
+**If `--fix` flag is present:** Skip the prompt and directly apply Option 2 (Remove and refactor).
+
+**Otherwise**, if issues were found, ask the user:
 
 ```
 Found {n} low-quality comments. How would you like to proceed?

@@ -129,7 +129,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh start",
+            "command": "~/.claude/hooks/juggler/notify.sh SessionStart",
             "timeout": 5
           }
         ]
@@ -140,29 +140,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh stop",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "idle_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh idle",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "permission_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh permission",
+            "command": "~/.claude/hooks/juggler/notify.sh Stop",
             "timeout": 5
           }
         ]
@@ -173,7 +151,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh working",
+            "command": "~/.claude/hooks/juggler/notify.sh UserPromptSubmit",
             "timeout": 5
           }
         ]
@@ -184,7 +162,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh end",
+            "command": "~/.claude/hooks/juggler/notify.sh SessionEnd",
             "timeout": 5
           }
         ]
@@ -192,10 +170,11 @@
     ],
     "PreCompact": [
       {
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh precompact",
+            "command": "~/.claude/hooks/juggler/notify.sh PreCompact",
             "timeout": 5
           }
         ]
@@ -207,7 +186,54 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/juggler/notify.sh working",
+            "command": "~/.claude/hooks/juggler/notify.sh PreToolUse",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh PostToolUse",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh PostToolUseFailure",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh PermissionRequest",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh SubagentStart",
             "timeout": 5
           }
         ]
