@@ -1,21 +1,25 @@
 ---
 name: review-comments
-description: Review code comments for quality. Flags: --all (entire codebase, uses parallel agents), --staged (git staged files), --changed (git unstaged changes). Default: --staged --changed combined. Use to ensure comments explain "why" not "what".
+description: Review and clean up low-quality code comments. Use when you notice "what" comments that should be "why" comments, or want to clean up comment noise before a PR.
 argument-hint: [--all | --staged | --changed]
 ---
 
 # Review Comments
 
-Review code comments to ensure they explain "why" not "what".
+Review code comments for quality, then offer to fix issues found.
+
+## Flags
+
+- `--staged` - git staged files
+- `--changed` - git unstaged changes
+- `--all` - entire codebase (parallel agents)
+- Default: `--staged --changed` combined
 
 ## Usage
 
 ```
-/review-comments                      # staged + changed files (default)
-/review-comments --staged             # only git staged files
-/review-comments --changed            # only unstaged changes
-/review-comments --staged --changed   # both explicitly
-/review-comments --all                # entire codebase (parallel agents)
+/review-comments              # staged + changed (default)
+/review-comments --all        # entire codebase
 ```
 
 ## Workflow
@@ -101,6 +105,37 @@ Return findings in this format:
 - Issues found: {count}
 - Most common issue: {type}
 ```
+
+### Step 5: Offer to Fix
+
+If issues were found, ask the user:
+
+```
+Found {n} low-quality comments. How would you like to proceed?
+
+1. **Remove all** - Delete all flagged comments
+2. **Remove and refactor** - Delete comments + extract better function/variable names where suggested
+3. **Cherry-pick** - Show me each one and I'll decide
+4. **Skip** - Keep the report, don't change anything
+```
+
+Based on user choice:
+
+**Option 1 (Remove all):**
+- Use Edit tool to remove each flagged comment
+- Report: "Removed {n} comments from {m} files"
+
+**Option 2 (Remove and refactor):**
+- Remove comments
+- Where suggestion was "extract to function" or "rename variable", apply that refactor
+- Report changes made
+
+**Option 3 (Cherry-pick):**
+- Present each issue one at a time: "Line 42: `// increment counter` - Remove? (y/n/stop)"
+- Apply user's choices
+
+**Option 4 (Skip):**
+- End without changes
 
 ## Comment Quality Guidelines
 
