@@ -1,6 +1,7 @@
 ---
 name: flutter-upgrade
 description: Flutter upgrade workflow. Use when upgrading Flutter SDK and dependencies.
+argument-hint: <target version>
 ---
 
 # Flutter Upgrade Workflow
