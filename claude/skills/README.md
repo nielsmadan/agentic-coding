@@ -166,6 +166,18 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ---
 
+### /workbench
+
+Run code in a Docker-sandboxed environment. Iteratively develop scripts with full isolation from the host.
+
+**Arguments:**
+- `<task description>` - What to build
+- `--lang <language>` - Override language detection (python, node, go, bash)
+
+**Example:** `/workbench build a python script that reads a CSV and outputs summary stats`
+
+---
+
 ### /rn-upgrade
 
 React Native upgrade workflow.

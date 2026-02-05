@@ -11,6 +11,13 @@ HOOK_INPUT=$(cat)
 # Get iTerm session ID from environment (if available)
 ITERM_SESSION_ID="${ITERM_SESSION_ID:-}"
 
+# Get tmux pane ID and session name (if running inside tmux)
+TMUX_PANE_ID="${TMUX_PANE:-}"
+TMUX_SESSION_NAME=""
+if [ -n "$TMUX_PANE_ID" ]; then
+    TMUX_SESSION_NAME=$(tmux display-message -p -t "$TMUX_PANE_ID" '#{session_name}' 2>/dev/null || echo "")
+fi
+
 # Get git info (if in a git repo)
 GIT_BRANCH=$(git -C "$PWD" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 GIT_REPO=$(basename "$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo "")
@@ -42,6 +49,14 @@ payload = {
         "repo": "$GIT_REPO"
     }
 }
+
+tmux_pane = "$TMUX_PANE_ID"
+tmux_session_name = "$TMUX_SESSION_NAME"
+if tmux_pane:
+    tmux_info = {"pane": tmux_pane}
+    if tmux_session_name:
+        tmux_info["sessionName"] = tmux_session_name
+    payload["tmux"] = tmux_info
 
 print(json.dumps(payload))
 PYTHON

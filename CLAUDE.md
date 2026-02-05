@@ -34,6 +34,7 @@ Available in `claude/skills/`:
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |
 | `/test` | Test review and generation (--review, --generate) |
+| `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
@@ -64,6 +65,19 @@ When the user's prompt contains "review plan", "review the plan", or "review my 
 When the user's prompt contains "add debug logs" or "debug logging", automatically invoke the `/debug-log` skill to instrument code with tracing.
 
 When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
+
+When the user's prompt contains "workbench", automatically invoke the `/workbench` skill to run code in a Docker-isolated environment.
+
+## Proactive Workbench Usage
+
+Proactively suggest or use `/workbench` when:
+- The user asks to write a script that processes files (CSV parsers, data transforms, etc.) and you'd otherwise run it directly on the host
+- The user asks to prototype or experiment with untrusted code, unfamiliar libraries, or generated code
+- The task involves running code that does filesystem operations (delete, move, overwrite) where a mistake could damage the project
+- The user asks to "try something out", "prototype", or "experiment" with code
+- You're about to run `python`, `node`, or `bash` on a user-written script that wasn't part of the existing project
+
+Do NOT use workbench for: running existing project test suites, build commands, linters, or other project tooling that's already configured.
 
 ## Internal Documentation
 

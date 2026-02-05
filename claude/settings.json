@@ -57,6 +57,7 @@
       "Bash(dirname:*)",
       "Bash(basename:*)",
       "Bash(jq:*)",
+      "Bash(cp:*)",
       "Bash(yarn --version)",
       "Bash(npm --version)",
       "Bash(node --version)",
@@ -64,6 +65,11 @@
       "Bash(ruby --version)",
       "Bash(gemini -s --approval-mode:*)",
       "Bash(codex exec -s read-only:*)",
+      "Bash(docker exec cc-workbench-*)",
+      "Bash(docker stop cc-workbench-*)",
+      "Bash(docker rm cc-workbench-*)",
+      "Bash(docker info:*)",
+      "Bash(docker ps:*)",
       "WebSearch",
       "WebFetch",
       "mcp__context7__resolve-library-id",
@@ -85,7 +91,8 @@
       "Skill(rn-upgrade)",
       "Skill(second-opinion)",
       "Skill(skill-creator)",
-      "Skill(test)"
+      "Skill(test)",
+      "Skill(workbench)"
     ],
     "deny": [
       "Bash(git add:*)",
