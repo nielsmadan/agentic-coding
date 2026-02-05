@@ -73,14 +73,14 @@ Set up and run performance tests (profiling, load testing, or E2E scenarios). In
 
 ---
 
-### /plan-review
+### /review-plan
 
 Multi-agent review of implementation plans before execution. Spawns parallel agents for external opinions, alternative solutions, and adversarial critique.
 
 **Arguments:**
 - `[path to plan file]` - Optional, uses current plan context if omitted
 
-**Example:** `/plan-review`
+**Example:** `/review-plan`
 
 ---
 

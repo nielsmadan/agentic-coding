@@ -1,5 +1,5 @@
 ---
-name: plan-review
+name: review-plan
 description: Multi-agent review of implementation plans. Use after creating a plan but before implementing, especially for complex or risky changes.
 argument-hint: [path to plan file or use current plan context]
 ---
@@ -11,8 +11,8 @@ Comprehensive review of implementation plans using parallel specialized agents.
 ## Usage
 
 ```
-/plan-review                          # Review plan from current context
-/plan-review path/to/plan.md          # Review specific plan file
+/review-plan                          # Review plan from current context
+/review-plan path/to/plan.md          # Review specific plan file
 ```
 
 ## Workflow
