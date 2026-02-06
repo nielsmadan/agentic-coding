@@ -1,42 +1,34 @@
 ---
 name: workbench
 description: Run code in a Docker-sandboxed environment. Use when developing scripts that need isolation from the host, or when iterating on untrusted/experimental code.
-argument-hint: <task description> [--lang <python|node|go|bash>]
+argument-hint: <task description>
 ---
 
 # Workbench
 
-Develop and iterate on code inside a Docker container with no host access.
+Develop and iterate on code inside a persistent Docker container with no host access.
 
 ## Usage
 
 ```
 /workbench build a python script that reads a CSV and outputs summary stats
 /workbench write a script that fetches data from an API and processes it
-/workbench --lang node create an express server prototype
+/workbench create an express server prototype
 /workbench                              # Uses recent conversation context
 ```
-
-## Flags
-
-| Flag | Effect |
-|------|--------|
-| `--lang <language>` | Override language detection (python, node, go, bash) |
-| No flags | Python (default) |
 
 ## Security Model
 
 **Why Docker:** Running `python script.py` on the host gives the script full access to the user's filesystem, even if the script file lives in `/tmp`. Docker containers isolate execution so the host filesystem doesn't exist inside the container.
 
 **Permission strategy:**
-- `docker exec cc-workbench-*` is whitelisted (runs inside an existing container - safe)
-- `docker stop cc-workbench-*` is whitelisted (just stops a container)
-- `docker rm cc-workbench-*` is whitelisted (just removes a container)
+- `docker exec cc-workbench` and `docker exec cc-workbench-*` are whitelisted (runs inside existing containers - safe)
+- `docker stop/rm/start cc-workbench` and `cc-workbench-*` are whitelisted
 - `docker info` is whitelisted (read-only check)
-- `docker run` is NOT whitelisted - the user approves it once per session
+- `docker build` and `docker run` are NOT whitelisted - the user approves these once
 
 The user can verify the `docker run` command has:
-- Only the workspace directory mounted (`-v /tmp/workbench-xxx:/workspace`)
+- Only the workspace directory mounted (`-v /tmp/workbench:/workspace`)
 - No `--privileged` flag
 
 **Remaining risks:**
@@ -54,65 +46,81 @@ docker info >/dev/null 2>&1
 
 If Docker is not running, tell the user and stop.
 
-**2. Check for stale containers from previous sessions:**
+**2. Check if the workbench container already exists:**
 ```bash
-docker ps -a --filter "name=cc-workbench-" --format "{{.Names}} {{.Status}}"
+docker ps -a --filter "name=^cc-workbench$" --format "{{.Names}} {{.Status}}"
 ```
 
-If stale containers exist, stop and remove each by name (so commands match the whitelist):
+Three cases:
+- **Container is running** → skip to step 4
+- **Container exists but is stopped** → restart it:
+  ```bash
+  docker start cc-workbench
+  ```
+- **Container doesn't exist** → continue to step 3
+
+**3. First-time setup (one-time, requires user approval):**
+
+Check if the `cc-workbench` image exists:
 ```bash
-docker stop cc-workbench-{name} && docker rm cc-workbench-{name}
+docker images cc-workbench --format "{{.Repository}}"
 ```
 
-**3. Detect language** from the task description or `--lang` flag:
-
-| Language | Image | Exec command |
-|----------|-------|-------------|
-| Python (default) | `python:3.12-slim` | `python script.py` |
-| Node.js | `node:20-slim` | `node script.js` |
-| Go | `golang:1.22-alpine` | `go run main.go` |
-| Bash | `ubuntu:24.04` | `bash script.sh` |
-
-**4. Create workspace and start container:**
+If no image, find the Dockerfile and build it (user approves once):
 ```bash
-WORKSPACE=$(mktemp -d /tmp/workbench-XXXXXX)
-echo "Workspace: $WORKSPACE"
+# Use Glob tool to find: **/claude/skills/workbench/Dockerfile
+# Then build from that directory:
+docker build -t cc-workbench /absolute/path/to/claude/skills/workbench/
 ```
 
-Start the container. **This requires user approval** (not whitelisted):
+Create the workspace directory and start the container (user approves once):
 ```bash
-docker run -d --name cc-workbench-{session_id} \
+mkdir -p /tmp/workbench
+docker run -d --name cc-workbench \
   --memory 512m --cpus 1 \
-  -v $WORKSPACE:/workspace \
+  -v /tmp/workbench:/workspace \
   -w /workspace \
-  {image} \
+  cc-workbench \
   tail -f /dev/null
 ```
 
-Use a short unique suffix for `{session_id}` (e.g., first 8 chars of a UUID or timestamp).
+After this, the container is running and all subsequent operations are auto-approved.
+
+**4. Create a task directory** inside the container:
+```bash
+docker exec cc-workbench mkdir -p /workspace/{task-name}
+```
+
+Use a short descriptive name for the task (e.g., `csv-parser`, `api-client`, `etl-pipeline`).
 
 ### Phase 2: Iterative Development (auto-approved)
 
 This is the main loop. All `docker exec` commands are whitelisted and auto-approve.
 
-**1. Write code** to the workspace using the Write tool:
+**1. Write code** to the task directory using the Write tool:
 ```
-Write tool -> $WORKSPACE/script.py
+Write tool -> /tmp/workbench/{task-name}/script.py
 ```
 
-**2. Execute** inside the container:
-```bash
-docker exec cc-workbench-{session_id} python /workspace/script.py
-```
+**2. Detect language and execute** inside the container:
+
+| Language | Run command |
+|----------|-------------|
+| Python | `docker exec cc-workbench python3 /workspace/{task-name}/script.py` |
+| Node.js | `docker exec cc-workbench node /workspace/{task-name}/script.js` |
+| Go | `docker exec -w /workspace/{task-name} cc-workbench go run main.go` |
+| Bash | `docker exec cc-workbench bash /workspace/{task-name}/script.sh` |
+
+Auto-detect the language from the task description and file extensions. No flag needed — the container has all runtimes.
 
 **3. Read output**, fix issues, iterate. Repeat steps 1-3 until the script works correctly.
 
 **Guidelines for iteration:**
-- Write files to `$WORKSPACE` using the Write tool (this writes to the host path which is mounted into the container)
+- Write files to `/tmp/workbench/{task-name}/` using the Write tool (this writes to the host path which is mounted into the container)
 - Execute via `docker exec` (runs inside the container)
-- Read output files from `$WORKSPACE` if the script produces file output
-- Install packages if needed: `docker exec cc-workbench-{session_id} pip install pandas`
-- **Use `docker exec` for all filesystem operations** inside the container (e.g., `docker exec cc-workbench-{session_id} mkdir -p /workspace/subdir`). Do NOT use host commands like `mkdir` or `chmod` on `$WORKSPACE` — only `docker exec` is whitelisted and auto-approved. Host commands will trigger a permission prompt.
+- Read output files from `/tmp/workbench/{task-name}/` if the script produces file output
+- Install packages if needed: `docker exec cc-workbench pip install pandas`
+- **Use `docker exec` for all filesystem operations** inside the container (e.g., `docker exec cc-workbench mkdir -p /workspace/{task-name}/subdir`). Do NOT use host commands like `mkdir` or `chmod` on the workspace — only `docker exec` is whitelisted and auto-approved. Host commands will trigger a permission prompt.
 
 ### Phase 3: Graduation
 
@@ -124,18 +132,41 @@ When the script is working:
 
 **3. Copy if requested:**
 ```bash
-cp $WORKSPACE/script.py /path/to/project/script.py
+cp /tmp/workbench/{task-name}/script.py /path/to/project/script.py
 ```
 
-**4. Cleanup:**
+**4. Keep the container running** for future tasks. Only clean up the task directory if asked:
 ```bash
-docker stop cc-workbench-{session_id} && docker rm cc-workbench-{session_id}
-rm -rf $WORKSPACE
+docker exec cc-workbench rm -rf /workspace/{task-name}
+```
+
+## Custom Environments
+
+If a task needs services not in the default image (e.g., PostgreSQL, Redis, Elasticsearch), create a task-specific container instead:
+
+```bash
+docker run -d --name cc-workbench-{task-name} \
+  --memory 512m --cpus 1 \
+  -v /tmp/workbench/{task-name}:/workspace \
+  -w /workspace \
+  postgres:16 \
+  ...
+```
+
+This falls back to the per-task flow — the user approves the `docker run` once. The whitelisted `docker exec cc-workbench-*` pattern covers these named containers too.
+
+## Full Cleanup
+
+Only when the user explicitly requests it:
+```bash
+docker stop cc-workbench && docker rm cc-workbench
+rm -rf /tmp/workbench
 ```
 
 ## Notes
 
 - The container runs as root inside its own namespace - this is fine because it has no host access
-- Files written to `$WORKSPACE` on the host appear at `/workspace` inside the container
-- If the session crashes, stale containers are cleaned up on next `/workbench` invocation
+- Files written to `/tmp/workbench/` on the host appear at `/workspace` inside the container
+- Installed packages persist across tasks (the container stays running)
+- If a task needs a clean environment, use `python3 -m venv` or create a custom container
 - For long-running processes (servers), use `docker exec -d` for background execution and `docker exec ... curl localhost:PORT` to test
