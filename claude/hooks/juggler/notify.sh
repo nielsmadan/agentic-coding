@@ -22,49 +22,61 @@ fi
 GIT_BRANCH=$(git -C "$PWD" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 GIT_REPO=$(basename "$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo "")
 
-# Build unified payload using Python (handles JSON escaping properly)
-JSON=$(python3 << PYTHON
-import json
-import sys
+# Pass all data safely via environment variables (avoids shell injection in heredoc)
+export JUGGLER_HOOK_INPUT="$HOOK_INPUT"
+export JUGGLER_EVENT="$EVENT"
+export JUGGLER_ITERM_SID="$ITERM_SESSION_ID"
+export JUGGLER_CWD="$PWD"
+export JUGGLER_GIT_BRANCH="$GIT_BRANCH"
+export JUGGLER_GIT_REPO="$GIT_REPO"
+export JUGGLER_TMUX_PANE="$TMUX_PANE_ID"
+export JUGGLER_TMUX_SESSION="$TMUX_SESSION_NAME"
 
-# Parse hook input (may be empty for some events)
+# Build unified payload using Python (quoted heredoc prevents shell expansion)
+# Pipe JSON output directly to curl via stdin
+python3 << 'PYTHON' | curl -s -X POST "http://localhost:${JUGGLER_PORT}/hook" \
+    -H "Content-Type: application/json" \
+    -d @- \
+    --connect-timeout 1 \
+    >/dev/null 2>&1 || true
+import json
+import os
+
+# Parse hook input from environment (safe - no shell interpolation)
+# Only extract fields Juggler needs; raw hookInput can be very large
+# (e.g. PostToolUse includes full tool_input/tool_result)
 hook_input = {}
-raw_input = '''$HOOK_INPUT'''
-if raw_input.strip():
+raw = os.environ.get("JUGGLER_HOOK_INPUT", "")
+if raw.strip():
     try:
-        hook_input = json.loads(raw_input)
+        full = json.loads(raw)
+        for key in ("session_id", "transcript_path", "tool_name"):
+            if key in full:
+                hook_input[key] = full[key]
     except json.JSONDecodeError:
         pass
 
 payload = {
     "agent": "claude-code",
-    "event": "$EVENT",
+    "event": os.environ.get("JUGGLER_EVENT", ""),
     "hookInput": hook_input,
     "terminal": {
-        "sessionId": "$ITERM_SESSION_ID",
-        "cwd": "$PWD"
+        "sessionId": os.environ.get("JUGGLER_ITERM_SID", ""),
+        "cwd": os.environ.get("JUGGLER_CWD", "")
     },
     "git": {
-        "branch": "$GIT_BRANCH",
-        "repo": "$GIT_REPO"
+        "branch": os.environ.get("JUGGLER_GIT_BRANCH", ""),
+        "repo": os.environ.get("JUGGLER_GIT_REPO", "")
     }
 }
 
-tmux_pane = "$TMUX_PANE_ID"
-tmux_session_name = "$TMUX_SESSION_NAME"
+tmux_pane = os.environ.get("JUGGLER_TMUX_PANE", "")
+tmux_session = os.environ.get("JUGGLER_TMUX_SESSION", "")
 if tmux_pane:
     tmux_info = {"pane": tmux_pane}
-    if tmux_session_name:
-        tmux_info["sessionName"] = tmux_session_name
+    if tmux_session:
+        tmux_info["sessionName"] = tmux_session
     payload["tmux"] = tmux_info
 
 print(json.dumps(payload))
 PYTHON
-)
-
-# Post to Juggler (ignore errors if Juggler isn't running)
-curl -s -X POST "http://localhost:${JUGGLER_PORT}/hook" \
-    -H "Content-Type: application/json" \
-    -d "$JSON" \
-    --connect-timeout 1 \
-    >/dev/null 2>&1 || true

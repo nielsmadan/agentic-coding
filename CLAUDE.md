@@ -54,6 +54,15 @@ Never claim "best practice", "recommended", "accepted solution", or "community c
 
 When unsure, be explicit: "I think this will work, but I haven't verified it's the recommended approach."
 
+## Test & Lint Failures
+
+Never dismiss test failures, linting errors, or type errors as "pre-existing issues." Fix them. All repos use pre-commit hooks that enforce clean tests and linting — if something fails after your changes, either your changes caused it or it needs fixing regardless. Do not:
+- Skip failing tests by claiming they were already broken
+- Suggest the user "ignore" lint errors
+- Offer to "move on" without fixing failures
+
+If a failure is genuinely unrelated to your changes, fix it anyway and note that it was pre-existing.
+
 ## Keyword Triggers
 
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
