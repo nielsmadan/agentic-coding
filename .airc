@@ -11,7 +11,7 @@ alias ccone="noglob _ccone"
 
 _ccli() {
   local result
-  result=$(claude -p "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
+  result=$(claude --tools "" -p "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
   print -z "$result"
 }
 alias ccli="noglob _ccli"
