@@ -43,6 +43,22 @@ Documentation review and generation.
 
 ---
 
+### /explain
+
+Explain unfamiliar code grouped by logical concepts. For language learners, includes syntax explanations.
+
+**Arguments:**
+- `--staged` - Explain code in git staged files
+- `--all` - Interactive file/directory selection
+- `--code` - Include language syntax explanations and alternatives
+- Default: explain code related to current conversation context
+
+**Examples:**
+- `/explain --staged`
+- `/explain --all --code`
+
+---
+
 ### /flutter-upgrade
 
 Workflow for upgrading Flutter and dependencies following best practices.

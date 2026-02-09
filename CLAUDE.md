@@ -33,6 +33,7 @@ Available in `claude/skills/`:
 | `/review-perf` | Performance analysis (--staged, --all) |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |
+| `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |
 | `/test` | Test review and generation (--review, --generate) |
 | `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
