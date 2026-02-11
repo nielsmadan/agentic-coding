@@ -1,7 +1,7 @@
 ---
 name: second-opinion
 description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Gemini and Codex.
-argument-hint: [--quick] <question or context>
+argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
@@ -12,9 +12,19 @@ Get input from Gemini and Codex on the current problem or question. By default, 
 
 ```
 /second-opinion <question or context>
-/second-opinion --quick <question>   # Single pass, no iteration
-/second-opinion                      # Uses current conversation context
+/second-opinion --quick <question>        # Single pass, no iteration
+/second-opinion --words=300 <question>    # Limit response to 300 words
+/second-opinion --timeout=120 <question>  # Set timeout to 120s
+/second-opinion                           # Uses current conversation context
 ```
+
+## Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--quick` | off | Single pass, no iteration |
+| `--timeout` | `300` | Timeout per advisor in seconds |
+| `--words` | `500` | Max words per advisor response |
 
 ## How It Works
 
@@ -45,54 +55,12 @@ Extract or use the user's question/problem. If not explicitly provided, summariz
 
 **Gemini** (run from project root, read-only sandbox):
 ```bash
-cd "{project_root}" && gemini -s --approval-mode default "I need a second opinion on this problem:
-
-IMPORTANT: This is a READ-ONLY consultation. Do NOT:
-- Create, modify, or delete any files
-- Run any commands that change state
-- Make any changes to the codebase
-
-Only analyze and provide your perspective.
-
-If you need more context to give a confident answer, say so clearly
-and specify what additional information would help.
-
----
-
-{problem_summary}
-
-{relevant_file_context_if_any}
-
-Give me your perspective in 200 words or less. Focus on:
-- Key considerations I might be missing
-- Potential issues with the current approach
-- Alternative approaches worth considering"
+gemini -s --approval-mode default "Read-only consultation. Do not modify any files. I need a second opinion: {problem_summary} -- Give your perspective in {words} words or less. Focus on: key considerations I might be missing, potential issues with the current approach, and alternative approaches worth considering. If you need more context to give a confident answer, say so clearly."
 ```
 
 **Codex** (run from project root, read-only sandbox):
 ```bash
-cd "{project_root}" && codex exec -s read-only "I need a second opinion on this problem:
-
-IMPORTANT: This is a READ-ONLY consultation. Do NOT:
-- Create, modify, or delete any files
-- Run any commands that change state
-- Make any changes to the codebase
-
-Only analyze and provide your perspective.
-
-If you need more context to give a confident answer, say so clearly
-and specify what additional information would help.
-
----
-
-{problem_summary}
-
-{relevant_file_context_if_any}
-
-Give me your perspective in 200 words or less. Focus on:
-- Key considerations I might be missing
-- Potential issues with the current approach
-- Alternative approaches worth considering"
+codex exec -s read-only "Read-only consultation. Do not modify any files. I need a second opinion: {problem_summary} -- Give your perspective in {words} words or less. Focus on: key considerations I might be missing, potential issues with the current approach, and alternative approaches worth considering. If you need more context to give a confident answer, say so clearly."
 ```
 
 ### Step 3: Evaluate Confidence
@@ -147,10 +115,7 @@ If iteration occurred, note it:
 
 ## Timeouts
 
-| Advisor | Timeout |
-|---------|---------|
-| Gemini | 180s |
-| Codex | 180s |
+Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 ## Error Handling
 

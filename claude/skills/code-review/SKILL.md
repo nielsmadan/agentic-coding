@@ -67,41 +67,13 @@ Invoke `/test --review --staged` to review test quality in changed test files.
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 
-If `--multi` flag is present in $ARGUMENTS, also query Gemini and Codex in parallel:
+If `--multi` flag is present in $ARGUMENTS, also get external opinions:
 
-**Gemini** (run from project root, read-only sandbox):
-```bash
-cd "{project_root}" && gemini -s --approval-mode default "This is a read-only code review. Do not modify any files.
+Use the **Skill tool** to invoke `second-opinion --quick` with this prompt:
 
-Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering:
-- Potential bugs or edge cases
-- Security concerns
-- Performance issues
-- Architecture/pattern violations"
 ```
-
-**Codex** (run from project root, read-only sandbox):
-```bash
-cd "{project_root}" && codex exec -s read-only "This is a read-only code review. Do not modify any files.
-
-Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering:
-- Potential bugs or edge cases
-- Security concerns
-- Performance issues
-- Architecture/pattern violations"
+Read-only code review. Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering: potential bugs or edge cases, security concerns, performance issues, and architecture/pattern violations.
 ```
-
-### Timeouts
-
-| Advisor | Timeout |
-|---------|---------|
-| Gemini | 180s |
-| Codex | 180s |
-
-### Error Handling
-- If one external advisor fails, continue with the other
-- External advisor failures should not block the Claude agent results
-- Report which advisor(s) failed if applicable
 
 ## Step 4: Score and Filter Issues
 For each issue found, assign a confidence score (0-100).
