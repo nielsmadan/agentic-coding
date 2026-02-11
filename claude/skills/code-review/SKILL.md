@@ -71,20 +71,9 @@ If `--multi` flag is present in $ARGUMENTS, also query Gemini and Codex in paral
 
 **Gemini** (run from project root, read-only sandbox):
 ```bash
-cd "{project_root}" && gemini -s --approval-mode default "Review this code:
+cd "{project_root}" && gemini -s --approval-mode default "This is a read-only code review. Do not modify any files.
 
-IMPORTANT: This is a READ-ONLY code review. Do NOT:
-- Create, modify, or delete any files
-- Run any commands that change state
-- Make any changes to the codebase
-
-Only analyze and provide your code review.
-
----
-
-{code_or_diff_to_review}
-
-Provide a focused code review in 300 words or less covering:
+Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering:
 - Potential bugs or edge cases
 - Security concerns
 - Performance issues
@@ -93,20 +82,9 @@ Provide a focused code review in 300 words or less covering:
 
 **Codex** (run from project root, read-only sandbox):
 ```bash
-cd "{project_root}" && codex exec -s read-only "Review this code:
+cd "{project_root}" && codex exec -s read-only "This is a read-only code review. Do not modify any files.
 
-IMPORTANT: This is a READ-ONLY code review. Do NOT:
-- Create, modify, or delete any files
-- Run any commands that change state
-- Make any changes to the codebase
-
-Only analyze and provide your code review.
-
----
-
-{code_or_diff_to_review}
-
-Provide a focused code review in 300 words or less covering:
+Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering:
 - Potential bugs or edge cases
 - Security concerns
 - Performance issues

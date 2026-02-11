@@ -14,7 +14,7 @@ ITERM_SESSION_ID="${ITERM_SESSION_ID:-}"
 # Get tmux pane ID and session name (if running inside tmux)
 TMUX_PANE_ID="${TMUX_PANE:-}"
 TMUX_SESSION_NAME=""
-if [ -n "$TMUX_PANE_ID" ]; then
+if [ -n "$TMUX_PANE_ID" ] && command -v tmux >/dev/null 2>&1; then
     TMUX_SESSION_NAME=$(tmux display-message -p -t "$TMUX_PANE_ID" '#{session_name}' 2>/dev/null || echo "")
 fi
 
