@@ -51,7 +51,7 @@ Extract or use the user's question/problem. If not explicitly provided, summariz
 - What approaches are being considered?
 - Any relevant file paths or code context
 
-Then write the prompt to a temp file using the Write tool at `/tmp/second-opinion-{timestamp}.md`:
+Write the prompt to `.second-opinion.md` in the current working directory (dotfile so it stays out of the way; in the project directory so sandboxed agents like Codex can read it). Use this exact filename for all subsequent steps:
 
 ```markdown
 Read-only consultation. Do not modify any files.
@@ -72,12 +72,12 @@ Run both commands in parallel, using `{timeout}` as the Bash timeout:
 
 **Gemini:**
 ```bash
-gemini -s --approval-mode default "Read the file at {prompt_file_path} and follow the instructions within it."
+gemini -s --approval-mode default "Read the file at .second-opinion.md and follow the instructions within it."
 ```
 
 **Codex:**
 ```bash
-codex exec -s read-only "Read the file at {prompt_file_path} and follow the instructions within it."
+codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
 ```
 
 ### Step 3: Evaluate Confidence
@@ -103,7 +103,7 @@ If confidence is LOW for either advisor:
 
 1. Identify what context is missing based on their feedback
 2. Gather additional context (read relevant files, clarify requirements)
-3. Write an updated prompt file (`/tmp/second-opinion-{timestamp}-retry-{n}.md`) with enhanced context
+3. Overwrite `.second-opinion.md` with enhanced context
 4. Re-query the low-confidence advisor using the same file-reference command
 5. Can iterate up to 2 times per advisor
 
@@ -131,6 +131,13 @@ If iteration occurred, note it:
 *Note: Re-queried {advisor} with additional context after initial response lacked confidence.*
 ```
 
+### Step 6: Clean Up
+
+Delete `.second-opinion.md` using the Bash tool:
+```bash
+rm .second-opinion.md
+```
+
 ## Timeouts
 
 Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
@@ -139,7 +146,6 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 - If one advisor fails, continue with the other
 - If both fail, inform the user and offer to retry
-- Temp prompt files in `/tmp/second-opinion-*` are ephemeral — no cleanup needed
 
 ## Key Differences from /debate
 
