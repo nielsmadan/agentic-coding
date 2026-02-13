@@ -1,7 +1,5 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(chmod:*)"
-    ]
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }

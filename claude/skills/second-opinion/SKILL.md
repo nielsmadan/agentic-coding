@@ -51,16 +51,33 @@ Extract or use the user's question/problem. If not explicitly provided, summariz
 - What approaches are being considered?
 - Any relevant file paths or code context
 
-### Step 2: Query Advisors (in parallel)
+Then write the prompt to a temp file using the Write tool at `/tmp/second-opinion-{timestamp}.md`:
 
-**Gemini** (run from project root, read-only sandbox):
-```bash
-gemini -s --approval-mode default "Read-only consultation. Do not modify any files. I need a second opinion: {problem_summary} -- Give your perspective in {words} words or less. Focus on: key considerations I might be missing, potential issues with the current approach, and alternative approaches worth considering. If you need more context to give a confident answer, say so clearly."
+```markdown
+Read-only consultation. Do not modify any files.
+
+I need a second opinion: {problem_summary}
+
+Give your perspective in {words} words or less. Focus on:
+- Key considerations I might be missing
+- Potential issues with the current approach
+- Alternative approaches worth considering
+
+If you need more context to give a confident answer, say so clearly.
 ```
 
-**Codex** (run from project root, read-only sandbox):
+### Step 2: Query Advisors (in parallel)
+
+Run both commands in parallel, using `{timeout}` as the Bash timeout:
+
+**Gemini:**
 ```bash
-codex exec -s read-only "Read-only consultation. Do not modify any files. I need a second opinion: {problem_summary} -- Give your perspective in {words} words or less. Focus on: key considerations I might be missing, potential issues with the current approach, and alternative approaches worth considering. If you need more context to give a confident answer, say so clearly."
+gemini -s --approval-mode default "Read the file at {prompt_file_path} and follow the instructions within it."
+```
+
+**Codex:**
+```bash
+codex exec -s read-only "Read the file at {prompt_file_path} and follow the instructions within it."
 ```
 
 ### Step 3: Evaluate Confidence
@@ -86,8 +103,9 @@ If confidence is LOW for either advisor:
 
 1. Identify what context is missing based on their feedback
 2. Gather additional context (read relevant files, clarify requirements)
-3. Re-query the low-confidence advisor with enhanced context
-4. Can iterate up to 2 times per advisor
+3. Write an updated prompt file (`/tmp/second-opinion-{timestamp}-retry-{n}.md`) with enhanced context
+4. Re-query the low-confidence advisor using the same file-reference command
+5. Can iterate up to 2 times per advisor
 
 Skip this step entirely if `--quick` flag was used.
 
@@ -121,7 +139,7 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 - If one advisor fails, continue with the other
 - If both fail, inform the user and offer to retry
-- Don't create any files or state - this is a read-only consultation
+- Temp prompt files in `/tmp/second-opinion-*` are ephemeral — no cleanup needed
 
 ## Key Differences from /debate
 
