@@ -16,5 +16,16 @@ _ccli() {
 }
 alias ccli="noglob _ccli"
 
+_todo() {
+  if [[ "$1" == "-i" ]]; then
+    shift
+    claude "/todo $*"
+  else
+    claude -p "/todo $*" > /dev/null 2>&1 &
+    echo "Todo queued (pid $!)"
+  fi
+}
+alias todo="noglob _todo"
+
 # Disable Claude Code feedback prompts
 export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
