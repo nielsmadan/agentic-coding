@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Capture a todo as a file in docs/todo/, or pick up the top todo and implement it. With arguments, creates a new todo. Without arguments, picks the highest-priority most-recent todo and makes the change. Supports --prio flag (1-5, default 3).
+description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports --prio flag (1-4, default 3).
 argument-hint: [--prio N] <description>
 ---
 
@@ -12,14 +12,24 @@ argument-hint: [--prio N] <description>
 /todo                                    # Pick up top todo and implement it
 /todo fix the typo in the readme         # Create todo (priority 3)
 /todo --prio 1 fix login crash on iOS    # Create todo (priority 1)
-/todo --prio 5 consider adding dark mode # Create todo (priority 5)
+/todo --prio 4 consider adding dark mode # Create todo (priority 4)
 ```
 
 ## Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--prio` | `3` | Priority 1-5 (1 = highest, 5 = lowest) |
+| `--prio` | `3` | Priority 1-4 (1 = highest, 4 = lowest). Maps directly to Todoist p1-p4. |
+
+## Project Mapping
+
+Resolve the Todoist project by running `git remote get-url origin` and matching against this table:
+
+| Git origin contains | Todoist project ID | Project name |
+|---------------------|-------------------|--------------|
+| `nielsmadan/juggler` | `6g2Rr8C5MjJQhQm6` | juggler |
+
+If no match is found, ask the user which Todoist project to use.
 
 ## Workflow
 
@@ -50,34 +60,21 @@ Ask clarifying questions via AskUserQuestion if the intent is ambiguous. Then ga
 
 Write a short expanded description focused on what the change looks like for the user — not technical implementation details. Include a `## Context` section listing relevant files or areas.
 
-### 4. Write File
+### 4. Resolve Project
 
-Create `docs/todo/` if it doesn't exist. Write to:
+Run `git remote get-url origin` and match against the Project Mapping table above. If no match, ask the user.
 
-```
-docs/todo/{priority}-{YYYY-MM-DD}-{slug}.md
-```
+### 5. Create Task
 
-Where `{slug}` is the description lowercased, spaces replaced with hyphens, non-alphanumeric characters removed.
+Call `mcp__todoist__add-tasks` with:
+- `content`: the todo description (title)
+- `description`: for simple todos, empty. For complex todos, the expanded description and context as Markdown.
+- `priority`: `p{prio}` where `{prio}` is the parsed priority value
+- `projectId`: resolved from the mapping table
 
-**Simple format:**
-```markdown
-# {Description}
-```
+### 6. Confirm
 
-**Complex format:**
-```markdown
-# {Description}
-
-{Expanded description of what the user-facing change is}
-
-## Context
-- {relevant files or areas}
-```
-
-### 5. Confirm
-
-Print a one-liner to the conversation: the file path and the priority level.
+Print a one-liner: the task title and priority level.
 
 ---
 
@@ -85,22 +82,28 @@ Print a one-liner to the conversation: the file path and the priority level.
 
 ### 1. Find Top Todo
 
-List files in `docs/todo/` sorted by filename (lowest priority number first, then most recent date). The first file is the top todo. If `docs/todo/` is empty or doesn't exist, tell the user there are no todos.
+Resolve the project ID from the Project Mapping table. Call `mcp__todoist__find-tasks` with the `projectId` and `limit: 50`.
+
+From the results, filter out any tasks with the `in-progress` label. Sort the remaining by:
+1. Priority (p1 first, then p2, p3, p4)
+2. Task ID ascending (oldest first)
+
+Pick the first task. If no tasks are found, tell the user there are no todos.
 
 ### 2. Read and Present
 
-Read the todo file. Print a short summary of what you're about to do and ask the user to confirm.
+Show the task title and description (if any). Print a short summary of what you're about to do and ask the user to confirm.
 
 ### 3. Mark In Progress
 
-Prepend `> **Status: In Progress**` to the todo file (before the `#` heading). This makes the file appear in `git status` as a visible reminder.
+Call `mcp__todoist__update-tasks` to add the `in-progress` label to the task.
 
 ### 4. Implement
 
 Make the change described in the todo. Follow normal development workflow — read relevant code, ask clarifying questions if needed, implement, and verify.
 
-When creating implementation tasks (TaskCreate), always include a final task: **"Remove todo file `{path}`"** — this ensures cleanup is tracked and won't be forgotten.
+When creating implementation tasks (TaskCreate), always include a final task: **"Complete Todoist task `{task ID}`"** — this ensures cleanup is tracked and won't be forgotten.
 
 ### 5. Clean Up
 
-When all tasks are complete and changes are verified, delete the todo file from `docs/todo/`.
+When all tasks are complete and changes are verified, call `mcp__todoist__complete-tasks` with the task ID to mark it done.

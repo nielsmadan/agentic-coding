@@ -21,7 +21,6 @@ _todo() {
     echo "Error: must be in a git repo root directory" >&2
     return 1
   fi
-  [[ -d docs/todo ]] || mkdir -p docs/todo
   if [[ "$1" == "-i" ]]; then
     shift
     claude "/todo $*"

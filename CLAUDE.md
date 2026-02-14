@@ -35,7 +35,7 @@ Available in `claude/skills/`:
 | `/doc` | Documentation review and generation (--review, --generate) |
 | `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |
 | `/test` | Test review and generation (--review, --generate) |
-| `/todo` | Capture a todo as a file in docs/todo/ (--prio 1-5) |
+| `/todo` | Capture a todo in Todoist (--prio 1-4) |
 | `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/second-opinion` | Get a second opinion |
