@@ -19,14 +19,12 @@ Resolve git conflicts from any operation with proper continuation workflow.
 
 ### Step 1: Detect Operation Type
 
-```bash
-# Run these to detect the conflict source
-ls .git/MERGE_HEAD 2>/dev/null && echo "MERGE"
-ls .git/rebase-merge 2>/dev/null && echo "REBASE"
-ls .git/rebase-apply 2>/dev/null && echo "REBASE"
-ls .git/CHERRY_PICK_HEAD 2>/dev/null && echo "CHERRY-PICK"
-ls .git/REVERT_HEAD 2>/dev/null && echo "REVERT"
-```
+Use Glob to check for these sentinel files in the `.git/` directory:
+- `.git/MERGE_HEAD` → **Merge**
+- `.git/rebase-merge` or `.git/rebase-apply` → **Rebase**
+- `.git/CHERRY_PICK_HEAD` → **Cherry-pick**
+- `.git/REVERT_HEAD` → **Revert**
+- None of the above → **Stash** (or manual conflict)
 
 | Operation | Detection | Continue | Abort |
 |-----------|-----------|----------|-------|
@@ -39,10 +37,12 @@ ls .git/REVERT_HEAD 2>/dev/null && echo "REVERT"
 ### Step 2: List Conflicted Files
 
 ```bash
-git status --porcelain | grep -E "^(UU|AA|DD|AU|UA|DU|UD)"
+git diff --name-only --diff-filter=U
 ```
 
-Conflict markers:
+Then run `git status` to see the full conflict status for each file.
+
+Conflict markers in `git status`:
 - `UU` - Both modified (most common)
 - `AA` - Both added
 - `DD` - Both deleted
