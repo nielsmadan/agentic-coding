@@ -21,11 +21,16 @@ _todo() {
     echo "Error: must be in a git repo root directory" >&2
     return 1
   fi
-  if [[ "$1" == "-i" ]]; then
-    shift
-    claude "/todo $*"
+  local interactive=false skill_flags=""
+  if [[ "$1" == -* && "$1" != --* ]]; then
+    local flags="$1"; shift
+    [[ "$flags" == *i* ]] && interactive=true
+    [[ "$flags" == *c* ]] && skill_flags="-c "
+  fi
+  if $interactive; then
+    claude "/todo -i ${skill_flags}$*"
   else
-    claude -p "/todo $*" > /dev/null 2>&1 &
+    claude -p "/todo ${skill_flags}$*" > /dev/null 2>&1 &
     echo "Todo queued (pid $!)"
   fi
 }

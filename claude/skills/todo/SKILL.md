@@ -1,7 +1,7 @@
 ---
 name: todo
-description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports --prio flag (1-4, default 3).
-argument-hint: [--prio N] <description>
+description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports -c (complex), -i (interactive), and --prio (1-4, default 3).
+argument-hint: [-i] [-c] [--prio N] <description>
 ---
 
 # Todo: $ARGUMENTS
@@ -10,9 +10,10 @@ argument-hint: [--prio N] <description>
 
 ```
 /todo                                    # Pick up top todo and implement it
-/todo fix the typo in the readme         # Create todo (priority 3)
-/todo --prio 1 fix login crash on iOS    # Create todo (priority 1)
-/todo --prio 4 consider adding dark mode # Create todo (priority 4)
+/todo fix the typo in the readme         # Create simple todo (priority 3)
+/todo --prio 1 fix login crash on iOS    # Create simple todo (priority 1)
+/todo -c redesign the settings screen    # Create complex todo with deep research
+/todo -ic redesign the settings screen   # Complex + interactive (can ask questions)
 ```
 
 ## Parameters
@@ -20,6 +21,17 @@ argument-hint: [--prio N] <description>
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--prio` | `3` | Priority 1-4 (1 = highest, 4 = lowest). Maps directly to Todoist p1-p4. |
+| `-c` | off | Complex mode. Deep research: reads docs, source files, identifies affected areas. |
+| `-i` | off | Interactive mode. Allows asking clarifying questions via AskUserQuestion. |
+
+## Interactive Mode
+
+- **With `-i`:** May use AskUserQuestion for clarifications. If project can't be resolved, ask the user.
+- **Without `-i` (default):** **Never** use AskUserQuestion — the session is running in background with no user to respond. If there are ambiguities, add them under a `## Open Questions` section in the task description. If the project can't be resolved from git origin, fall back to Inbox.
+
+## Todoist Integration
+
+Use the `mcp__claude_ai_Todoist__*` MCP tools directly as native tool calls. Do NOT shell out to MCP tools via Bash — they are native tool calls, not CLI commands. Do NOT check if MCP is available — assume it is.
 
 ## Project Mapping
 
@@ -28,8 +40,6 @@ Resolve the Todoist project by running `git remote get-url origin` and matching 
 | Git origin contains | Todoist project ID | Project name |
 |---------------------|-------------------|--------------|
 | `nielsmadan/juggler` | `6g2Rr8C5MjJQhQm6` | juggler |
-
-If no match is found, ask the user which Todoist project to use.
 
 ## Workflow
 
@@ -44,35 +54,32 @@ Otherwise → continue to step 1 (Create Todo).
 
 ### 1. Parse
 
-Extract `--prio` value (default 3) and the todo description from $ARGUMENTS.
+Extract `-i`, `-c`, `--prio` value (default 3), and the todo description from $ARGUMENTS. Flags can be combined (e.g. `-ic` or `-ci`).
 
-### 2. Assess Complexity
+### 2. Research
 
-- **Simple** (clear, self-contained, single concern): Skip to step 4
-- **Complex** (multiple areas, ambiguous scope, needs context): Continue to step 3
+- **Without `-c` (cursory):** Quick glance at relevant file or area names based on the description. Don't deep-read files. If anything relevant is spotted, add a brief note to the task description.
+- **With `-c` (deep):** Gather context thoroughly:
+  - Check `docs/` for related documentation
+  - Read relevant source files to understand the current state
+  - Identify affected areas
+  - Write a short expanded description focused on what the change looks like for the user — not technical implementation details. Include a `## Context` section listing relevant files or areas.
+  - If there are ambiguities and `-i` is set, ask clarifying questions via AskUserQuestion. If `-i` is not set, add them under `## Open Questions` in the description.
 
-### 3. Expand (complex only)
+### 3. Resolve Project
 
-Ask clarifying questions via AskUserQuestion if the intent is ambiguous. Then gather context:
-- Check `docs/` for related documentation
-- Read relevant source files to understand the current state
-- Identify affected areas
+Run `git remote get-url origin` and match against the Project Mapping table above.
 
-Write a short expanded description focused on what the change looks like for the user — not technical implementation details. Include a `## Context` section listing relevant files or areas.
-
-### 4. Resolve Project
-
-Run `git remote get-url origin` and match against the Project Mapping table above. If no match, ask the user.
-
-### 5. Create Task
+### 4. Create Task
 
 Call `mcp__todoist__add-tasks` with:
 - `content`: the todo description (title)
-- `description`: for simple todos, empty. For complex todos, the expanded description and context as Markdown.
+- `description`: from cursory research, empty or a brief note. From deep research, the expanded description and context as Markdown.
 - `priority`: `p{prio}` where `{prio}` is the parsed priority value
 - `projectId`: resolved from the mapping table
+- `labels`: `["development"]`
 
-### 6. Confirm
+### 5. Confirm
 
 Print a one-liner: the task title and priority level.
 
@@ -82,7 +89,7 @@ Print a one-liner: the task title and priority level.
 
 ### 1. Find Top Todo
 
-Resolve the project ID from the Project Mapping table. Call `mcp__todoist__find-tasks` with the `projectId` and `limit: 50`.
+Resolve the project ID from the Project Mapping table. Call `mcp__todoist__find-tasks` with the `projectId`, `labels: ["development"]`, and `limit: 50`.
 
 From the results, filter out any tasks with the `in-progress` label. Sort the remaining by:
 1. Priority (p1 first, then p2, p3, p4)
