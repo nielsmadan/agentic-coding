@@ -143,7 +143,7 @@ To abort:
 - `{abort_command}`
 ```
 
-## Best Practices
+## Guidelines
 
 - **Understand both sides** before resolving - don't blindly pick one
 - **Check for semantic conflicts** - code may compile but logic is broken

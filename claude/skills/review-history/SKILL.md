@@ -51,10 +51,12 @@ git log --oneline --since="3 months ago" -- <file_or_directory>
 ### Step 3: Search Past Issue Logs
 
 Check if this problem occurred before:
-```bash
-ls docs/log/ 2>/dev/null | head -20
-grep -r "<keywords>" docs/log/ 2>/dev/null | head -10
-```
+
+1. List past issue logs:
+   - Glob pattern: `docs/log/*.md`
+
+2. Search logs for relevant keywords:
+   - Grep pattern: `{keywords}` path: `docs/log/`
 
 Look for:
 - Similar error messages

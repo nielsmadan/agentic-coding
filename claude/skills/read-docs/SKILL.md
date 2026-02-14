@@ -38,22 +38,20 @@ In order of priority:
 ## Workflow
 
 ### With keywords:
-```bash
-# Search filenames
-find docs/ -iname "*{keyword}*" 2>/dev/null
 
-# Search contents
-grep -ril "{keyword}" docs/ *.md 2>/dev/null | head -10
-```
+1. Search filenames for keyword matches:
+   - Glob pattern: `docs/**/*{keyword}*`
+
+2. Search file contents for keyword matches:
+   - Grep pattern: `{keyword}` path: `docs/` and root `*.md` files
 
 Read the most relevant matches and summarize findings.
 
 ### Without keywords:
-```bash
-# List available docs
-ls -la docs/ 2>/dev/null
-ls *.md 2>/dev/null
-```
+
+List available documentation:
+- Glob pattern: `docs/**/*.md`
+- Glob pattern: `*.md` (root-level docs)
 
 Present an overview of available documentation.
 
