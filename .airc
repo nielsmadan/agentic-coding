@@ -17,6 +17,11 @@ _ccli() {
 alias ccli="noglob _ccli"
 
 _todo() {
+  if ! git rev-parse --show-toplevel >/dev/null 2>&1 || [[ "$(pwd)" != "$(git rev-parse --show-toplevel)" ]]; then
+    echo "Error: must be in a git repo root directory" >&2
+    return 1
+  fi
+  [[ -d docs/todo ]] || mkdir -p docs/todo
   if [[ "$1" == "-i" ]]; then
     shift
     claude "/todo $*"
