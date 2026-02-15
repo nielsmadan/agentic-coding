@@ -373,6 +373,18 @@ Generating tests following these patterns...
 
 ---
 
+## Examples
+
+**Generate tests for a payment function:**
+> /test --generate lib/services/payment.ts
+
+Detects the project's test framework and patterns, then generates a test file covering happy path (successful charge), error handling (declined card, network failure), and edge cases (zero amount, currency mismatch). Places the file following existing test conventions.
+
+**Review staged tests catches over-mocking:**
+> /test --review --staged
+
+Reviews staged test files against the testing principles. Flags tests that mock internal modules instead of only external boundaries, and identifies tests with no meaningful assertions that would pass regardless of behavior.
+
 ## Notes
 
 - Default is review mode with context-based scope

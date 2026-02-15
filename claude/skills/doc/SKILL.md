@@ -203,6 +203,18 @@ Generate docs directly into `docs/` folder with appropriate structure:
 
 ---
 
+## Examples
+
+**Generate docs for a new service module:**
+> /doc --generate lib/services/notification_service.dart
+
+Reads the notification service code, checks for existing docs, then generates a full module doc in `docs/tech/` with Purpose, Usage, API, and Gotchas sections following project conventions.
+
+**Review staged docs catches broken links:**
+> /doc --review --staged
+
+Reviews all staged `.md` files against the documentation checklist. Flags broken internal links, stale file references, and any local paths like `/Users/` that slipped in.
+
 ## Notes
 
 - Default is review mode with context-based scope

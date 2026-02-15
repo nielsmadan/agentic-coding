@@ -115,6 +115,18 @@ Collect all agent results and synthesize:
 
 If significant issues found, offer to revise the plan incorporating the feedback.
 
+## Examples
+
+**Review a refactor plan -- agents find a robustness issue:**
+> /review-plan
+
+Spawns parallel review agents against the current plan. The robustness agent flags that the migration has no rollback path if it fails midway, and the adversarial agent identifies a race condition under concurrent writes. The synthesis recommends adding a rollback step and a distributed lock.
+
+**Review an auth plan with research agent:**
+> /review-plan docs/plans/auth-redesign.md
+
+Reviews the auth redesign plan with all agents including the research agent, which finds that the proposed token rotation strategy has a known edge case documented in the OAuth 2.1 spec. The synthesis recommends adjusting the refresh window based on the research findings.
+
 ## Notes
 
 - Use the Skill tool for `second-opinion` and `research-online` - do not write slash commands directly

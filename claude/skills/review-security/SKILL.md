@@ -171,6 +171,18 @@ Report any Critical or High severity vulnerabilities.
 - {improvement}
 ```
 
+## Examples
+
+**Staged changes introduce SQL injection:**
+> /review-security --staged
+
+Reviews staged files and catches a login handler using string concatenation to build a SQL query with user input. Reports it as Critical with a fix showing parameterized queries.
+
+**Pre-release audit finds hardcoded secret:**
+> /review-security --all
+
+Parallel agents scan the full codebase by security category. Finds a hardcoded API key in a config file and a JWT secret committed as a string literal, along with an overly permissive CORS policy allowing all origins.
+
 ## Notes
 
 - Focus on exploitable vulnerabilities, not theoretical risks

@@ -143,6 +143,18 @@ To abort:
 - `{abort_command}`
 ```
 
+## Examples
+
+**Merge conflict on auth logic -- merge both sides:**
+> /resolve-conflicts src/auth/session.ts
+
+Detects a merge operation, reads the conflict markers in the session file, and determines that both sides added complementary validation checks. Recommends merging both changes together and produces a clean resolution that includes both validations.
+
+**Rebase conflict with inverted ours/theirs:**
+> /resolve-conflicts
+
+Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, and resolves accordingly before running `git rebase --continue`.
+
 ## Guidelines
 
 - **Understand both sides** before resolving - don't blindly pick one

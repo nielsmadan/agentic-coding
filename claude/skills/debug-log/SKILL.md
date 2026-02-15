@@ -99,6 +99,18 @@ async function login(email: string, password: string) {
 }
 ```
 
+## Examples
+
+**Instrument auth flow with entry/exit and state logs:**
+> /debug-log authentication flow
+
+Locates login, token validation, and session creation functions. Adds `[DEBUG][Auth]` logs at each function entry/exit, before/after async calls like `findUser` and `verifyPassword`, and logs key state such as token presence and user lookup results.
+
+**Trace intermittent checkout error:**
+> /debug-log checkout process
+
+Finds the checkout handler, payment processing, and cart validation code. Adds logs at each conditional branch and async boundary to capture the exact execution path and variable state when the intermittent error occurs.
+
 ## Notes
 
 - Keep logs concise but informative

@@ -221,6 +221,18 @@ Ask: "Should I proceed with the recommended fix?"
 {how to avoid in future}
 ```
 
+## Examples
+
+**Token refresh bug after multiple failed fix attempts:**
+> /hard-fix auth token refresh fails silently after 3 fix attempts
+
+Launches parallel agents: research finds a known axios issue with token queuing, debug-log traces the refresh timing, history reveals the bug started after PR #234 moved refresh to background, and library source confirms axios doesn't queue requests during refresh. Synthesizes a root cause (race condition) with a concrete fix using axios-auth-refresh.
+
+**Race condition traced to library update via git history:**
+> /hard-fix race condition in order processing since last deploy
+
+History agent pinpoints a dependency bump that changed default concurrency behavior. Debug logging captures the interleaved execution order, and library source inspection confirms the breaking change in the new version. Presents the version diff and a targeted fix to restore the previous behavior.
+
 ## Notes
 
 - This is a heavyweight process - use for genuinely stuck problems

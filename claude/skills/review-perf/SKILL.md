@@ -252,6 +252,18 @@ const { data } = useSWR(`/users/${id}`, fetcher);
 - {optimization opportunity}
 ```
 
+## Examples
+
+**Staged changes introduce N+1 query:**
+> /review-perf --staged
+
+Reviews staged files and catches a new user list endpoint that queries posts per user in a loop. Reports it as Critical with the impact ("100 users = 101 queries") and provides a fix using eager loading with `include`.
+
+**Full audit finds memory leak in dashboard:**
+> /review-perf --all
+
+Parallel agents scan the full codebase by category. Finds an event listener in the dashboard component that is never cleaned up on unmount, plus an unbounded in-memory cache growing with every API call.
+
 ## Notes
 
 - Focus on measurable impact, not micro-optimizations

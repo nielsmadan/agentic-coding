@@ -86,6 +86,18 @@ Report:
 {assessment: was this working before? when did it break?}
 ```
 
+## Examples
+
+**Trace when a payment bug was introduced:**
+> /review-history processPayment
+
+Uses `git log -S` and `git blame` to trace the payment processing function, identifies the commit that changed the rounding logic three weeks ago, and cross-references with past issue logs to confirm this is when the billing discrepancy started.
+
+**Understand why validation works a certain way:**
+> /review-history src/validators/address.ts
+
+Analyzes the git history of the address validator, surfaces the original commit that added the unusual postal code regex along with its commit message explaining a partner API requirement, and checks past issue logs for related context.
+
 ## Notes
 
 - Focus on commits from the last 3-6 months unless investigating older issues

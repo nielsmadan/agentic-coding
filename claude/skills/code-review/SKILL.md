@@ -103,6 +103,18 @@ If `--multi` was used, include:
 #### Cross-Model Agreement
 {note areas where external advisors agree/disagree with Claude agents - highlight consensus issues as higher confidence}
 
+## Examples
+
+**Review staged PR changes with 6 agents:**
+> /code-review
+
+Runs 6 parallel review agents (bug/logic, architecture, security/performance, historical context, comment quality, test quality) against staged changes and produces a prioritized list of issues grouped by severity.
+
+**Cross-model consensus review:**
+> /code-review --multi
+
+Runs the same 6 Claude agents plus external reviews from Gemini and Codex. The output includes a cross-model agreement section highlighting issues where all models converge, giving higher confidence to consensus findings.
+
 ---
 
 Review agents should apply [clean code principles](references/clean-code.md) when evaluating code quality.

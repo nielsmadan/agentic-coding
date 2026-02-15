@@ -114,3 +114,15 @@ When creating implementation tasks (TaskCreate), always include a final task: **
 ### 5. Clean Up
 
 When all tasks are complete and changes are verified, call `mcp__todoist__complete-tasks` with the task ID to mark it done.
+
+## Examples
+
+**Pick up top priority task and implement it:**
+> /todo
+
+Fetches all development-labeled tasks for the current project, filters out in-progress items, and picks the highest-priority oldest task. Presents the task for confirmation, marks it in-progress, implements the change, and completes it in Todoist when done.
+
+**Create a rich task with deep context:**
+> /todo -c redesign the settings screen
+
+Reads internal docs and relevant source files to understand the current settings implementation. Creates a Todoist task with an expanded description including affected files, a Context section, and any open questions -- all without interrupting the user.

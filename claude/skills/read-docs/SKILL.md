@@ -62,6 +62,18 @@ Summarize findings:
 2. **Key information** - Relevant excerpts for the query
 3. **Related docs** - Other documents that may be useful
 
+## Examples
+
+**Search internal docs before implementing auth feature:**
+> /read-docs auth
+
+Searches `docs/` filenames and contents for auth-related documentation. Finds `docs/auth.md` and references in `docs/architecture.md`, then summarizes relevant patterns, token handling conventions, and any documented gotchas before you start coding.
+
+**Check for documented gotchas before refactor:**
+> /read-docs database migration
+
+Searches for migration-related docs and surfaces any documented pitfalls, required steps, or past issues logged in `docs/log/`. Presents key findings so you can avoid known problems during the refactor.
+
 ## Notes
 
 - This skill is for internal project docs, not external library docs

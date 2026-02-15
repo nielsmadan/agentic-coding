@@ -219,6 +219,18 @@ Save test setup for future replication:
 | Rust | criterion | hey | custom scripts |
 | Any CLI | hyperfine | hey, ab | shell scripts with timing |
 
+## Examples
+
+**Load test an API endpoint with before/after comparison:**
+> /perf-test /api/orders
+
+Sets up a load test using hey or autocannon against the endpoint, collects latency percentiles and throughput, then runs an improvement cycle to compare metrics before and after optimizations are applied.
+
+**Profile a slow parser function:**
+> /perf-test parseCSV
+
+Creates a benchmark harness for the function, runs it with multiple iterations to get statistically significant timing data, and identifies the hotspot causing the slowdown along with optimization recommendations.
+
 ## Notes
 
 - Always run multiple iterations for statistical significance

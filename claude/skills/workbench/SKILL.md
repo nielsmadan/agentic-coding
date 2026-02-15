@@ -163,6 +163,18 @@ docker stop cc-workbench && docker rm cc-workbench
 rm -rf /tmp/workbench
 ```
 
+## Examples
+
+**Prototype a CSV parser in Docker isolation:**
+> /workbench build a python script that reads a CSV and outputs summary stats
+
+Sets up (or reuses) the `cc-workbench` Docker container, creates a `csv-parser` task directory, and iterates on a Python script inside the container. Installs pandas if needed, runs against sample data, and presents the working script for graduation to the project.
+
+**Test untrusted npm package safely:**
+> /workbench try out the new csv-parse package and see if it handles edge cases
+
+Creates a Node.js script inside the container that imports and exercises the package with various edge-case inputs. All execution stays sandboxed -- nothing touches the host filesystem or project dependencies.
+
 ## Notes
 
 - The container runs as root inside its own namespace - this is fine because it has no host access
