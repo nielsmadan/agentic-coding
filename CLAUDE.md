@@ -36,9 +36,11 @@ Available in `claude/skills/`:
 | `/doc` | Documentation review and generation (--review, --generate) |
 | `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |
 | `/test` | Test review and generation (--review, --generate) |
+| `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/todo` | Capture a todo in Todoist (--prio 1-4) |
 | `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
+| `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
 
@@ -79,6 +81,10 @@ When the user's prompt contains "add debug logs" or "debug logging", automatical
 When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
 
 When the user's prompt contains "workbench", automatically invoke the `/workbench` skill to run code in a Docker-isolated environment.
+
+When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, split, extract text, create, fill forms, OCR, watermark), automatically invoke the `/pdf` skill.
+
+When the user's prompt asks to build or design a web page, landing page, dashboard, or component, or to beautify/style a web UI, automatically invoke the `/frontend-design` skill.
 
 ## Proactive Workbench Usage
 
