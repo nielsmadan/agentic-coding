@@ -24,11 +24,11 @@ _todo() {
   local interactive=false skill_flags=""
   if [[ "$1" == -* && "$1" != --* ]]; then
     local flags="$1"; shift
-    [[ "$flags" == *i* ]] && interactive=true
-    [[ "$flags" == *c* ]] && skill_flags="-c "
+    [[ "$flags" == *i* ]] && { interactive=true; skill_flags+="-i "; }
+    [[ "$flags" == *c* ]] && skill_flags+="-c "
   fi
   if $interactive; then
-    claude "/todo -i ${skill_flags}$*"
+    claude "/todo ${skill_flags}$*"
   else
     claude -p "/todo ${skill_flags}$*" > /dev/null 2>&1 &
     echo "Todo queued (pid $!)"
