@@ -171,9 +171,9 @@ Default mode. Checks tests against the principles above.
 
 **Pattern Conformance (for --staged/new tests):**
 - [ ] File naming matches project convention
-- [ ] Test organization matches existing tests (describe/it structure)
-- [ ] Setup/teardown patterns match (beforeEach, fixtures, factories)
-- [ ] Mocking approach consistent (manual mocks, jest.mock, dependency injection)
+- [ ] Test organization matches existing tests (suite grouping and test naming conventions per framework — see Terminology Mapping)
+- [ ] Setup/teardown patterns match existing tests (per-test and per-suite setup per framework)
+- [ ] Mocking approach consistent with project (framework-specific mocking or dependency injection)
 - [ ] Assertion style matches (expect vs assert, matchers used)
 
 ### Coverage Check
@@ -271,6 +271,27 @@ Check for:
 - `pytest.ini`, `pyproject.toml` with pytest → pytest
 - `*_test.go` files → Go testing
 - `*_test.dart` files → Flutter test
+- `.rspec`, `Gemfile` with rspec → RSpec
+- `Cargo.toml` with `[dev-dependencies]` → Rust `#[test]`
+- `*.test.tsx` or `*.spec.tsx` with `@testing-library/react` in package.json → React Testing Library
+- `phpunit.xml` → PHPUnit
+
+### Framework Terminology Mapping
+
+When reviewing or generating tests, translate concepts to the detected framework:
+
+| Concept | Jest/Vitest | pytest | Go testing | Flutter test |
+|---------|-------------|--------|------------|--------------|
+| Test suite grouping | `describe()` | class or module | `func Test...` prefix | `group()` |
+| Individual test | `it()` / `test()` | `def test_...()` | `func Test...(t *testing.T)` | `test()` / `testWidgets()` |
+| Setup (per-test) | `beforeEach()` | `setup_method` / fixture | `t.Cleanup()` or helper | `setUp()` |
+| Setup (per-suite) | `beforeAll()` | `setUpClass` / session fixture | `TestMain()` | `setUpAll()` |
+| Mocking | `jest.mock()` | `unittest.mock.patch` | interface + stub struct | `mockito` package |
+| Assertion | `expect(x).toBe(y)` | `assert x == y` | `if got != want { t.Errorf() }` | `expect(x, equals(y))` |
+| Async test | `async/await` | `@pytest.mark.asyncio` | `t.Run` with goroutines | `async` test + `pump()` |
+| Skip test | `it.skip()` | `@pytest.mark.skip` | `t.Skip()` | `skip()` |
+
+Use this table to adapt all examples and checklists below. Code examples in this skill use JavaScript/Jest syntax as a reference; translate idioms to the detected framework.
 
 ### Test File Placement
 
@@ -281,6 +302,8 @@ Follow project conventions:
 - `*_test.py` alongside source or in `tests/`
 
 ### What to Generate
+
+> The templates below use Jest syntax for illustration. Adapt structure and syntax to the detected framework using the Terminology Mapping table above. For example, in pytest use `def test_returns_expected_result():` instead of `it('returns expected result', ...)`.
 
 **For a function:**
 ```javascript

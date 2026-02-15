@@ -45,7 +45,17 @@ In order of priority:
 2. Search file contents for keyword matches:
    - Grep pattern: `{keyword}` path: `docs/` and root `*.md` files
 
-Read the most relevant matches and summarize findings.
+3. Rank matches by priority:
+   - Exact filename match (e.g., "auth" → `docs/auth.md`)
+   - Filename contains keyword (e.g., "auth" → `docs/authentication-guide.md`)
+   - Content match with keyword in a heading (e.g., `## Auth` in `docs/architecture.md`)
+   - Content match in body text
+
+4. Read up to 5 top-ranked matches and summarize findings.
+
+5. For multi-word queries (e.g., "database schema"), search each word separately AND as a phrase. Prioritize files that match all words over files matching only one.
+
+6. If more than 5 files match, list the remaining filenames without reading them so the user knows what else is available.
 
 ### Without keywords:
 
@@ -53,7 +63,11 @@ List available documentation:
 - Glob pattern: `docs/**/*.md`
 - Glob pattern: `*.md` (root-level docs)
 
-Present an overview of available documentation.
+Present a structured overview of available documentation:
+
+1. Group files by directory (e.g., `docs/api/`, `docs/guides/`, root-level)
+2. For each file, show the filename and its first heading (or first non-empty line if no heading exists)
+3. If more than 20 files exist, summarize by directory with file counts and list only the top-level structure instead of enumerating every file
 
 ## Output
 

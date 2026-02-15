@@ -20,7 +20,7 @@ Security audit for common vulnerabilities and unsafe patterns.
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from recent conversation |
+| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
@@ -31,12 +31,25 @@ Security audit for common vulnerabilities and unsafe patterns.
 
 ## Workflow
 
-1. **Determine scope** based on flags
-2. **Review** (directly if ≤5 files, parallel agents if more)
-3. **Check dependencies** for known vulnerabilities
-4. **Report findings** by severity
+1. **Determine scope** based on flags (see Scope table above)
+2. **Review each file** against the Security Checklist below, prioritizing categories in this order:
+   1. Injection (OWASP 2021 A03) — highest exploitation likelihood
+   2. Sensitive Data Exposure (OWASP 2021 A02) — hardcoded secrets are easy wins
+   3. Broken Authentication (OWASP 2021 A07) — auth bugs have outsized impact
+   4. Security Misconfiguration (OWASP 2021 A05) — config issues are common in PRs
+   5. Dependency Vulnerabilities — run audit commands last (they take time)
+3. **Parallelize** if scope has >5 files: spawn one sub-agent per checklist category, each scanning all files. Merge results and deduplicate.
+4. **Check dependencies** using the ecosystem-specific commands in the Dependency Vulnerabilities section
+5. **Classify severity** for each finding:
+   - **Critical**: Exploitable vulnerability with direct user/data impact (e.g., SQL injection on a public endpoint, hardcoded production secret)
+   - **High**: Vulnerability requiring specific conditions to exploit but with serious impact (e.g., XSS in admin panel, missing rate limiting on login)
+   - **Medium**: Security weakness that increases attack surface (e.g., overly permissive CORS, debug mode flag)
+   - **Suggestion**: Defense-in-depth improvement (e.g., adding CSP headers, tightening cookie flags)
+6. **Report findings** grouped by severity using the Output Format below
 
 ## Security Checklist
+
+> References below use OWASP Top 10 2021 category numbers (A01–A10).
 
 ### Injection (OWASP A03)
 
@@ -98,6 +111,12 @@ secret\s*=\s*['"][^'"]+['"]
 token\s*=\s*['"][^'"]+['"]
 Bearer\s+[A-Za-z0-9\-_]+
 ```
+
+**False-positive filtering:** Before reporting a match:
+- Skip lines containing `example`, `placeholder`, `test`, `TODO`, `CHANGEME`, or `xxx`
+- Skip files in `test/`, `__tests__/`, `*_test.*`, `*.test.*`, `*.spec.*`
+- Skip `.md` files (documentation examples)
+- If the matched value is a well-known placeholder (e.g., `sk-...` with all zeros, `your-api-key-here`), skip it
 
 **Logging Sensitive Data:**
 ```javascript

@@ -20,15 +20,21 @@ Performance analysis for common bottlenecks and inefficiencies.
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from recent conversation |
+| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
 ## Workflow
 
-1. **Determine scope** based on flags
-2. **Review** (directly if ≤5 files, parallel agents if more)
-3. **Report findings** by severity (Critical = user-facing slowdown)
+1. **Determine scope** based on flags (see Scope table above)
+2. **Review each file** against all 5 categories in the Performance Checklist below: Algorithmic Complexity, Database/Query Patterns, Memory Management, UI/Render Performance, Network/IO
+3. **Parallelize** if scope has >5 files: spawn one sub-agent per category, each scanning all files for that category. Merge results and deduplicate.
+4. **Classify severity** for each finding:
+   - **Critical**: User-facing slowdown, data loss risk, or resource exhaustion (e.g., memory leak, N+1 on hot path)
+   - **High**: Measurable inefficiency on a common code path but not immediately user-visible (e.g., O(n²) on lists typically < 100 items but growing)
+   - **Medium**: Suboptimal pattern that could become a problem at scale (e.g., missing pagination, sequential requests that could be parallel)
+   - **Suggestion**: Optimization opportunity with marginal current impact
+5. **Report findings** grouped by severity using the Output Format below
 
 ## Performance Checklist
 

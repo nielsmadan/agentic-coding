@@ -22,7 +22,11 @@ Investigate how code evolved over time to understand current behavior or find re
 
 From the provided topic, identify the relevant files:
 - If a file path is given, use it directly
-- If a feature/function name, use Grep/Glob to find relevant files
+- If a feature/function name, locate relevant files using this strategy:
+  1. Grep for the exact function/class name to find where it is defined and used
+  2. Glob for files with the feature name in the path (e.g., `**/*payment*`)
+  3. Prioritize source files over test files; include tests only if investigating test behavior
+  4. Limit to the 5 most relevant files to keep the analysis focused
 
 ### Step 2: Git History Analysis
 
@@ -35,7 +39,12 @@ git log --oneline -20 -- <file_or_directory>
 
 **Detailed blame for key sections:**
 ```bash
-git blame <file> | head -100
+# For files > 200 lines: target the specific function or section under investigation.
+# Use Grep to find the line range first, then:
+git blame -L <start>,<end> <file>
+
+# For files ≤ 200 lines: blame the entire file:
+git blame <file>
 ```
 
 **Find when specific code was introduced:**
@@ -47,6 +56,11 @@ git log -S "<search_term>" --oneline -- <file>
 ```bash
 git log --oneline --since="3 months ago" -- <file_or_directory>
 ```
+
+Adjust the time window based on context:
+- Investigating a recent regression: use `--since="2 weeks ago"`
+- Understanding a feature's evolution: use `--since="6 months ago"` or omit `--since` entirely
+- If the initial window returns fewer than 3 commits, double the window and retry once
 
 ### Step 3: Search Past Issue Logs
 
@@ -64,6 +78,13 @@ Look for:
 - Related symptoms
 
 ### Step 4: Synthesize Findings
+
+Populate the report using these methods:
+
+- **Recent Changes**: List commits from `git log`, most recent first. Include only commits that touch the target code.
+- **Key Code Introduction**: Use `git log -S` results to identify when the function/feature first appeared and its last substantive change (skip formatting-only commits).
+- **Related Past Issues**: Direct matches from Step 3. If none found, state "None found in docs/log/".
+- **Regression Risk**: Compare current behavior against commit history. If code worked before a specific commit and broke after, name that commit. If no clear regression point, state "No clear regression identified — behavior may be by design."
 
 Report:
 

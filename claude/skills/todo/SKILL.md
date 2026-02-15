@@ -72,7 +72,7 @@ Run `git remote get-url origin` and match against the Project Mapping table abov
 
 ### 4. Create Task
 
-Call `mcp__todoist__add-tasks` with:
+Call `mcp__claude_ai_Todoist__add-tasks` with:
 - `content`: the todo description (title)
 - `description`: from cursory research, empty or a brief note. From deep research, the expanded description and context as Markdown.
 - `priority`: `p{prio}` where `{prio}` is the parsed priority value
@@ -89,7 +89,7 @@ Print a one-liner: the task title and priority level.
 
 ### 1. Find Top Todo
 
-Resolve the project ID from the Project Mapping table. Call `mcp__todoist__find-tasks` with the `projectId`, `labels: ["development"]`, and `limit: 50`.
+Resolve the project ID from the Project Mapping table. Call `mcp__claude_ai_Todoist__find-tasks` with the `projectId`, `labels: ["development"]`, and `limit: 50`.
 
 From the results, filter out any tasks with the `in-progress` label. Sort the remaining by:
 1. Priority (p1 first, then p2, p3, p4)
@@ -103,7 +103,7 @@ Show the task title and description (if any). Print a short summary of what you'
 
 ### 3. Mark In Progress
 
-Call `mcp__todoist__update-tasks` to add the `in-progress` label to the task.
+Call `mcp__claude_ai_Todoist__update-tasks` to add the `in-progress` label to the task.
 
 ### 4. Implement
 
@@ -113,7 +113,7 @@ When creating implementation tasks (TaskCreate), always include a final task: **
 
 ### 5. Clean Up
 
-When all tasks are complete and changes are verified, call `mcp__todoist__complete-tasks` with the task ID to mark it done.
+When all tasks are complete and changes are verified, call `mcp__claude_ai_Todoist__complete-tasks` with the task ID to mark it done.
 
 ## Examples
 

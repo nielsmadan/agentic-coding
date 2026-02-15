@@ -33,13 +33,18 @@ Explain code grouped by logical concepts rather than file-by-file.
 
 | Flag | Method |
 |------|--------|
-| (none) | Identify relevant files from conversation context |
+| (none) | Collect files from conversation context: files the user mentioned by name, files you have read or edited in this session, and files referenced in error messages or stack traces. If no files can be identified, ask the user: 'Which files or directories would you like me to explain? You can also use `--all` to browse.' |
 | `--staged` | `git diff --cached --name-only` to get file list |
 | `--all` | Use Glob to find source files, present directory tree to user, ask which dirs/files to explain via AskUserQuestion |
 
+**Empty scope handling:**
+- `--staged` with no staged files: Report "No staged files found. Stage files with `git add` first, or use `--all` to pick files interactively."
+- `--all` with no source files found: Report "No source files found in this directory. Verify you are in the project root."
+- Default mode with no context: Ask the user to specify files (see table above).
+
 ### 2. Read and Analyze
 
-Read all in-scope files to understand the codebase.
+Read all in-scope source files to understand the codebase. Skip binary files (images, compiled assets, `.lock` files), generated directories (`node_modules/`, `build/`, `dist/`), and files over 2000 lines (summarize their purpose from the first 50 lines instead).
 
 ### 3. Identify Concepts
 
