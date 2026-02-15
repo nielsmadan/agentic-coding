@@ -385,6 +385,14 @@ Detects the project's test framework and patterns, then generates a test file co
 
 Reviews staged test files against the testing principles. Flags tests that mock internal modules instead of only external boundaries, and identifies tests with no meaningful assertions that would pass regardless of behavior.
 
+## Troubleshooting
+
+### Generated tests fail immediately on first run
+**Solution:** Verify the correct test framework was detected by checking the "Detected Test Patterns" output. If imports or setup are wrong, point `--generate` at an existing passing test file so the generator can match its patterns exactly.
+
+### Cannot detect the project's test framework
+**Solution:** Ensure a framework config file exists (`jest.config.*`, `vitest.config.*`, `pytest.ini`, or `pyproject.toml` with pytest section). If the project uses a non-standard setup, run `/test --generate <target>` and specify the framework in your prompt.
+
 ## Notes
 
 - Default is review mode with context-based scope

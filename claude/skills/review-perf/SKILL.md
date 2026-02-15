@@ -264,6 +264,14 @@ Reviews staged files and catches a new user list endpoint that queries posts per
 
 Parallel agents scan the full codebase by category. Finds an event listener in the dashboard component that is never cleaned up on unmount, plus an unbounded in-memory cache growing with every API call.
 
+## Troubleshooting
+
+### False positive on a rarely-executed code path
+**Solution:** If the flagged code runs only during initialization or in admin-only flows, note the expected data size in a code comment. Re-run the review and the context will help distinguish hot paths from cold ones.
+
+### Cannot determine algorithmic complexity without runtime data
+**Solution:** Add a brief comment with the expected input size (e.g., `// n is typically < 50`) so static analysis can assess impact. For uncertain cases, use `/perf-test` to measure actual performance with realistic data.
+
 ## Notes
 
 - Focus on measurable impact, not micro-optimizations

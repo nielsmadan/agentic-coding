@@ -233,6 +233,14 @@ Launches parallel agents: research finds a known axios issue with token queuing,
 
 History agent pinpoints a dependency bump that changed default concurrency behavior. Debug logging captures the interleaved execution order, and library source inspection confirms the breaking change in the new version. Presents the version diff and a targeted fix to restore the previous behavior.
 
+## Troubleshooting
+
+### Parallel investigation agents do not converge on root cause
+**Solution:** Run `/second-opinion` with a consolidated summary of all agent findings and the conflicting theories. If agents still disagree, prioritize the evidence from the debug-log agent (actual runtime behavior) over static analysis, and test the most likely theory first.
+
+### Root cause is in a third-party dependency
+**Solution:** Pin the dependency to the last known working version as an immediate fix, then file an issue upstream with reproduction steps. If a patch is needed sooner, fork the dependency or apply a local patch using `patch-package` (JS) or the equivalent for your ecosystem.
+
 ## Notes
 
 - This is a heavyweight process - use for genuinely stuck problems

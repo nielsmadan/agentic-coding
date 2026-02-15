@@ -184,6 +184,14 @@ active_users = [u for u in users if u.is_active]
 index = bisect.bisect_left(sorted_users, target_user)
 ```
 
+## Troubleshooting
+
+### False positives on license headers or necessary comments
+**Solution:** License headers and legal notices are required -- skip them during review. If the tool flags doc comments (JSDoc, docstrings) or regulatory annotations, those are intentional and should be excluded from cleanup.
+
+### Comments in unfamiliar language or framework
+**Solution:** Focus on structural patterns (e.g., comments restating the next line of code are low-quality in any language). For framework-specific annotations or directives you do not recognize, leave them in place and flag them for manual review rather than removing them.
+
 ## Notes
 
 - For `--all` on large codebases, parallel agents significantly speed up review

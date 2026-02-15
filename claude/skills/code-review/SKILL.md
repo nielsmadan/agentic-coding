@@ -123,3 +123,11 @@ For each issue, explain:
 1. What the problem is
 2. Why it matters
 3. How to fix it (with code example if helpful)
+
+## Troubleshooting
+
+### Too many changed files for agents to handle
+**Solution:** Narrow the review scope by targeting a specific directory or file pattern (e.g., `/code-review src/auth/`) instead of the entire changeset, or break the PR into smaller, focused reviews.
+
+### Agent returns shallow or redundant findings
+**Solution:** Ensure the review target is specific enough to give agents meaningful context; vague targets like "everything" produce generic results. Re-run with a focused target and verify that CLAUDE.md contains project-specific patterns the agents can check against.

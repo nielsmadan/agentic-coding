@@ -175,6 +175,14 @@ Sets up (or reuses) the `cc-workbench` Docker container, creates a `csv-parser` 
 
 Creates a Node.js script inside the container that imports and exercises the package with various edge-case inputs. All execution stays sandboxed -- nothing touches the host filesystem or project dependencies.
 
+## Troubleshooting
+
+### Docker daemon not running
+**Solution:** Start Docker Desktop (or the Docker daemon via `sudo systemctl start docker` on Linux) and wait for it to be ready. Run `docker info` to confirm it is accepting commands before retrying the workbench setup.
+
+### Container runs out of memory or disk
+**Solution:** Stop the container with `docker stop cc-workbench && docker rm cc-workbench`, then recreate it with higher limits (e.g., `--memory 1g`). For disk issues, prune unused images and containers with `docker system prune` to free space, or clear the `/tmp/workbench` directory of old task folders.
+
 ## Notes
 
 - The container runs as root inside its own namespace - this is fine because it has no host access

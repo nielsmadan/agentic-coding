@@ -126,3 +126,11 @@ Fetches all development-labeled tasks for the current project, filters out in-pr
 > /todo -c redesign the settings screen
 
 Reads internal docs and relevant source files to understand the current settings implementation. Creates a Todoist task with an expanded description including affected files, a Context section, and any open questions -- all without interrupting the user.
+
+## Troubleshooting
+
+### Todoist API unavailable or MCP not connected
+**Solution:** Verify that the Todoist MCP server is listed in your Claude Code MCP configuration and that your API token is valid. Restart Claude Code to re-initialize MCP connections if the tools are not responding.
+
+### Cannot resolve project name to Todoist project
+**Solution:** Check that the git remote origin URL matches an entry in the Project Mapping table. If the repository is not mapped, add a new row to the table in this skill file, or use the `-i` flag so the skill can ask you which project to use.

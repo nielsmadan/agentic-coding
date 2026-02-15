@@ -215,6 +215,14 @@ Reads the notification service code, checks for existing docs, then generates a 
 
 Reviews all staged `.md` files against the documentation checklist. Flags broken internal links, stale file references, and any local paths like `/Users/` that slipped in.
 
+## Troubleshooting
+
+### Generated docs miss important sections like Gotchas or API
+**Solution:** Re-run with `--generate` targeting the specific file and explicitly mention the missing sections in your prompt. The generator follows the module/feature templates, so ensure the code has enough context for each section.
+
+### Review finds no issues but documentation coverage is incomplete
+**Solution:** Use `--all` to scan the full `docs/` tree and cross-reference against source modules. Missing docs for key modules will surface as completeness gaps in the review output.
+
 ## Notes
 
 - Default is review mode with context-based scope

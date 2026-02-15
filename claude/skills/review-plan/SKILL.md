@@ -127,6 +127,14 @@ Spawns parallel review agents against the current plan. The robustness agent fla
 
 Reviews the auth redesign plan with all agents including the research agent, which finds that the proposed token rotation strategy has a known edge case documented in the OAuth 2.1 spec. The synthesis recommends adjusting the refresh window based on the research findings.
 
+## Troubleshooting
+
+### Review agents disagree on approach
+**Solution:** Focus on the points of consensus first, then evaluate the disagreements by weighing each agent's reasoning against your project constraints. Use the adversarial agent's concerns as a tiebreaker -- if it flags real risk in one approach, prefer the safer alternative.
+
+### Plan is too vague for meaningful review
+**Solution:** Add concrete details before running the review: specify which files change, what data flows through the system, and what the failure modes are. Agents produce generic feedback when the plan lacks implementation-level specifics.
+
 ## Notes
 
 - Use the Skill tool for `second-opinion` and `research-online` - do not write slash commands directly

@@ -98,6 +98,14 @@ Uses `git log -S` and `git blame` to trace the payment processing function, iden
 
 Analyzes the git history of the address validator, surfaces the original commit that added the unusual postal code regex along with its commit message explaining a partner API requirement, and checks past issue logs for related context.
 
+## Troubleshooting
+
+### Relevant commit was squashed or rebased away
+**Solution:** Use `git reflog` to find the original commit before the squash or rebase. If the reflog has expired, search for the change using `git log -S "<code_snippet>" --all` to locate it in any branch or dangling commit.
+
+### History is too large to analyze effectively
+**Solution:** Narrow the scope by passing a specific file path or function name instead of a broad directory. Use `--since` with `git log` to limit the time window, or focus on a single author's contributions with `--author`.
+
 ## Notes
 
 - Focus on commits from the last 3-6 months unless investigating older issues

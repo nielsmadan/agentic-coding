@@ -111,6 +111,14 @@ Locates login, token validation, and session creation functions. Adds `[DEBUG][A
 
 Finds the checkout handler, payment processing, and cart validation code. Adds logs at each conditional branch and async boundary to capture the exact execution path and variable state when the intermittent error occurs.
 
+## Troubleshooting
+
+### Added logging breaks functionality
+**Solution:** Revert the last logging change immediately and re-test. Ensure log statements do not alter control flow (e.g., accidentally placed inside a ternary or before a return) and that string interpolation does not call methods with side effects.
+
+### Too many log points obscure the issue
+**Solution:** Remove all but the entry/exit logs for the top-level function, then re-add logs one layer deeper at a time. Use distinct prefixes per module (e.g., `[DEBUG][Auth]` vs `[DEBUG][Cart]`) and filter output with `grep` to isolate the relevant trace.
+
 ## Notes
 
 - Keep logs concise but informative

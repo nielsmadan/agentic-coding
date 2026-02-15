@@ -183,6 +183,14 @@ Reviews staged files and catches a login handler using string concatenation to b
 
 Parallel agents scan the full codebase by security category. Finds a hardcoded API key in a config file and a JWT secret committed as a string literal, along with an overly permissive CORS policy allowing all origins.
 
+## Troubleshooting
+
+### False positive on an intentional security pattern
+**Solution:** If the flagged code is deliberate (e.g., a test fixture with hardcoded credentials, or a localhost-only CORS wildcard), add a comment like `// SECURITY: intentional - <reason>` so future audits can skip it with context.
+
+### Obfuscated or generated code blocks the audit
+**Solution:** Exclude generated files (e.g., `*.min.js`, `dist/`, `generated/`) from the scope and audit only the source inputs. For vendored code, check the upstream project's security advisories rather than scanning the minified output.
+
 ## Notes
 
 - Focus on exploitable vulnerabilities, not theoretical risks

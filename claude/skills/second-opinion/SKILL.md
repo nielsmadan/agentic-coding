@@ -169,3 +169,11 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 /second-opinion --quick Just tell me if this pattern looks right
 /second-opinion  # Uses current context from conversation
 ```
+
+## Troubleshooting
+
+### Advisor times out or fails to respond
+**Solution:** Increase the timeout with `--timeout=600` or use `--quick` to skip iteration. If one advisor consistently fails, the other's response is still presented.
+
+### All advisors agree with no diversity of opinion
+**Solution:** Rephrase your question to include a specific alternative approach you want evaluated, or provide more context about trade-offs you are considering to prompt more nuanced responses.

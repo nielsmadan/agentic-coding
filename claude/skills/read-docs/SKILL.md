@@ -74,6 +74,14 @@ Searches `docs/` filenames and contents for auth-related documentation. Finds `d
 
 Searches for migration-related docs and surfaces any documented pitfalls, required steps, or past issues logged in `docs/log/`. Presents key findings so you can avoid known problems during the refactor.
 
+## Troubleshooting
+
+### No docs/ folder found in project
+**Solution:** Fall back to searching root-level `.md` files (README.md, CLAUDE.md, CONTRIBUTING.md). If the project has no documentation at all, use `/research-online` for external references or check inline code comments via Grep for conventions.
+
+### Documentation is stale or contradicts code
+**Solution:** Trust the code over the documentation when they conflict. Note the discrepancy in your response so the user can update the docs, and verify behavior by reading the actual source files rather than relying on the outdated documentation.
+
 ## Notes
 
 - This skill is for internal project docs, not external library docs

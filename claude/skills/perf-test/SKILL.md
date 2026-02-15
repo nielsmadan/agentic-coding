@@ -231,6 +231,14 @@ Sets up a load test using hey or autocannon against the endpoint, collects laten
 
 Creates a benchmark harness for the function, runs it with multiple iterations to get statistically significant timing data, and identifies the hotspot causing the slowdown along with optimization recommendations.
 
+## Troubleshooting
+
+### Benchmark results are inconsistent across runs
+**Solution:** Increase the number of iterations and add warmup runs to reduce cold-start variance. Close other resource-intensive processes and pin CPU frequency if possible to minimize OS-level noise.
+
+### Performance tool not available in project
+**Solution:** Check the Tool Reference table above for alternatives in your language. If no project dependency exists, use language-built-in options (e.g., `console.time` for JS, `timeit` for Python, `testing.B` for Go) or install a standalone tool like `hyperfine` or `hey` that requires no project integration.
+
 ## Notes
 
 - Always run multiple iterations for statistical significance

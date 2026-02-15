@@ -120,6 +120,14 @@ Lists source directories and lets you pick `lib/auth/`. Groups the code into con
 
 Explains staged files with both architectural context and language-level syntax notes. Highlights non-obvious constructs like Dart extension methods or Go channel patterns, and explains why they were chosen over alternatives.
 
+## Troubleshooting
+
+### Codebase too large to explain at once
+**Solution:** Use `--all` to interactively select specific directories or files instead of the entire codebase. For very large projects, focus on one module or feature area per invocation and let the parallelization handle splitting within that scope.
+
+### Unfamiliar framework or DSL
+**Solution:** Combine `--code` with your scope flag so the output includes language-level syntax explanations alongside architectural context. If the framework uses heavy code generation or macros, call `/research-online` first to get external documentation, then run `/explain --code` with that context.
+
 ## Notes
 
 - Concepts over files: always group by what the code does, not where it lives
