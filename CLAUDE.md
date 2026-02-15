@@ -20,6 +20,7 @@ Available in `claude/skills/`:
 | Skill | Purpose |
 |-------|---------|
 | `/code-review` | Code review workflow |
+| `/frontend-design` | Build distinctive frontend interfaces with high design quality |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/flutter-upgrade` | Flutter upgrade workflow |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
