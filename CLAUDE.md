@@ -48,6 +48,17 @@ Available in `claude/skills/`:
 
 **Read-only.** Do not run git commands that modify state (add, commit, push, etc.) - they will fail. Ask the user to run these manually.
 
+## GitHub Commands
+
+Prefer dedicated `gh` subcommands over `gh api`:
+- Issue comments: `gh issue view <num> --comments -R <owner/repo>`
+- PR comments: `gh pr view <num> --comments -R <owner/repo>`
+- PR reviews: `gh pr view <num> --json reviews -R <owner/repo>`
+- Releases: `gh release list -R <owner/repo>`
+- Workflow runs: `gh run list -R <owner/repo>`
+
+Do NOT use `gh api` when a dedicated subcommand exists.
+
 ## Verification Policy
 
 Never claim "best practice", "recommended", "accepted solution", or "community consensus" without a cited source. If you haven't verified something, say "I believe" or "this might work" - not "this is the way."
