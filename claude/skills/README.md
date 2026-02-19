@@ -158,6 +158,21 @@ Analyze how code changed over time using git history and past issue logs. Useful
 
 ---
 
+### /review-logs
+
+Analyze Claude Code session transcripts for failure patterns (retry loops, permission denials, command failures) and suggest concrete fixes.
+
+**Arguments:**
+- `--days N` - Lookback window (default: 14)
+- `--project <name>` - Filter to a specific project
+- `--verbose` - Include problematic session IDs for manual review
+
+**Examples:**
+- `/review-logs`
+- `/review-logs --days 30 --project my-app`
+
+---
+
 ### /review-perf
 
 Static performance analysis for algorithmic complexity, memory leaks, N+1 queries, and render issues.

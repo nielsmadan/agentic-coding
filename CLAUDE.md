@@ -42,6 +42,7 @@ Available in `claude/skills/`:
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
+| `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
 | `/skill-creator` | Guide for creating skills |
 
 ## Git Policy
@@ -96,6 +97,8 @@ When the user's prompt contains "workbench", automatically invoke the `/workbenc
 When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, split, extract text, create, fill forms, OCR, watermark), automatically invoke the `/pdf` skill.
 
 When the user's prompt asks to build or design a web page, landing page, dashboard, or component, or to beautify/style a web UI, automatically invoke the `/frontend-design` skill.
+
+When the user's prompt contains "review logs", "session analysis", or "failure patterns", automatically invoke the `/review-logs` skill to analyze session transcripts.
 
 ## Proactive Workbench Usage
 
