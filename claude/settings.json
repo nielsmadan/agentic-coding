@@ -79,6 +79,7 @@
       "Bash(realpath *)",
       "Bash(dirname *)",
       "Bash(basename *)",
+      "Bash(dig *)",
       "Bash(jq *)",
       "Bash(cp *)",
       "Bash(yarn --version)",

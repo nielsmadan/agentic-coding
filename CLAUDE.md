@@ -77,8 +77,18 @@ Never dismiss test failures, linting errors, or type errors as "pre-existing iss
 - Skip failing tests by claiming they were already broken
 - Suggest the user "ignore" lint errors
 - Offer to "move on" without fixing failures
+- Acknowledge a failure is "pre-existing" and then stop — that is not fixing it
+- Use `git diff` to prove something isn't your fault as justification for leaving it broken
 
-If a failure is genuinely unrelated to your changes, fix it anyway and note that it was pre-existing.
+"Fix it" means the check passes. The only acceptable outcome is ALL checks green. If a failure is genuinely unrelated to your changes, fix it anyway (and note it was pre-existing).
+
+## Build & Check Workflow
+
+- After writing or creating any new file, run the project's formatter before running check-all or lint commands.
+- When a typecheck or lint command fails, read ALL errors and fix them in one pass before re-running. Do not fix one error and re-check.
+- When moving or renaming files: update imports, barrel/index exports, and clear build caches (e.g., `.next`, `build/`) in the same pass — before re-running checks.
+- When changing a shared type or component prop, grep for all consumers and update them before re-running typecheck.
+- Do not reflexively re-run a failing command without making changes first. If it failed, something needs fixing.
 
 ## Keyword Triggers
 
