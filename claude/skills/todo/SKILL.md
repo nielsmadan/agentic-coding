@@ -35,11 +35,15 @@ Use the `mcp__claude_ai_Todoist__*` MCP tools directly as native tool calls. Do 
 
 ## Project Mapping
 
-Resolve the Todoist project by running `git remote get-url origin` and matching against this table:
+Resolve the Todoist project by running `git remote get-url origin`, then read `claude/skills/todo/projects.local.md` and match the origin against the table there. This file is gitignored — create it locally with your own mappings:
 
+```markdown
 | Git origin contains | Todoist project ID | Project name |
 |---------------------|-------------------|--------------|
-| `nielsmadan/juggler` | `6g2Rr8C5MjJQhQm6` | juggler |
+| `your-org/your-repo` | `your-todoist-project-id` | project-name |
+```
+
+If the file doesn't exist or no match is found, ask the user which Todoist project to use.
 
 ## Workflow
 

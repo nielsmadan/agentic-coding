@@ -1,3 +1,4 @@
 docs/tmp
 tmp
 .claude/settings.local.json
+claude/skills/todo/projects.local.md
