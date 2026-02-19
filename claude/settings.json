@@ -3,6 +3,21 @@
   "permissions": {
     "allow": [
       "Read(~/.claude/skills/todo/projects.local.md)",
+      "Bash(td task add *)",
+      "Bash(td task list *)",
+      "Bash(td task view *)",
+      "Bash(td task update *)",
+      "Bash(td task complete *)",
+      "Bash(td task uncomplete *)",
+      "Bash(td today *)",
+      "Bash(td upcoming *)",
+      "Bash(td inbox *)",
+      "Bash(td project list *)",
+      "Bash(td project view *)",
+      "Bash(td label list *)",
+      "Bash(td comment *)",
+      "Bash(td activity *)",
+      "Bash(td stats *)",
       "Bash(git status *)",
       "Bash(git log *)",
       "Bash(git diff *)",
@@ -141,24 +156,7 @@
       "Skill(theme-factory)",
       "Skill(todo)",
       "Skill(workbench)",
-      "mcp__claude_ai_Todoist__add-tasks",
-      "mcp__claude_ai_Todoist__add-projects",
-      "mcp__claude_ai_Todoist__add-sections",
-      "mcp__claude_ai_Todoist__add-comments",
-      "mcp__claude_ai_Todoist__find-tasks",
-      "mcp__claude_ai_Todoist__find-tasks-by-date",
-      "mcp__claude_ai_Todoist__find-completed-tasks",
-      "mcp__claude_ai_Todoist__find-projects",
-      "mcp__claude_ai_Todoist__find-sections",
-      "mcp__claude_ai_Todoist__find-comments",
-      "mcp__claude_ai_Todoist__find-activity",
-      "mcp__claude_ai_Todoist__find-project-collaborators",
-      "mcp__claude_ai_Todoist__get-overview",
-      "mcp__claude_ai_Todoist__fetch-object",
-      "mcp__claude_ai_Todoist__user-info",
-      "mcp__claude_ai_Todoist__list-workspaces",
-      "mcp__claude_ai_Todoist__search",
-      "mcp__claude_ai_Todoist__fetch"
+      "Skill(optimize-seo)"
     ],
     "deny": [
       "Bash(git add *)",
@@ -269,6 +267,16 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/redirect-gh-api.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/redundant-git-c.sh",
             "timeout": 5
           }
         ]

@@ -31,7 +31,29 @@ argument-hint: [-i] [-c] [--prio N] <description>
 
 ## Todoist Integration
 
-Use the `mcp__claude_ai_Todoist__*` MCP tools directly as native tool calls. Do NOT shell out to MCP tools via Bash — they are native tool calls, not CLI commands. Do NOT check if MCP is available — assume it is.
+Use the `td` CLI (official Todoist CLI). Key commands:
+
+**Create task:**
+```bash
+td task add "Task title" --project <name> --priority p3 --labels development --description "Description here"
+```
+
+**List tasks:**
+```bash
+td task list --project <name> --label development --json
+```
+
+**Update task (e.g., add in-progress label):**
+```bash
+td task update <task-id> --labels development,in-progress
+```
+
+**Complete task:**
+```bash
+td task complete <task-id>
+```
+
+Use `--json` for parseable output when you need to process results.
 
 ## Project Mapping
 
@@ -42,6 +64,8 @@ Resolve the Todoist project by running `git remote get-url origin`, then read `c
 |---------------------|-------------------|--------------|
 | `your-org/your-repo` | `your-todoist-project-id` | project-name |
 ```
+
+Use the **project name** (not the ID) with `td` commands via `--project <name>`.
 
 If the file doesn't exist or no match is found, ask the user which Todoist project to use.
 
@@ -76,12 +100,9 @@ Run `git remote get-url origin` and match against the Project Mapping table abov
 
 ### 4. Create Task
 
-Call `mcp__claude_ai_Todoist__add-tasks` with:
-- `content`: the todo description (title)
-- `description`: from cursory research, empty or a brief note. From deep research, the expanded description and context as Markdown.
-- `priority`: `p{prio}` where `{prio}` is the parsed priority value
-- `projectId`: resolved from the mapping table
-- `labels`: `["development"]`
+```bash
+td task add "Task title" --project <name> --priority p<N> --labels development --description "Research notes"
+```
 
 ### 5. Confirm
 
@@ -93,7 +114,11 @@ Print a one-liner: the task title and priority level.
 
 ### 1. Find Top Todo
 
-Resolve the project ID from the Project Mapping table. Call `mcp__claude_ai_Todoist__find-tasks` with the `projectId`, `labels: ["development"]`, and `limit: 50`.
+Resolve the project name from the Project Mapping table. Fetch tasks:
+
+```bash
+td task list --project <name> --label development --json
+```
 
 From the results, filter out any tasks with the `in-progress` label. Sort the remaining by:
 1. Priority (p1 first, then p2, p3, p4)
@@ -107,7 +132,9 @@ Show the task title and description (if any). Print a short summary of what you'
 
 ### 3. Mark In Progress
 
-Call `mcp__claude_ai_Todoist__update-tasks` to add the `in-progress` label to the task.
+```bash
+td task update <task-id> --labels development,in-progress
+```
 
 ### 4. Implement
 
@@ -117,7 +144,11 @@ When creating implementation tasks (TaskCreate), always include a final task: **
 
 ### 5. Clean Up
 
-When all tasks are complete and changes are verified, call `mcp__claude_ai_Todoist__complete-tasks` with the task ID to mark it done.
+When all tasks are complete and changes are verified:
+
+```bash
+td task complete <task-id>
+```
 
 ## Examples
 
@@ -133,8 +164,8 @@ Reads internal docs and relevant source files to understand the current settings
 
 ## Troubleshooting
 
-### Todoist API unavailable or MCP not connected
-**Solution:** Verify that the Todoist MCP server is listed in your Claude Code MCP configuration and that your API token is valid. Restart Claude Code to re-initialize MCP connections if the tools are not responding.
+### td command not found
+**Solution:** Install the Todoist CLI: `npm install -g @doist/todoist-cli`, then authenticate with `td auth login`.
 
 ### Cannot resolve project name to Todoist project
-**Solution:** Check that the git remote origin URL matches an entry in the Project Mapping table. If the repository is not mapped, add a new row to the table in this skill file, or use the `-i` flag so the skill can ask you which project to use.
+**Solution:** Check that the git remote origin URL matches an entry in the Project Mapping table. If the repository is not mapped, add a new row to `claude/skills/todo/projects.local.md`, or use the `-i` flag so the skill can ask you which project to use.
