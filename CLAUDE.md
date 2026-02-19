@@ -43,6 +43,7 @@ Available in `claude/skills/`:
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
+| `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
 | `/skill-creator` | Guide for creating skills |
 
 ## Git Policy
