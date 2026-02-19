@@ -75,6 +75,8 @@ Use the **Skill tool** to invoke `second-opinion --quick` with this prompt:
 Read-only code review. Review the staged changes (git diff --cached) in this repository. Provide a focused code review in 300 words or less covering: potential bugs or edge cases, security concerns, performance issues, and architecture/pattern violations.
 ```
 
+**IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion results (both Gemini and Codex) have been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary.
+
 ## Step 4: Score and Filter Issues
 For each issue found, assign a confidence score (0-100).
 Only report issues with confidence >= 80.
