@@ -11,10 +11,25 @@ alias ccone="noglob _ccone"
 
 _ccli() {
   local result
-  result=$(claude --tools "" -p "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
+  result=$(claude --model haiku --tools "" -p "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
+  result=$(echo "$result" | sed '/^```/d' | sed '/^$/d')
   print -z "$result"
 }
 alias ccli="noglob _ccli"
+
+_gemcli() {
+  local result
+  result=$(gemini -m gemini-2.0-flash "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*")
+  print -z "$result"
+}
+alias gemcli="noglob _gemcli"
+
+_cxcli() {
+  local result
+  result=$(codex exec -m gpt-5-codex-mini "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $*" 2>/dev/null)
+  print -z "$result"
+}
+alias cxcli="noglob _cxcli"
 
 _todo() {
   if ! git rev-parse --show-toplevel >/dev/null 2>&1 || [[ "$(pwd)" != "$(git rev-parse --show-toplevel)" ]]; then
