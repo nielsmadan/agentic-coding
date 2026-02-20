@@ -81,24 +81,15 @@ Edit the file to:
 2. Keep the correct code
 3. Ensure the result is syntactically valid
 
-### Step 6: Mark Resolved and Continue
+### Step 6: Print Next Steps
 
-```bash
-# After resolving each file
-git add <resolved-file>
+Do NOT run git commands yourself. Print the commands the user needs to run:
 
-# After all files resolved, based on operation type:
-# Merge:
-git commit
+```markdown
+Run these commands to complete the resolution:
 
-# Rebase:
-git rebase --continue
-
-# Cherry-pick:
-git cherry-pick --continue
-
-# Revert:
-git revert --continue
+git add <resolved-files>
+<continue_command based on operation type>
 ```
 
 ## Output Format
@@ -135,11 +126,11 @@ git revert --continue
 
 ### Next Steps
 
-After all conflicts resolved:
+Run these commands to complete the resolution:
 1. `git add {files}`
 2. `{continue_command}`
 
-To abort:
+Or to abort:
 - `{abort_command}`
 ```
 
@@ -153,7 +144,7 @@ Detects a merge operation, reads the conflict markers in the session file, and d
 **Rebase conflict with inverted ours/theirs:**
 > /resolve-conflicts
 
-Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, and resolves accordingly before running `git rebase --continue`.
+Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, resolves the conflicts in the files, and prints the commands to run (`git add` + `git rebase --continue`).
 
 ## Guidelines
 
@@ -167,8 +158,8 @@ Detects a rebase operation and reminds that ours/theirs semantics are inverted d
 
 ### Lock File Conflicts (package-lock.json, yarn.lock)
 
-Regenerate rather than manually resolve:
-```bash
+Regenerate rather than manually resolve. Tell the user to run:
+```
 git checkout --theirs package-lock.json  # or --ours
 npm install  # regenerates lock file
 git add package-lock.json
@@ -176,8 +167,8 @@ git add package-lock.json
 
 ### Auto-generated Files
 
-Accept one version and regenerate:
-```bash
+Accept one version and regenerate. Tell the user to run:
+```
 git checkout --theirs <file>
 # Run generation command
 git add <file>
@@ -189,8 +180,8 @@ Usually keep one and incorporate changes from other manually.
 
 ### Deleted vs Modified
 
-Decide: should file exist or not? If yes, keep modified. If no, remove.
-```bash
+Decide: should file exist or not? If yes, keep modified. If no, remove. Tell the user to run the appropriate command:
+```
 # Keep the file (accept modification)
 git add <file>
 
