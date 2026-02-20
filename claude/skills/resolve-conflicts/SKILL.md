@@ -63,25 +63,14 @@ Incoming changes
 
 **For rebase conflicts:** "Ours" is the branch being rebased onto, "theirs" is the commit being replayed. This is inverted from merge!
 
-### Step 4: Present Resolution Options
-
-For each conflict, explain:
-1. What the current (HEAD) version does
-2. What the incoming version does
-3. Recommend one of:
-   - **Keep current** - incoming change not needed
-   - **Keep incoming** - current is outdated
-   - **Merge both** - both changes are needed
-   - **Rewrite** - neither version is correct as-is
-
-### Step 5: Apply Resolution
+### Step 4: Apply Resolution
 
 Edit the file to:
 1. Remove conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)
 2. Keep the correct code
 3. Ensure the result is syntactically valid
 
-### Step 6: Print Next Steps
+### Step 5: Print Next Steps
 
 Do NOT run git commands yourself. Print the commands the user needs to run:
 
@@ -106,23 +95,6 @@ git add <resolved-files>
 | File | Type | Complexity |
 |------|------|------------|
 | {path} | UU | {simple/moderate/complex} |
-
-### {file}
-
-**Current (HEAD):**
-```{lang}
-{code}
-```
-
-**Incoming ({source}):**
-```{lang}
-{code}
-```
-
-**Resolution:** {Keep current | Keep incoming | Merge both}
-**Reason:** {explanation}
-
----
 
 ### Next Steps
 
