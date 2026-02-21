@@ -27,6 +27,8 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 ## Step 3: Parallel Review Agents
 Launch the following review perspectives IN PARALLEL:
 
+Each agent should output a list of issues. For each issue, include: what the problem is, where it is (file + line), and why it matters. Do NOT assign confidence scores — scoring happens in a separate pass.
+
 ### Agent 1: Bug & Logic Review
 - Look for potential bugs, edge cases, race conditions
 - Check null/undefined handling
@@ -77,9 +79,23 @@ Read-only code review. Review the staged changes (git diff --cached) in this rep
 
 **IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion results (both Gemini and Codex) have been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary.
 
-## Step 4: Score and Filter Issues
-For each issue found, assign a confidence score (0-100).
-Only report issues with confidence >= 80.
+## Step 4: Independent Confidence Scoring
+
+Collect all issues from the review agents. Then launch **parallel scorer agents** — one per issue (or batch small groups if there are many). Each scorer receives:
+- The issue description and location
+- The relevant code context (read the file around the reported lines)
+- The CLAUDE.md guidelines
+
+Each scorer independently assigns a confidence score 0-100:
+- **0**: False positive, not a real issue
+- **25**: Might be real but unlikely
+- **50**: Plausible but minor or uncertain
+- **75**: Likely real and worth noting
+- **100**: Certain, clear problem
+
+The scorer should NOT know which agent found the issue. It evaluates purely based on the code and the claim.
+
+**Filter**: Only issues scoring >= 80 pass through to the output.
 
 ## Step 5: Format Output
 
