@@ -125,6 +125,31 @@ prefix_rule(
     decision = "allow"
 )
 
+prefix_rule(
+    pattern = ["git", "grep"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["git", "range-diff"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["git", "cherry"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["git", "whatchanged"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["git", "count-objects"],
+    decision = "allow"
+)
+
 # =============================================================================
 # ALLOWED: File inspection commands
 # =============================================================================
