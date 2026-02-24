@@ -151,6 +151,110 @@ prefix_rule(
 )
 
 # =============================================================================
+# ALLOWED: GitLab CLI (glab) read-only commands
+# =============================================================================
+
+prefix_rule(
+    pattern = ["glab", "mr", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "mr", "view"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "mr", "diff"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "issue", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "issue", "view"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "issue", "board"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "view"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "status"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "get"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "lint"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "ci", "trace"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "release", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "release", "view"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "label", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "milestone", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "repo", "view"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "job", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "schedule", "list"],
+    decision = "allow"
+)
+
+prefix_rule(
+    pattern = ["glab", "variable", "list"],
+    decision = "allow"
+)
+
+# =============================================================================
 # ALLOWED: File inspection commands
 # =============================================================================
 
