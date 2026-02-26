@@ -53,6 +53,12 @@ _todo() {
 }
 alias todo="noglob _todo"
 
+# OpenCode
+alias oc="opencode"
+alias ocg="opencode -m openrouter/z-ai/glm-5"
+alias ock="opencode -m openrouter/moonshotai/kimi-k2.5"
+alias occo="opencode --continue"
+
 # Disable Claude Code feedback prompts
 export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
 
