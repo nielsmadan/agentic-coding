@@ -1,12 +1,12 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Gemini, Codex, and OpenCode+GLM.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Gemini and Codex.
 argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
 
-Get input from Gemini, Codex, and OpenCode+GLM on the current problem or question. By default, iterates if responses lack confidence.
+Get input from Gemini and Codex on the current problem or question. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -31,7 +31,7 @@ Get input from Gemini, Codex, and OpenCode+GLM on the current problem or questio
 ### Default Flow (Iterative)
 
 1. Summarize the current problem/question from the conversation (or use what the user provides)
-2. Query Gemini, Codex, and OpenCode+GLM in parallel for their perspectives
+2. Query Gemini and Codex in parallel for their perspectives
 3. Evaluate confidence in all responses
 4. If confidence is LOW for any advisor, re-query with additional context (up to 2 iterations)
 5. Present final results with your synthesis
@@ -80,11 +80,6 @@ gemini -s --approval-mode default "Read the file at .second-opinion.md and follo
 codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
 ```
 
-**OpenCode+GLM:**
-```bash
-opencode -m opencode/glm-5 -p "Read the file at .second-opinion.md and follow the instructions within it."
-```
-
 ### Step 3: Evaluate Confidence
 
 After receiving responses, evaluate each for confidence level:
@@ -126,9 +121,6 @@ Format the responses for the user:
 
 ### Codex
 {codex_response}
-
-### GLM
-{glm_response}
 
 ### My Take
 {your brief synthesis - where they agree, disagree, and your recommendation}
