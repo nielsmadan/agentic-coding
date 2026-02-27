@@ -37,7 +37,7 @@ Available in `claude/skills/`:
 | `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |
 | `/test` | Test review and generation (--review, --generate) |
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
-| `/todo` | Capture a todo in Todoist (--prio 1-4) |
+| `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
 | `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |

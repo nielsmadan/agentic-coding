@@ -1,7 +1,7 @@
 ---
 name: todo
-description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports -c (complex), -i (interactive), and --prio (1-4, default 3).
-argument-hint: [-i] [-c] [--prio N] <description>
+description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports -c (complex), -i (interactive), --prio (1-4, default 3), and --list.
+argument-hint: [-i] [-c] [--prio N] [--list] <description>
 ---
 
 # Todo: $ARGUMENTS
@@ -14,6 +14,7 @@ argument-hint: [-i] [-c] [--prio N] <description>
 /todo --prio 1 fix login crash on iOS    # Create simple todo (priority 1)
 /todo -c redesign the settings screen    # Create complex todo with deep research
 /todo -ic redesign the settings screen   # Complex + interactive (can ask questions)
+/todo --list                             # List todos and pick one to tackle
 ```
 
 ## Parameters
@@ -23,6 +24,7 @@ argument-hint: [-i] [-c] [--prio N] <description>
 | `--prio` | `3` | Priority 1-4 (1 = highest, 4 = lowest). Maps directly to Todoist p1-p4. |
 | `-c` | off | Complex mode. Deep research: reads docs, source files, identifies affected areas. |
 | `-i` | off | Interactive mode. Allows asking clarifying questions via AskUserQuestion. |
+| `--list` | off | List all development todos for the current project sorted by priority and choose which to implement. |
 
 ## Interactive Mode
 
@@ -73,6 +75,7 @@ If the file doesn't exist or no match is found, ask the user which Todoist proje
 
 ### 0. Route
 
+If `--list` flag is present → go to **List Todos** workflow below.
 If $ARGUMENTS is empty or blank → go to **Pick Up Todo** workflow below.
 Otherwise → continue to step 1 (Create Todo).
 
@@ -150,12 +153,56 @@ When all tasks are complete and changes are verified:
 td task complete <task-id>
 ```
 
+## List Todos
+
+### 1. Resolve Project
+
+Run `git remote get-url origin` and match against the Project Mapping table.
+
+### 2. Fetch Tasks
+
+```bash
+td task list --project <name> --label development --json
+```
+
+Filter out any tasks with the `in-progress` label. Sort the remaining by:
+1. Priority (p1 first, then p2, p3, p4)
+2. Task ID ascending (oldest first)
+
+If no tasks are found, tell the user there are no todos.
+
+### 3. Display List
+
+Print all tasks as a numbered list showing priority and title for each:
+
+```
+1. [p1] Fix login crash on iOS
+2. [p2] Redesign settings screen
+3. [p3] Update onboarding copy
+4. [p3] Add dark mode toggle
+```
+
+### 4. Choose Task
+
+Use AskUserQuestion to let the user pick which task to work on. Present up to 4 top tasks as options (AskUserQuestion supports 2-4 options). If there are more than 4 tasks, the full list from step 3 gives context and the user can select "Other" to specify by number.
+
+### 5. Implement
+
+Once the user picks a task, continue with the **Pick Up Todo** workflow from step 2 onwards (Read and Present → Mark In Progress → Implement → Clean Up).
+
+---
+
 ## Examples
 
 **Pick up top priority task and implement it:**
 > /todo
 
 Fetches all development-labeled tasks for the current project, filters out in-progress items, and picks the highest-priority oldest task. Presents the task for confirmation, marks it in-progress, implements the change, and completes it in Todoist when done.
+
+**Browse todos and pick one to work on:**
+> /todo --list
+
+Fetches all development-labeled tasks for the current project, displays them sorted by priority, and asks which one to tackle. Once chosen, marks it in-progress, implements the change, and completes it in Todoist when done.
 
 **Create a rich task with deep context:**
 > /todo -c redesign the settings screen
