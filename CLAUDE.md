@@ -84,6 +84,14 @@ Never dismiss test failures, linting errors, or type errors as "pre-existing iss
 
 "Fix it" means the check passes. The only acceptable outcome is ALL checks green. If a failure is genuinely unrelated to your changes, fix it anyway (and note it was pre-existing).
 
+## Fix Escalation
+
+When fixing a bug or error, track how many fix attempts have failed (a failed attempt = you made a change, re-ran the check, and it still fails):
+- **After 2 failed fixes:** Automatically invoke `/second-opinion` to get external perspective before trying again.
+- **After 4 failed fixes:** Automatically invoke `/hard-fix` to switch to the structured escalation workflow.
+
+Do not keep trying the same approach. Each escalation tier forces a fresh perspective.
+
 ## Build & Check Workflow
 
 - After writing or creating any new file, run the project's formatter before running check-all or lint commands.
