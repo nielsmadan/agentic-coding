@@ -63,12 +63,13 @@ Do NOT use `gh api` when a dedicated subcommand exists.
 
 ## Verification Policy
 
-Never claim "best practice", "recommended", "accepted solution", or "community consensus" without a cited source. If you haven't verified something, say "I believe" or "this might work" - not "this is the way."
+Never claim "best practice", "recommended", "accepted solution", "community consensus", "known bug", "known issue", or "known limitation" without a cited source. If you haven't verified something, say "I believe" or "this might work" - not "this is the way."
 
 **Do NOT say:**
 - "This is the accepted approach" → without a source, you don't know this
 - "The community recommends" → find a citation or don't claim consensus
 - "This is best practice" → according to whom?
+- "Known bug" / "known issue" → known by whom? Link the issue or say "I suspect"
 
 When unsure, be explicit: "I think this will work, but I haven't verified it's the recommended approach."
 
