@@ -13,7 +13,6 @@ SYMLINKS=(
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
   "$SCRIPT_DIR/claude/settings.json:$HOME/.claude/settings.json"
   # Codex
-  "$SCRIPT_DIR/codex/config.toml:$HOME/.codex/config.toml"
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
   # Gemini
   "$SCRIPT_DIR/gemini/settings.json:$HOME/.gemini/settings.json"
@@ -69,6 +68,95 @@ create_symlink() {
   echo "✓  Linked: $dest -> $source"
 }
 
+install_codex_config() {
+  local source="$SCRIPT_DIR/codex/config.toml"
+  local dest="$HOME/.codex/config.toml"
+  local rendered
+
+  if [[ ! -f "$source" ]]; then
+    echo "⚠️  Codex config template does not exist: $source (skipping)"
+    return
+  fi
+
+  mkdir -p "$(dirname "$dest")"
+  rendered="$(sed "s|__PROJECT_ROOT__|$SCRIPT_DIR|g" "$source")"
+
+  if [[ -e "$dest" || -L "$dest" ]]; then
+    if [[ ! -L "$dest" && -f "$dest" ]] && diff -q "$dest" <(printf '%s\n' "$rendered") >/dev/null 2>&1; then
+      echo "✓  Codex config already up to date: $dest"
+      return
+    fi
+
+    echo ""
+    echo "File already exists: $dest"
+    if [[ -L "$dest" ]]; then
+      echo "   (symlink to: $(readlink "$dest"))"
+    fi
+    echo ""
+    read -p "Replace with generated Codex config for $SCRIPT_DIR? [y/n/q] " choice
+    case "$choice" in
+      y|Y)
+        rm -rf "$dest"
+        ;;
+      q|Q)
+        echo "Aborted."
+        exit 0
+        ;;
+      *)
+        echo "⏭️  Skipped: $dest"
+        return
+        ;;
+    esac
+  fi
+
+  printf '%s\n' "$rendered" > "$dest"
+  echo "✓  Wrote: $dest"
+}
+
+install_codex_skills() {
+  local source_dir="$SCRIPT_DIR/codex/skills"
+  local dest_dir="$HOME/.codex/skills"
+
+  if [[ ! -d "$source_dir" ]]; then
+    echo "⚠️  Codex skills directory does not exist: $source_dir (skipping)"
+    return
+  fi
+
+  mkdir -p "$dest_dir"
+
+  echo ""
+  echo "Installing Codex skills..."
+
+  for dest in "$dest_dir"/*; do
+    if [[ ! -L "$dest" ]]; then
+      continue
+    fi
+
+    local target
+    local name
+    target="$(readlink "$dest")"
+    name="$(basename "$dest")"
+
+    if [[ "$target" == "$source_dir/"* && ! -e "$source_dir/$name" ]]; then
+      rm -f "$dest"
+      echo "✓  Removed stale Codex skill link: $dest"
+    fi
+  done
+
+  for source in "$source_dir"/*; do
+    if [[ ! -e "$source" ]]; then
+      continue
+    fi
+
+    local name
+    local dest
+    name="$(basename "$source")"
+    dest="$dest_dir/$name"
+
+    create_symlink "$source" "$dest"
+  done
+}
+
 add_airc_to_zshrc() {
   local zshrc="$HOME/.zshrc"
   local source_line='[ -f ~/.airc ] && source ~/.airc'
@@ -107,6 +195,9 @@ for entry in "${SYMLINKS[@]}"; do
   dest="${entry##*:}"
   create_symlink "$source" "$dest"
 done
+
+install_codex_config
+install_codex_skills
 
 echo ""
 add_airc_to_zshrc

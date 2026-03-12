@@ -4,3 +4,10 @@
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 personality = "pragmatic"
+model = "gpt-5.4"
+
+[projects."__PROJECT_ROOT__"]
+trust_level = "trusted"
+
+[notice.model_migrations]
+"gpt-5.3-codex" = "gpt-5.4"
