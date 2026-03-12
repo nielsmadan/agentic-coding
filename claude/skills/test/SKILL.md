@@ -1,7 +1,7 @@
 ---
 name: test
-description: Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --all, or context-based. Use for test quality and creation.
-argument-hint: [--review | --generate <target>] [--staged | --all]
+description: "Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --all, or context-based. Use for test quality and creation."
+argument-hint: "[--review | --generate <target>] [--staged | --all]"
 ---
 
 # Test

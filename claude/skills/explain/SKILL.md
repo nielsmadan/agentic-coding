@@ -1,7 +1,7 @@
 ---
 name: explain
-description: Explain unfamiliar code in a project, grouped by concept. Use when the user wants to understand what code does, how it's structured, or learn the programming language. Supports --staged (staged files), --all (interactive file/dir selection), and --code (include language syntax explanations and alternatives).
-argument-hint: [--staged | --all] [--code]
+description: "Explain unfamiliar code in a project, grouped by concept. Use when the user wants to understand what code does, how it's structured, or learn the programming language. Supports --staged (staged files), --all (interactive file/dir selection), and --code (include language syntax explanations and alternatives)."
+argument-hint: "[--staged | --all] [--code]"
 ---
 
 # Explain
