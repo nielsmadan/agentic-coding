@@ -55,13 +55,13 @@ Each agent should output a list of issues. For each issue, include: what the pro
 - Identify code that may be stale or unused
 
 ### Agent 5: Comment Quality Review
-Invoke `/review-comments --staged --changed` to review comment quality in changed files.
+Invoke `review-comments --staged --changed` to review comment quality in changed files.
 - Identify "what" comments that should be "why" comments
 - Flag comments that could be replaced with better naming
 - Ensure comments add value, not noise
 
 ### Agent 6: Test Quality Review
-Invoke `/test --review --staged` to review test quality in changed test files.
+Invoke `test --review --staged` to review test quality in changed test files.
 - Check for missing edge cases and coverage gaps
 - Identify brittle or flaky test patterns
 - Flag over-mocking and testing implementation instead of behavior

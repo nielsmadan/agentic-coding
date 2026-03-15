@@ -25,7 +25,7 @@ Add targeted debug logging to trace execution flow and variable state.
 - Never stack untested changes
 
 **Circuit Breaker:**
-If 3 sequential attempts fail to isolate the issue, STOP. Document findings and escalate to `/hard-fix` for parallel investigation.
+If 3 sequential attempts fail to isolate the issue, STOP. Document findings and escalate to `hard-fix` for parallel investigation.
 
 ## Workflow
 

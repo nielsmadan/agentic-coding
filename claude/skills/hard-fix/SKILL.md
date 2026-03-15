@@ -74,31 +74,31 @@ Launch ALL of these simultaneously using the Task tool:
 
 | Agent | Skill/Tool | Focus |
 |-------|------------|-------|
-| **Research** | `/research-online` | External solutions, known issues, library bugs |
-| **Debug** | `/debug-log` | Add logging to trace the actual execution path |
-| **History** | `/review-history` | Git blame, recent changes, past issue logs |
+| **Research** | `research-online` | External solutions, known issues, library bugs |
+| **Debug** | `debug-log` | Add logging to trace the actual execution path |
+| **History** | `review-history` | Git blame, recent changes, past issue logs |
 | **Library Source** | Read library code | Undocumented behavior, actual implementation |
-| **Opinion 1** | `/second-opinion` | Fresh perspective on the problem |
+| **Opinion 1** | `second-opinion` | Fresh perspective on the problem |
 
 **Task prompts:**
 
 **Research agent:**
 ```
-/research-online {library_if_any} {error_or_symptom}
+research-online {library_if_any} {error_or_symptom}
 
 Focus on: known bugs, breaking changes, similar issues others faced
 ```
 
 **Debug agent:**
 ```
-/debug-log {problem_area}
+debug-log {problem_area}
 
 Add comprehensive logging to trace the exact execution path and state
 ```
 
 **History agent:**
 ```
-/review-history {affected_files_or_area}
+review-history {affected_files_or_area}
 
 Look for: recent changes, when it last worked, who touched it, past similar issues
 ```
@@ -136,7 +136,7 @@ Return findings about how the library actually works vs how we're using it.
 
 **Second opinion agent:**
 ```
-/second-opinion
+second-opinion
 
 Problem: {description}
 Tried: {list of attempted fixes}
@@ -171,7 +171,7 @@ The difference: superficial stops at symptoms, good traces to mechanism.
 
 ### Phase 4: Validate Theory
 
-Run `/second-opinion` with your synthesis and proposed fix. Check for blind spots.
+Run `second-opinion` with your synthesis and proposed fix. Check for blind spots.
 
 ### Phase 5: Present to User
 
@@ -236,7 +236,7 @@ History agent pinpoints a dependency bump that changed default concurrency behav
 ## Troubleshooting
 
 ### Parallel investigation agents do not converge on root cause
-**Solution:** Run `/second-opinion` with a consolidated summary of all agent findings and the conflicting theories. If agents still disagree, prioritize the evidence from the debug-log agent (actual runtime behavior) over static analysis, and test the most likely theory first.
+**Solution:** Run `second-opinion` with a consolidated summary of all agent findings and the conflicting theories. If agents still disagree, prioritize the evidence from the debug-log agent (actual runtime behavior) over static analysis, and test the most likely theory first.
 
 ### Root cause is in a third-party dependency
 **Solution:** Pin the dependency to the last known working version as an immediate fix, then file an issue upstream with reproduction steps. If a patch is needed sooner, fork the dependency or apply a local patch using `patch-package` (JS) or the equivalent for your ecosystem.

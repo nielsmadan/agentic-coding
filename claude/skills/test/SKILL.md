@@ -414,7 +414,7 @@ Reviews staged test files against the testing principles. Flags tests that mock 
 **Solution:** Verify the correct test framework was detected by checking the "Detected Test Patterns" output. If imports or setup are wrong, point `--generate` at an existing passing test file so the generator can match its patterns exactly.
 
 ### Cannot detect the project's test framework
-**Solution:** Ensure a framework config file exists (`jest.config.*`, `vitest.config.*`, `pytest.ini`, or `pyproject.toml` with pytest section). If the project uses a non-standard setup, run `/test --generate <target>` and specify the framework in your prompt.
+**Solution:** Ensure a framework config file exists (`jest.config.*`, `vitest.config.*`, `pytest.ini`, or `pyproject.toml` with pytest section). If the project uses a non-standard setup, run `test --generate <target>` and specify the framework in your prompt.
 
 ## Notes
 
