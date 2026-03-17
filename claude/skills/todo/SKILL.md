@@ -59,7 +59,7 @@ Use `--json` for parseable output when you need to process results.
 
 ## Project Mapping
 
-Resolve the Todoist project by running `git remote get-url origin`, then read `claude/skills/todo/projects.local.md` and match the origin against the table there. This file is gitignored — create it locally with your own mappings:
+Resolve the Todoist project by running `git remote get-url origin`, then read `~/.claude/skills/todo/projects.local.md` and match the origin against the table there. This file is gitignored — create it locally with your own mappings:
 
 ```markdown
 | Git origin contains | Todoist project ID | Project name |
