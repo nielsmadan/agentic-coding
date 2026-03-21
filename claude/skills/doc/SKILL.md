@@ -151,45 +151,7 @@ Create documentation for code following the principles above.
 
 ### What to Document
 
-For a **module/service:**
-```markdown
-# {Module Name}
-
-## Purpose
-{What this module does and why it exists}
-
-## Usage
-{How to use it - code examples from the project}
-
-## API
-{Key functions/methods with signatures}
-
-## Gotchas
-{Non-obvious behavior, common mistakes}
-
-## Related
-{Links to related docs}
-```
-
-For a **feature:**
-```markdown
-# {Feature Name}
-
-## Overview
-{What the feature does for users}
-
-## Architecture
-{How it's implemented - key components}
-
-## Files
-{Key files involved with brief descriptions}
-
-## Configuration
-{Any config options}
-
-## Gotchas
-{Edge cases, limitations, common issues}
-```
+For document templates, see `references/generate-templates.md`.
 
 For **staged changes:**
 1. Identify what changed (new feature, modified behavior, etc.)

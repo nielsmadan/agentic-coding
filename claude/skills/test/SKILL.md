@@ -25,71 +25,23 @@ Both review and generate modes follow these principles. Review checks conformanc
 
 ### 1. Test Behavior, Not Implementation
 
-```javascript
-// BAD: Breaks on any refactor
-expect(component.state.internalFlag).toBe(true);
-expect(service._privateMethod).toHaveBeenCalled();
-
-// GOOD: Test observable behavior
-expect(screen.getByText('Welcome')).toBeVisible();
-expect(result.status).toBe('success');
-```
+Assert observable outputs and side effects — not internal state or private methods.
 
 ### 2. Mock Only External Boundaries
 
-```javascript
-// BAD: Testing mocks, not real code
-jest.mock('./database');
-jest.mock('./auth');
-jest.mock('./validator');
-jest.mock('./logger');
-// What's actually being tested?
-
-// GOOD: Mock only external boundaries
-jest.mock('./externalPaymentApi');
-```
+Mock third-party services and I/O; keep internal modules real so the test exercises actual code.
 
 ### 3. Meaningful Assertions
 
-```javascript
-// BAD: Test always passes
-test('user login', async () => {
-  await loginUser('test@example.com');
-  // No expect() - what are we testing?
-});
-
-// GOOD: Verify outcomes
-test('user login', async () => {
-  const result = await loginUser('test@example.com');
-  expect(result.token).toBeDefined();
-  expect(result.user.email).toBe('test@example.com');
-});
-```
+Every test must have at least one `expect` that can fail; a test with no assertions proves nothing.
 
 ### 4. No Brittle Timing
 
-```javascript
-// BAD: Flaky - depends on timing
-await doAsyncThing();
-await new Promise(r => setTimeout(r, 100));
-expect(result).toBe('done');
-
-// GOOD: Wait for actual condition
-await waitFor(() => expect(result).toBe('done'));
-```
+Never use `setTimeout`/`sleep` to wait for async work; wait for the actual condition instead.
 
 ### 5. Independent Tests
 
-```javascript
-// BAD: Tests depend on execution order
-let sharedState;
-test('first', () => { sharedState = setup(); });
-test('second', () => { expect(sharedState.value).toBe(1); }); // Fails if run alone
-
-// GOOD: Each test sets up its own state
-test('first', () => { const state = setup(); /* ... */ });
-test('second', () => { const state = setup(); expect(state.value).toBe(1); });
-```
+Each test must set up its own state and not rely on execution order or shared mutable state.
 
 ### 6. Cover Edge Cases
 
@@ -102,28 +54,13 @@ test('second', () => { const state = setup(); expect(state.value).toBe(1); });
 
 ### 7. Focused Tests
 
-```javascript
-// BAD: Tests too much, hard to debug failures
-test('user flow', async () => {
-  // 50 lines testing signup, login, profile, settings, logout
-});
-
-// GOOD: One concern per test
-test('signup creates user', ...);
-test('login sets session', ...);
-```
+One concern per test — avoid multi-step flows that test several behaviors in a single `it` block.
 
 ### 8. Named Constants Over Magic Values
 
-```javascript
-// BAD: What is 42? Why 'abc123'?
-expect(calculate(42)).toBe(84);
-expect(validate('abc123')).toBe(true);
+Use named constants for test inputs and expected values so the intent is clear at a glance.
 
-// GOOD: Named constants explain intent
-const VALID_USER_ID = 'user_12345';
-const DOUBLED_VALUE = INPUT * 2;
-```
+For BAD/GOOD code examples of each principle, see `references/principles-examples.md`.
 
 ---
 
@@ -151,34 +88,7 @@ Default mode. Checks tests against the principles above.
 
 ### Checklist
 
-**Principles:**
-- [ ] Tests verify behavior, not implementation
-- [ ] Mocks limited to external boundaries
-- [ ] All tests have meaningful assertions
-- [ ] No brittle timing (setTimeout, sleep)
-- [ ] Tests are independent (no shared state)
-- [ ] Edge cases covered
-- [ ] Tests are focused (one concern each)
-
-**Flaky Patterns:**
-- [ ] No unseeded `Math.random()`
-- [ ] No unmocked `new Date()`
-- [ ] No network calls to real services
-- [ ] No file system dependencies without cleanup
-- [ ] No environment variable assumptions
-
-**Completeness (for code being reviewed):**
-- [ ] All public functions/methods have tests
-- [ ] All exported components have tests
-- [ ] Error paths are tested, not just happy paths
-- [ ] Edge cases identified in code have corresponding tests
-
-**Pattern Conformance (for --staged/new tests):**
-- [ ] File naming matches project convention
-- [ ] Test organization matches existing tests (suite grouping and test naming conventions per framework — see Terminology Mapping)
-- [ ] Setup/teardown patterns match existing tests (per-test and per-suite setup per framework)
-- [ ] Mocking approach consistent with project (framework-specific mocking or dependency injection)
-- [ ] Assertion style matches (expect vs assert, matchers used)
+For the review checklist, see `references/generate-templates.md`.
 
 ### Coverage Check
 
@@ -267,35 +177,7 @@ Only claim the test is valid if it fails without the fix and passes with it. Thi
 4. **Check existing tests** - avoid duplicates, extend if needed
 5. **Generate tests** following both principles AND project patterns
 
-### Framework Detection
-
-Check for:
-- `jest.config.*`, `package.json` with jest → Jest
-- `vitest.config.*` → Vitest
-- `pytest.ini`, `pyproject.toml` with pytest → pytest
-- `*_test.go` files → Go testing
-- `*_test.dart` files → Flutter test
-- `.rspec`, `Gemfile` with rspec → RSpec
-- `Cargo.toml` with `[dev-dependencies]` → Rust `#[test]`
-- `*.test.tsx` or `*.spec.tsx` with `@testing-library/react` in package.json → React Testing Library
-- `phpunit.xml` → PHPUnit
-
-### Framework Terminology Mapping
-
-When reviewing or generating tests, translate concepts to the detected framework:
-
-| Concept | Jest/Vitest | pytest | Go testing | Flutter test |
-|---------|-------------|--------|------------|--------------|
-| Test suite grouping | `describe()` | class or module | `func Test...` prefix | `group()` |
-| Individual test | `it()` / `test()` | `def test_...()` | `func Test...(t *testing.T)` | `test()` / `testWidgets()` |
-| Setup (per-test) | `beforeEach()` | `setup_method` / fixture | `t.Cleanup()` or helper | `setUp()` |
-| Setup (per-suite) | `beforeAll()` | `setUpClass` / session fixture | `TestMain()` | `setUpAll()` |
-| Mocking | `jest.mock()` | `unittest.mock.patch` | interface + stub struct | `mockito` package |
-| Assertion | `expect(x).toBe(y)` | `assert x == y` | `if got != want { t.Errorf() }` | `expect(x, equals(y))` |
-| Async test | `async/await` | `@pytest.mark.asyncio` | `t.Run` with goroutines | `async` test + `pump()` |
-| Skip test | `it.skip()` | `@pytest.mark.skip` | `t.Skip()` | `skip()` |
-
-Use this table to adapt all examples and checklists below. Code examples in this skill use JavaScript/Jest syntax as a reference; translate idioms to the detected framework.
+For framework detection rules and cross-framework terminology, see `references/framework-mapping.md`.
 
 ### Test File Placement
 
@@ -307,72 +189,7 @@ Follow project conventions:
 
 ### What to Generate
 
-> The templates below use Jest syntax for illustration. Adapt structure and syntax to the detected framework using the Terminology Mapping table above. For example, in pytest use `def test_returns_expected_result():` instead of `it('returns expected result', ...)`.
-
-**For a function:**
-```javascript
-describe('{functionName}', () => {
-  it('returns expected result for valid input', () => {
-    // Happy path
-  });
-
-  it('handles empty input', () => {
-    // Edge case
-  });
-
-  it('throws on invalid input', () => {
-    // Error handling
-  });
-
-  it('handles boundary value', () => {
-    // Edge case: 0, MAX, etc.
-  });
-});
-```
-
-**For a component:**
-```javascript
-describe('{ComponentName}', () => {
-  it('renders with required props', () => {
-    // Happy path
-  });
-
-  it('responds to user interaction', () => {
-    // User events
-  });
-
-  it('displays error state', () => {
-    // Error handling
-  });
-
-  it('handles loading state', () => {
-    // Async states
-  });
-});
-```
-
-**For a service/API:**
-```javascript
-describe('{ServiceName}', () => {
-  it('returns data on success', () => {
-    // Happy path
-  });
-
-  it('handles errors gracefully', () => {
-    // Error handling
-  });
-
-  it('validates input', () => {
-    // Input validation
-  });
-});
-```
-
-**For staged changes:**
-1. Identify what changed (new function, modified behavior, etc.)
-2. Find or create relevant test file
-3. Generate tests for the changes
-4. Ensure edge cases are covered
+For generate templates (function, component, service, staged changes), see `references/generate-templates.md`.
 
 ### Output
 

@@ -84,94 +84,13 @@ Launch ALL of these simultaneously using the Task tool:
 | **Library Source** | Read library code | Undocumented behavior, actual implementation |
 | **Opinion 1** | `second-opinion` | Fresh perspective on the problem |
 
-**Task prompts:**
-
-**Research agent:**
-```
-research-online {library_if_any} {error_or_symptom}
-
-Focus on: known bugs, breaking changes, similar issues others faced
-```
-
-**Debug agent:**
-```
-debug-log {problem_area}
-
-Add comprehensive logging to trace the exact execution path and state
-```
-
-**History agent:**
-```
-review-history {affected_files_or_area}
-
-Look for: recent changes, when it last worked, who touched it, past similar issues
-```
-
-**Library source agent:**
-```
-Subagent type: general-purpose
-Prompt:
----
-Investigate the source code of libraries involved in this issue:
-
-Problem: {description}
-Libraries involved: {library_names}
-
-1. Find the library source code:
-   - node_modules/{library}/ for JS/TS
-   - Look for .dart files in pub cache for Flutter
-   - site-packages/{library}/ for Python
-   - vendor/ or go modules for Go
-
-2. Locate the relevant functions/classes being used
-
-3. Read the actual implementation and look for:
-   - Undocumented behavior or edge cases
-   - Default values that might cause issues
-   - Error handling that swallows errors
-   - Race conditions or timing assumptions
-   - Version-specific behavior
-
-4. Check if our usage matches what the library expects
-
-Return findings about how the library actually works vs how we're using it.
----
-```
-
-**Second opinion agent:**
-```
-second-opinion
-
-Problem: {description}
-Tried: {list of attempted fixes}
-Symptoms: {what's happening}
-
-What are we missing?
-```
+For detailed agent prompt templates, see `references/templates.md`.
 
 ### Phase 3: Synthesize Findings
 
 Wait for all agents. Combine into a root cause theory with evidence.
 
-**BAD synthesis (superficial):**
-```
-Root Cause: The API call is failing.
-Evidence: Got a 500 error in the logs.
-Fix: Add a try-catch.
-```
-
-**GOOD synthesis (investigative):**
-```
-Root Cause: Race condition between auth token refresh and API call.
-Evidence:
-- Debug logs: Token refresh starts at T+0, API call at T+50ms, refresh completes T+200ms
-- History: Started after PR #234 moved token refresh to background
-- Library source: axios doesn't queue requests during refresh by default
-- Research: Known issue axios#4193, recommended fix is axios-auth-refresh
-Fix: Add request queuing during token refresh using axios-auth-refresh interceptor.
-```
-
-The difference: superficial stops at symptoms, good traces to mechanism.
+The synthesis must trace to mechanism, not stop at symptoms — good synthesis names the root cause with corroborating evidence from multiple agents (debug timing, git history, library source, research). See `references/templates.md` for BAD/GOOD synthesis examples.
 
 ### Phase 4: Validate Theory
 
@@ -179,19 +98,7 @@ Run `second-opinion` with your synthesis and proposed fix. Check for blind spots
 
 ### Phase 5: Present to User
 
-```markdown
-## Hard Fix Analysis: {problem}
-
-**Root Cause** (Confidence: High/Medium/Low): {mechanism, not symptom}
-
-**Evidence**: {one key finding per source}
-
-**Recommended Fix**: {specific steps}
-
-**Alternatives**: {if main fix fails}
-
-**Validation**: {how to verify}
-```
+For the presentation template, see `references/templates.md`.
 
 Ask: "Should I proceed with the recommended fix?"
 
@@ -205,25 +112,9 @@ Ask: "Should I proceed with the recommended fix?"
 
 ### Phase 7: Log for Future Reference (after user confirms fix)
 
-**Only after user confirms fix works**, write to `docs/log/YYYY-MM-DD-{Issue}.md`:
+**Only after user confirms fix works**, write to `docs/log/YYYY-MM-DD-{Issue}.md`.
 
-```markdown
-# {Issue Title}
-
-**Date:** {date} | **Area:** {files/components}
-
-## Problem & Symptoms
-{what was happening}
-
-## Root Cause
-{what was actually wrong - the mechanism}
-
-## Solution
-{what fixed it, with code if relevant}
-
-## Prevention
-{how to avoid in future}
-```
+For the log template, see `references/templates.md`.
 
 ## Examples
 
