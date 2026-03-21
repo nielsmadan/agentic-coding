@@ -46,6 +46,10 @@ Available in `claude/skills/`:
 | `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
 | `/skill-creator` | Guide for creating skills |
 
+## Secrets Policy
+
+**Never commit API tokens, secrets, or credentials to any file in this repo.** This repo is version-controlled and shared. Secrets must stay in the user's environment (e.g., shell env vars, `.env` files in `.gitignore`, or OS keychain). MCP server configs use `${ENV_VAR}` interpolation for auth — never hardcode tokens.
+
 ## Git Policy
 
 **Read-only.** Do not run git commands that modify state (add, commit, push, etc.) - they will fail. Ask the user to run these manually.

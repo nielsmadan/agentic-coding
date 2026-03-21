@@ -199,6 +199,38 @@ done
 install_codex_config
 install_codex_skills
 
+install_claude_mcp_servers() {
+  echo ""
+  echo "Installing Claude MCP servers..."
+
+  if ! command -v claude &>/dev/null; then
+    echo "⚠️  Claude CLI not found, skipping MCP server setup"
+    return
+  fi
+
+  # Todoist MCP (requires TODOIST_API_TOKEN env var at runtime)
+  local existing
+  existing="$(claude mcp list 2>/dev/null)"
+  if echo "$existing" | grep -q "todoist"; then
+    echo "✓  Todoist MCP server already configured"
+  else
+    echo ""
+    read -p "Add Todoist MCP server? (requires TODOIST_API_TOKEN env var) [y/n] " choice
+    case "$choice" in
+      y|Y)
+        claude mcp add --transport http --scope user todoist https://ai.todoist.net/mcp \
+          --header 'Authorization: Bearer ${TODOIST_API_TOKEN}'
+        echo "✓  Added Todoist MCP server"
+        ;;
+      *)
+        echo "⏭️  Skipped Todoist MCP server"
+        ;;
+    esac
+  fi
+}
+
+install_claude_mcp_servers
+
 echo ""
 add_airc_to_zshrc
 

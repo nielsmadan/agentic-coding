@@ -33,29 +33,39 @@ argument-hint: [-i] [-c] [--prio N] [--list] <description>
 
 ## Todoist Integration
 
-Use the `td` CLI (official Todoist CLI). Key commands:
+Use the Todoist MCP tools (prefixed `mcp__todoist__`). Key tools:
 
 **Create task:**
-```bash
-td task add "Task title" --project <name> --priority p3 --labels development --description "Description here"
 ```
+mcp__todoist__add_tasks
+```
+Parameters: `tasks` array with objects containing `content` (title), `description`, `project_id`, `priority` (1-4), `labels` (array of strings).
 
-**List tasks:**
-```bash
-td task list --project <name> --label development --json
+**Find tasks:**
 ```
+mcp__todoist__find_tasks
+```
+Parameters: `filter` (Todoist filter string, e.g. `#ProjectName & @development`).
 
-**Update task (e.g., add in-progress label):**
-```bash
-td task update <task-id> --labels development,in-progress
+**Update task:**
 ```
+mcp__todoist__update_tasks
+```
+Parameters: `tasks` array with objects containing `task_id`, `labels`, etc.
 
 **Complete task:**
-```bash
-td task complete <task-id>
 ```
+mcp__todoist__complete_tasks
+```
+Parameters: `task_ids` array of task IDs.
 
-Use `--json` for parseable output when you need to process results.
+**Find projects:**
+```
+mcp__todoist__find_projects
+```
+Use to look up project IDs by name.
+
+Use these MCP tools directly — do not shell out to `td` CLI.
 
 ## Project Mapping
 
@@ -67,7 +77,7 @@ Resolve the Todoist project by running `git remote get-url origin`, then read `~
 | `your-org/your-repo` | `your-todoist-project-id` | project-name |
 ```
 
-Use the **project name** (not the ID) with `td` commands via `--project <name>`.
+Use the **project name** to find the project via `mcp__todoist__find_projects`, then use the returned **project ID** when creating or filtering tasks.
 
 If the file doesn't exist or no match is found, ask the user which Todoist project to use.
 
@@ -99,13 +109,16 @@ Extract `-i`, `-c`, `--prio` value (default 3), and the todo description from $A
 
 ### 3. Resolve Project
 
-Run `git remote get-url origin` and match against the Project Mapping table above.
+Run `git remote get-url origin` and match against the Project Mapping table above. Use `mcp__todoist__find_projects` to get the project ID.
 
 ### 4. Create Task
 
-```bash
-td task add "Task title" --project <name> --priority p<N> --labels development --description "Research notes"
-```
+Use `mcp__todoist__add_tasks` with:
+- `content`: Task title
+- `description`: Research notes
+- `project_id`: From step 3
+- `priority`: From parsed `--prio` value
+- `labels`: `["development"]`
 
 ### 5. Confirm
 
@@ -117,11 +130,7 @@ Print a one-liner: the task title and priority level.
 
 ### 1. Find Top Todo
 
-Resolve the project name from the Project Mapping table. Fetch tasks:
-
-```bash
-td task list --project <name> --label development --json
-```
+Resolve the project name from the Project Mapping table. Fetch tasks using `mcp__todoist__find_tasks` with a filter like `#ProjectName & @development`.
 
 From the results, filter out any tasks with the `in-progress` label. Sort the remaining by:
 1. Priority (p1 first, then p2, p3, p4)
@@ -135,9 +144,7 @@ Show the task title and description (if any). Print a short summary of what you'
 
 ### 3. Mark In Progress
 
-```bash
-td task update <task-id> --labels development,in-progress
-```
+Use `mcp__todoist__update_tasks` to set labels to `["development", "in-progress"]`.
 
 ### 4. Implement
 
@@ -149,9 +156,7 @@ When creating implementation tasks (TaskCreate), always include a final task: **
 
 When all tasks are complete and changes are verified:
 
-```bash
-td task complete <task-id>
-```
+Use `mcp__todoist__complete_tasks` with the task ID.
 
 ## List Todos
 
@@ -161,9 +166,7 @@ Run `git remote get-url origin` and match against the Project Mapping table.
 
 ### 2. Fetch Tasks
 
-```bash
-td task list --project <name> --label development --json
-```
+Use `mcp__todoist__find_tasks` with a filter like `#ProjectName & @development`.
 
 Filter out any tasks with the `in-progress` label. Sort the remaining by:
 1. Priority (p1 first, then p2, p3, p4)
@@ -211,8 +214,8 @@ Reads internal docs and relevant source files to understand the current settings
 
 ## Troubleshooting
 
-### td command not found
-**Solution:** Install the Todoist CLI: `npm install -g @doist/todoist-cli`, then authenticate with `td auth login`.
+### Todoist MCP server not connected
+**Solution:** Check `/mcp` in Claude Code. Ensure `TODOIST_API_TOKEN` is exported in your shell environment. Get your API token from Todoist Settings > Integrations > Developer > API token.
 
 ### Cannot resolve project name to Todoist project
 **Solution:** Check that the git remote origin URL matches an entry in the Project Mapping table. If the repository is not mapped, add a new row to `claude/skills/todo/projects.local.md`, or use the `-i` flag so the skill can ask you which project to use.
