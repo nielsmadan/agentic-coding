@@ -8,6 +8,10 @@ argument-hint: <component or page description>
 
 Build distinctive, production-grade frontend interfaces that avoid generic AI aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 
+## Gotchas
+- Adding `import { motion } from 'motion/react'` without checking the dependency is installed will break the build. Verify the package exists in `package.json` before using it.
+- Google Fonts CDN calls create third-party network requests that may be blocked by enterprise CSP policies or raise GDPR concerns. Always include local font fallbacks.
+
 ## Instructions
 
 ### Step 1: Understand Requirements

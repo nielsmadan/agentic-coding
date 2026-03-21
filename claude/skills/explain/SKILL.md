@@ -27,6 +27,10 @@ Explain code grouped by logical concepts rather than file-by-file.
 | `--all` | List source dirs/files, let user pick which to explain |
 | `--code` | Include language syntax explanations, idioms, and alternatives |
 
+## Gotchas
+- Output writes to `docs/explain/` and overwrites existing content. Any hand-written additions to previously generated files will be silently destroyed on re-run.
+- Files over 2000 lines are summarized from only the first 50 lines — important logic deep in the file (e.g., a state machine in the second half) will be missed.
+
 ## Workflow
 
 ### 1. Determine Scope

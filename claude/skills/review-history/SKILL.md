@@ -16,6 +16,10 @@ Investigate how code evolved over time to understand current behavior or find re
 /review-history UserProfile component
 ```
 
+## Gotchas
+- `git log -S` finds commits where the string was added OR removed. A commit that deleted a function surfaces as equally relevant to the one that added it — verify the direction of change.
+- Squash merges erase commit-level traceability. `git reflog` only works locally and expires — if another contributor squashed and force-pushed, the original commits are unrecoverable.
+
 ## Workflow
 
 ### Step 1: Identify Target Files

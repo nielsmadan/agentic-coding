@@ -15,6 +15,10 @@ Resolve git conflicts from any operation with proper continuation workflow.
 /resolve-conflicts path/to/file # Focus on specific file
 ```
 
+## Gotchas
+- During rebase, ours/theirs semantics are INVERTED. "Ours" is the branch being rebased onto (the target), not your working branch. This causes wrong-direction resolutions if you forget.
+- Lock file conflicts (package-lock.json, yarn.lock, Podfile.lock) must NEVER be manually resolved. Delete the lock file and regenerate it — manual merging produces corrupt files.
+
 ## Workflow
 
 ### Step 1: Detect Operation Type

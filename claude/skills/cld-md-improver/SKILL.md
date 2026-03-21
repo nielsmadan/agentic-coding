@@ -7,6 +7,10 @@ description: Audit and improve CLAUDE.md files in repositories. Use when user as
 
 Audit, evaluate, and improve CLAUDE.md files to ensure Claude Code has optimal project context. Can also capture session learnings into CLAUDE.md.
 
+## Gotchas
+- In this repo, `~/.claude/` is symlinked — changes to CLAUDE.md here affect all projects. The skill could propose changes to a committed, shared file without warning about cross-project impact.
+- The cross-referencing step ("check if referenced files exist, if commands would work") has no specific checks defined. It can be done superficially, leading to a high quality score that misses stale paths.
+
 ## Instructions
 
 ### Step 1: Discovery

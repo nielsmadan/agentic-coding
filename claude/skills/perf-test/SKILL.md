@@ -18,6 +18,10 @@ Set up, run, and analyze performance tests with an iterative improvement cycle.
 /perf-test                                # Ask what to test
 ```
 
+## Gotchas
+- First runs include JIT/cold-start overhead. Always configure warmup passes in the proposal — without them, baseline measurements are inflated and improvement percentages are misleading.
+- Before/after comparisons are invalid if run on different machines, different concurrency levels, or with different iteration counts. Lock test configuration between runs.
+
 ## Workflow
 
 ### Phase 1: Understanding

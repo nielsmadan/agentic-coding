@@ -17,6 +17,10 @@ Scan recent Claude Code session transcripts for recurring failure patterns and g
 /review-logs --days 30 --verbose
 ```
 
+## Gotchas
+- The `--project` filter is case-sensitive and must exactly match the directory name. `--project MyApp` vs `my-app` gives zero results with no indication of the mismatch.
+- In repos with read-only git policies, every blocked `git add`/`git commit` appears as a failure, dominating results and obscuring real problems. Filter known-policy denials from the output.
+
 ## Workflow
 
 ### Step 1: Parse Arguments

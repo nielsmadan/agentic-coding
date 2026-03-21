@@ -16,6 +16,10 @@ You are tasked with upgrading a React Native application to the version specifie
 /rn-upgrade          # upgrades to latest stable
 ```
 
+## Gotchas
+- The rn-diff-purge diff reflects a pristine RN template only. Custom native code (modified `MainApplication.kt`, `AppDelegate.swift`) may be silently overwritten because it's not in the diff.
+- Multi-version jumps (e.g., 0.73 → 0.76) require building and testing at each intermediate version. A breakage at 0.74 that is masked until 0.76 is much harder to diagnose.
+
 ## Instructions
 
 1. **Determine versions:**

@@ -28,6 +28,10 @@ If 3 sequential fix attempts have failed for the same issue:
 3. This signals a systemic/architectural issue, not a localized bug
 4. Recommend architectural review rather than continuing to patch
 
+## Gotchas
+- Phase 0 doc search uses `2>/dev/null` on `docs/log/` — if the directory doesn't exist, the search silently returns nothing and gives false confidence there are no prior known issues.
+- Phase 7 logging requires user confirmation that the fix works. If the session ends before confirmation, no log is written and the institutional knowledge loop breaks.
+
 ## Workflow
 
 ### Phase 0: Pre-Check Internal Documentation

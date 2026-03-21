@@ -29,6 +29,10 @@ Security audit for common vulnerabilities and unsafe patterns.
 - "This is just a prototype" -- Prototypes become production code
 - "I already checked for the obvious issues" -- The non-obvious ones are the dangerous ones
 
+## Gotchas
+- Dependency audit commands (`pip-audit`, `safety check`, `bundle audit`, `govulncheck`) must be installed separately. If missing, they silently produce no output rather than erroring.
+- `--staged` reviews the full file content, not just the diff. Pre-existing vulnerabilities in the file are flagged even if the staged change is unrelated.
+
 ## Workflow
 
 1. **Determine scope** based on flags (see Scope table above)

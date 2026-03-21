@@ -16,6 +16,10 @@ Upgrade Flutter SDK and all dependencies to the version specified in $ARGUMENTS 
 /flutter-upgrade          # upgrades to latest stable
 ```
 
+## Gotchas
+- `dart fix --apply` (Step 6) runs AFTER quality gates (Step 5). If it changes code, quality gates need re-running — but no re-run step exists in the workflow. Re-run them manually.
+- `flutter pub upgrade --major-versions` upgrades all packages at once. If multiple break simultaneously, isolating the cause is very difficult. Consider upgrading high-risk packages individually.
+
 ## Instructions
 
 1. **Pre-upgrade checks:**

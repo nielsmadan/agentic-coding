@@ -72,6 +72,10 @@ Both review and generate modes follow these principles. Review checks conformanc
 
 ---
 
+## Gotchas
+- `--generate --staged` documents uncommitted code that may change in review. If the code is revised but generated docs are committed alongside, they immediately drift.
+- `--all` scope includes CLAUDE.md — the skill may propose edits to the project instructions file that governs its own behavior.
+
 ## Review Mode (`--review`)
 
 Default mode. Checks documentation against the principles above.

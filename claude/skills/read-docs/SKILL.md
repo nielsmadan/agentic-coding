@@ -35,6 +35,10 @@ In order of priority:
 3. `README.md` - Project overview
 4. `*.md` in project root - Other documentation
 
+## Gotchas
+- The search cap of 5 files means relevant docs can be silently skipped. If the most relevant doc ranks 6th, it will be listed but never read.
+- Trust code over docs when they conflict — docs may describe an intended design that was never implemented or was later changed.
+
 ## Workflow
 
 ### With keywords:

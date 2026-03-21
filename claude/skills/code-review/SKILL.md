@@ -15,6 +15,10 @@ Review the code related to: **$ARGUMENTS**
 /code-review --multi <target>   # Also get reviews from Gemini and Codex
 ```
 
+## Gotchas
+- Sub-agents 5 and 6 invoke `review-comments` and `test --review --staged` — if no files are staged, they return nothing and the review silently has empty agent results.
+- The 80-point confidence threshold silently drops findings. A legitimate 75/100 security issue is filtered out with no trace.
+
 ## Step 1: Locate and Read Project Guidelines
 First, find and read any CLAUDE.md files in the repository root and relevant directories to understand project-specific conventions and rules.
 

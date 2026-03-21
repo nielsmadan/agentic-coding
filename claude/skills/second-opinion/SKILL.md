@@ -26,6 +26,10 @@ Get input from Gemini and Codex on the current problem or question. By default, 
 | `--timeout` | `300` | Timeout per advisor in seconds |
 | `--words` | `500` | Max words per advisor response |
 
+## Gotchas
+- `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
+- Both `gemini` and `codex` CLI tools must be installed and on PATH. If one is missing, the command fails silently and that advisor's input is simply absent from the synthesis.
+
 ## How It Works
 
 ### Default Flow (Iterative)

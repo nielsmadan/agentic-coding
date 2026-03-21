@@ -21,6 +21,10 @@ Each theme includes:
 /theme-factory create a luxury theme  # Generate a custom theme
 ```
 
+## Gotchas
+- Theme arguments in `$ARGUMENTS` skip the user selection step and apply directly — no confirmation. Only the interactive flow (no arguments) shows the showcase and waits for selection.
+- Accessibility contrast requirements (4.5:1 body, 3:1 headings) are stated as a goal but never verified. Some preset themes may have insufficient contrast for certain artifact types.
+
 ## Instructions
 
 ### Step 1: Understand Context

@@ -24,6 +24,10 @@ Review code comments for quality, then offer to fix issues found.
 /review-comments --fix        # review and auto-fix
 ```
 
+## Gotchas
+- Framework directives (`// @ts-ignore`, `// eslint-disable`, `// noinspection`) look like "what" comments but are functional. Removing them silently breaks linting or type checking.
+- `--staged` on a clean working tree (everything already committed) reviews nothing and reports "No files to review" — which looks like a passing review. Use `--all` after committing.
+
 ## Workflow
 
 ### Step 1: Parse Flags

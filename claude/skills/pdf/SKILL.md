@@ -6,6 +6,11 @@ argument-hint: <pdf file or operation>
 
 # PDF Processing
 
+## Gotchas
+- Never use Unicode subscript/superscript characters (₁, ², etc.) in ReportLab PDFs. Built-in fonts don't include these glyphs, rendering them as solid black boxes.
+- OCR requires the `tesseract` system binary, not just `pip install pytesseract`. On macOS: `brew install tesseract`.
+- Watermark PDFs must have transparent backgrounds. `merge_page()` composites content — a watermark with a white background will cover the document.
+
 ## Instructions
 
 ### Step 1: Identify the Operation

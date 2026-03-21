@@ -122,6 +122,10 @@ Result: ...
 
 **Size limit:** Keep SKILL.md under ~5,000 words. If approaching this limit, move reference material to `references/` and link to it. See `references/patterns.md` for progressive disclosure patterns.
 
+## Gotchas
+- "When to use" information in the skill body has ZERO effect on triggering. Only the frontmatter `description` field is scanned for trigger matching — put all trigger phrases there.
+- XML angle brackets (`<`, `>`) in frontmatter silently break skill loading with no error message. Use backticks or natural language instead of `<feature>` in descriptions.
+
 ## Creation Process
 
 ### Step 1: Understand with Concrete Examples

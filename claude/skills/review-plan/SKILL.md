@@ -15,6 +15,10 @@ Comprehensive review of implementation plans using parallel specialized agents.
 /review-plan path/to/plan.md          # Review specific plan file
 ```
 
+## Gotchas
+- The External Opinions agent depends on `gemini` and `codex` CLI tools being installed and on PATH. If they're missing, that section of the synthesis is silently blank.
+- Vague plans get only generic feedback and soft warnings, giving a false sense of validation. Plans need implementation-level specifics (file paths, function names, data flow) to get useful review.
+
 ## Workflow
 
 ### Step 1: Extract Plan and Check Internal Docs

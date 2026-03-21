@@ -7,6 +7,10 @@ description: Audit and optimize web pages for SEO. Use when user asks to "optimi
 
 Audit a web page against current SEO best practices (2025-2026) and generate missing or improved elements.
 
+## Gotchas
+- On SPAs, SSG sites (Next.js, Gatsby), or template-driven systems, the HTML file may be a build artifact. Fixes applied to generated output are lost on the next build — find the source template instead.
+- Adding meta tags without checking for existing ones creates duplicates. Most parsers use the first match, so the old (wrong) tag wins. Check for existing tags before adding new ones.
+
 ## Instructions
 
 ### Step 1: Identify the Target

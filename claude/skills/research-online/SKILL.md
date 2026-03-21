@@ -18,6 +18,10 @@ Research a programming topic from multiple angles using parallel sub-agents, wit
 /research-online Redux vs Zustand for large app
 ```
 
+## Gotchas
+- Context7 docs may lag behind a recent major release. The indexed version could be outdated — check which version is documented before citing it as authoritative.
+- "Prefer recent, then higher authority" can be wrong: an authoritative maintainer comment from 18 months ago may be more correct than a popular blog post from last month. Weigh authority first for stable libraries.
+
 ## Workflow
 
 ### Step 1: Parse Input

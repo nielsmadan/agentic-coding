@@ -24,6 +24,10 @@ Performance analysis for common bottlenecks and inefficiencies.
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
+## Gotchas
+- Default scope (no flag) uses conversation context, which may be stale from an earlier part of the session. The review silently targets the wrong files if context has shifted.
+- Blindly adding `useMemo`/`useCallback` to fix re-render warnings can worsen performance on simple components — memoization has overhead and only helps when the memoized value is expensive or the child does reference equality checks.
+
 ## Workflow
 
 1. **Determine scope** based on flags (see Scope table above)

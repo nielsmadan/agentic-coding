@@ -127,6 +127,10 @@ const DOUBLED_VALUE = INPUT * 2;
 
 ---
 
+## Gotchas
+- `--staged` review filters by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
+- Red-Green Verification (run → green, revert → red, re-apply → green) is described for bug fixes only, but is equally important for new feature tests to confirm the test actually validates the implementation.
+
 ## Review Mode (`--review`)
 
 Default mode. Checks tests against the principles above.

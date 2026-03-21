@@ -27,6 +27,10 @@ Add targeted debug logging to trace execution flow and variable state.
 **Circuit Breaker:**
 If 3 sequential attempts fail to isolate the issue, STOP. Document findings and escalate to `hard-fix` for parallel investigation.
 
+## Gotchas
+- Log statements inside ternaries or short-circuit expressions change control flow — the return value becomes the log output, not the original expression.
+- String interpolation can trigger side effects (e.g., calling a getter that consumes an iterator or increments a counter). Log arguments must be pure reads.
+
 ## Workflow
 
 1. **Identify target** - Use provided topic or infer from recent conversation

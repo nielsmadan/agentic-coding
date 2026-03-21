@@ -31,6 +31,10 @@ argument-hint: [-i] [-c] [--prio N] [--list] <description>
 - **With `-i`:** May use AskUserQuestion for clarifications. If project can't be resolved, ask the user.
 - **Without `-i` (default):** **Never** use AskUserQuestion — the session is running in background with no user to respond. If there are ambiguities, add them under a `## Open Questions` section in the task description. If the project can't be resolved from git origin, fall back to Inbox.
 
+## Gotchas
+- Non-interactive mode falls back to Inbox when the project can't be resolved. But the pick-up flow filters by `#ProjectName & @development` — Inbox tasks are invisible to `/todo` and `/todo --list`.
+- If a session ends before the implementation is complete, the task stays labeled `in-progress` and is filtered out of all future pick-up runs, silently losing it.
+
 ## Todoist Integration
 
 Use the Todoist MCP tools (prefixed `mcp__todoist__`). Key tools:
