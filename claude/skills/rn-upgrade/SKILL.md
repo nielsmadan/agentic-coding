@@ -1,6 +1,6 @@
 ---
 name: rn-upgrade
-description: React Native upgrade workflow. Use when upgrading a React Native application to a new version.
+description: React Native upgrade workflow. Use when upgrading React Native, bumping RN version, migrating to a new RN release, or resolving breaking changes after a React Native update.
 argument-hint: <target version>
 ---
 

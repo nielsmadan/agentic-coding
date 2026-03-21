@@ -1,6 +1,6 @@
 ---
 name: research-online
-description: Research a programming topic online from multiple sources. Use when implementing features, learning new libraries, or debugging issues.
+description: Research a programming topic online from multiple sources. Use when asking "how do I implement X", comparing libraries (X vs Y), looking up best practices, debugging unfamiliar errors, or needing up-to-date documentation beyond the knowledge cutoff.
 argument-hint: <topic or error message>
 ---
 
