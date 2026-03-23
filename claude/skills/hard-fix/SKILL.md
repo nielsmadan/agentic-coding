@@ -105,10 +105,12 @@ Ask: "Should I proceed with the recommended fix?"
 ### Phase 6: Implement and Verify
 
 1. Implement the recommended fix
-2. Ask user to test/verify
-3. **Wait for user confirmation** that the fix worked
+2. **Keep all debug logging in place** — do NOT remove debug logs added during investigation
+3. Ask user to test/verify
+4. **Wait for user confirmation** that the fix worked
+5. Only after user confirms the fix works, remove the debug logging added in Phase 2
 
-**Do NOT proceed to logging until user confirms the fix is working.**
+**Do NOT remove debug logs until user confirms the fix is working.** If the fix fails, the logs are essential for the next investigation round. **Do NOT proceed to Phase 7 until user confirms the fix is working.**
 
 ### Phase 7: Log for Future Reference (after user confirms fix)
 
