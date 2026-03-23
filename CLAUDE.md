@@ -32,6 +32,7 @@ Available in `claude/skills/`:
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
 | `/review-perf` | Performance analysis (--staged, --all) |
+| `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |
 | `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |

@@ -11,12 +11,12 @@ Review the code related to: **$ARGUMENTS**
 ## Usage
 
 ```
-/code-review <target>           # Claude-only review (6 parallel agents)
+/code-review <target>           # Claude-only review (7 parallel agents)
 /code-review --multi <target>   # Also get reviews from Gemini and Codex
 ```
 
 ## Gotchas
-- Sub-agents 5 and 6 invoke `review-comments` and `test --review --staged` — if no files are staged, they return nothing and the review silently has empty agent results.
+- Sub-agents 5, 6, and 7 invoke `review-comments`, `test --review --staged`, and `review-interfaces --staged` — if no files are staged, they return nothing and the review silently has empty agent results.
 - The 80-point confidence threshold silently drops findings. A legitimate 75/100 security issue is filtered out with no trace.
 
 ## Step 1: Locate and Read Project Guidelines
@@ -70,6 +70,13 @@ Invoke `test --review --staged` to review test quality in changed test files.
 - Identify brittle or flaky test patterns
 - Flag over-mocking and testing implementation instead of behavior
 - Ensure tests have meaningful assertions
+
+### Agent 7: Interface Design Review
+Invoke `review-interfaces --staged` to review the design quality of functions, classes, and components.
+- Check for pit-of-success violations (multiple ways to do the same thing, easy to misuse)
+- Flag poor naming, inconsistent vocabulary, weak types
+- Identify over-engineered or YAGNI interfaces
+- Check encapsulation and public surface area
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 
@@ -130,7 +137,7 @@ If `--multi` was used, include:
 **Review staged PR changes with 6 agents:**
 > /code-review
 
-Runs 6 parallel review agents (bug/logic, architecture, security/performance, historical context, comment quality, test quality) against staged changes and produces a prioritized list of issues grouped by severity.
+Runs 7 parallel review agents (bug/logic, architecture, security/performance, historical context, comment quality, test quality, interface design) against staged changes and produces a prioritized list of issues grouped by severity.
 
 **Cross-model consensus review:**
 > /code-review --multi
