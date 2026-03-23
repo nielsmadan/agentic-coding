@@ -1,43 +1,39 @@
 # Output Format Template
 
-Full output format for research results. Include only the sections relevant to the query type.
+Lead with the synthesis, then include only the supporting detail sections relevant to the query. Skip sections that would repeat the synthesis.
 
 ```markdown
 ## Research Results: {topic}
 
-### Documentation (Context7)
-{findings from docs agent}
-- Source: {url}
-- Authority: High (official docs)
+### Synthesis
 
-### GitHub Issues & Discussions
-| Item | Date | Type | Authority | Relevance |
-|------|------|------|-----------|-----------|
-| [#123: {title}]({url}) | 2024-01-15 | Issue | High (maintainer) | High |
-| [{title}]({url}) | 2024-02-01 | Discussion | Medium | High |
+**Goal:** {one-line summary of what user is trying to achieve}
 
-{summary of solutions/approaches found}
+**Recommended Approach:**
+{what the research suggests, prioritizing recent authoritative sources}
 
-### General Solutions
-| Source | Date | Authority | Relevance |
-|--------|------|-----------|-----------|
-| [{title}]({url}) | {date} | {score} | {score} |
+**Key Findings (weighted by credibility):**
+- {finding from high-credibility source}
+- {finding from high-credibility source}
+- {finding from medium source, noting caveat if needed}
 
-{summary of approaches}
+**Confidence:** {High/Medium/Low}
+- Based on: {e.g., "3 high-credibility sources agree"}
+- Caveats: {any outdated info factored in, unresolved conflicts, gaps in research}
 
-### Best Practices
-(only if feature implementation query)
-| Source | Date | Authority |
-|--------|------|-----------|
-| [{title}]({url}) | {date} | {score} |
+**Key References:**
+1. [{title}]({url}) — {why this source matters, e.g., "official migration guide"}
+2. [{title}]({url}) — {why this source matters, e.g., "maintainer confirmed fix in this issue"}
+3. [{title}]({url}) — {why this source matters} (optional, only if 3rd source significantly shaped the conclusion)
 
-{recommended patterns and approaches}
+---
 
-### Comparison
+### Supporting Details
+
+(Include only sections relevant to the query, and only findings not already covered in the synthesis above)
+
+#### Comparison
 (only if comparison query)
-| Source | Date | Authority | Covers Current Versions |
-|--------|------|-----------|------------------------|
-| [{title}]({url}) | {date} | {score} | Yes/No |
 
 **{Option A}:**
 - Pros: {list}
@@ -49,55 +45,16 @@ Full output format for research results. Include only the sections relevant to t
 - Cons: {list}
 - Best for: {use cases}
 
-### Specific Error Matches
+#### Specific Error Matches
 (only if error was provided)
-| Source | Date | Authority | Match |
-|--------|------|-----------|-------|
-| [{title}]({url}) | {date} | {score} | Exact/Similar |
+{causes and fixes not already in synthesis}
 
-{causes and fixes}
-
-### Stack Overflow
-| Question | Date | Votes | Accepted |
-|----------|------|-------|----------|
-| [{title}]({url}) | {date} | {count} | Yes/No |
-
-{community solutions}
-
-### Version/Changelog
+#### Version/Changelog
 (only if version was mentioned)
 {breaking changes and migration info}
 
----
-
-## Source Evaluation Summary
-
-**Most Credible Sources:**
-1. {source} - {reason: e.g., "Official docs + exact match"}
-2. {source} - {reason: e.g., "Recent GitHub issue with maintainer fix"}
-
-**Potentially Outdated (use with caution):**
-- {source} from {date} - verify still applies to current version
-
-**Conflicts Found:**
+#### Conflicts
+(only if sources disagree on something material)
 - {source A} says X, but {source B} says Y
 - **Resolution:** {which to trust and why}
-
----
-
-## Synthesis
-
-**Goal:** {one-line summary of what user is trying to achieve}
-
-**Key Findings (weighted by credibility):**
-- {finding from high-credibility source}
-- {finding from high-credibility source}
-- {finding from medium source, noting caveat if needed}
-
-**Recommended Approach:**
-{what the research suggests, prioritizing recent authoritative sources}
-
-**Confidence:** {High/Medium/Low}
-- Based on: {e.g., "3 high-credibility sources agree"}
-- Caveats: {any outdated info factored in, unresolved conflicts, gaps in research}
 ```

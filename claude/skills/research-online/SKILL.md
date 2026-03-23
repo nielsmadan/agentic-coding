@@ -55,6 +55,7 @@ If found, read and include internal patterns/conventions in the synthesis. Inter
 | **StackOverflow** | Common problem/implementation pattern | Community Q&A solutions |
 | **Changelog** | Version mentioned OR "stopped working" / "after upgrade" | Breaking changes, migration guides |
 | **Best Practices** | Feature implementation (no error message) | Architecture patterns, recommended approaches |
+| **Reddit** | Comparison, best practices, or "real world experience" queries | Candid developer opinions, warnings, real-world experience |
 | **Comparison** | Query contains "vs", "or", "compare", "which", "best library" | Compare options, pros/cons |
 
 ### Step 4: Spawn Agents in Parallel
@@ -65,35 +66,34 @@ Use the Task tool to spawn ALL relevant agents in a **single message** (parallel
 
 | Agent | Tool | Search Strategy |
 |-------|------|-----------------|
-| Docs | Context7 | resolve-library-id then query-docs |
+| Docs | Context7 | resolve-library-id then query-docs. If resolve-library-id returns no match, fall back to WebSearch for `{lib} official documentation {goal}` |
 | GitHub | WebSearch | `site:github.com {lib} "{terms}"`, then WebFetch top 2-3 |
 | General | WebSearch | `how to {goal} {lib}` |
 | Specific | WebSearch | `"{exact_error_message}" {lib}` |
 | StackOverflow | WebSearch | `site:stackoverflow.com {lib} {keywords}`, then WebFetch top answers |
 | Changelog | WebSearch | `{lib} {version} changelog breaking changes migration` |
 | Best Practices | WebSearch | `{lib} best practices {goal}` + `{lib} recommended architecture {goal}` |
+| Reddit | WebSearch | `site:reddit.com {lib} {keywords}`, then WebFetch top 2-3 threads |
 | Comparison | WebSearch | `{option_A} vs {option_B} {context}` |
 
 For full agent prompt templates with detailed instructions, see `references/agent-prompts.md`.
 
-### Step 5: Collect Results
+### Step 5: Collect and Deduplicate Results
 
-Wait for all agents to complete and gather their findings with metadata.
+Wait for all agents to complete and gather their findings with metadata. Before evaluation, deduplicate: if multiple agents found the same URL or GitHub issue, keep the entry with the richest metadata and merge any unique context from the duplicates. Note which agents independently found the same source — convergence from multiple agents increases confidence.
 
 ### Step 6: Critical Evaluation
 
 Before synthesizing, evaluate each source:
 
-**Recency:**
+**Recency** (adjust thresholds by library velocity):
 
-| Age | Score | Notes |
-|-----|-------|-------|
-| < 6 months | High | Likely current |
-| 6-18 months | Medium | Check for updates |
-| 18+ months | Low | May be outdated |
-| > 3 years | Very Low | Likely outdated, verify |
-
-Adjust for library velocity: fast-moving libraries (React, Next.js) decay faster than stable ones (Express, lodash).
+| Age | Fast-moving libs (React, Next.js, etc.) | Stable libs (Express, lodash, etc.) |
+|-----|----------------------------------------|-------------------------------------|
+| < 6 months | High | High |
+| 6-18 months | Medium | High |
+| 18-36 months | Low | Medium |
+| > 3 years | Very Low | Low |
 
 **Authority:**
 
@@ -103,8 +103,9 @@ Adjust for library velocity: fast-moving libraries (React, Next.js) decay faster
 | GitHub issues (maintainer response) | High |
 | GitHub issues (community), recent blogs (known author) | Medium |
 | SO answers (accepted, high votes), comparison articles | Medium |
+| Reddit threads (high upvotes, experienced devs) | Medium |
 | SO answers (low votes), old blogs, old comparisons | Low |
-| Random forums | Very Low |
+| Reddit threads (low engagement), random forums | Very Low |
 
 **Relevance:** Exact error/goal match = High. Same library, similar task = Medium. Related concept = Low.
 
@@ -112,20 +113,23 @@ Adjust for library velocity: fast-moving libraries (React, Next.js) decay faster
 
 ### Step 7: Present Results
 
-Structure the output with these sections (include only those relevant to the query):
+**Lead with the synthesis, not the raw data.** The user wants the answer first, with supporting evidence.
 
-1. **Documentation** — Context7 findings with authority rating
-2. **GitHub Issues & Discussions** — table with date, type, authority, relevance
-3. **General Solutions** — table with source, date, authority
-4. **Best Practices** — (feature queries only) recommended patterns
-5. **Comparison** — (comparison queries only) pros/cons/best-for per option
-6. **Specific Error Matches** — (error queries only) causes and fixes
-7. **Stack Overflow** — question table with date, votes, accepted status
-8. **Version/Changelog** — (version queries only) breaking changes
-9. **Source Evaluation Summary** — most credible, potentially outdated, conflicts found
-10. **Synthesis** — goal, key findings weighted by credibility, recommended approach, confidence level
+Structure the output as:
 
-For the full output format template with markdown tables, see `references/output-format.md`.
+1. **Synthesis** — goal, recommended approach, confidence level, key findings weighted by credibility. Include the **1-3 most influential references** with URLs — the sources that most shaped the conclusion.
+2. **Supporting Details** — only include sections relevant to the query, and only findings not already covered in the synthesis. Skip sections that would just repeat what's in the synthesis.
+
+Available detail sections (include only those relevant):
+- **Documentation** — Context7 findings
+- **GitHub Issues & Discussions** — with date, type, authority
+- **Reddit** — real-world experience, warnings, opinions with upvote context
+- **Comparison** — (comparison queries only) pros/cons/best-for per option
+- **Specific Error Matches** — (error queries only) causes and fixes
+- **Version/Changelog** — (version queries only) breaking changes
+- **Conflicts** — only if sources disagree on something material, with resolution
+
+For the full output format template, see `references/output-format.md`.
 
 ## Examples
 
@@ -139,7 +143,7 @@ Spawns: Docs, GitHub, General, Best Practices, StackOverflow
 ```
 /research-online Redux vs Zustand for large React app
 ```
-Spawns: Docs (both), General, Comparison, StackOverflow
+Spawns: Docs (both), General, Comparison, Reddit, StackOverflow
 
 ### Example 3: Specific Error
 ```
@@ -157,7 +161,7 @@ Spawns: Docs, GitHub, General, Changelog, StackOverflow
 ```
 /research-online best practices for folder structure in Express API
 ```
-Spawns: Docs, General, Best Practices, StackOverflow
+Spawns: Docs, General, Best Practices, Reddit, StackOverflow
 
 ## Troubleshooting
 

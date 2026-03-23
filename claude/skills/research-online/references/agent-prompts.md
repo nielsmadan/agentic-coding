@@ -10,7 +10,8 @@ Full prompt templates for each research agent. All agents use `subagent_type: ge
 Use Context7 to look up documentation for {library_name}.
 
 1. First call resolve-library-id with libraryName="{library_name}" and query="{goal_or_problem}"
-2. Then call query-docs with the resolved library ID and query="{goal_or_problem}"
+2. If resolve-library-id returns no match, fall back to WebSearch: "{library_name} official documentation {goal_or_problem}"
+3. If a match is found, call query-docs with the resolved library ID and query="{goal_or_problem}"
 
 Focus on finding:
 - API usage relevant to: {goal_or_problem}
@@ -169,6 +170,34 @@ For each source, note:
 - Author credibility (core team, recognized expert, unknown)
 
 Return a summary of recommended approaches with source metadata.
+```
+
+## Reddit Agent
+
+**Spawn when:** Comparison, best practices, or "real world experience" queries
+
+```
+Search Reddit for real-world developer opinions and experiences.
+
+Use WebSearch to search: site:reddit.com {library_name} {keywords}
+
+Focus on:
+- Real-world experience reports ("we used X in production and...")
+- Warnings and gotchas that don't appear in docs
+- Candid opinions on trade-offs
+- "Don't do this" advice from experience
+
+For the top 2-3 relevant threads:
+1. Use WebFetch to read the thread
+2. Focus on highly-upvoted comments, not just the original post
+
+For each source, note:
+- Thread URL
+- Date
+- Upvote context (highly upvoted = more community agreement)
+- Source type: Reddit thread (high engagement) or Reddit thread (low engagement)
+
+Return a summary of real-world opinions and warnings with metadata.
 ```
 
 ## Comparison Agent
