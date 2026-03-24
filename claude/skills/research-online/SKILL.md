@@ -21,6 +21,7 @@ Research a programming topic from multiple angles using parallel sub-agents, wit
 ## Gotchas
 - Context7 docs may lag behind a recent major release. The indexed version could be outdated — check which version is documented before citing it as authoritative.
 - "Prefer recent, then higher authority" can be wrong: an authoritative maintainer comment from 18 months ago may be more correct than a popular blog post from last month. Weigh authority first for stable libraries.
+- Quick mode may miss nuance. If a seemingly simple question turns out to have a complex answer (e.g., "default port" but it depends on framework integration), note this in the synthesis and suggest re-running in Standard mode.
 
 ## Workflow
 
@@ -34,7 +35,18 @@ Extract from the user's query:
 - **Problem description** (if debugging: what's broken or unexpected)
 - **Comparison targets** (if comparing: "X vs Y", "X or Y")
 
-### Step 2: Check Internal Documentation First
+### Step 2: Classify Query Depth
+
+Classify the query to avoid over-researching simple questions:
+
+| Mode | When | Behavior |
+|------|------|----------|
+| **Quick** | Simple factual lookup, single API question, "what version supports X", "how to do X" with well-known library | Skip internal docs check. Spawn only Docs + General (max 2 agents). Skip follow-up loop and critique. Go straight to synthesis. |
+| **Standard** | Comparisons, best practices, errors, complex implementation, "real world experience", debugging | Full workflow including follow-up loop and adversarial critique |
+
+When in doubt, use Standard.
+
+### Step 3: Check Internal Documentation First (Standard mode only)
 
 Before external research, use the Grep tool to search for relevant keywords in the project's docs:
 
@@ -44,7 +56,7 @@ Grep pattern: "<relevant_keywords>" path: "docs/" and "*.md"
 
 If found, read and include internal patterns/conventions in the synthesis. Internal docs often contain project-specific decisions that external research won't cover.
 
-### Step 3: Determine Which Agents to Spawn
+### Step 4: Determine Which Agents to Spawn
 
 | Agent | Spawn When | Purpose |
 |-------|------------|---------|
@@ -58,7 +70,7 @@ If found, read and include internal patterns/conventions in the synthesis. Inter
 | **Reddit** | Comparison, best practices, or "real world experience" queries | Candid developer opinions, warnings, real-world experience |
 | **Comparison** | Query contains "vs", "or", "compare", "which", "best library" | Compare options, pros/cons |
 
-### Step 4: Spawn Agents in Parallel
+### Step 5: Spawn Agents in Parallel
 
 Use the Task tool to spawn ALL relevant agents in a **single message** (parallel execution). Each agent uses `subagent_type: general-purpose`.
 
@@ -78,11 +90,11 @@ Use the Task tool to spawn ALL relevant agents in a **single message** (parallel
 
 For full agent prompt templates with detailed instructions, see `references/agent-prompts.md`.
 
-### Step 5: Collect and Deduplicate Results
+### Step 6: Collect and Deduplicate Results
 
 Wait for all agents to complete and gather their findings with metadata. Before evaluation, deduplicate: if multiple agents found the same URL or GitHub issue, keep the entry with the richest metadata and merge any unique context from the duplicates. Note which agents independently found the same source — convergence from multiple agents increases confidence.
 
-### Step 6: Critical Evaluation
+### Step 7: Critical Evaluation
 
 Before synthesizing, evaluate each source:
 
@@ -102,16 +114,38 @@ Before synthesizing, evaluate each source:
 | Official docs, changelogs, core team posts | High |
 | GitHub issues (maintainer response) | High |
 | GitHub issues (community), recent blogs (known author) | Medium |
-| SO answers (accepted, high votes), comparison articles | Medium |
-| Reddit threads (high upvotes, experienced devs) | Medium |
-| SO answers (low votes), old blogs, old comparisons | Low |
-| Reddit threads (low engagement), random forums | Very Low |
+| SO answers (accepted + >10 votes), comparison articles | Medium |
+| Reddit threads (>50 upvotes or multiple experienced replies) | Medium |
+| SO answers (not accepted, <10 votes), old blogs, old comparisons | Low |
+| Reddit threads (<10 upvotes, few replies), random forums | Very Low |
 
 **Relevance:** Exact error/goal match = High. Same library, similar task = Medium. Related concept = Low.
 
 **When sources conflict:** Prefer more recent, then higher authority. Note conflicts in synthesis. If official docs conflict with recent issues, the issue may reveal a bug or undocumented behavior.
 
-### Step 7: Present Results
+### Step 8: Follow-Up Search Loop (Standard mode only)
+
+After critical evaluation, check if any topic area has **fewer than 2 sources** or if the query's core question remains unanswered. If so:
+
+1. Identify the gap (e.g., "no sources found for how to handle token refresh specifically")
+2. Generate 1-2 targeted delta queries — more specific terms, alternative terminology, or broader scope
+3. Spawn 1-2 follow-up agents with the delta queries
+4. Merge new results into existing findings, deduplicate, re-evaluate
+
+**Max 1 follow-up cycle.** If the gap persists, note it in the synthesis as a low-confidence area rather than searching again.
+
+### Step 9: Adversarial Critique (Standard mode only)
+
+Brief self-challenge before presenting. Ask:
+
+- What would someone who disagrees with this conclusion say?
+- Are we over-weighting one source type? (e.g., all findings from blog posts, no official docs)
+- Could any "independent" sources actually trace back to the same original? (e.g., 3 blogs all citing one tweet = 1 source, not 3)
+- Is the recommended approach the simplest option, or are we over-engineering?
+
+If the critique reveals a blind spot, adjust the synthesis and lower the confidence level. This is a brief internal review pass — do not spawn a separate agent.
+
+### Step 10: Present Results
 
 **Lead with the synthesis, not the raw data.** The user wants the answer first, with supporting evidence.
 
@@ -162,6 +196,12 @@ Spawns: Docs, GitHub, General, Changelog, StackOverflow
 /research-online best practices for folder structure in Express API
 ```
 Spawns: Docs, General, Best Practices, Reddit, StackOverflow
+
+### Example 6: Quick Mode (Simple Lookup)
+```
+/research-online what's the default port for Vite dev server
+```
+Quick mode: Spawns Docs + General only. Returns direct answer without follow-up loop or critique.
 
 ## Troubleshooting
 

@@ -118,9 +118,9 @@ For the top 2-3 relevant questions:
 For each answer, note:
 - Question URL
 - Answer date
-- Vote count
+- Vote count (>10 votes = higher credibility signal)
 - Whether it's the accepted answer
-- Source type: SO answer (accepted/high-votes) or SO answer (low-votes)
+- Source type: SO answer (accepted + >10 votes) = Medium authority, SO answer (not accepted, <10 votes) = Low authority
 
 Return a summary of community solutions with metadata.
 ```
@@ -194,8 +194,8 @@ For the top 2-3 relevant threads:
 For each source, note:
 - Thread URL
 - Date
-- Upvote context (highly upvoted = more community agreement)
-- Source type: Reddit thread (high engagement) or Reddit thread (low engagement)
+- Upvote count and comment count (>50 upvotes or >20 comments = high engagement signal)
+- Source type: Reddit thread (>50 upvotes) = Medium authority, Reddit thread (<10 upvotes) = Very Low authority
 
 Return a summary of real-world opinions and warnings with metadata.
 ```
