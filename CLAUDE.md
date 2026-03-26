@@ -46,6 +46,7 @@ Available in `claude/skills/`:
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
 | `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
 | `/skill-creator` | Guide for creating skills |
+| `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 
 ## Secrets Policy
 
