@@ -11,12 +11,12 @@ Review the code related to: **$ARGUMENTS**
 ## Usage
 
 ```
-/code-review <target>           # Claude-only review (7 parallel agents)
+/code-review <target>           # Claude-only review (8 parallel agents)
 /code-review --multi <target>   # Also get reviews from Gemini and Codex
 ```
 
 ## Gotchas
-- Sub-agents 5, 6, and 7 invoke `review-comments`, `test --review --staged`, and `review-interfaces --staged` — if no files are staged, they return nothing and the review silently has empty agent results.
+- Sub-agents 5, 6, 7, and 8 invoke `review-comments`, `test --review --staged`, `review-interfaces --staged`, and `review-cleancode --staged` — if no files are staged, they return nothing and the review silently has empty agent results.
 - The 80-point confidence threshold silently drops findings. A legitimate 75/100 security issue is filtered out with no trace.
 
 ## Step 1: Locate and Read Project Guidelines
@@ -43,8 +43,6 @@ Each agent should output a list of issues. For each issue, include: what the pro
 - Check compliance with CLAUDE.md rules
 - Search `docs/` for documented patterns related to this code area
 - Verify code follows existing codebase patterns
-- Assess separation of concerns
-- Identify code duplication
 
 ### Agent 3: Security & Performance Review
 - Check for injection vulnerabilities
@@ -77,6 +75,13 @@ Invoke `review-interfaces --staged` to review the design quality of functions, c
 - Flag poor naming, inconsistent vocabulary, weak types
 - Identify over-engineered or YAGNI interfaces
 - Check encapsulation and public surface area
+
+### Agent 8: Clean Code Review
+Invoke `review-cleancode --staged` to review code against clean code principles.
+- Check SOLID principles (SRP, OCP, LSP, ISP, DIP)
+- Flag DRY violations, YAGNI, unnecessary complexity (KISS)
+- Identify code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery)
+- Check design principles (Law of Demeter, separation of concerns, composition over inheritance)
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 
@@ -134,19 +139,15 @@ If `--multi` was used, include:
 
 ## Examples
 
-**Review staged PR changes with 6 agents:**
+**Review staged PR changes with 8 agents:**
 > /code-review
 
-Runs 7 parallel review agents (bug/logic, architecture, security/performance, historical context, comment quality, test quality, interface design) against staged changes and produces a prioritized list of issues grouped by severity.
+Runs 8 parallel review agents (bug/logic, architecture, security/performance, historical context, comment quality, test quality, interface design, clean code) against staged changes and produces a prioritized list of issues grouped by severity.
 
 **Cross-model consensus review:**
 > /code-review --multi
 
-Runs the same 6 Claude agents plus external reviews from Gemini and Codex. The output includes a cross-model agreement section highlighting issues where all models converge, giving higher confidence to consensus findings.
-
----
-
-Review agents should apply [clean code principles](references/clean-code.md) when evaluating code quality.
+Runs the same 8 Claude agents plus external reviews from Gemini and Codex. The output includes a cross-model agreement section highlighting issues where all models converge, giving higher confidence to consensus findings.
 
 For each issue, explain:
 1. What the problem is
