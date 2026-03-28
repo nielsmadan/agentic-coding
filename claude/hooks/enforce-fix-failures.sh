@@ -17,6 +17,6 @@ if echo "$command" | grep -qiE \
 '\b(mypy|pyright|pytype|tsc\b|flow check)\b|'\
 '\b(npm|yarn|pnpm|make|rake)\b.*(test|lint|check|typecheck|type-check|analyze)'; then
   cat << 'EOF'
-{"additionalContext": "This test/lint/type-check command failed. You MUST fix ALL failures before proceeding. Do NOT dismiss them as pre-existing issues. If something fails after your changes, either your changes caused it or it needs fixing regardless. Fix every failure now."}
+{"additionalContext": "MANDATORY: This test/lint/type-check command failed. You MUST fix ALL failures before proceeding. Do NOT dismiss them as 'pre-existing', 'flaky', 'already broken', or 'unrelated to your changes'. These excuses are NEVER acceptable. Read ALL error output, identify every failure, and fix them in ONE pass. The ONLY acceptable outcome is ALL checks green. If you try to stop without fixing, you will be blocked."}
 EOF
 fi

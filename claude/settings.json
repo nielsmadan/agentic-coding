@@ -142,6 +142,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "~/.claude/hooks/block-test-dismissal.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "~/.claude/hooks/juggler/notify.sh Stop",
             "timeout": 5
           }
