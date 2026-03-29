@@ -51,7 +51,7 @@
       {
         "hooks": [
           {
-            "command": "~/.claude/hooks/redundant-git-c.sh",
+            "command": "~/.claude/hooks/no-redundant-abs-path.sh",
             "timeout": 5,
             "type": "command"
           }
