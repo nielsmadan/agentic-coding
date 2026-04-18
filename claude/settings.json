@@ -209,7 +209,8 @@
       "Bash(git mv *)",
       "Bash(git init *)",
       "Bash(git clone *)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
   "hooks": {
     "PostToolUseFailure": [
@@ -385,9 +386,10 @@
       ]
     }
   },
+  "effortLevel": "medium",
   "autoMemoryEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
   },
-  "effortLevel": "medium"
+  "skipAutoPermissionPrompt": true
 }
