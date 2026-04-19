@@ -36,7 +36,7 @@ Available in `claude/skills/`:
 | `/review-cleancode` | Clean code principles review - SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/doc` | Documentation review and generation (--review, --generate) |
-| `/explain` | Explain unfamiliar code grouped by concept (--staged, --all, --code) |
+| `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/test` | Test review and generation (--review, --generate) |
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
