@@ -1,145 +1,179 @@
 ---
 name: explain
-description: "Explain unfamiliar code in a project, grouped by concept. Use when the user wants to understand what code does, how it's structured, or learn the programming language. Supports --staged (staged files), --all (interactive file/dir selection), and --code (include language syntax explanations and alternatives)."
-argument-hint: "[--staged | --all] [--code]"
+description: "Generate project explanation docs in docs/explain/ covering architecture, language syntax, system APIs, infrastructure, or testing. Use when the user wants to understand an unfamiliar project or codebase. Supports --all (every aspect), --staged (scope to git-staged files), --architecture, --syntax, --system, --infra, --test, optionally followed by a topic filter (e.g. `--architecture database`)."
+argument-hint: "[--all | --architecture | --syntax | --system | --infra | --test] [--staged] [topic]"
 ---
 
 # Explain
 
-Explain code grouped by logical concepts rather than file-by-file.
+Generate project explanation documents in `docs/explain/`. Each aspect of the project gets its own file. An `overview.md` acts as the index (opened first); a `preliminary.md` carries the shared project context every other doc assumes.
+
+## Flags
+
+| Flag | What it covers |
+|------|----------------|
+| `--architecture` | Components, data flow, layering. Pros/cons of the current design **and** at least one alternative structuring with its tradeoffs. |
+| `--syntax` | Non-obvious language features actually used in the project. Skip basics like `for` loops. Where the language offers multiple ways to do the same thing, list them with pros/cons. |
+| `--system` | System-level APIs in use (filesystem, networking, process, IPC, OS-specific). For each, list alternatives with pros/cons. |
+| `--infra` | Build, CI/CD, deploy, release pipelines. Include how to run each piece locally (scripts, commands, env setup). |
+| `--test` | Testing infrastructure: frameworks, test types, fixtures, how to run. |
+| `--all` | All five aspects above, dispatched to parallel sub-agents. |
+| `--staged` | Scope to files returned by `git diff --cached --name-only`. Combines with any aspect flag(s). |
+| _topic_ | A positional word after an aspect flag narrows the focus (e.g. `--architecture database` = architecture of the database layer only). |
 
 ## Usage
 
 ```
-/explain                          # Explain code related to current context
-/explain --staged                 # Explain code in git staged files
-/explain --all                    # Interactive: pick dirs/files to explain
-/explain --code                   # Also explain language syntax and idioms
-/explain --code --staged          # Staged files with syntax explanations
+/explain --all                      # Full project explanation
+/explain --architecture             # Just architecture
+/explain --architecture database    # Architecture, focused on the database
+/explain --staged --architecture    # Architecture needed to understand staged changes
+/explain --staged --all             # All aspects, scoped to staged files
+/explain --infra                    # CI/CD + local setup
 ```
-
-## Flags
-
-| Flag | Effect |
-|------|--------|
-| (none) | Explain code related to current conversation context |
-| `--staged` | Explain code in git staged files |
-| `--all` | List source dirs/files, let user pick which to explain |
-| `--code` | Include language syntax explanations, idioms, and alternatives |
-
-## Gotchas
-- Output writes to `docs/explain/` and overwrites existing content. Any hand-written additions to previously generated files will be silently destroyed on re-run.
-- Files over 2000 lines are summarized from only the first 50 lines — important logic deep in the file (e.g., a state machine in the second half) will be missed.
 
 ## Workflow
 
-### 1. Determine Scope
+### 1. Parse arguments
+- Collect requested aspect flags. `--all` expands to all five.
+- Check for `--staged`.
+- Capture any positional topic filter that follows an aspect flag, and pass it to that aspect's sub-agent only.
+- If no aspect flag and no `--all` was given, ask the user which aspect(s) to cover before proceeding.
 
-| Flag | Method |
-|------|--------|
-| (none) | Collect files from conversation context: files the user mentioned by name, files you have read or edited in this session, and files referenced in error messages or stack traces. If no files can be identified, ask the user: 'Which files or directories would you like me to explain? You can also use `--all` to browse.' |
-| `--staged` | `git diff --cached --name-only` to get file list |
-| `--all` | Use Glob to find source files, present directory tree to user, ask which dirs/files to explain via AskUserQuestion |
+### 2. Determine scope
 
-**Empty scope handling:**
-- `--staged` with no staged files: Report "No staged files found. Stage files with `git add` first, or use `--all` to pick files interactively."
-- `--all` with no source files found: Report "No source files found in this directory. Verify you are in the project root."
-- Default mode with no context: Ask the user to specify files (see table above).
+| Mode | Scope |
+|------|-------|
+| `--staged` set | Output of `git diff --cached --name-only` |
+| `--staged` not set | Whole project (respect `.gitignore`, skip `node_modules/`, `build/`, `dist/`, lockfiles, binaries) |
 
-### 2. Read and Analyze
+Empty scope: if `--staged` is set but nothing is staged, tell the user to stage files first or drop `--staged`. Do not proceed.
 
-Read all in-scope source files to understand the codebase. Skip binary files (images, compiled assets, `.lock` files), generated directories (`node_modules/`, `build/`, `dist/`), and files over 2000 lines (summarize their purpose from the first 50 lines instead).
+### 3. Write `preliminary.md` first
+Before dispatching aspect sub-agents, write `docs/explain/preliminary.md`. Keep it tight — just enough shared context that a new reader can follow the other docs:
+- Project name and purpose
+- Primary language(s) and major frameworks
+- Top-level directory layout
+- Entry points (main binary, app root, server entry)
 
-### 3. Identify Concepts
+Every aspect sub-agent should be told to assume readers have read `preliminary.md` and link to it rather than restate its content.
 
-Group code into logical concepts/features rather than explaining file-by-file. Examples of concepts:
-- "Authentication" — login flow, token management, session handling
-- "Database layer" — models, migrations, query helpers
-- "API routing" — endpoint definitions, middleware, request handling
-- "State management" — stores, reducers, selectors
-- "Error handling" — error types, recovery strategies, logging
+### 4. Run aspect sub-agents in parallel
+For each requested aspect, dispatch an `Agent` sub-agent in a single message so they execute concurrently. Prefer `subagent_type: "Explore"` for research-heavy aspects (`--architecture`, `--syntax`, `--system`), `general-purpose` for `--infra` and `--test` since they may need to run commands.
 
-Choose concept names that reflect what the code actually does — don't force-fit generic names.
+Each sub-agent prompt must include:
+- The aspect name (e.g. "architecture")
+- The exact scope (list of staged files, or "whole project" with `.gitignore` honored)
+- The topic filter, if any
+- The target output path (`docs/explain/<aspect>.md`)
+- The per-aspect rubric (see below) copied into the prompt
+- The file format template (see Output)
+- Instructions to link to siblings using the "See also" block
 
-### 4. Generate Explanations
-
-For each concept:
-- **Overview:** What this concept does and why it exists
-- **Key pieces:** Detailed walkthrough of non-obvious parts — control flow, algorithms, edge cases, design decisions
-- **Connections:** How files in this concept relate to each other and to other concepts
-- **Syntax notes** (`--code` only): For notable syntax constructs, explain the syntax itself, common alternatives in the language, and why this particular construct was likely chosen
-
-### 5. Parallelization
-
-For large scopes (>10 files): use parallel Task agents, one per concept cluster (~5-10 files each), then merge results into a single output.
+### 5. Write `overview.md`
+After sub-agents return, write `docs/explain/overview.md` as the entry index: short intro, link to `preliminary.md`, one link per generated aspect file with a one-line summary. In the final chat response, tell the user to open `overview.md` first.
 
 ## Output
 
-Write explanations to `docs/explain/` rather than inline to the conversation.
+All output goes to `docs/explain/`. Existing files there are overwritten — this is generated content, not hand-written.
 
-### Output rules
-
-- **Small scope (≤3 concepts):** Write a single `docs/explain/overview.md` containing all concepts inline
-- **Large scope (>3 concepts):** Write `docs/explain/overview.md` (index with one-line summaries + links) plus one file per concept: `docs/explain/<concept-slug>.md`
-- Always print a short summary to the conversation listing the files written and a one-liner per concept
-- If `docs/explain/` already exists, overwrite its contents (these are generated docs, not hand-written)
-
-### File format for per-concept files
-
-```markdown
-# [Concept Name]
-**Files:** `path/a.ext`, `path/b.ext`
-
-[Overview paragraph]
-
-## Key pieces
-[Detailed walkthrough]
-
-## Connections
-[How this concept connects to others]
-
-## Syntax notes (--code only)
-[Language syntax explanations]
+```
+docs/explain/
+├── overview.md        # Index; open this first
+├── preliminary.md     # Project context needed to read the rest
+├── architecture.md    # If --architecture or --all
+├── syntax.md          # If --syntax or --all
+├── system.md          # If --system or --all
+├── infra.md           # If --infra or --all
+└── test.md            # If --test or --all
 ```
 
-### Overview index format (`docs/explain/overview.md`)
+### File format (per-aspect)
 
 ```markdown
-# Code Explanation
+# [Aspect Title]
 
-Generated by `/explain`. Covers [N] concepts across [M] files.
+**Scope:** [whole project | staged files: path/a, path/b, …]
+**Topic filter:** [none | database | …]
+**See also:** [overview](overview.md) · [preliminary](preliminary.md) · [architecture](architecture.md) · [syntax](syntax.md) · [system](system.md) · [infra](infra.md) · [test](test.md)
 
-## Concepts
-
-- **[Concept Name]** — one-line summary ([link to file](concept-slug.md))
-- ...
+[Body following the per-aspect rubric]
 ```
 
-For small scope (≤3 concepts), the overview file contains the full explanations inline instead of linking out.
+Only link to siblings that were actually generated in this run.
+
+### Per-aspect rubrics
+
+**architecture.md**
+- Component/module map with data flow and boundaries
+- Major design decisions, each with pros/cons
+- For each major decision: at least one alternative structuring, with its pros/cons
+- Reference real files/functions, not vague labels
+
+**syntax.md**
+- Notable language features the project uses (macros, operators, type-system quirks, idioms)
+- For each: what it does, why it's used here, alternatives the language offers, pros/cons
+- Omit anything a general programmer already knows
+
+**system.md**
+- System APIs in use (OS, filesystem, network, process, IPC, hardware)
+- For each: what it does in this project, why this one, alternatives with pros/cons
+
+**infra.md**
+- Build system, CI/CD pipelines, release flow, deployment targets
+- For each pipeline/script: what it does, where it lives, exact command(s) to run it locally, prerequisites, env vars
+
+**test.md**
+- Test frameworks in use; unit/integration/e2e split
+- Directory layout, fixtures, mocks
+- Exact commands to run the full suite and a single test
+
+### overview.md format
+
+```markdown
+# Explanation Overview
+
+Start here. Read [preliminary](preliminary.md) next for the shared context the
+other docs assume.
+
+**Scope:** [whole project | staged files: …]
+
+## Aspects
+- [Architecture](architecture.md) — one-line summary
+- [Syntax](syntax.md) — one-line summary
+- [System APIs](system.md) — one-line summary
+- [Infrastructure](infra.md) — one-line summary
+- [Testing](test.md) — one-line summary
+```
+
+Only include bullets for aspects actually generated this run.
 
 ## Examples
 
-**Understand an auth module by concept:**
-> /explain --all
+### `/explain --all`
+Writes `preliminary.md`, dispatches five parallel sub-agents (one per aspect), writes `overview.md` last. Final chat message lists the files and tells the user to open `overview.md` first.
 
-Lists source directories and lets you pick `lib/auth/`. Groups the code into concepts like "Token Management," "Session Handling," and "Permission Guards" rather than explaining file-by-file, then writes results to `docs/explain/`.
+### `/explain --staged --architecture`
+`git diff --cached --name-only` → staged files. Write a focused `preliminary.md` covering the surrounding modules. Dispatch one sub-agent to produce `architecture.md` limited to what is needed to understand the staged change. Write `overview.md` linking only to `preliminary.md` and `architecture.md`.
 
-**Language syntax and architecture for unfamiliar code:**
-> /explain --code --staged
-
-Explains staged files with both architectural context and language-level syntax notes. Highlights non-obvious constructs like Dart extension methods or Go channel patterns, and explains why they were chosen over alternatives.
+### `/explain --architecture database`
+Whole-project scope. Write `preliminary.md`. Dispatch one architecture sub-agent with topic filter `database`. `architecture.md` covers the database layer's structure, decisions, and alternatives only. `overview.md` links to the two generated files.
 
 ## Troubleshooting
 
-### Codebase too large to explain at once
-**Solution:** Use `--all` to interactively select specific directories or files instead of the entire codebase. For very large projects, focus on one module or feature area per invocation and let the parallelization handle splitting within that scope.
+### No staged files
+"No staged files found. Stage files with `git add` first, or drop `--staged` to cover the whole project." Do not fall back to the whole project silently.
 
-### Unfamiliar framework or DSL
-**Solution:** Combine `--code` with your scope flag so the output includes language-level syntax explanations alongside architectural context. If the framework uses heavy code generation or macros, call `research-online` first to get external documentation, then run `explain --code` with that context.
+### Aspect not applicable to the project
+E.g. `--infra` on a project with no CI/CD. Generate the file anyway with a clear "No CI/CD configured. Build runs manually via `…`" note, and still link to it from `overview.md`. Silent omission leaves the user wondering.
+
+### Project too large for one sub-agent
+The sub-agent can split by top-level directory and run its own parallel reads. If output is still incomplete, re-run the specific aspect flag (with a topic filter if helpful) rather than `--all`.
+
+### Docs went stale after code changes
+`docs/explain/` is regenerated, not incrementally updated. Re-run the relevant flags; existing files are overwritten.
 
 ## Notes
-
-- Concepts over files: always group by what the code does, not where it lives
-- Skip boilerplate: don't explain standard framework scaffolding unless `--code` is set
-- Be specific: reference actual function names, variable names, and line numbers
-- For `--code`: focus on syntax that would surprise someone from another language, not basics like `if/else`
+- Group by aspect, not by file. Within an aspect, cite real files/functions.
+- Do not restate `preliminary.md` content inside aspect docs — link to it.
+- Only link to sibling files that exist in this run; don't produce broken links.
