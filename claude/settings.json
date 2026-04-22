@@ -152,6 +152,8 @@
       "WebFetch",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
+      "mcp__jina__read_url",
+      "mcp__jina__parallel_read_url",
       "Skill(code-review)",
       "Skill(debug-log)",
       "Skill(doc)",

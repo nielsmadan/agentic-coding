@@ -79,14 +79,16 @@ Use the Task tool to spawn ALL relevant agents in a **single message** (parallel
 | Agent | Tool | Search Strategy |
 |-------|------|-----------------|
 | Docs | Context7 | resolve-library-id then query-docs. If resolve-library-id returns no match, fall back to WebSearch for `{lib} official documentation {goal}` |
-| GitHub | WebSearch | `site:github.com {lib} "{terms}"`, then WebFetch top 2-3 |
+| GitHub | WebSearch | `site:github.com {lib} "{terms}"`, then WebFetch top 2-3 (github.com works fine with WebFetch) |
 | General | WebSearch | `how to {goal} {lib}` |
 | Specific | WebSearch | `"{exact_error_message}" {lib}` |
-| StackOverflow | WebSearch | `site:stackoverflow.com {lib} {keywords}`, then WebFetch top answers |
+| StackOverflow | WebSearch | `site:stackoverflow.com {lib} {keywords}`, then `mcp__jina__read_url` top answers (SO is JS-heavy) |
 | Changelog | WebSearch | `{lib} {version} changelog breaking changes migration` |
 | Best Practices | WebSearch | `{lib} best practices {goal}` + `{lib} recommended architecture {goal}` |
-| Reddit | WebSearch | `site:reddit.com {lib} {keywords}`, then WebFetch top 2-3 threads |
+| Reddit | WebSearch | `site:reddit.com {lib} {keywords}`, then `mcp__jina__read_url` top 2-3 threads (Reddit is JS-heavy) |
 | Comparison | WebSearch | `{option_A} vs {option_B} {context}` |
+
+**Fetching note**: for arbitrary blog / General / Best Practices / Specific / Changelog results, prefer `mcp__jina__read_url` when the page is likely JS-rendered (modern docs, SPAs); use `WebFetch` for plain HTML and github.com. If one returns thin content, retry with the other. See the "Web Fetching" section in CLAUDE.md.
 
 For full agent prompt templates with detailed instructions, see `references/agent-prompts.md`.
 

@@ -2,6 +2,17 @@
 
 Full prompt templates for each research agent. All agents use `subagent_type: general-purpose`. Every agent must capture metadata for each source: URL, date, and source type.
 
+## Fetching web content
+
+When an agent needs to read a URL, prefer `mcp__jina__read_url` over `WebFetch` — Jina renders JS server-side and returns clean markdown, avoiding the empty-shell problem `WebFetch` has on SPAs (Reddit, Stack Overflow, many modern docs sites).
+
+Exceptions where plain `WebFetch` is fine or better:
+- `github.com` URLs (issues, PRs, repo files) — no JS hydration needed
+- Plain HTML blogs, RSS feeds, PDFs
+- When Jina is unavailable or returns thin content — fall back to `WebFetch`
+
+Use `mcp__jina__parallel_read_url` when fetching several URLs at once.
+
 ## Docs Agent (Context7)
 
 **Spawn when:** Library/framework is identified
@@ -112,7 +123,7 @@ Search Stack Overflow for solutions and implementations.
 Use WebSearch to search: site:stackoverflow.com {library_name} {keywords}
 
 For the top 2-3 relevant questions:
-1. Use WebFetch to read the accepted/top answers
+1. Use `mcp__jina__read_url` to read the accepted/top answers (Stack Overflow is JS-heavy; plain WebFetch often returns an empty shell)
 2. Extract the solution approach
 
 For each answer, note:
@@ -188,7 +199,7 @@ Focus on:
 - "Don't do this" advice from experience
 
 For the top 2-3 relevant threads:
-1. Use WebFetch to read the thread
+1. Use `mcp__jina__read_url` to read the thread (Reddit is JS-heavy; plain WebFetch often returns an empty shell)
 2. Focus on highly-upvoted comments, not just the original post
 
 For each source, note:
