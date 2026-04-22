@@ -34,6 +34,13 @@ if echo "$msg_lower" | grep -qiE \
 'not.{0,20}(my|our) (fault|problem|issue)|'\
 '(test|check).{0,30}(skip|ignore|move on)|'\
 'existing (issue|bug|problem|failure)'; then
+  # User-approved bypass: if the assistant message contains the exact phrase
+  # [user-approved-preexisting], allow the stop through. The phrase should
+  # only appear when the user has explicitly told the assistant in the current
+  # session that a specific warning / failure is acceptable on this branch.
+  if echo "$message" | grep -qF '[user-approved-preexisting]'; then
+    exit 0
+  fi
   cat << 'EOF'
 {"decision": "block", "reason": "You are dismissing test/lint failures instead of fixing them. This is not allowed. Per project policy: ALL checks must pass. 'Pre-existing' is not an excuse — fix every failure now. Run the failing command, read ALL errors, and fix them in one pass."}
 EOF
