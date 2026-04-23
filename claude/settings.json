@@ -390,6 +390,7 @@
   },
   "effortLevel": "medium",
   "autoMemoryEnabled": true,
+  "awaySummaryEnabled": false,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
   },
