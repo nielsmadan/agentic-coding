@@ -1,11 +1,19 @@
 ---
 name: summary
-description: Summarize and explain currently staged git changes in detail, then propose two conventional-commit messages (one detailed, one short). Use when user says "summary", "summarize staged", "summarize my changes", "explain what I staged", "propose a commit message", "commit summary", or invokes the summary skill. Reads `git diff --cached` — does not commit.
+description: Summarize and explain currently staged git changes in detail, then propose two conventional-commit messages (one detailed, one short). Supports `--quick` for a short recap of the current task and next steps. Use when user says "summary", "summarize staged", "summarize my changes", "explain what I staged", "propose a commit message", "commit summary", "where are we", "what's next", or invokes the summary skill. Read-only — does not commit or stage.
+argument-hint: [--quick]
 ---
 
 # Summary
 
 Explain staged git changes in depth, then propose conventional-commit messages. Analysis only — never runs `git commit`, `git add`, or any state-changing command.
+
+## Modes
+
+- **Default**: detailed per-change writeup + long + short commit messages.
+- **`--quick`**: short recap of the task being worked on, what's been done so far, and what's next. No git mechanics (branch, file counts), no commit messages. Use when the user wants to orient themselves mid-session.
+
+If `--quick` is passed, jump to the "Quick mode" section below and skip everything else.
 
 ## Instructions
 
@@ -107,6 +115,43 @@ feat(auth): add refresh-token rotation
 
 End by noting: "To commit, run `git commit -F-` and paste the long message, or use `git commit -m '<short>'`."
 
+## Quick mode (`--quick`)
+
+A recap of what the session is working on — the task, not the git mechanics. The user can see branch/staged/unstaged in their own tooling; don't repeat that here.
+
+### Figure out the task
+
+Draw from these, in order of authority:
+
+1. **The conversation so far** — what has the user been asking for in this session? This is the primary source.
+2. **Active plan file** — if there's a plan at `~/.claude/plans/<name>.md` (or the project's `plansDirectory`) whose contents match the session's work, it names the task explicitly.
+3. **Recent commits on this branch** (`git log --oneline -20 <branch>..HEAD` or similar) — completed sub-tasks already shipped in this session.
+4. **Uncommitted diff** (`git diff`, `git diff --cached`) — last-resort hint at what's in flight when the conversation is ambiguous.
+
+Pick the most specific source that fits. Conversation beats plan beats commits beats diff.
+
+### Present the recap
+
+Three sections:
+
+```
+## Task
+<one or two sentences naming the goal we're working toward>
+
+## State
+<short paragraph: what's been done so far this session, what's in flight right now>
+
+## Next
+1. <concrete next step>
+2. <concrete next step>
+```
+
+Rules:
+- Keep each section tight — a sentence or two per block.
+- If a specific step just finished and the next thing is unclear, say so in State and set Next to "None — what would you like to do next?"
+- Do NOT list branch name, file counts, staged/unstaged totals, or other git metadata — the user doesn't want it.
+- Max 3 items in Next. If the plan has more remaining, mention it in State ("4 more steps after these") rather than listing them all.
+
 ## Examples
 
 ### Example 1: Narrow bugfix
@@ -159,7 +204,40 @@ The detailed summary calls out each concern (route, handler logic, migration col
 
 Surface this in the summary: "These changes address two unrelated concerns. Consider splitting into two commits (`git reset HEAD <file>` to unstage one, then commit separately)." Still offer proposed messages, but present them as "if you keep the commit as-is" along with separate messages for each concern if the user chooses to split.
 
-### Example 4: Conciseness — trim a wordy body
+### Example 4: Quick mode
+
+**User**: `/summary --quick`
+
+**Context**: session has been adding a `/summary` skill and wiring up a Jina MCP server. An active plan exists at `~/.claude/plans/web-fetching.md`. Skill file is written; just finished refining the `--quick` output format.
+
+**Output**:
+
+```
+## Task
+Add Jina MCP for web fetching and create a `/summary` skill that explains staged changes and recaps session state.
+
+## State
+Jina MCP is live (registered user-level, verified). The `/summary` skill exists with the detailed mode + commit-message output; `--quick` mode was just reworked to focus on task state rather than git mechanics.
+
+## Next
+1. Try `/summary --quick` in a fresh session to see how the recap reads.
+2. Decide whether other cross-project guidance should move from the project `CLAUDE.md` into the global one.
+```
+
+If a task just wrapped up:
+
+```
+## Task
+Set up Jina MCP server for cleaner web fetches.
+
+## State
+Done — key registered, tool verified against a JS-heavy docs page, settings.json permissions added.
+
+## Next
+None — what would you like to do next?
+```
+
+### Example 5: Conciseness — trim a wordy body
 
 Bodies drift wordy when they enumerate what the diff already shows. Below is the kind of output to avoid, followed by the right version.
 
