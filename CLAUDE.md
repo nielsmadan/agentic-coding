@@ -29,6 +29,7 @@ Available in `claude/skills/`:
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-online` | Research a topic online using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
+| `/summary` | Explain staged git changes in detail and propose conventional-commit messages |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
 | `/review-perf` | Performance analysis (--staged, --all) |
