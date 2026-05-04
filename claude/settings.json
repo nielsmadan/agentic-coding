@@ -390,10 +390,11 @@
     }
   },
   "effortLevel": "medium",
-  "autoMemoryEnabled": true,
   "awaySummaryEnabled": false,
+  "autoMemoryEnabled": true,
+  "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
   },
-  "skipAutoPermissionPrompt": true
+  "model": "opus"
 }

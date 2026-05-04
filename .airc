@@ -33,7 +33,7 @@ _gemcli() {
     input="$req"
   fi
   local result
-  result=$(gemini -m gemini-2.5-flash -e none "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input")
+  result=$(gemini -m gemini-2.5-flash -e none --skip-trust "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input")
   print -z "$result"
 }
 alias gemcli="noglob _gemcli"
@@ -46,7 +46,7 @@ _cxcli() {
     input="$req"
   fi
   local result
-  result=$(codex exec -m gpt-5-codex-mini -s read-only --skip-git-repo-check "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input" 2>/dev/null)
+  result=$(codex exec -m gpt-5.4-mini -s read-only --skip-git-repo-check "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input")
   print -z "$result"
 }
 alias cxcli="noglob _cxcli"
