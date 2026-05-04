@@ -1,0 +1,116 @@
+# Allow-list of read-only shell commands.
+# Migrated from gemini/settings.json `tools.allowed` (deprecated, removed in Gemini CLI 1.0).
+# Docs: https://geminicli.com/docs/core/policy-engine/
+
+[[rule]]
+toolName = "run_shell_command"
+decision = "allow"
+priority = 100
+commandPrefix = [
+  "git status",
+  "git log",
+  "git diff",
+  "git show",
+  "git branch",
+  "git branch -l",
+  "git branch -a",
+  "git branch -r",
+  "git branch --list",
+  "git remote -v",
+  "git remote show",
+  "git fetch",
+  "git ls-files",
+  "git ls-tree",
+  "git rev-parse",
+  "git rev-list",
+  "git describe",
+  "git blame",
+  "git shortlog",
+  "git stash list",
+  "git tag -l",
+  "git tag --list",
+  "git config --get",
+  "git config --list",
+  "git cat-file",
+  "git for-each-ref",
+  "git name-rev",
+  "git reflog",
+  "git grep",
+  "git range-diff",
+  "git cherry",
+  "git whatchanged",
+  "git count-objects",
+]
+
+[[rule]]
+toolName = "run_shell_command"
+decision = "allow"
+priority = 100
+commandPrefix = [
+  "glab mr list",
+  "glab mr view",
+  "glab mr diff",
+  "glab issue list",
+  "glab issue view",
+  "glab issue board",
+  "glab ci list",
+  "glab ci view",
+  "glab ci status",
+  "glab ci get",
+  "glab ci lint",
+  "glab ci trace",
+  "glab release list",
+  "glab release view",
+  "glab label list",
+  "glab milestone list",
+  "glab repo view",
+  "glab job list",
+  "glab schedule list",
+  "glab variable list",
+]
+
+[[rule]]
+toolName = "run_shell_command"
+decision = "allow"
+priority = 100
+commandPrefix = [
+  "ls",
+  "pwd",
+  "which",
+  "whoami",
+  "cat",
+  "head",
+  "tail",
+  "less",
+  "more",
+  "find",
+  "grep",
+  "rg",
+  "wc",
+  "du",
+  "df",
+  "date",
+  "uptime",
+  "uname",
+  "env",
+  "printenv",
+  "file",
+  "stat",
+  "tree",
+  "realpath",
+  "dirname",
+  "basename",
+  "jq",
+]
+
+[[rule]]
+toolName = "run_shell_command"
+decision = "allow"
+priority = 100
+commandPrefix = [
+  "yarn --version",
+  "npm --version",
+  "node --version",
+  "python --version",
+  "ruby --version",
+]
