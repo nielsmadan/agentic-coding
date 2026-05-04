@@ -1,12 +1,12 @@
 ---
 name: summary
-description: Summarize and explain currently staged git changes in detail, then propose two conventional-commit messages (one detailed, one short). Supports `--quick` for a short recap of the current task and next steps. Use when user says "summary", "summarize staged", "summarize my changes", "explain what I staged", "propose a commit message", "commit summary", "where are we", "what's next", or invokes the summary skill. Read-only — does not commit or stage.
+description: Summarize and explain current git changes (staged by default, falling back to unstaged if nothing is staged) in detail, then propose two conventional-commit messages (one detailed, one short). Supports `--quick` for a short recap of the current task and next steps. Use when user says "summary", "summarize staged", "summarize my changes", "explain what I changed", "propose a commit message", "commit summary", "where are we", "what's next", or invokes the summary skill. Read-only — does not commit or stage.
 argument-hint: [--quick]
 ---
 
 # Summary
 
-Explain staged git changes in depth, then propose conventional-commit messages. Analysis only — never runs `git commit`, `git add`, or any state-changing command.
+Explain current git changes in depth, then propose conventional-commit messages. Prefers staged changes; falls back to unstaged if nothing is staged. Analysis only — never runs `git commit`, `git add`, or any state-changing command.
 
 ## Modes
 
@@ -17,13 +17,20 @@ If `--quick` is passed, jump to the "Quick mode" section below and skip everythi
 
 ## Instructions
 
-### Step 1: Confirm there are staged changes
+### Step 1: Pick the scope (staged, with unstaged fallback)
 
-Run `git diff --cached --stat`. If the output is empty, stop and tell the user "No staged changes. Run `git add` first." Do not fall back to unstaged changes unless the user explicitly asks.
+Run `git diff --cached --stat`.
 
-### Step 2: Read the full staged diff
+- **If non-empty**: scope = staged. Use `git diff --cached` for the rest of the analysis. This is the preferred path — assume the user has curated what they want to commit.
+- **If empty**: run `git diff --stat`.
+  - **If non-empty**: scope = unstaged. Open the writeup with a one-line note: "Nothing staged — summarizing unstaged changes instead." Use `git diff` for the analysis. Commit messages still apply (the user can stage and commit afterward).
+  - **If also empty**: stop. Tell the user "No changes — working tree is clean."
 
-Run `git diff --cached`. For large diffs (hundreds of lines), also run `git diff --cached --stat` first to orient, then read the full diff. If the diff is enormous (thousands of lines), summarize per-file rather than trying to hold the whole thing.
+Throughout the rest of the skill, "diff" means whichever scope was selected here.
+
+### Step 2: Read the full diff
+
+Run `git diff --cached` (staged scope) or `git diff` (unstaged scope) — whichever Step 1 selected. For large diffs (hundreds of lines), run the corresponding `--stat` form first to orient, then read the full diff. If the diff is enormous (thousands of lines), summarize per-file rather than trying to hold the whole thing.
 
 Also helpful but optional:
 - `git status --short` — flags partially-staged files (both `M` in column 1 and `M` in column 2)
@@ -278,10 +285,15 @@ The cut: file enumerations, rename lists, cosmetic notes, and anything a reader 
 
 ## Troubleshooting
 
-### No staged changes
+### No changes anywhere
 
-**Cause:** User hasn't run `git add` yet.
-**Solution:** Tell the user "No staged changes. Run `git add <files>` first." Do not silently fall back to unstaged or untracked changes.
+**Cause:** Working tree is clean — nothing staged, nothing unstaged.
+**Solution:** Tell the user "No changes — working tree is clean." Don't try to summarize untracked files or recent commits; that's outside this skill's scope.
+
+### Nothing staged but unstaged work exists
+
+**Cause:** User hasn't run `git add` yet, but has edits in the working tree.
+**Solution:** Fall back to summarizing unstaged changes (`git diff` instead of `git diff --cached`). Open the writeup with one line acknowledging the fallback: "Nothing staged — summarizing unstaged changes instead." Still propose commit messages; the user can stage and commit afterward.
 
 ### Diff is huge (thousands of lines)
 
