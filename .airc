@@ -5,7 +5,7 @@
 # Claude Code
 alias claude="~/.local/bin/claude"
 alias clco="claude --continue"
-_clcof() { claude --resume main --fork-session --name "main-$(openssl rand -hex 3)" "$@"; }
+_clcof() { claude --continue --fork-session --name "main-$(openssl rand -hex 3)" "$@"; }
 alias clcof="noglob _clcof"
 
 _ccone() { claude -p "$*"; }
