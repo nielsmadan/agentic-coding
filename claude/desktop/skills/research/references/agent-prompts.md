@@ -2,6 +2,31 @@
 
 Templates for each search group. For each source found, capture: URL, date, and source type. Track your total search count against the budget (Quick: 3-4, Standard: 8-12).
 
+## Encyclopedic Searches (Wikipedia)
+
+**Run when:** Topic is unfamiliar OR you need a citation trail to primary sources (1 search, optional fetch)
+
+```
+Look up the topic on Wikipedia for grounding and citation trails.
+
+web_search: site:en.wikipedia.org {topic}
+
+If a relevant article exists, web_fetch the top 1-2 articles. Note:
+- Which key claims have inline citations and what those cited sources are (these are leads for Authority / Community / Regional searches)
+- Any Wikipedia dispute markers ([citation needed], NPOV warnings, "this article has multiple issues")
+- Last revision date
+
+Capture for each article:
+- URL
+- Last revision date
+- Whether it has dispute markers
+- Key cited sources for the main claims (URL + author/publisher)
+
+Treat Wikipedia as **grounding, not authority** — follow its citations to the primary source rather than citing Wikipedia itself for load-bearing claims.
+
+Skip Encyclopedic for: topics Claude already knows well at high confidence (the existing-knowledge check should have caught these), or for hyper-current topics where Wikipedia hasn't caught up.
+```
+
 ## General Searches
 
 **Run when:** Always (1-2 searches)
@@ -145,4 +170,43 @@ Focus on:
 - New options recently available
 
 Only include genuinely recent results (within last 12 months). Don't pad with older news.
+```
+
+## Specific Claim Searches (Fact Checking)
+
+**Run when:** User provides a quoted claim to verify or refute (1-2 searches)
+
+```
+Verify or refute the specific claim: "{exact_claim}"
+
+web_search: "{exact_claim}"
+web_search: "{exact_claim}" fact check
+Optional: web_search: "{exact_claim}" debunked OR origin
+
+Prioritize established fact-check organizations:
+- Snopes (snopes.com)
+- Reuters Fact Check (reuters.com/fact-check)
+- AP Fact Check (apnews.com/hub/ap-fact-check)
+- FactCheck.org
+- PolitiFact (politifact.com)
+- Full Fact (fullfact.org, UK)
+- Africa Check (africacheck.org)
+
+Also look for:
+- The original source of the claim (often a misquote, oversimplification, or out-of-context excerpt of something real)
+- Academic papers or primary sources that directly address the claim
+- The strongest evidence FOR and AGAINST — not just the verdict
+
+web_fetch the top 1-2 fact-check pages or primary sources for detail.
+
+For each source, note:
+- URL, outlet, date
+- Source type: fact-check / academic / news / blog
+- Verdict (if a fact-check): true / mostly true / mixed / mostly false / false / unproven
+
+Return:
+- The claim's verdict, weighted by source authority
+- Strongest evidence each way
+- The original source of the claim, if findable (or note "untraceable")
+- Whether the claim is a misquote, oversimplification, or out-of-context version of a real statement
 ```

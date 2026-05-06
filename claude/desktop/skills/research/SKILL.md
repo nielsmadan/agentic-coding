@@ -1,6 +1,6 @@
 ---
 name: research
-description: Research non-programming topics online from multiple sources. Use when asking about life decisions, consumer purchases, freelancing, finance, career strategy, travel, regulations, marketing, health, or any general knowledge question. Also handles programming-adjacent topics like marketing a dev blog or freelancer career strategy. Triggers on "research", "find out about", "what are my options for", "how to handle", "best way to", comparisons like "X vs Y" for non-technical topics, or questions about real-world products, services, and strategies. Do NOT use for programming, library docs, or code debugging — use research-online instead.
+description: Research non-programming topics online from multiple sources. Use when asking about life decisions, consumer purchases, freelancing, finance, career strategy, travel, regulations, marketing, health, or any general knowledge question. Also handles programming-adjacent topics like marketing a dev blog or freelancer career strategy. Triggers on "research", "find out about", "what are my options for", "how to handle", "best way to", comparisons like "X vs Y" for non-technical topics, or questions about real-world products, services, and strategies. Do NOT use for programming, library docs, or code debugging — use research-code instead.
 argument-hint: <topic or question>
 ---
 
@@ -55,12 +55,14 @@ Query type classification (influences which searches to run):
 
 | Query Type | Signals | Search groups |
 |-----------|---------|---------------|
-| **Simple factual** | "What is", "How much", "When does" | Quick: General + Authority |
+| **Simple factual** | "What is", "How much", "When does" | Quick: Encyclopedic + General |
 | **Opinion/experience** | "How do you handle", "What's it like", "tips for" | General, Community |
 | **Comparison** | "vs", "or", "compare", "which is better", "best X" | General, Comparison, Community |
 | **Regional/localized** | Country/city mentioned, regulations, local services | General, Authority, Regional |
 | **How-to/strategy** | "How to", "best way to", "strategy for" | General, Community, Authority |
 | **Consumer/purchase** | Product names, "buy", "price", "worth it", "quality" | General, Comparison, Community, Regional |
+| **Claim verification** | Quoted claim, "is it true that", "fact check", "debunked" | Specific Claim, Authority, Encyclopedic |
+| **Background / unfamiliar topic** | Topic Claude isn't deeply familiar with, niche field | Encyclopedic (always), then route by query type |
 
 When in doubt, use Standard.
 
@@ -70,12 +72,14 @@ Run the relevant searches sequentially. Each search group below is 1-3 `web_sear
 
 | Search group | Run when | Purpose |
 |-------------|----------|---------|
+| **Encyclopedic** | Almost always for unfamiliar topics; optional for topics Claude knows well | Wikipedia for grounding — terminology, entity overview, citation trail to primary sources |
 | **General** | Always | Broad web search for the topic |
 | **Community** | Opinion/experience, comparison, consumer, strategy queries | Reddit threads, Quora, forums — candid experiences, warnings. For genuinely niche topics (specific hobbies, medical conditions, specialized professions), also search specialized forums beyond Reddit. |
 | **Authority** | Factual, regulatory, financial, health queries | Government sites, established institutions, official sources |
 | **Comparison** | Query contains "vs", "or", "compare", "which", "best" | Structured comparisons, pros/cons, rankings |
 | **Regional** | Query mentions a country, city, or region-specific topic | Localized information, local regulations, region-specific options |
 | **News** | Topic likely affected by recent events, policy changes, market shifts | Up-to-date reporting, recent developments |
+| **Specific Claim** | User provides a quoted claim to verify or refute | Fact-check sites (Snopes, Reuters Fact Check, AP Fact Check, FactCheck.org, PolitiFact) plus the claim's apparent origin |
 
 **For Germany-specific queries:** Always include German-language searches. Key authoritative German sources: Finanztip (personal finance), Verbraucherzentrale (consumer protection), Stiftung Warentest (product testing), Check24 (price comparison), IHK (business/freelancing). Search in German — e.g., "Tagesgeld Vergleich 2026" rather than "savings account comparison Germany."
 
@@ -191,6 +195,13 @@ Quick mode: General + Authority only (3-4 searches). Direct answer.
 /research What are the pros and cons of a UG vs GmbH?
 ```
 Claude likely knows this well. Answer from training data, offer to search for verification or current details (e.g., minimum capital requirements may have changed).
+
+### Example 8: Claim Verification
+```
+/research is it true that "humans only use 10% of their brain"?
+```
+Query type: Claim verification
+Searches: Specific Claim (Snopes, Reuters Fact Check), Authority (neuroscience sources), Encyclopedic (for context on the myth's origin)
 
 ## Troubleshooting
 

@@ -234,6 +234,50 @@ Return:
 - Whether the claim is a misquote, oversimplification, or out-of-context
 ```
 
+## Regional Agent
+
+**Spawn when:** Query mentions a country, city, region, or locale-specific topic (regulations, prices, services, regulators, health systems, taxation, real estate)
+
+```
+Find region-specific sources and authorities for: {topic} in {region}
+
+Use WebSearch:
+- {topic} {country/region}
+- {topic} site:{country_TLD}  (e.g., site:.de, site:.fr, site:.uk, site:.gov.au)
+
+For non-English locales, ALWAYS also search in the local language — results are significantly better and pick up authoritative local sources that English searches miss.
+
+Locale playbook (extend as needed):
+
+**Germany (DE)**
+- Search terms in German: e.g., "Tagesgeld Vergleich 2026", "Matratze Test", "Mietpreisspiegel Berlin", "Freiberufler Steuern"
+- Key authoritative sites: finanztip.de, verbraucherzentrale.de, test.de (Stiftung Warentest), check24.de, ihk.de, bafin.de, bundesbank.de
+
+**France (FR)**
+- Search in French: e.g., "comparatif {topic}", "{topic} avis"
+- Key sites: service-public.fr, ufc-quechoisir.org, 60millions-mag.com, ameli.fr (health)
+
+**UK (GB)**
+- Key sites: gov.uk, which.co.uk, moneysavingexpert.com, nhs.uk, citizensadvice.org.uk
+
+**United States (US)**
+- Key sites: .gov sites for the relevant agency, consumerreports.org, nerdwallet.com, kff.org (health policy)
+
+**Australia (AU)**
+- Key sites: gov.au, choice.com.au, moneysmart.gov.au
+
+For other regions, look for: the national consumer-protection body, the relevant regulator (financial / health / industry), an established independent test or comparison institution.
+
+For each source, capture:
+- Title, URL, language
+- Publication date
+- Source type: government / regulator / consumer-protection body / independent test institution / commercial comparison site / local news
+- **Affiliate or sponsorship disclosure** (especially relevant for commercial comparison sites)
+- Region/scope it covers (and flag if it covers a different region than requested)
+
+Return: a summary of region-specific findings, weighting government and independent-test institutions above commercial comparison sites. Translate key terms back to English in the summary so the synthesis can use them.
+```
+
 ## Historical Agent
 
 **Spawn when:** Topic is historical, OR a historical angle is needed for context

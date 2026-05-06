@@ -144,7 +144,7 @@ Do NOT use `gh api` when a dedicated subcommand exists.
 
 These phrases automatically invoke skills:
 - "second opinion" → `/second-opinion`
-- "research online" → `/research-online`
+- "research online" → `/research-code` (programming/library/code) or `/research-general` (academic/historical/consumer/fact-check). Pick by topic; default to `/research-general` if ambiguous.
 - "review plan" → `/review-plan`
 - "add debug logs" / "debug logging" → `/debug-log`
 - "review history" / "git history" → `/review-history`
@@ -163,7 +163,8 @@ Invoke with `/<skill-name>`:
 | `/debug-log` | Add debug logging to trace execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/read-docs` | Search internal project documentation |
-| `/research-online` | Research topic online with parallel agents |
+| `/research-code` | Research a programming topic online with parallel agents |
+| `/research-general` | Research a non-programming topic online with parallel agents |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-security` | Security audit for vulnerabilities |
 | `/review-perf` | Performance analysis |

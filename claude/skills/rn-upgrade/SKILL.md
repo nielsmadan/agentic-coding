@@ -29,7 +29,7 @@ You are tasked with upgrading a React Native application to the version specifie
 
 2. **Research and validate:**
    - Fetch the release notes for the target version from https://github.com/facebook/react-native/releases/tag/v{target}
-   - Use `research-online` if release notes mention major changes (e.g., New Architecture default, Kotlin/Swift migration)
+   - Use `research-code` if release notes mention major changes (e.g., New Architecture default, Kotlin/Swift migration)
    - List any breaking changes that affect this project
 
 3. **Fetch the upgrade diff:**

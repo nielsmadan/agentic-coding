@@ -53,7 +53,7 @@ Do NOT invoke one at a time. Do NOT stop after the first agent.
 | **Alternatives** | Propose 2-4 other solutions | Task: general-purpose |
 | **Robustness** | Check for fragile patterns | Task: general-purpose |
 | **Adversarial** | Maximally critical review | Task: general-purpose |
-| **Research** | Relevant practices online | Skill: `research-online` |
+| **Research** | Relevant practices online | Skill: `research-code` |
 
 See [references/agent-prompts.md](references/agent-prompts.md) for full prompt templates for each agent.
 
@@ -141,7 +141,7 @@ Reviews the auth redesign plan with all agents including the research agent, whi
 
 ## Notes
 
-- Use the Skill tool for `second-opinion` and `research-online` - do not write slash commands directly
+- Use the Skill tool for `second-opinion` and `research-code` - do not write slash commands directly
 - External opinions provide model diversity (Gemini + Codex)
 - The adversarial agent should be harsh - that's its job
 - Robustness review catches patterns that "work in testing, fail in prod" - see [references/robustness-patterns.md](references/robustness-patterns.md) for examples

@@ -5,7 +5,7 @@
 ### Research Agent
 
 ```
-research-online {library_if_any} {error_or_symptom}
+research-code {library_if_any} {error_or_symptom}
 
 Focus on: known bugs, breaking changes, similar issues others faced
 ```

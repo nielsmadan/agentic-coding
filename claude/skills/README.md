@@ -69,7 +69,7 @@ Workflow for upgrading Flutter and dependencies following best practices.
 
 ### /hard-fix
 
-Escalation workflow for stubborn bugs. Combines parallel investigation using research-online, debug-log, review-history, and second-opinion.
+Escalation workflow for stubborn bugs. Combines parallel investigation using research-code, debug-log, review-history, and second-opinion.
 
 **Arguments:**
 - `<description of the persistent problem>`
@@ -122,14 +122,14 @@ Search and read internal project documentation (docs/, README.md, CLAUDE.md).
 
 ---
 
-### /research-online
+### /research-code
 
 Research a programming topic online using parallel agents. Searches documentation, GitHub issues, and general solutions.
 
 **Arguments:**
 - `<topic or error message>`
 
-**Example:** `/research-online React 19 use() hook`
+**Example:** `/research-code React 19 use() hook`
 
 ---
 

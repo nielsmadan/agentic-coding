@@ -27,7 +27,7 @@ Available in `claude/skills/`:
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/read-docs` | Search internal project documentation (proactive) |
-| `/research-online` | Research a programming topic online using parallel agents |
+| `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
@@ -114,7 +114,7 @@ Do not keep trying the same approach. Each escalation tier forces a fresh perspe
 
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
 
-When the user's prompt contains "research online", automatically invoke the `/research-online` skill to search documentation, GitHub issues, and web resources in parallel.
+When the user's prompt contains "research online", automatically invoke whichever skill fits the topic: `/research-code` for programming, library docs, code patterns, error debugging, or version-specific issues; `/research-general` for non-programming topics — academic, historical, current events, regional/regulatory, consumer, fact-checking. If the topic is genuinely ambiguous, default to `/research-general`.
 
 When the user's prompt contains "review plan", "review the plan", or "review my plan", automatically invoke the `/review-plan` skill to get multi-agent feedback before implementation.
 
@@ -153,4 +153,4 @@ When a `docs/` folder exists, proactively check internal documentation using `/r
 - When debugging issues (check for documented gotchas)
 - When the user asks about conventions, patterns, or architecture
 
-This supplements CLAUDE.md with detailed project-specific knowledge. For external library docs, use `/research-online` instead.
+This supplements CLAUDE.md with detailed project-specific knowledge. For external library docs, use `/research-code` instead.

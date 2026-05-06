@@ -78,7 +78,7 @@ Launch ALL of these simultaneously using the Task tool:
 
 | Agent | Skill/Tool | Focus |
 |-------|------------|-------|
-| **Research** | `research-online` | External solutions, known issues, library bugs |
+| **Research** | `research-code` | External solutions, known issues, library bugs |
 | **Debug** | `debug-log` | Add logging to trace the actual execution path |
 | **History** | `review-history` | Git blame, recent changes, past issue logs |
 | **Library Source** | Read library code | Undocumented behavior, actual implementation |

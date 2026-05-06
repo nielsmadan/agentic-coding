@@ -1,66 +1,44 @@
 # Output Format Template
 
-Lead with the synthesis, then include only supporting detail sections relevant to the query. Skip sections that would repeat the synthesis.
+Lead with the answer. Keep it concise. Only add sections that provide value beyond the main answer.
 
 ```markdown
-## Research Results: {topic}
+## {topic}
 
-### Synthesis
+{Direct answer to the question. State the recommended approach or key finding up front. Use **inline source counts** for transparency — e.g., "(3 sources)", "(2 high-authority sources)", or "(1 source, low confidence)" next to specific claims.}
 
-**Question:** {one-line restatement of what the user wants to know}
+{For empirical questions, lead with what the strongest evidence shows. For historical questions, lead with what primary sources show. For comparisons, lead with the headline trade-off. For claim verification, lead with the verdict.}
 
-**Best Answer:**
-{what the evidence shows, weighted by source authority and topic stability — primary sources and peer-reviewed work first for empirical questions; primary documents for historical}
-
-**Key Findings (weighted by credibility):**
-- {finding from high-credibility source — e.g., meta-analysis or primary document}
-- {finding from high-credibility source}
-- {finding from medium source, noting caveat — e.g., "single study", "advocacy source", "preliminary data"}
-
-**Confidence:** {High / Medium / Low}
-- Based on: {e.g., "convergent findings across 1 meta-analysis and 2 primary studies"}
-- Caveats: {scope mismatches, contested areas, gaps in evidence, recency concerns for fast-moving topics}
-
-**Key References:**
+**Key references:**
 1. [{title}]({url}) — {why this source matters, e.g., "2023 meta-analysis pooling 47 studies"}
-2. [{title}]({url}) — {why this source matters, e.g., "primary government data"}
-3. [{title}]({url}) — {why this source matters} (optional, only if 3rd source significantly shaped the conclusion)
+2. [{title}]({url}) — {why this source matters, e.g., "primary government data from BLS"}
+3. [{title}]({url}) — {why this source matters} (only if a 3rd source significantly shaped the answer)
+
+{STOP HERE if the answer above covers it. Only add sections below if they provide substantial additional value beyond what the direct answer already states.}
 
 ---
 
-### Supporting Details
-
-(Include only sections relevant to the query, and only findings not already covered in the synthesis above)
-
 #### Background
-(only when grounding is useful — e.g., topic involves contested terminology or unfamiliar entities)
-{Wikipedia / encyclopedic context with the entry's own cited sources}
+(only when grounding is useful — contested terminology, unfamiliar entities, niche field)
+{Encyclopedic context with the entry's own cited sources}
 
 #### Evidence
-(empirical / scientific / scholarly questions)
+(empirical / scientific / scholarly questions, when there's nuance the headline answer didn't capture)
 - **{Finding}** — {study type, sample, date, citation}. {What it shows.}
 - **{Finding}** — {study type, sample, date, citation}. {What it shows.}
 
 Include where studies disagree and what drives the disagreement (sample, endpoint, methodology).
 
-#### News & Reporting
-(current events or contemporaneous coverage)
-- **{Outlet, date}** — {what was reported, with primary-vs-secondary distinction}
-
 #### Comparison
-(only if comparison query)
-
-**{Option A}:**
-- Strengths: {list}
-- Weaknesses: {list}
-- Best for: {use cases / contexts}
-
-**{Option B}:**
-- Strengths: {list}
-- Weaknesses: {list}
-- Best for: {use cases / contexts}
+(only for comparison queries with meaningful pros/cons to lay out)
+**{Option A}:** Strengths · Weaknesses · Best for
+**{Option B}:** Strengths · Weaknesses · Best for
 
 Note where the choice depends on values vs. where there's an empirical answer.
+
+#### Regional details
+(only if region-specific info wasn't already in the main answer)
+{Local regulations, pricing, availability, locale-specific authoritative sources}
 
 #### Claim Verification
 (only if user provided a specific claim to verify)
@@ -71,18 +49,22 @@ Note where the choice depends on values vs. where there's an empirical answer.
 - **Origin of the claim:** {original source if findable, or "untraceable"}
 
 #### Historical Context
-(only if historical query)
-- **Primary documents:** {list with dates}
-- **Contemporaneous reporting:** {list with dates and outlets}
-- **Historiographical debate:** {where established historians disagree, if relevant}
+(only if historical query — primary documents and contemporaneous reporting that didn't fit in the headline)
 
 #### Conflicts
 (only if sources disagree on something material)
 - {source A} says X, but {source B} says Y
 - **Resolution:** {which to trust and why — authority, scope, recency, primary vs secondary}
-- {or note the conflict is unresolved by the evidence available}
 
 #### Open Questions
-(what the search did not resolve)
-- {gap}: {why it persisted — e.g., "no peer-reviewed data on this population", "primary documents still classified"}
+(only if material gaps remain — what the search did not resolve and why)
 ```
+
+## Guidelines
+
+- **No empty sections.** If a section would just repeat the headline answer or has nothing material to add, skip it entirely.
+- **Inline source counts.** Use "(N sources)" or "(1 source, low confidence)" next to claims to show how well-supported they are. This replaces a separate Confidence block in most cases.
+- **Confidence is implicit when source counts are visible.** Only call out confidence explicitly when it's notably low, when sources conflict and the conflict matters, or when the topic is fast-moving and the answer might shift.
+- **Shorter is better.** A 5-sentence answer with 3 good sources beats a structured report with empty sections. Resist the urge to fill every available section.
+- **Flag affiliate/sponsored sources** when they materially shaped the answer — readers should know if a recommendation came from a comparison site that earns commission.
+- **For regional queries**, name the locale explicitly in the answer (don't assume the reader knows you searched in German).
