@@ -78,6 +78,17 @@ Escalation workflow for stubborn bugs. Combines parallel investigation using res
 
 ---
 
+### /pre-existing
+
+Force a thorough investigation of "pre-existing" test, lint, type, build, or CI failures instead of dismissing them. Replaces the old `block-test-dismissal` Stop hook.
+
+**Arguments:**
+- `[optional: name of the failing check, file, or error]`
+
+**Example:** `/pre-existing tsc errors in src/api`
+
+---
+
 ### /perf-test
 
 Set up and run performance tests (profiling, load testing, or E2E scenarios). Includes improvement cycle to implement fixes and compare results.

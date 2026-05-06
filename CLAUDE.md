@@ -41,6 +41,7 @@ Available in `claude/skills/`:
 | `/test` | Test review and generation (--review, --generate) |
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
+| `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/workbench` | Run code in a Docker-sandboxed environment |
 | `/rn-upgrade` | React Native upgrade workflow |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
@@ -127,6 +128,8 @@ When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, s
 When the user's prompt asks to build or design a web page, landing page, dashboard, or component, or to beautify/style a web UI, automatically invoke the `/frontend-design` skill.
 
 When the user's prompt contains "review logs", "session analysis", or "failure patterns", automatically invoke the `/review-logs` skill to analyze session transcripts.
+
+When the user's prompt contains "pre-existing", "preexisting", "already broken", or "flaky test", or when you are about to label a test/lint/type/build/CI failure as pre-existing, unrelated, or not your fault, automatically invoke the `/pre-existing` skill before stopping.
 
 ## Proactive Workbench Usage
 

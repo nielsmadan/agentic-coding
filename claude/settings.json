@@ -176,7 +176,8 @@
       "Skill(theme-factory)",
       "Skill(todo)",
       "Skill(workbench)",
-      "Skill(optimize-seo)"
+      "Skill(optimize-seo)",
+      "Skill(pre-existing)"
     ],
     "deny": [
       "Bash(git add *)",
@@ -338,15 +339,6 @@
       }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/block-test-dismissal.sh",
-            "timeout": 10
-          }
-        ]
-      },
       {
         "hooks": [
           {
