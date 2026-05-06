@@ -45,8 +45,12 @@ _cxcli() {
     vared -p "cxcli> " req || return 0
     input="$req"
   fi
+  local outfile
+  outfile=$(mktemp -t cxcli.XXXXXX)
+  codex exec -m gpt-5.4-mini -s read-only --skip-git-repo-check --output-last-message "$outfile" "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input" >/dev/null 2>&1
   local result
-  result=$(codex exec -m gpt-5.4-mini -s read-only --skip-git-repo-check "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input")
+  result=$(sed '/^```/d;/^$/d' "$outfile")
+  rm -f "$outfile"
   print -z "$result"
 }
 alias cxcli="noglob _cxcli"
