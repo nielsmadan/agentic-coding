@@ -5,7 +5,19 @@
 # Claude Code
 alias claude="~/.local/bin/claude"
 alias clco="claude --continue"
-_clcof() { claude --continue --fork-session --name "main-$(openssl rand -hex 3)" "$@"; }
+_clcof() {
+  local base="main"
+  local recent_name
+  recent_name=$(jq -rs --arg cwd "$PWD" '
+    map(select(.cwd == $cwd))
+    | sort_by(.updatedAt) | reverse
+    | .[0].name // ""
+  ' ~/.claude/sessions/*.json 2>/dev/null)
+  if [[ -n "$recent_name" ]]; then
+    base="${recent_name%-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]}"
+  fi
+  claude --continue --fork-session --name "${base}-$(openssl rand -hex 3)" "$@"
+}
 alias clcof="noglob _clcof"
 
 _ccone() { claude -p "$*"; }
