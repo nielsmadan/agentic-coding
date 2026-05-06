@@ -10,9 +10,10 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenC
 
 ```
 /
-├── claude/           # Claude Code configuration
+├── claude/           # Claude Code + Claude Desktop configuration
 │   ├── settings.json # Permissions, hooks, status line
-│   ├── skills/       # Custom skills (<name>/SKILL.md)
+│   ├── skills/       # Claude Code skills (<name>/SKILL.md)
+│   ├── desktop/      # Claude Desktop skills (zip-and-upload)
 │   └── hooks/        # Shell scripts for event triggers
 ├── codex/            # OpenAI Codex CLI configuration
 │   ├── config.toml   # Approval policy, sandbox mode
@@ -152,6 +153,15 @@ These phrases automatically invoke skills:
 - ".pdf" or PDF-related tasks → `/pdf`
 - Build/design web page/component → `/frontend-design`
 - "review logs" / "session analysis" → `/review-logs`
+
+## Claude Desktop Skills
+
+Skills under `claude/desktop/skills/` deploy to Claude Desktop manually (no automation):
+1. Edit `claude/desktop/skills/<name>/SKILL.md` (and any `references/`)
+2. Run `./claude/desktop/package-skills.sh` to produce `claude/desktop/zips/<name>.zip`
+3. Upload the zip via Claude Desktop's UI
+
+Unpacked copies under `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/...` are read-only — never edit there.
 
 ## Available Skills
 

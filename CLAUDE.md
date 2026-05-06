@@ -52,6 +52,15 @@ Available in `claude/skills/`:
 | `/skill-creator` | Guide for creating skills |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 
+## Claude Desktop Skills
+
+Skills under `claude/desktop/skills/` are deployed to Claude Desktop manually:
+1. Edit `claude/desktop/skills/<name>/SKILL.md` (and any `references/`)
+2. Run `./claude/desktop/package-skills.sh` — produces `claude/desktop/zips/<name>.zip`
+3. Upload the zip via Claude Desktop's UI (no automation)
+
+The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/...` are read-only — never edit there.
+
 ## Secrets Policy
 
 **Never commit API tokens, secrets, or credentials to any file in this repo.** This repo is version-controlled and shared. Secrets must stay in the user's environment (e.g., shell env vars, `.env` files in `.gitignore`, or OS keychain). MCP server configs use `${ENV_VAR}` interpolation for auth — never hardcode tokens.
