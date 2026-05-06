@@ -27,7 +27,8 @@ Available in `claude/skills/`:
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/read-docs` | Search internal project documentation (proactive) |
-| `/research-online` | Research a topic online using parallel agents |
+| `/research-online` | Research a programming topic online using parallel agents |
+| `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
 | `/review-history` | Analyze git history and past issue logs |

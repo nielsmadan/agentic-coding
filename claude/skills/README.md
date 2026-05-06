@@ -133,6 +133,20 @@ Research a programming topic online using parallel agents. Searches documentatio
 
 ---
 
+### /research-general
+
+Research a non-programming topic online using parallel agents. Searches Wikipedia, academic papers (arxiv/SSRN), established news outlets, primary government/organizational sources, and forums.
+
+**Arguments:**
+- `<question, topic, or claim to verify>`
+
+**Examples:**
+- `/research-general what does the evidence say about screen time and adolescent sleep`
+- `/research-general "humans only use 10% of their brain"`
+- `/research-general nuclear vs solar economics for grid power`
+
+---
+
 ### /resolve-conflicts
 
 Resolve git conflicts from any operation (merge, rebase, cherry-pick, stash, revert). Detects conflict type and provides correct continuation commands.

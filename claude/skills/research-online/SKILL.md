@@ -11,11 +11,11 @@ Research a programming topic from multiple angles using parallel sub-agents, wit
 ## Usage
 
 ```
-/research-online <library> <what you want to do>
-/research-online "<error message>" <library>
-/research-online how to implement auth in react-navigation v7
-/research-online best practices for state management in React
-/research-online Redux vs Zustand for large app
+research-online <library> <what you want to do>
+research-online "<error message>" <library>
+research-online how to implement auth in react-navigation v7
+research-online best practices for state management in React
+research-online Redux vs Zustand for large app
 ```
 
 ## Gotchas
@@ -171,37 +171,37 @@ For the full output format template, see `references/output-format.md`.
 
 ### Example 1: Feature Implementation
 ```
-/research-online how to implement authentication in Next.js 14
+research-online how to implement authentication in Next.js 14
 ```
 Spawns: Docs, GitHub, General, Best Practices, StackOverflow
 
 ### Example 2: Comparison Query
 ```
-/research-online Redux vs Zustand for large React app
+research-online Redux vs Zustand for large React app
 ```
 Spawns: Docs (both), General, Comparison, Reddit, StackOverflow
 
 ### Example 3: Specific Error
 ```
-/research-online "Cannot read property 'navigate' of undefined" react-navigation
+research-online "Cannot read property 'navigate' of undefined" react-navigation
 ```
 Spawns: Docs, GitHub, General, Specific, StackOverflow
 
 ### Example 4: Version-Specific
 ```
-/research-online auth navigation not working in react-navigation v7
+research-online auth navigation not working in react-navigation v7
 ```
 Spawns: Docs, GitHub, General, Changelog, StackOverflow
 
 ### Example 5: Best Practices
 ```
-/research-online best practices for folder structure in Express API
+research-online best practices for folder structure in Express API
 ```
 Spawns: Docs, General, Best Practices, Reddit, StackOverflow
 
 ### Example 6: Quick Mode (Simple Lookup)
 ```
-/research-online what's the default port for Vite dev server
+research-online what's the default port for Vite dev server
 ```
 Quick mode: Spawns Docs + General only. Returns direct answer without follow-up loop or critique.
 
