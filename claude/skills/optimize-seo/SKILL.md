@@ -1,6 +1,6 @@
 ---
 name: optimize-seo
-description: Audit and optimize web pages for SEO. Use when user asks to "optimize SEO", "check SEO", "add meta tags", "add structured data", "add schema markup", "improve search ranking", "SEO audit", or wants to generate Open Graph tags, JSON-LD, or fix SEO issues on HTML pages.
+description: Audit and optimize web pages for SEO — meta tags, Open Graph, JSON-LD, structured data. Triggers "optimize SEO", "check SEO", "add meta tags", "SEO audit".
 ---
 
 # Optimize SEO

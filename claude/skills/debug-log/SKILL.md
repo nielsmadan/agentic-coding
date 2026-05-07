@@ -1,6 +1,6 @@
 ---
 name: debug-log
-description: Add debug logging statements to trace code execution. Use when debugging issues, understanding control flow, or investigating why code behaves unexpectedly. Supports any language (JS/TS, Python, Go, etc). Invoke with a topic/area to debug, or use conversation context.
+description: Add debug logging to trace code execution. Use when debugging, tracing control flow, or investigating unexpected behavior. Any language (JS/TS, Python, Go).
 argument-hint: <topic or area to debug>
 ---
 

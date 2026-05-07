@@ -371,6 +371,7 @@
     }
   },
   "effortLevel": "medium",
+  "skillListingBudgetFraction": 0.02,
   "awaySummaryEnabled": false,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,

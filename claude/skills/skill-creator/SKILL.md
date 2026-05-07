@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Guide for creating effective skills. Use when users want to create a new skill, update an existing skill, or need help structuring a skill that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations. Triggers on "create a skill", "build a skill", "new skill", "improve this skill", or "skill for [use case]".
+description: Guide for creating or improving Claude skills. Triggers "create a skill", "build a skill", "new skill", "improve this skill", "skill for [use case]".
 argument-hint: <skill name or description>
 ---
 

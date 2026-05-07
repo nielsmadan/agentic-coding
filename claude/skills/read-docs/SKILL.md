@@ -1,6 +1,6 @@
 ---
 name: read-docs
-description: Search and read internal project documentation. Use proactively when needing project-specific patterns, conventions, architecture, or domain knowledge. Searches docs/, README.md, CLAUDE.md, and other .md files. Invoke before planning features, when entering new code areas, or when debugging.
+description: Search internal project docs (docs/, README.md, CLAUDE.md, *.md) for patterns, conventions, architecture. Use proactively before features, in new code areas, or when debugging.
 argument-hint: <keywords or topic>
 ---
 

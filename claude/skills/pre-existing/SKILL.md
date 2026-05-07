@@ -1,6 +1,6 @@
 ---
 name: pre-existing
-description: Fix any test, lint, type-check, build, or CI failure instead of dismissing it as pre-existing, flaky, unrelated, or someone else's problem. Invoke whenever you notice a red check OR when the user types `/pre-existing`.
+description: Fix any test/lint/type/build/CI failure instead of dismissing it as pre-existing, flaky, or unrelated. Triggers on red checks or `/pre-existing`.
 argument-hint: "[optional: name of the failing check, file, or error]"
 ---
 

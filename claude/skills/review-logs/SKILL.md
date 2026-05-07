@@ -1,6 +1,6 @@
 ---
 name: review-logs
-description: Analyze Claude Code session transcripts for failure patterns (retry loops, permission denials, command failures) and suggest concrete fixes. Use when user says "review logs", "session analysis", "failure patterns", or wants to analyze Claude Code error trends.
+description: Analyze Claude Code session transcripts for failure patterns and suggest fixes. Triggers "review logs", "session analysis", "failure patterns".
 argument-hint: [--days N] [--project <name>] [--verbose]
 ---
 

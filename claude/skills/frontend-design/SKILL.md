@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Create distinctive, production-grade frontend interfaces with high design quality. Use when the user asks to build web components, pages, artifacts, posters, or applications (websites, landing pages, dashboards, React components, HTML/CSS layouts) or when styling/beautifying any web UI.
+description: Build distinctive, production-grade frontend UIs — components, pages, landing pages, dashboards, posters, HTML/CSS. Use when asked to build or beautify any web UI.
 argument-hint: <component or page description>
 ---
 

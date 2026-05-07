@@ -1,6 +1,6 @@
 ---
 name: theme-factory
-description: Apply professional visual themes to artifacts (presentations, documents, reports, HTML pages, landing pages). Use when user asks to "style this", "apply a theme", "make this look better", "beautify", or requests specific aesthetics like minimalist, modern, luxury, etc. Includes 10 preset themes and custom theme generation.
+description: Apply visual themes (10 presets + custom) to artifacts — presentations, docs, HTML, landing pages. Triggers "style this", "apply a theme", "beautify".
 license: Apache-2.0
 ---
 

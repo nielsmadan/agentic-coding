@@ -1,6 +1,6 @@
 ---
 name: research-general
-description: Research a non-programming topic online from multiple sources — scientific, historical, current events, policy, regional/regulatory, consumer, comparisons, fact-checking. Use when asking "what does the research say about X", "what caused Y", "X vs Y" (non-tech), "best X in country Y", or verifying a claim. For programming topics use the `research-code` skill instead.
+description: Research a non-programming topic online (science, history, news, policy, regional/regulatory, consumer, fact-check). For programming topics use `research-code`.
 argument-hint: <topic, question, or claim to verify>
 ---
 

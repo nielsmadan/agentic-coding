@@ -1,6 +1,6 @@
 ---
 name: review-cleancode
-description: Review code for clean code principles - SOLID, DRY, YAGNI, KISS, code smells, and design best practices. Use when reviewing code quality, asking "review clean code", "check DRY", "check SOLID", "code smells", "clean code review", or wanting a design principles audit.
+description: Review code for clean-code principles — SOLID, DRY, YAGNI, KISS, code smells. Triggers "review clean code", "check DRY/SOLID", "code smells".
 argument-hint: [--staged | --all | --multi]
 ---
 

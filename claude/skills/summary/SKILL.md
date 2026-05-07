@@ -1,6 +1,6 @@
 ---
 name: summary
-description: Summarize and explain current git changes (staged by default, falling back to unstaged if nothing is staged) in detail, then propose two conventional-commit messages (one detailed, one short). Supports `--quick` for a short recap of the current task and next steps. Use when user says "summary", "summarize staged", "summarize my changes", "explain what I changed", "propose a commit message", "commit summary", "where are we", "what's next", or invokes the summary skill. Read-only — does not commit or stage.
+description: Summarize git changes (staged, falling back to unstaged) and propose conventional-commit messages. `--quick` recaps current task. Triggers "summary", "summarize changes", "commit message", "where are we". Read-only.
 argument-hint: [--quick]
 ---
 

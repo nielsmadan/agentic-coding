@@ -1,6 +1,6 @@
 ---
 name: cld-md-improver
-description: Audit and improve CLAUDE.md files in repositories. Use when user asks to "check CLAUDE.md", "audit CLAUDE.md", "update CLAUDE.md", "improve CLAUDE.md", "fix CLAUDE.md", "CLAUDE.md maintenance", or "project memory optimization". Also use when user says "revise CLAUDE.md" or wants to capture session learnings into CLAUDE.md. Do NOT use for general documentation tasks unrelated to CLAUDE.md files.
+description: Audit and improve CLAUDE.md files. Triggers "check/audit/update/improve/fix/revise CLAUDE.md", "project memory optimization". Not for general docs.
 ---
 
 # CLAUDE.md Improver

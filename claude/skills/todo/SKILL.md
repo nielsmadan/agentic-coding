@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Capture a todo in Todoist, or pick up the top todo and implement it. With arguments, creates a new task. Without arguments, picks the highest-priority oldest task and makes the change. Supports -c (complex), -i (interactive), --prio (1-4, default 3), and --list.
+description: Capture a Todoist task, or pick up the highest-priority oldest task and implement it. Flags -c (complex), -i (interactive), --prio 1-4, --list.
 argument-hint: [-i] [-c] [--prio N] [--list] <description>
 ---
 

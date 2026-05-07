@@ -1,6 +1,6 @@
 ---
 name: review-interfaces
-description: Review code interface design for functions, classes, modules, and components. Checks naming, parameter design, encapsulation, YAGNI, and usability. Use when reviewing interface quality, component props, function signatures, public surface area, or asking "review interfaces".
+description: Review interface design for functions, classes, modules, components — naming, params, encapsulation, YAGNI, usability. Triggers "review interfaces".
 argument-hint: [--staged | --all]
 ---
 

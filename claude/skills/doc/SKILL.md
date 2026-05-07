@@ -1,6 +1,6 @@
 ---
 name: doc
-description: "Documentation review and generation. Modes: --review (check docs against standards, default), --generate (create docs for code). Scope: --staged, --all, or context-based. Use for documentation quality, creation, and maintenance."
+description: "Documentation review (--review, default) or generation (--generate). Scope --staged, --all, or context. For doc quality and creation."
 argument-hint: "[--review | --generate <target>] [--staged | --all]"
 ---
 

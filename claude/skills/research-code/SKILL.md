@@ -1,6 +1,6 @@
 ---
 name: research-code
-description: Research a programming topic online from multiple sources. Use when asking "how do I implement X", comparing libraries (X vs Y), looking up best practices, debugging unfamiliar errors, or needing up-to-date documentation beyond the knowledge cutoff.
+description: Research a programming topic online — libraries, best practices, errors, post-cutoff docs. For non-programming topics use `research-general`.
 argument-hint: <topic or error message>
 ---
 

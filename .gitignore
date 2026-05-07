@@ -3,3 +3,5 @@ tmp
 .claude/settings.local.json
 claude/skills/todo/projects.local.md
 *.zip
+.DS_Store
+claude/skills/breakdown*
