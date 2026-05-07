@@ -38,10 +38,9 @@ This is a configuration-only repository. No build, lint, or test commands exist.
 
 ## Git Policy
 
-**Read-only.** Do not run git commands that modify state:
-- DENIED: `git add`, `git commit`, `git push`, `git pull`, `git merge`, `git rebase`, `git reset`, `git checkout`, `git switch`, `git restore`, `git cherry-pick`, `git revert`, `git stash`, `git branch -d/-D/-m/-M`, `git tag -d/-a`, `git remote add/remove/rename`, `git clean`, `git rm`, `git mv`, `git init`, `git clone`
+Leave git to the user. Do not run git commands that modify state (`add`, `commit`, `checkout`, `branch`, `merge`, `rebase`, `stash`, etc.) unless the user explicitly asks for that specific operation. A few commands are hard-blocked at the harness level — `git push`, `git branch -d/-D`, `git reset --hard`, `git clean -f*` — because they push to a remote or destroy local work; ask the user to run those manually.
 
-Ask the user to run these manually.
+Read-only inspection (`status`, `log`, `diff`, `show`, `branch` listing, etc.) is always fine.
 
 ## Code Style
 

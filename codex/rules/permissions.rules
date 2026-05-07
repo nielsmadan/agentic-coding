@@ -1,5 +1,8 @@
 # Codex CLI permission rules
-# Replicates Claude Code read-only git policy
+# Mirrors Claude Code's git policy: read-only git is allowed; only
+# remote-publishing and destructive ops (push, branch -d/-D, reset --hard,
+# clean -f*) are hard-denied. Other state-changing ops (add, commit, etc.)
+# fall through to the harness's normal approval flow.
 
 # =============================================================================
 # ALLOWED: Read-only git commands
@@ -432,91 +435,11 @@ prefix_rule(
 )
 
 # =============================================================================
-# DENIED: State-modifying git commands
+# DENIED: Remote-publishing and destructive git commands only
 # =============================================================================
 
 prefix_rule(
-    pattern = ["git", "add"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "commit"],
-    decision = "forbidden"
-)
-
-prefix_rule(
     pattern = ["git", "push"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "pull"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "merge"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "rebase"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "reset"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "checkout"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "switch"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "restore"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "cherry-pick"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "revert"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "stash", "push"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "stash", "pop"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "stash", "drop"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "stash", "apply"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "stash", "clear"],
     decision = "forbidden"
 )
 
@@ -531,66 +454,26 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["git", "branch", "-m"],
+    pattern = ["git", "reset", "--hard"],
     decision = "forbidden"
 )
 
 prefix_rule(
-    pattern = ["git", "branch", "-M"],
+    pattern = ["git", "clean", "-f"],
     decision = "forbidden"
 )
 
 prefix_rule(
-    pattern = ["git", "tag", "-d"],
+    pattern = ["git", "clean", "-fd"],
     decision = "forbidden"
 )
 
 prefix_rule(
-    pattern = ["git", "tag", "-a"],
+    pattern = ["git", "clean", "-fdx"],
     decision = "forbidden"
 )
 
 prefix_rule(
-    pattern = ["git", "remote", "add"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "remote", "remove"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "remote", "rm"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "remote", "rename"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "clean"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "rm"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "mv"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "init"],
-    decision = "forbidden"
-)
-
-prefix_rule(
-    pattern = ["git", "clone"],
+    pattern = ["git", "clean", "-fx"],
     decision = "forbidden"
 )
