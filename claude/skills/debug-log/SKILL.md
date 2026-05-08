@@ -129,3 +129,4 @@ Finds the checkout handler, payment processing, and cart validation code. Adds l
 - Don't log sensitive data (passwords, tokens, PII)
 - Use consistent prefixes for easy filtering
 - Focus on the specific area requested, don't over-instrument
+- **Do not remove debug logs until the user confirms the issue is fixed.** Even if a fix looks correct, keep the logs in place so the next run can verify behavior. Only clean them up after the user explicitly confirms the bug is resolved (or asks for cleanup).

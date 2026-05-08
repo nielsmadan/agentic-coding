@@ -3,7 +3,6 @@
 # ---------------------------------------------------------------------------
 
 # Claude Code
-alias claude="~/.local/bin/claude"
 alias clco="claude --continue"
 _clcof() {
   local base="main"
