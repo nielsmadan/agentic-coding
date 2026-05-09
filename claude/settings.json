@@ -180,8 +180,6 @@
       "Skill(pre-existing)"
     ],
     "deny": [
-      "Bash(git push)",
-      "Bash(git push *)",
       "Bash(git branch -d *)",
       "Bash(git branch -D *)",
       "Bash(git reset --hard)",
@@ -342,6 +340,7 @@
     "rust-analyzer-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
+    "telegram@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true
   },
   "sandbox": {
