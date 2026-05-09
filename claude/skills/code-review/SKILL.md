@@ -27,7 +27,7 @@ Aspect flags let you run a subset of the review agents instead of all 9. Flags a
 | Flag | Maps to |
 |------|---------|
 | `--logic` | Agent 1: Bug & Logic Review (inline) |
-| `--architecture` | Agent 2: Architecture & Patterns Review (inline) |
+| `--architecture` | Agent 2: Architecture Review (delegates to `/review-architecture --staged`) |
 | `--security` | Agent 3a: Security Review (inline + delegate to `/review-security`) |
 | `--performance` | Agent 3b: Performance Review (inline + delegate to `/review-perf`) |
 | `--history` | Agent 4: Historical Context Review (inline) |
@@ -43,7 +43,7 @@ Aspect flags let you run a subset of the review agents instead of all 9. Flags a
 - The non-flag portion of `$ARGUMENTS` is the review target (e.g. `src/auth/`).
 
 ## Gotchas
-- Sub-agents that delegate to staged-scope sub-skills (`--security`, `--performance`, `--comments`, `--test`, `--interface`, `--clean-code`) return nothing when no files are staged — the review silently has empty agent results. This applies whether an agent runs as part of the full default set or because its flag was explicitly selected.
+- Sub-agents that delegate to staged-scope sub-skills (`--architecture`, `--security`, `--performance`, `--comments`, `--test`, `--interface`, `--clean-code`) return nothing when no files are staged — the review silently has empty agent results. This applies whether an agent runs as part of the full default set or because its flag was explicitly selected.
 - The 80-point confidence threshold silently drops findings. A legitimate 75/100 security issue is filtered out with no trace.
 
 ## Step 1: Locate and Read Project Guidelines
@@ -69,10 +69,13 @@ Each agent should output a list of issues. For each issue, include: what the pro
 - Verify error handling completeness
 - Look for off-by-one errors
 
-### Agent 2: Architecture & Patterns Review (`--architecture`)
-- Check compliance with CLAUDE.md rules
-- Search `docs/` for documented patterns related to this code area
-- Verify code follows existing codebase patterns
+### Agent 2: Architecture Review (`--architecture`)
+Invoke `review-architecture --staged` to review the architectural impact of changed files.
+- Check layering and module boundary respect
+- Flag coupling/cohesion smells (god modules, circular deps, modular mirage, manager centralization)
+- Verify pattern consistency with the rest of the system
+- Check structural support for stated quality attributes (scalability, resilience, evolvability)
+- Flag deviations from `CLAUDE.md`, `docs/`, and ADRs
 
 ### Agent 3a: Security Review (`--security`)
 - Check for injection vulnerabilities (SQL, command, XSS, etc.)
