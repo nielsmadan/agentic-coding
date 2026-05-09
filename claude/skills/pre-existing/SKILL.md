@@ -22,6 +22,20 @@ Whenever you are about to:
 
 Also when the **user** types `/pre-existing`.
 
+## Common rationalizations
+
+If you catch yourself thinking any of these, the answer is in the right column.
+
+| Rationalization | Reality |
+|---|---|
+| "It was failing before my changes" | CI was green at the branch point. If it's red now, something changed — a dep update, a generated file, a type-narrowing edit elsewhere. Bisect. |
+| "`git diff` doesn't touch this file" | Indirect deps, generated files, transitive type changes, and snapshot drift can break distant checks. The diff is not the blast radius. |
+| "It's a flaky test" | Known by whom? Link the issue. If you can't, it's not flaky — it's a race or shared-state bug you haven't found yet. |
+| "Out of scope for this PR" | Green CI is in scope for every PR. There is no PR for which red CI is acceptable. |
+| "The test must be wrong" | Maybe. Verify — don't assume. If it really is wrong, fix the test; don't delete or skip it. |
+| "Works on my machine / differs from CI" | Match the environment. That's what lockfiles, containers, and CI configs are for. |
+| "I'll fix it in a follow-up" | Follow-ups don't happen. Fix it now, in this change, before the next bug lands on top. |
+
 ## What to do
 
 1. **Reproduce.** Re-run the failing command. Capture the full output — exact error, file, line, stack trace.
