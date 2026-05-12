@@ -1,7 +1,7 @@
 ---
 name: test
-description: "Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --all, or context-based. Use for test quality and creation."
-argument-hint: "[--review | --generate <target>] [--staged | --all]"
+description: "Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --changed, --all, or context-based. Use for test quality and creation."
+argument-hint: "[--review | --generate <target>] [--staged | --changed | --all]"
 ---
 
 # Test
@@ -14,9 +14,11 @@ Review and generate tests following consistent principles.
 /test                              # Review tests related to current context (default)
 /test --review                     # Explicit review mode
 /test --review --staged            # Review staged test files
+/test --review --changed           # Review unstaged test files
 /test --review --all               # Review all tests (parallel agents)
 /test --generate <target>          # Generate tests for file/module/feature
 /test --generate --staged          # Generate tests for staged code changes
+/test --generate --changed         # Generate tests for unstaged code changes
 ```
 
 ## Testing Principles
@@ -65,7 +67,7 @@ For BAD/GOOD code examples of each principle, see `references/principles-example
 ---
 
 ## Gotchas
-- `--staged` review filters by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
+- `--staged` and `--changed` review filter by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
 - Red-Green Verification (run → green, revert → red, re-apply → green) is described for bug fixes only, but is equally important for new feature tests to confirm the test actually validates the implementation.
 
 ## Review Mode (`--review`)
@@ -78,6 +80,7 @@ Default mode. Checks tests against the principles above.
 |------|-------|--------|
 | (none) | Context-related tests | Find tests for recently discussed code |
 | `--staged` | Staged test files | `git diff --cached --name-only -- '*test*' '*spec*'` |
+| `--changed` | Unstaged test files | `git diff --name-only -- '*test*' '*spec*'` |
 | `--all` | All test files | Glob `**/*test*.{ts,js,py,dart}` etc. |
 
 ### Workflow
@@ -162,6 +165,7 @@ Only claim the test is valid if it fails without the fix and passes with it. Thi
 |------|-------|--------|
 | `<target>` | Specific file/function/module | Read the code, generate tests |
 | `--staged` | Staged code changes | Generate tests for what changed |
+| `--changed` | Unstaged code changes | Generate tests for what changed |
 
 ### Workflow
 

@@ -1,7 +1,7 @@
 ---
 name: review-perf
 description: Performance analysis for algorithmic complexity, memory leaks, N+1 queries, and render issues. Use when code feels slow, after adding loops/queries, or before scaling up.
-argument-hint: [--staged | --all]
+argument-hint: [--staged | --changed | --all]
 ---
 
 # Review Performance
@@ -13,6 +13,7 @@ Performance analysis for common bottlenecks and inefficiencies.
 ```
 /review-perf                  # Review context-related code
 /review-perf --staged         # Review staged changes
+/review-perf --changed        # Review unstaged changes
 /review-perf --all            # Full codebase audit (parallel agents)
 ```
 
@@ -20,8 +21,9 @@ Performance analysis for common bottlenecks and inefficiencies.
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--all`. |
+| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
 ## Gotchas

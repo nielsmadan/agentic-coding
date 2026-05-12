@@ -1,7 +1,7 @@
 ---
 name: review-security
 description: Security audit for vulnerabilities, secrets, and unsafe patterns. Use before releases, after adding auth code, or when reviewing third-party integrations.
-argument-hint: [--staged | --all]
+argument-hint: [--staged | --changed | --all]
 ---
 
 # Review Security
@@ -13,6 +13,7 @@ Security audit for common vulnerabilities and unsafe patterns.
 ```
 /review-security              # Review context-related code
 /review-security --staged     # Review staged changes
+/review-security --changed    # Review unstaged changes
 /review-security --all        # Full codebase audit (parallel agents)
 ```
 
@@ -20,8 +21,9 @@ Security audit for common vulnerabilities and unsafe patterns.
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--all`. |
+| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
 **Do NOT skip checks:**
@@ -31,7 +33,7 @@ Security audit for common vulnerabilities and unsafe patterns.
 
 ## Gotchas
 - Dependency audit commands (`pip-audit`, `safety check`, `bundle audit`, `govulncheck`) must be installed separately. If missing, they silently produce no output rather than erroring.
-- `--staged` reviews the full file content, not just the diff. Pre-existing vulnerabilities in the file are flagged even if the staged change is unrelated.
+- `--staged` and `--changed` review the full file content, not just the diff. Pre-existing vulnerabilities in the file are flagged even if the staged/unstaged change is unrelated.
 
 ## Workflow
 

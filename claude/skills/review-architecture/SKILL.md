@@ -1,7 +1,7 @@
 ---
 name: review-architecture
 description: Review system architecture — layering, module boundaries, coupling/cohesion, pattern fit, quality attributes (scalability, resilience, evolvability), and architectural smells. Triggers "review architecture", "architecture review", "system design review", "check architecture".
-argument-hint: [--staged | --all | --multi]
+argument-hint: [--staged | --changed | --all | --multi]
 ---
 
 # Review Architecture
@@ -13,6 +13,7 @@ Macro-level review of system structure: how modules, layers, and components fit 
 ```
 /review-architecture                  # Review context-related code
 /review-architecture --staged         # Review staged changes against the surrounding architecture
+/review-architecture --changed        # Review unstaged changes against the surrounding architecture
 /review-architecture --all            # Full system audit (parallel agents per category)
 /review-architecture --multi          # Also get Codex/Gemini opinions
 ```
@@ -21,8 +22,9 @@ Macro-level review of system structure: how modules, layers, and components fit 
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify a target or use `--staged`/`--all`. |
+| (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify a target or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes + their architectural context | `git diff --cached --name-only`, then read each file's surrounding module/layer to judge fit |
+| `--changed` | Unstaged changes + their architectural context | `git diff --name-only`, then read each file's surrounding module/layer to judge fit |
 | `--all` | Full system | Map directory/module structure, then parallel agents per category |
 | `--multi` | Add external opinions | Combines with any scope; invokes `second-opinion --quick` |
 
@@ -38,14 +40,14 @@ Macro-level review of system structure: how modules, layers, and components fit 
 1. **Read project conventions first** — `CLAUDE.md` (root + relevant subdirs), `docs/architecture/`, `docs/adr/`, any ADR-style markdown. These define the intended architecture; the review checks alignment to it, not to a generic ideal.
 2. **Determine scope** based on flags (see Scope table).
 3. **Map the structure**:
-   - For `--staged`: identify which modules/layers the changed files belong to and what they import from.
+   - For `--staged` or `--changed`: identify which modules/layers the changed files belong to and what they import from.
    - For `--all`: build a quick mental map of top-level modules, their dependencies, and the dominant pattern (layered, hexagonal, event-driven, modular monolith, microservices).
 4. **Review against the 6 categories** in the Architecture Checklist below.
-5. **Parallelize** if `--all` or staged scope spans >5 modules: spawn one sub-agent per category, each scanning across the scope. Merge and deduplicate findings.
-6. **External opinions** (if `--multi`): invoke `second-opinion --quick` with this prompt:
+5. **Parallelize** if `--all` or the diff scope spans >5 modules: spawn one sub-agent per category, each scanning across the scope. Merge and deduplicate findings.
+6. **External opinions** (if `--multi`): invoke `second-opinion --quick`. Phrase the diff source according to the resolved scope (`git diff --cached` for `--staged`, `git diff` for `--changed`, the whole repository for `--all`):
 
 ```
-Read-only architecture review. Review the architecture of the staged changes (git diff --cached) and their surrounding modules in this repository. Focus on: module boundaries and coupling, layering violations, pattern consistency, support for stated quality attributes (scalability, resilience, evolvability), and architectural smells (god modules, circular deps, leaky abstractions, manager classes, modular mirage). Provide a focused review in 300 words or less.
+Read-only architecture review. Review the architecture of the <diff source> and their surrounding modules in this repository. Focus on: module boundaries and coupling, layering violations, pattern consistency, support for stated quality attributes (scalability, resilience, evolvability), and architectural smells (god modules, circular deps, leaky abstractions, manager classes, modular mirage). Provide a focused review in 300 words or less.
 ```
 
 Wait for all external results before proceeding to step 7.

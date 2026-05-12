@@ -1,7 +1,7 @@
 ---
 name: review-interfaces
 description: Review interface design for functions, classes, modules, components — naming, params, encapsulation, YAGNI, usability. Triggers "review interfaces".
-argument-hint: [--staged | --all]
+argument-hint: [--staged | --changed | --all]
 ---
 
 # Review Interfaces
@@ -13,6 +13,7 @@ Interface design review for functions, classes, modules, and components.
 ```
 /review-interfaces                  # Review context-related code
 /review-interfaces --staged         # Review staged changes
+/review-interfaces --changed        # Review unstaged changes
 /review-interfaces --all            # Full codebase audit (parallel agents)
 ```
 
@@ -20,8 +21,9 @@ Interface design review for functions, classes, modules, and components.
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--all`. |
+| (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 
 ## Gotchas

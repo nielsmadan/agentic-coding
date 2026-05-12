@@ -1,7 +1,7 @@
 ---
 name: review-cleancode
 description: Review code for clean-code principles — SOLID, DRY, YAGNI, KISS, code smells. Triggers "review clean code", "check DRY/SOLID", "code smells".
-argument-hint: [--staged | --all | --multi]
+argument-hint: [--staged | --changed | --all | --multi]
 ---
 
 # Review Clean Code
@@ -13,6 +13,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 ```
 /review-cleancode                  # Review context-related code
 /review-cleancode --staged         # Review staged changes
+/review-cleancode --changed        # Review unstaged changes
 /review-cleancode --all            # Full codebase audit (parallel agents)
 /review-cleancode --multi          # Also get Codex/Gemini opinions
 ```
@@ -21,8 +22,9 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 
 | Flag | Scope | Method |
 |------|-------|--------|
-| (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify files or use `--staged`/`--all`. |
+| (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 | `--multi` | Add external opinions | Combines with any scope above; invokes `second-opinion --quick` for Codex/Gemini input |
 
@@ -40,7 +42,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 5. **External opinions** (if `--multi`): invoke `second-opinion --quick` with this prompt:
 
 ```
-Read-only clean code review. Review the code in this repository (use git diff --cached for staged, or read the relevant files). Evaluate against clean code principles: SOLID, DRY, YAGNI, KISS, Law of Demeter, code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery). Provide a focused review in 300 words or less.
+Read-only clean code review. Review the code in this repository (use `git diff --cached` for `--staged`, `git diff` for `--changed`, or read the relevant files). Evaluate against clean code principles: SOLID, DRY, YAGNI, KISS, Law of Demeter, code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery). Provide a focused review in 300 words or less.
 ```
 
 Wait for all external results before proceeding to step 6.
@@ -165,7 +167,7 @@ Runs the 5-category review plus Codex/Gemini opinions. Cross-model agreement hig
 **Solution:** Check whether the code is a library or framework consumed by external callers. Flexibility is expected in public APIs. Add context in a code comment (e.g., `// Public API: consumers use these options`) and re-run.
 
 ### DRY violations not caught across distant files
-**Solution:** Use `--all` scope. The default and `--staged` scopes only see a subset of the codebase, so cross-file duplication requires the full scan.
+**Solution:** Use `--all` scope. The default, `--staged`, and `--changed` scopes only see a subset of the codebase, so cross-file duplication requires the full scan.
 
 ### Disagreement on class/method size thresholds
 **Solution:** The ~300 line / ~20 line guidelines are heuristics, not rules. A 25-line method that does one clear thing is fine. The real signal: can you describe what it does in one sentence without "and"?
