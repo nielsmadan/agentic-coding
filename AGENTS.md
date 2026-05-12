@@ -42,6 +42,15 @@ Leave git to the user. Do not run git commands that modify state (`add`, `commit
 
 Read-only inspection (`status`, `log`, `diff`, `show`, `branch` listing, etc.) is always fine.
 
+## Secrets
+
+API keys are deliberately kept out of the agent's reach: SOPS-encrypted at rest, injected by zsh wrappers only into the AI CLI subprocesses that need them, never present in the parent shell env. The agent should NOT try to enumerate, decrypt, or echo the secrets store.
+
+- Don't grep shell env / `.airc` / `.zshrc` for API keys — they aren't there.
+- Don't run `sops -d`, list variable names, or read `~/.config/sops/age/keys.txt`.
+- For HTTP MCPs and wrapped CLI tools, the relevant env var is already present in this process — just call the tool.
+- If a needed credential isn't reaching a subprocess, ask the user. Don't try to source it yourself.
+
 ## Code Style
 
 ### Skills (SKILL.md)

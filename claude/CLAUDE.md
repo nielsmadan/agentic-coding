@@ -19,7 +19,20 @@ External URLs are best fetched through the Jina MCP server, which renders JS ser
 
 **Authenticated or anti-bot sites** are not supported via either path — use `gh`, `glab`, or project-specific CLIs instead.
 
-**Key management**: the API key lives in `$JINA_API_KEY` in the user's shell, and `~/.claude.json` references it as `${JINA_API_KEY}`. Never commit the raw key.
+**Auth**: the Jina MCP's auth happens automatically — token comes from the SOPS-encrypted store via the `claude` zsh wrapper, interpolated into the request header by Claude Code at startup. The agent does not need to know or fetch the value (see Secrets below).
+
+## Secrets
+
+API keys are deliberately kept **out of Claude Code's reach**. They live in a SOPS-encrypted file outside this conversation's read scope, and the zsh wrappers around `claude`/`codex`/`gemini`/`opencode`/`nvim`/`mvim`/`neovide` inject only the values needed into each subprocess. The point of this setup is that the model cannot enumerate, read, or echo secrets — not that the model needs convenience access to them.
+
+What this means for you (the agent):
+
+- **Don't look for API keys in shell env.** They aren't there. `env | grep -i key`, sourcing `~/.airc`, reading `~/.zshrc`, etc. won't find them.
+- **Don't try to decrypt, list, or print contents of the secrets store.** No `sops -d …`, no reading `~/.config/sops/age/keys.txt`, no cataloguing variable names. If an MCP call fails for lack of an env var, surface that to the user — don't try to source the value yourself.
+- **Trust auto-injection for HTTP MCPs and CLI tools.** When you invoke an MCP like `mcp__jina__read_url`, the relevant token is already in this process's env (injected at launch). You don't need to fetch or check it.
+- **If a needed credential genuinely isn't injected**, ask the user. They'll decide whether to add it to the store or pass it some other way.
+
+Architecture details (for if the user asks you to help debug or extend the setup, not for general lookup): `~/rc/CLAUDE.md` has the full description.
 
 ## Git Policy
 

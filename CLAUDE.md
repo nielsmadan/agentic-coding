@@ -64,7 +64,9 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 ## Secrets Policy
 
-**Never commit API tokens, secrets, or credentials to any file in this repo.** This repo is version-controlled and shared. Secrets must stay in the user's environment (e.g., shell env vars, `.env` files in `.gitignore`, or OS keychain). MCP server configs use `${ENV_VAR}` interpolation for auth — never hardcode tokens.
+**Never commit API tokens, secrets, or credentials to any file in this repo.** This repo is version-controlled and shared. MCP server configs use `${ENV_VAR}` interpolation for auth — never hardcode tokens.
+
+Dev secrets are SOPS-encrypted and injected into subprocesses by zsh wrappers around the AI CLI tools. Do not enumerate, read, or echo the secrets store from this session — see `~/.claude/CLAUDE.md` "Secrets" for the agent-facing rules.
 
 ## Git Policy
 
