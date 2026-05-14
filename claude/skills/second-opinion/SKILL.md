@@ -72,16 +72,23 @@ If you need more context to give a confident answer, say so clearly.
 
 ### Step 2: Query Advisors (in parallel)
 
-Run all commands in parallel, using `{timeout}` as the Bash timeout:
+Run all commands in parallel, using `{timeout}` as the Bash timeout.
+
+Prefix both with the `command` builtin. In some shells `gemini` / `codex` are
+`sops exec-env` wrapper functions that depend on an interactive-shell variable
+not present in the agent's environment; `command` bypasses the wrapper and runs
+the real binary, which authenticates via its own on-disk credentials. `gemini`
+additionally needs `--skip-trust` so it doesn't refuse to run in a working
+directory it hasn't been told to trust.
 
 **Gemini:**
 ```bash
-gemini -s --approval-mode default "Read the file at .second-opinion.md and follow the instructions within it."
+command gemini -s --skip-trust --approval-mode default "Read the file at .second-opinion.md and follow the instructions within it."
 ```
 
 **Codex:**
 ```bash
-codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
+command codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
 ```
 
 ### Step 3: Evaluate Confidence

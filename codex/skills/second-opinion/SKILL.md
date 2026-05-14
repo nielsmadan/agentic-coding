@@ -68,10 +68,17 @@ If you need more context to give a confident answer, say so clearly.
 
 ### Step 2: Query Gemini
 
-Run Gemini using the Bash tool timeout set to `{timeout}` seconds:
+Run Gemini using the Bash tool timeout set to `{timeout}` seconds.
+
+Prefix with the `command` builtin: `gemini` may be a `sops exec-env` wrapper
+function that depends on an interactive-shell variable not present in the
+agent's environment; `command` bypasses the wrapper and runs the real binary,
+which authenticates via its own on-disk credentials. It also needs
+`--skip-trust` so it doesn't refuse to run in a working directory it hasn't
+been told to trust.
 
 ```bash
-gemini -p "Read the file at .second-opinion.md and follow the instructions within it." --approval-mode default --output-format text
+command gemini -p "Read the file at .second-opinion.md and follow the instructions within it." --approval-mode default --output-format text --skip-trust
 ```
 
 If `gemini` is unavailable in the current environment, report that clearly rather than failing silently.
