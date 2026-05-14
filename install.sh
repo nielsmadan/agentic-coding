@@ -16,6 +16,9 @@ SYMLINKS=(
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
   # Gemini
   "$SCRIPT_DIR/gemini/settings.json:$HOME/.gemini/settings.json"
+  "$SCRIPT_DIR/gemini/policies:$HOME/.gemini/policies"
+  # OpenCode
+  "$SCRIPT_DIR/opencode/opencode.json:$HOME/.opencode/opencode.json"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
 )
@@ -187,7 +190,32 @@ add_airc_to_zshrc() {
   esac
 }
 
+generate_permissions() {
+  local script="$SCRIPT_DIR/permissions/sync.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  Permission generator not found: $script (skipping)"
+    return
+  fi
+
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping permission generation"
+    echo "    (the committed permission files will be used as-is)"
+    return
+  fi
+
+  echo "Generating agent permission config from permissions/permissions.toml..."
+  if python3 "$script"; then
+    echo "✓  Permission config up to date"
+  else
+    echo "⚠️  Permission generation failed — using committed permission files"
+  fi
+}
+
 echo "Installing agentic coding config..."
+echo ""
+
+generate_permissions
 echo ""
 
 for entry in "${SYMLINKS[@]}"; do

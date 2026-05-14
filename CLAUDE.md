@@ -9,9 +9,12 @@ This repository contains shared configuration for agentic coding tools. It inclu
 ## Structure
 
 - `claude/` - Claude Code specific configuration
-  - `settings.json` - Permissions (allowed/denied commands), hooks, and status line config
+  - `settings.json` - Permissions, hooks, and status line config (the `permissions.*` arrays are **generated** — see Permissions below)
   - `skills/` - Custom skills in `<skill-name>/SKILL.md` format
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
+- `permissions/` - Single source of truth for agent shell-command permissions
+  - `permissions.toml` - the source; edit this
+  - `sync.py` - regenerates every agent's permission config from the source
 
 ## Skills
 
@@ -61,6 +64,18 @@ Skills under `claude/desktop/skills/` are deployed to Claude Desktop manually:
 3. Upload the zip via Claude Desktop's UI (no automation)
 
 The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/...` are read-only — never edit there.
+
+## Permissions
+
+Shell-command permissions for all four agents (Claude, Codex, Gemini, OpenCode) are generated from a single source of truth: **`permissions/permissions.toml`**.
+
+**Never hand-edit these generated files** — a lefthook pre-commit hook (`sync.py --check`) rejects any drift:
+- `claude/settings.json` (`permissions.allow` / `deny` / `ask`)
+- `codex/rules/permissions.rules`
+- `gemini/policies/allowed-tools.toml`, `deny-destructive.toml`, `ask-confirm.toml`
+- `opencode/opencode.json` (`permission.bash`)
+
+To change permissions: edit `permissions/permissions.toml`, then run `python3 permissions/sync.py` (also run automatically by `install.sh`). `[shell]` entries (allow/deny/ask) go to all four agents; `[claude.extra]` / `[opencode.extra]` hold tool-native entries (`Skill()`, `mcp__*`, OpenCode toggles) with no cross-agent equivalent. Codex's token matcher can't express glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
 ## Secrets Policy
 

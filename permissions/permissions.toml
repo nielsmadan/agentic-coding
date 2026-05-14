@@ -1,0 +1,245 @@
+# Single source of truth for agent shell-command permissions.
+#
+# Edit this file, then run `permissions/sync.py` (or `./install.sh`) to
+# regenerate every agent's permission config. NEVER hand-edit the generated
+# files — the lefthook pre-commit hook rejects drift.
+#
+# Generated files:
+#   claude/settings.json                  (permissions.allow / deny / ask)
+#   codex/rules/permissions.rules
+#   gemini/policies/allowed-tools.toml
+#   gemini/policies/deny-destructive.toml
+#   gemini/policies/ask-confirm.toml
+#   opencode/opencode.json                (permission.bash)
+#
+# Entries in [shell] are command prefixes — emitted to ALL FOUR agents.
+# An entry ending in `*` is a glob: kept literally for Claude and OpenCode,
+# trailing-`*`-stripped for Gemini's string-prefix matcher, and skipped for
+# Codex (its token matcher can't express a mid-argument glob, so those
+# commands simply fall through to Codex's normal approval prompt).
+
+[shell]
+
+# allow — run without prompting on every agent.
+allow = [
+  # git — read-only
+  "git status",
+  "git log",
+  "git diff",
+  "git show",
+  "git branch",
+  "git remote -v",
+  "git remote show",
+  "git remote get-url",
+  "git fetch",
+  "git ls-files",
+  "git ls-tree",
+  "git rev-parse",
+  "git rev-list",
+  "git describe",
+  "git blame",
+  "git shortlog",
+  "git stash list",
+  "git tag -l",
+  "git tag --list",
+  "git config --get",
+  "git config --list",
+  "git cat-file",
+  "git for-each-ref",
+  "git name-rev",
+  "git reflog",
+  "git grep",
+  "git range-diff",
+  "git cherry",
+  "git whatchanged",
+  "git count-objects",
+
+  # gh — read-only
+  "gh pr list",
+  "gh pr view",
+  "gh pr status",
+  "gh pr diff",
+  "gh pr checks",
+  "gh issue list",
+  "gh issue view",
+  "gh issue status",
+  "gh repo list",
+  "gh repo view",
+  "gh run list",
+  "gh run view",
+  "gh run watch",
+  "gh workflow list",
+  "gh workflow view",
+  "gh release list",
+  "gh release view",
+  "gh search",
+  "gh project list",
+  "gh project view",
+  "gh project field-list",
+  "gh project item-list",
+
+  # glab — read-only
+  "glab mr list",
+  "glab mr view",
+  "glab mr diff",
+  "glab issue list",
+  "glab issue view",
+  "glab issue board",
+  "glab ci list",
+  "glab ci view",
+  "glab ci status",
+  "glab ci get",
+  "glab ci lint",
+  "glab ci trace",
+  "glab release list",
+  "glab release view",
+  "glab label list",
+  "glab milestone list",
+  "glab repo view",
+  "glab job list",
+  "glab schedule list",
+  "glab variable list",
+
+  # file inspection
+  "ls",
+  "pwd",
+  "which",
+  "whoami",
+  "cat",
+  "head",
+  "tail",
+  "less",
+  "more",
+  "find",
+  "grep",
+  "rg",
+  "wc",
+  "du",
+  "df",
+  "date",
+  "uptime",
+  "uname",
+  "env",
+  "printenv",
+  "file",
+  "stat",
+  "tree",
+  "realpath",
+  "dirname",
+  "basename",
+  "dig",
+  "jq",
+  "cp",
+
+  # version checks
+  "yarn --version",
+  "npm --version",
+  "node --version",
+  "python --version",
+  "ruby --version",
+
+  # external advisor commands
+  "gemini -p",
+  "gemini -s --approval-mode",
+  "codex exec -s read-only",
+
+  # docker — workbench container management
+  "docker exec cc-workbench",
+  "docker exec cc-workbench-*",
+  "docker stop cc-workbench",
+  "docker stop cc-workbench-*",
+  "docker rm cc-workbench",
+  "docker rm cc-workbench-*",
+  "docker start cc-workbench",
+  "docker start cc-workbench-*",
+  "docker info",
+  "docker ps",
+
+  # xcrun — read-only Xcode tooling
+  "xcrun xcresulttool",
+  "xcrun xccov view",
+  "xcrun xccov diff",
+  "xcrun xctrace list",
+  "xcrun xctrace export",
+  "xcrun simctl list",
+  "xcrun simctl listapps",
+  "xcrun simctl appinfo",
+  "xcrun simctl getenv",
+  "xcrun simctl get_app_container",
+  "xcrun simctl help",
+  "xcrun swift-demangle",
+  "xcrun dwarfdump",
+  "xcrun otool",
+  "xcrun nm",
+]
+
+# deny — hard-blocked on every agent. Remote-publishing and destructive ops.
+deny = [
+  "git push",
+  "git branch -d",
+  "git branch -D",
+  "git reset --hard",
+  "git clean -f",
+  "git clean -fd",
+  "git clean -fdx",
+  "git clean -fx",
+]
+
+# ask — always prompt for confirmation, even in auto/auto-accept modes.
+ask = [
+  "heroku",
+]
+
+# Tool-native permission entries with no cross-agent shell-command
+# equivalent. Emitted verbatim, only to the named tool.
+
+[claude.extra]
+# Appended as-is to claude/settings.json permissions.allow.
+allow = [
+  "Read(~/.claude/skills/*)",
+  "WebSearch",
+  "WebFetch",
+  "mcp__todoist__add_tasks",
+  "mcp__todoist__find_tasks",
+  "mcp__todoist__find_projects",
+  "mcp__todoist__update_tasks",
+  "mcp__todoist__complete_tasks",
+  "mcp__todoist__find_labels",
+  "mcp__todoist__find_comments",
+  "mcp__todoist__add_comments",
+  "mcp__context7__resolve-library-id",
+  "mcp__context7__query-docs",
+  "mcp__jina",
+  "Skill(code-review)",
+  "Skill(debug-log)",
+  "Skill(doc)",
+  "Skill(explain)",
+  "Skill(flutter-upgrade)",
+  "Skill(hard-fix)",
+  "Skill(perf-test)",
+  "Skill(review-plan)",
+  "Skill(read-docs)",
+  "Skill(research-code)",
+  "Skill(resolve-conflicts)",
+  "Skill(review-comments)",
+  "Skill(review-history)",
+  "Skill(review-perf)",
+  "Skill(review-security)",
+  "Skill(rn-upgrade)",
+  "Skill(second-opinion)",
+  "Skill(skill-creator)",
+  "Skill(summary)",
+  "Skill(test)",
+  "Skill(theme-factory)",
+  "Skill(todo)",
+  "Skill(workbench)",
+  "Skill(optimize-seo)",
+  "Skill(pre-existing)",
+]
+
+[opencode.extra]
+# Written to opencode.json permission.<key>.
+skill = "allow"
+webfetch = "allow"
+websearch = "allow"
+codesearch = "allow"

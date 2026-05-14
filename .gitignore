@@ -5,3 +5,7 @@ claude/skills/todo/projects.local.md
 *.zip
 .DS_Store
 claude/skills/breakdown*
+
+# Python
+__pycache__/
+*.py[cod]

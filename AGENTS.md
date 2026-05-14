@@ -11,21 +11,32 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenC
 ```
 /
 ├── claude/           # Claude Code + Claude Desktop configuration
-│   ├── settings.json # Permissions, hooks, status line
+│   ├── settings.json # Hooks, status line; permissions.* arrays are GENERATED
 │   ├── skills/       # Claude Code skills (<name>/SKILL.md)
 │   ├── desktop/      # Claude Desktop skills (zip-and-upload)
 │   └── hooks/        # Shell scripts for event triggers
 ├── codex/            # OpenAI Codex CLI configuration
-│   ├── config.toml   # Approval policy, sandbox mode
-│   └── rules/        # Permission rules
+│   └── rules/        # Permission rules (permissions.rules is GENERATED)
 ├── gemini/           # Gemini CLI configuration
-│   └── settings.json
+│   ├── settings.json
+│   └── policies/     # Permission policy TOML (GENERATED)
 ├── opencode/         # OpenCode configuration
-│   └── opencode.json
+│   └── opencode.json # permission.bash is GENERATED
+├── permissions/      # Single source of truth for agent permissions
+│   ├── permissions.toml  # the source — edit this
+│   └── sync.py           # regenerates every agent's permission config
 ├── docs/             # Documentation
-│   └── skill-best-practices.md
 └── CLAUDE.md         # Main project instructions
 ```
+
+## Permissions
+
+Shell-command permissions for all four agents are generated from
+**`permissions/permissions.toml`** by `permissions/sync.py`. Never hand-edit the
+generated permission files (`claude/settings.json` permission arrays,
+`codex/rules/permissions.rules`, `gemini/policies/*.toml`, `opencode/opencode.json`
+`permission.bash`) — a lefthook pre-commit hook (`sync.py --check`) rejects drift.
+To change permissions: edit the TOML, run `python3 permissions/sync.py`.
 
 ## Build/Lint/Test Commands
 
