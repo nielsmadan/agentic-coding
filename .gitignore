@@ -1,6 +1,8 @@
 docs/tmp
 tmp
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/aiconf.state.json
 claude/skills/todo/projects.local.md
 *.zip
 .DS_Store

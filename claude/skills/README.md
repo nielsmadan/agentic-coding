@@ -59,14 +59,6 @@ Explain unfamiliar code grouped by logical concepts. For language learners, incl
 
 ---
 
-### /flutter-upgrade
-
-Workflow for upgrading Flutter and dependencies following best practices.
-
-**Example:** `/flutter-upgrade`
-
----
-
 ### /hard-fix
 
 Escalation workflow for stubborn bugs. Combines parallel investigation using research-code, debug-log, review-history, and second-opinion.
@@ -260,6 +252,18 @@ Get input from Gemini and Codex on the current problem or question.
 Guide for creating effective skills. Use when creating or updating skills.
 
 **Example:** `/skill-creator`
+
+---
+
+### /sync-project-config
+
+Bidirectional sync between a project's deployed Claude config (`.mcp.json`, bundled skills,
+CLAUDE.md snippet) and its canonical template in `~/ac/templates/<type>/`. Direction per
+artifact is decided from diff + git history. Invoked by `aiconf sync`.
+
+**Examples:**
+- `/sync-project-config` (from inside a project dir)
+- `/sync-project-config /path/to/project` (from `~/ac`)
 
 ---
 

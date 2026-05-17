@@ -15,6 +15,13 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `permissions/` - Single source of truth for agent shell-command permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
+- `templates/` - Project-type config + skills deployed per-project (see Project Templates below)
+  - `<type>/` - config fragments and project-only skills for a project type (e.g. `flutter/`)
+    - `.mcp.json`, `settings.local.json` - merged into the target project
+    - `skills/<name>/` - project-only skills, copied into the target's `.claude/skills/`
+    - `claude-md.md` *(optional)* - markdown snippet appended once to the project's
+      `CLAUDE.md` on first install; updates flow through `aiconf sync` afterwards
+  - `deploy.py` - copies/merges a type's contents into a target project
 
 ## Skills
 
@@ -25,7 +32,6 @@ Available in `claude/skills/`:
 | `/code-review` | Code review workflow |
 | `/frontend-design` | Build distinctive frontend interfaces with high design quality |
 | `/debug-log` | Add debug logging to trace code execution |
-| `/flutter-upgrade` | Flutter upgrade workflow |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
@@ -33,6 +39,7 @@ Available in `claude/skills/`:
 | `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
+| `/sync-project-config` | Bidirectional sync of project config (`.mcp.json`, bundled skills) with its template (invoked by `aiconf sync`) |
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
@@ -76,6 +83,55 @@ Shell-command permissions for all four agents (Claude, Codex, Gemini, OpenCode) 
 - `opencode/opencode.json` (`permission.bash`)
 
 To change permissions: edit `permissions/permissions.toml`, then run `python3 permissions/sync.py` (also run automatically by `install.sh`). `[shell]` entries (allow/deny/ask) go to all four agents; `[claude.extra]` / `[opencode.extra]` hold tool-native entries (`Skill()`, `mcp__*`, OpenCode toggles) with no cross-agent equivalent. Codex's token matcher can't express glob entries (those ending in `*`), so they fall through to its normal approval prompt.
+
+## Project Templates
+
+`templates/<type>/` holds config and skills that belong to a *kind* of project rather than to
+every session. For example `templates/flutter/` carries the Flutter MCP servers (`.mcp.json`),
+their enablement + `mcp__*` permissions (`settings.local.json`), and project-only skills like
+`flutter-upgrade` (`skills/<name>/`). Keeping it here version-controls the config centrally
+without making it global: a project-root `.mcp.json` is project-scoped (only loads inside that
+project), and a skill bundled with a template only shows up after deployment — it never
+pollutes Claude sessions in unrelated projects.
+
+Two CLI verbs (defined in `.airc`):
+
+```
+aiconf <type> [dir]   # mechanical install: deploy template into dir (default cwd)
+aiconf sync           # from a project dir: bidirectional sync against its template
+aiconf sync <dir>     # from ~/ac: bidirectional sync against <dir>
+```
+
+**Install** (`aiconf <type> [dir]`) runs `templates/deploy.py`. It **copies** (not symlinks)
+so the target project owns real, committable files. Each step is idempotent in its own way:
+- `.mcp.json` and `settings.local.json` merge (union arrays, preserve unrelated entries)
+- `skills/<name>/` recursively copy into `<target>/.claude/skills/<name>/`, only writing files
+  whose bytes differ
+- `claude-md.md` (optional) is **appended once** to `<target>/CLAUDE.md` on first install for a
+  given type. State is tracked in `<target>/.claude/aiconf.state.json` so subsequent installs
+  skip the append. After install, the snippet is yours — refactor, integrate, move it freely;
+  use `aiconf sync` to mirror edits between project and template.
+
+Add `.claude/aiconf.state.json` to a project's `.gitignore` (alongside
+`.claude/settings.local.json`) — it's machine-local install state.
+
+To update template-side fragments, edit `templates/<type>/` and re-deploy (for the mechanical
+artifacts) or use `aiconf sync` (for the CLAUDE.md snippet, since install doesn't touch it
+after first run).
+
+**Sync** (`aiconf sync [dir]`) opens an interactive Claude session that invokes the
+`/sync-project-config` skill. The skill picks per-file direction (pull project→template or
+push template→project) from `diff` + `git log` / `git status`, scoped to artifacts already
+defined in the template. `settings.local.json` is intentionally out of scope for sync —
+recommend `aiconf <type> <dir>` for mechanical settings refresh.
+
+Project-only skills live *inside* their template (`templates/<type>/skills/<name>/`), not in
+`claude/skills/`, so `install.sh` never exposes them globally. To turn an existing global skill
+into a project-only one, move its directory from `claude/skills/<name>/` to
+`templates/<type>/skills/<name>/`.
+
+Templates cover config only; machine prerequisites (e.g. `npx`, `uvx`, `dart` for the Flutter
+MCP servers) must be installed separately.
 
 ## Secrets Policy
 
