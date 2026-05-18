@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ios-sim__get_booted_sim_id",
+      "mcp__ios-sim__screenshot",
+      "mcp__ios-sim__ui_view",
+      "mcp__ios-sim__ui_describe_all",
+      "mcp__ios-sim__ui_tap",
+      "mcp__ios-sim__ui_swipe",
+      "mcp__ios-sim__ui_describe_point",
+      "mcp__ios-sim__ui_type",
+      "Bash(rn-logs:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "ios-sim",
+    "android"
+  ]
+}

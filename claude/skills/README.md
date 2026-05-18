@@ -225,17 +225,6 @@ Run code in a persistent Docker-sandboxed environment. Iteratively develop scrip
 
 ---
 
-### /rn-upgrade
-
-React Native upgrade workflow.
-
-**Arguments:**
-- `<target version>` - Version to upgrade to
-
-**Example:** `/rn-upgrade 0.73`
-
----
-
 ### /second-opinion
 
 Get input from Gemini and Codex on the current problem or question.

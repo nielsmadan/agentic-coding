@@ -55,7 +55,6 @@ Available in `claude/skills/`:
 | `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/workbench` | Run code in a Docker-sandboxed environment |
-| `/rn-upgrade` | React Native upgrade workflow |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |

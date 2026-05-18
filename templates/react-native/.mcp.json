@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "ios-sim": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "ios-simulator-mcp"
+      ],
+      "env": {}
+    },
+    "android": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "android-mcp"
+      ],
+      "env": {}
+    }
+  }
+}

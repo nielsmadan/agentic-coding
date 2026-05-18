@@ -224,7 +224,6 @@ allow = [
   "Skill(review-history)",
   "Skill(review-perf)",
   "Skill(review-security)",
-  "Skill(rn-upgrade)",
   "Skill(second-opinion)",
   "Skill(skill-creator)",
   "Skill(summary)",
