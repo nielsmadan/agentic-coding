@@ -16,7 +16,8 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenC
 │   ├── desktop/      # Claude Desktop skills (zip-and-upload)
 │   └── hooks/        # Shell scripts for event triggers
 ├── codex/            # OpenAI Codex CLI configuration
-│   └── rules/        # Permission rules (permissions.rules is GENERATED)
+│   ├── rules/        # Permission rules (permissions.rules is GENERATED)
+│   └── skills/       # Codex-specific overrides; install.sh syncs the curated subset of claude/skills/ to ~/.agents/skills/
 ├── gemini/           # Gemini CLI configuration
 │   ├── settings.json
 │   └── policies/     # Permission policy TOML (GENERATED)
@@ -168,7 +169,6 @@ These phrases automatically invoke skills:
 - "review plan" → `/review-plan`
 - "add debug logs" / "debug logging" → `/debug-log`
 - "review history" / "git history" → `/review-history`
-- "workbench" → `/workbench`
 - ".pdf" or PDF-related tasks → `/pdf`
 - Build/design web page/component → `/frontend-design`
 - "review logs" / "session analysis" → `/review-logs`
@@ -198,4 +198,3 @@ Invoke with `/<skill-name>`:
 | `/review-security` | Security audit for vulnerabilities |
 | `/review-perf` | Performance analysis |
 | `/skill-creator` | Guide for creating effective skills |
-| `/workbench` | Run code in Docker-sandboxed environment |

@@ -23,6 +23,15 @@ SYMLINKS=(
   "$SCRIPT_DIR/.airc:$HOME/.airc"
 )
 
+# Skills shared with Codex (subset of claude/skills/). A name with a real dir
+# in codex/skills/ uses that override; otherwise it links from claude/skills/.
+CODEX_SKILLS=(
+  code-review debug-log doc explain frontend-design optimize-seo pdf
+  perf-test read-docs review-architecture review-cleancode review-comments
+  review-history review-interfaces review-perf review-plan review-security
+  second-opinion skill-creator temp test theme-factory
+)
+
 create_symlink() {
   local source="$1"
   local dest="$2"
@@ -71,65 +80,21 @@ create_symlink() {
   echo "✓  Linked: $dest -> $source"
 }
 
-install_codex_config() {
-  local source="$SCRIPT_DIR/codex/config.toml"
-  local dest="$HOME/.codex/config.toml"
-  local rendered
-
-  if [[ ! -f "$source" ]]; then
-    echo "⚠️  Codex config template does not exist: $source (skipping)"
-    return
-  fi
-
-  mkdir -p "$(dirname "$dest")"
-  rendered="$(sed "s|__PROJECT_ROOT__|$SCRIPT_DIR|g" "$source")"
-
-  if [[ -e "$dest" || -L "$dest" ]]; then
-    if [[ ! -L "$dest" && -f "$dest" ]] && diff -q "$dest" <(printf '%s\n' "$rendered") >/dev/null 2>&1; then
-      echo "✓  Codex config already up to date: $dest"
-      return
-    fi
-
-    echo ""
-    echo "File already exists: $dest"
-    if [[ -L "$dest" ]]; then
-      echo "   (symlink to: $(readlink "$dest"))"
-    fi
-    echo ""
-    read -p "Replace with generated Codex config for $SCRIPT_DIR? [y/n/q] " choice
-    case "$choice" in
-      y|Y)
-        rm -rf "$dest"
-        ;;
-      q|Q)
-        echo "Aborted."
-        exit 0
-        ;;
-      *)
-        echo "⏭️  Skipped: $dest"
-        return
-        ;;
-    esac
-  fi
-
-  printf '%s\n' "$rendered" > "$dest"
-  echo "✓  Wrote: $dest"
-}
-
 install_codex_skills() {
-  local source_dir="$SCRIPT_DIR/codex/skills"
-  local dest_dir="$HOME/.codex/skills"
-
-  if [[ ! -d "$source_dir" ]]; then
-    echo "⚠️  Codex skills directory does not exist: $source_dir (skipping)"
-    return
-  fi
+  local dest_dir="$HOME/.agents/skills"
+  local claude_src="$SCRIPT_DIR/claude/skills"
+  local override_src="$SCRIPT_DIR/codex/skills"
 
   mkdir -p "$dest_dir"
 
   echo ""
-  echo "Installing Codex skills..."
+  echo "Installing Codex skills to $dest_dir..."
 
+  local wanted=" ${CODEX_SKILLS[*]} "
+
+  # Stale cleanup: only remove symlinks pointing into this repo whose target
+  # is gone or whose basename is no longer in CODEX_SKILLS. Links pointing
+  # outside this repo (e.g. find-skills from the npx skills CLI) are untouched.
   for dest in "$dest_dir"/*; do
     if [[ ! -L "$dest" ]]; then
       continue
@@ -140,24 +105,45 @@ install_codex_skills() {
     target="$(readlink "$dest")"
     name="$(basename "$dest")"
 
-    if [[ "$target" == "$source_dir/"* && ! -e "$source_dir/$name" ]]; then
-      rm -f "$dest"
-      echo "✓  Removed stale Codex skill link: $dest"
+    if [[ "$target" == "$SCRIPT_DIR/"* ]]; then
+      if [[ ! -e "$dest" ]] || [[ "$wanted" != *" $name "* ]]; then
+        rm -f "$dest"
+        echo "✓  Removed stale skill link: $dest"
+      fi
     fi
   done
 
-  for source in "$source_dir"/*; do
+  for name in "${CODEX_SKILLS[@]}"; do
+    local source="$claude_src/$name"
+    # Prefer a real override dir in codex/skills/ (ignore lingering symlinks).
+    if [[ -d "$override_src/$name" && ! -L "$override_src/$name" ]]; then
+      source="$override_src/$name"
+    fi
+
     if [[ ! -e "$source" ]]; then
+      echo "⚠️  Source for skill '$name' does not exist (skipping): $source"
       continue
     fi
 
-    local name
-    local dest
-    name="$(basename "$source")"
-    dest="$dest_dir/$name"
-
-    create_symlink "$source" "$dest"
+    create_symlink "$source" "$dest_dir/$name"
   done
+
+  # Legacy cleanup: remove repo-pointing symlinks from the old ~/.codex/skills/
+  # (Codex now reads ~/.agents/skills/). Leaves .system/ and non-ours untouched.
+  local legacy_dir="$HOME/.codex/skills"
+  if [[ -d "$legacy_dir" ]]; then
+    for dest in "$legacy_dir"/*; do
+      if [[ ! -L "$dest" ]]; then
+        continue
+      fi
+      local target
+      target="$(readlink "$dest")"
+      if [[ "$target" == "$SCRIPT_DIR/"* ]]; then
+        rm -f "$dest"
+        echo "✓  Removed legacy Codex skill link: $dest"
+      fi
+    done
+  fi
 }
 
 add_airc_to_zshrc() {
@@ -224,7 +210,6 @@ for entry in "${SYMLINKS[@]}"; do
   create_symlink "$source" "$dest"
 done
 
-install_codex_config
 install_codex_skills
 
 install_claude_mcp_servers() {

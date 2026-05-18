@@ -12,6 +12,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `settings.json` - Permissions, hooks, and status line config (the `permissions.*` arrays are **generated** — see Permissions below)
   - `skills/` - Custom skills in `<skill-name>/SKILL.md` format
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
+- `codex/` - OpenAI Codex CLI configuration
+  - `rules/` - Permission rules (**generated** — see Permissions below)
+  - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
 - `permissions/` - Single source of truth for agent shell-command permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
@@ -54,7 +57,6 @@ Available in `claude/skills/`:
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
-| `/workbench` | Run code in a Docker-sandboxed environment |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
@@ -206,8 +208,6 @@ When the user's prompt contains "add debug logs" or "debug logging", automatical
 
 When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
 
-When the user's prompt contains "workbench", automatically invoke the `/workbench` skill to run code in a Docker-isolated environment.
-
 When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, split, extract text, create, fill forms, OCR, watermark), automatically invoke the `/pdf` skill.
 
 When the user's prompt asks to build or design a web page, landing page, dashboard, or component, or to beautify/style a web UI, automatically invoke the `/frontend-design` skill.
@@ -215,17 +215,6 @@ When the user's prompt asks to build or design a web page, landing page, dashboa
 When the user's prompt contains "review logs", "session analysis", or "failure patterns", automatically invoke the `/review-logs` skill to analyze session transcripts.
 
 When the user's prompt contains "pre-existing", "preexisting", "already broken", or "flaky test", or when you are about to label a test/lint/type/build/CI failure as pre-existing, unrelated, or not your fault, automatically invoke the `/pre-existing` skill before stopping.
-
-## Proactive Workbench Usage
-
-Proactively suggest or use `/workbench` when:
-- The user asks to write a script that processes files (CSV parsers, data transforms, etc.) and you'd otherwise run it directly on the host
-- The user asks to prototype or experiment with untrusted code, unfamiliar libraries, or generated code
-- The task involves running code that does filesystem operations (delete, move, overwrite) where a mistake could damage the project
-- The user asks to "try something out", "prototype", or "experiment" with code
-- You're about to run `python`, `node`, or `bash` on a user-written script that wasn't part of the existing project
-
-Do NOT use workbench for: running existing project test suites, build commands, linters, or other project tooling that's already configured.
 
 ## Internal Documentation
 

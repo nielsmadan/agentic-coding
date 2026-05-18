@@ -214,17 +214,6 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ---
 
-### /workbench
-
-Run code in a persistent Docker-sandboxed environment. Iteratively develop scripts with full isolation from the host. Container persists across tasks with Python, Node.js, Go, and Bash pre-installed.
-
-**Arguments:**
-- `<task description>` - What to build
-
-**Example:** `/workbench build a python script that reads a CSV and outputs summary stats`
-
----
-
 ### /second-opinion
 
 Get input from Gemini and Codex on the current problem or question.
