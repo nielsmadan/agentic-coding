@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "skillListingBudgetFraction": 0.02,
   "attribution": {
     "commit": "",
     "pr": ""
@@ -194,6 +195,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "opus",
   "hooks": {
     "PostToolUseFailure": [
       {
@@ -350,13 +352,11 @@
       ]
     }
   },
-  "effortLevel": "medium",
-  "skillListingBudgetFraction": 0.02,
+  "effortLevel": "xhigh",
   "awaySummaryEnabled": false,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
-  },
-  "model": "opus"
+  }
 }
