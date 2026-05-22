@@ -246,6 +246,21 @@ If `--multi` was used, include:
 #### Cross-Model Agreement
 {note areas where external advisors agree/disagree with Claude agents - highlight consensus issues as higher confidence}
 
+## Step 6: Offer to Fix
+
+After presenting the review output, if there are any **Critical** or **Should Fix** findings, use the **AskUserQuestion tool** to let the user pick a fix scope instead of typing one out. This saves the user from describing which issues to address.
+
+Build the options list from what findings actually exist:
+
+- If there are Critical findings → include **"Fix Critical only"** (fixes the `Critical Issues (Must Fix)` section).
+- If there are both Critical and Should Fix findings → also include **"Fix Critical + Should Fix"** (fixes Critical and `Improvements (Should Fix)`).
+- If there are Should Fix findings but no Critical findings → include **"Fix Should Fix"** instead.
+- Always include **"Don't fix anything"** as the last option.
+
+List the strongest/most-inclusive fix option first. Skip this step entirely (no prompt) when there are no Critical and no Should Fix findings — there is nothing actionable to offer.
+
+When the user selects a fix option, apply the fixes for exactly the chosen severity tier(s). `Suggestions (Nice to Have)` are never auto-fixed — mention the user can request those separately if they want them.
+
 ## Examples
 
 **Review the default scope with all 9 agents:**
