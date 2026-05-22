@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Code review workflow. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
-argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--staged] [--all] [--changed] [--multi]
+argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--staged] [--all] [--changed] [--multi] [--rereview]
 ---
 
 # Code Review: $ARGUMENTS
@@ -22,7 +22,10 @@ Review the code related to: **$ARGUMENTS**
 /code-review --multi                  # All aspects + Gemini + Codex
 /code-review --multi --architecture   # Architecture only + Gemini + Codex
 /code-review --all --multi            # Whole repo + external opinions
+/code-review --rereview               # Re-review automatically after fixes are applied
 ```
+
+`--rereview` composes with any aspect, scope, or `--multi` selection.
 
 ## Aspect Selection
 
@@ -78,7 +81,7 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 
 ### 3a. Parse flags
 
-Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`), scope flags (`--staged`, `--all`, `--changed`), and `--multi` from `$ARGUMENTS`. The remainder is the review target.
+Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`), scope flags (`--staged`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
 
 If any aspect flags are present, launch ONLY the corresponding agents. Otherwise launch all 9 agents.
 
@@ -261,6 +264,17 @@ List the strongest/most-inclusive fix option first. Skip this step entirely (no 
 
 When the user selects a fix option, apply the fixes for exactly the chosen severity tier(s). `Suggestions (Nice to Have)` are never auto-fixed — mention the user can request those separately if they want them.
 
+## Step 7: Re-Review After Fixes (`--rereview` only)
+
+If `--rereview` was passed AND fixes were applied in Step 6, automatically run the review again to verify the fixes landed cleanly and didn't introduce new issues:
+
+- Re-run Steps 3–6 with the **same aspect, `--multi`, and target/scope selection** as the original run.
+- Review the **same file list** computed in step 3b — fixes turn staged files into unstaged edits, so re-resolving scope from scratch could miss them. Reuse the original file list directly rather than recomputing from `git diff`.
+- Announce the re-review at the start, e.g. `Re-reviewing after fixes (--rereview)`.
+- The re-review's Step 6 fix prompt runs as normal. This forms a natural loop: review → fix → re-review → fix … It terminates when the re-review surfaces no Critical/Should Fix findings (Step 6 is skipped) or the user picks "Don't fix anything".
+
+Without `--rereview`, Step 6 ends the run after fixes are applied — the user must invoke `/code-review` again manually to verify.
+
 ## Examples
 
 **Review the default scope with all 9 agents:**
@@ -282,6 +296,11 @@ Runs all 9 agents against every file in the repo (`git ls-files`). Use this for 
 > /code-review --multi
 
 Runs the same 9 Claude agents plus external reviews from Gemini and Codex. The output includes a cross-model agreement section highlighting issues where all models converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
+
+**Review, fix, then re-review automatically:**
+> /code-review --rereview
+
+Runs the review, offers the fix prompt (Step 6), and — once fixes are applied — immediately re-runs the same review on the same files to confirm the fixes landed and introduced no new issues. The loop continues until a re-review comes back with no Critical/Should Fix findings or the user declines to fix. Composes with aspect, scope, and `--multi` flags.
 
 For each issue, explain:
 1. What the problem is
