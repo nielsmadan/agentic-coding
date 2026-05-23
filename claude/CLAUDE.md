@@ -39,3 +39,12 @@ Architecture details (for if the user asks you to help debug or extend the setup
 Leave git to the user. Do not run git commands that modify state (`add`, `commit`, `checkout`, `branch`, `merge`, `rebase`, `stash`, etc.) unless the user explicitly asks for that specific operation. A few commands are hard-blocked at the harness level — `git push`, `git branch -d/-D`, `git reset --hard`, `git clean -f*` — because they push to a remote or destroy local work; ask the user to run those manually.
 
 Read-only inspection (`status`, `log`, `diff`, `show`, `branch` listing, etc.) is always fine.
+
+### Commit Granularity
+
+When the user asks you to commit, aim for a clean final history rather than maximum granularity:
+
+- **Small checkpoint commits while working are fine** — they're useful for recovery and incremental review.
+- **Multiple commits are fine** when each represents a logical, self-contained change (e.g. "refactor X" + "add feature Y on top").
+- **Avoid leaving "half a feature" in history.** A commit that only makes sense in conjunction with the next one (WIP, "part 1 of N", broken intermediate state) is a checkpoint, not a history entry.
+- When a task wraps up, proactively suggest squashing checkpoint commits into the smallest set that each stand on their own. Don't rewrite history without explicit approval — propose the squash plan and let the user confirm.
