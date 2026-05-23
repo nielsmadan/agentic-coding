@@ -22,6 +22,71 @@ alias clcof="noglob _clcof"
 _ccone() { claude -p "$*"; }
 alias ccone="noglob _ccone"
 
+# Relocate CC session storage when a project folder moves on disk.
+# Renames the slug dir under ~/.claude/projects/; JSONL transcripts are not rewritten.
+_ccmove() {
+  local src="" tgt="" dry=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -s) [[ -z "$2" ]] && { echo "ccmove: -s requires a value" >&2; return 2; }; src="$2"; shift 2 ;;
+      -t) [[ -z "$2" ]] && { echo "ccmove: -t requires a value" >&2; return 2; }; tgt="$2"; shift 2 ;;
+      -n|--dry-run) dry=1; shift ;;
+      help|-h|--help)
+        cat <<EOF
+ccmove -s <source-dir> -t <target-dir>   relocate CC sessions from one project
+                                         path to another (slug rename under
+                                         ~/.claude/projects/)
+ccmove -s ... -t ... -n                  dry-run: print planned mv, don't run
+ccmove help                              show this message
+
+Notes:
+  - Operates on session storage only. Move the actual project folder
+    yourself (mv, git mv, etc.) before or after running ccmove.
+  - JSONL transcripts are NOT rewritten. Old absolute paths remain in
+    historical tool calls/results; cwd for new turns picks up the new path.
+EOF
+        return 0
+        ;;
+      *) echo "ccmove: unknown argument: $1" >&2; return 2 ;;
+    esac
+  done
+  if [[ -z "$src" || -z "$tgt" ]]; then
+    echo "ccmove: -s <source-dir> and -t <target-dir> are required (see: ccmove help)" >&2
+    return 2
+  fi
+  src="${src/#\~/$HOME}"; src="${src:a}"; [[ "$src" != "/" && "$src" == */ ]] && src="${src%/}"
+  tgt="${tgt/#\~/$HOME}"; tgt="${tgt:a}"; [[ "$tgt" != "/" && "$tgt" == */ ]] && tgt="${tgt%/}"
+  local src_slug="${src//\//-}"
+  local tgt_slug="${tgt//\//-}"
+  local base="$HOME/.claude/projects"
+  local src_dir="$base/$src_slug"
+  local tgt_dir="$base/$tgt_slug"
+  if [[ "$src_slug" == "$tgt_slug" ]]; then
+    echo "ccmove: source and target slugs are identical ($src_slug); nothing to do" >&2
+    return 1
+  fi
+  if [[ ! -d "$src_dir" ]]; then
+    echo "ccmove: source session dir does not exist: $src_dir" >&2
+    return 1
+  fi
+  if [[ -e "$tgt_dir" ]]; then
+    echo "ccmove: target session dir already exists: $tgt_dir (refusing to overwrite)" >&2
+    return 1
+  fi
+  if (( dry )); then
+    echo "ccmove: dry-run — would run:"
+    echo "  mv $src_dir $tgt_dir"
+    return 0
+  fi
+  mv "$src_dir" "$tgt_dir" || return $?
+  local n
+  n=$(find "$tgt_dir" -maxdepth 1 -name '*.jsonl' -type f | wc -l | tr -d ' ')
+  echo "ccmove: moved $n session file(s) to $tgt_dir"
+  echo "  note: JSONL transcripts retain old absolute paths in their history;"
+  echo "        cwd for new turns will reflect the new project path."
+}
+alias ccmove='noglob _ccmove'
+
 _ccli() {
   local input="$*"
   if [[ -z "$input" ]]; then
