@@ -1,12 +1,12 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Gemini and Codex.
+description: Get an external AI opinion on a problem or question. Use when you want an outside perspective from Codex.
 argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
 
-Get input from Gemini and Codex on the current problem or question. By default, iterates if responses lack confidence.
+Get input from Codex on the current problem or question. By default, iterates if the response lacks confidence.
 
 ## Usage
 
@@ -28,21 +28,21 @@ Get input from Gemini and Codex on the current problem or question. By default, 
 
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
-- Both `gemini` and `codex` CLI tools must be installed and on PATH. If one is missing, the command fails silently and that advisor's input is simply absent from the synthesis.
+- The `codex` CLI tool must be installed and on PATH. If it is missing, the command fails silently.
 
 ## How It Works
 
 ### Default Flow (Iterative)
 
 1. Summarize the current problem/question from the conversation (or use what the user provides)
-2. Query Gemini and Codex in parallel for their perspectives
-3. Evaluate confidence in all responses
-4. If confidence is LOW for any advisor, re-query with additional context (up to 2 iterations)
+2. Query Codex for its perspective
+3. Evaluate confidence in the response
+4. If confidence is LOW, re-query with additional context (up to 2 iterations)
 5. Present final results with your synthesis
 
 ### Quick Mode (`--quick`)
 
-1. Query all advisors once
+1. Query Codex once
 2. Present results immediately without iteration
 3. Useful when you just want fast input without refinement
 
@@ -70,23 +70,15 @@ Give your perspective in {words} words or less. Focus on:
 If you need more context to give a confident answer, say so clearly.
 ```
 
-### Step 2: Query Advisors (in parallel)
+### Step 2: Query Codex
 
-Run all commands in parallel, using `{timeout}` as the Bash timeout.
+Run Codex using the Bash tool timeout set to `{timeout}` seconds.
 
-Prefix both with the `command` builtin. In some shells `gemini` / `codex` are
-`sops exec-env` wrapper functions that depend on an interactive-shell variable
-not present in the agent's environment; `command` bypasses the wrapper and runs
-the real binary, which authenticates via its own on-disk credentials. `gemini`
-additionally needs `--skip-trust` so it doesn't refuse to run in a working
-directory it hasn't been told to trust.
+Prefix with the `command` builtin: in some shells `codex` is a `sops exec-env`
+wrapper function that depends on an interactive-shell variable not present in
+the agent's environment; `command` bypasses the wrapper and runs the real
+binary, which authenticates via its own on-disk credentials.
 
-**Gemini:**
-```bash
-command gemini -s --skip-trust --approval-mode default "Read the file at .second-opinion.md and follow the instructions within it."
-```
-
-**Codex:**
 ```bash
 command codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
 ```
@@ -110,13 +102,13 @@ After receiving responses, evaluate each for confidence level:
 
 ### Step 4: Iterate If Needed (Default Mode Only)
 
-If confidence is LOW for either advisor:
+If confidence is LOW:
 
-1. Identify what context is missing based on their feedback
+1. Identify what context is missing based on Codex's feedback
 2. Gather additional context (read relevant files, clarify requirements)
 3. Overwrite `.second-opinion.md` with enhanced context
-4. Re-query the low-confidence advisor using the same file-reference command
-5. Can iterate up to 2 times per advisor
+4. Re-query Codex using the same file-reference command
+5. Can iterate up to 2 times
 
 Skip this step entirely if `--quick` flag was used.
 
@@ -125,16 +117,13 @@ Skip this step entirely if `--quick` flag was used.
 Format the responses for the user:
 
 ```markdown
-## Second Opinions
-
-### Gemini
-{gemini_response}
+## Second Opinion
 
 ### Codex
 {codex_response}
 
 ### My Take
-{your brief synthesis - where they agree, disagree, and your recommendation}
+{your brief synthesis - key takeaways and your recommendation}
 ```
 
 If iteration occurred, note it:
@@ -155,8 +144,7 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 ## Error Handling
 
-- If one advisor fails, continue with the others
-- If all fail, inform the user and offer to retry
+- If Codex fails, inform the user and offer to retry
 
 ## Key Differences from /debate
 
@@ -184,7 +172,4 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 ## Troubleshooting
 
 ### Advisor times out or fails to respond
-**Solution:** Increase the timeout with `--timeout=600` or use `--quick` to skip iteration. If one advisor consistently fails, the other's response is still presented.
-
-### All advisors agree with no diversity of opinion
-**Solution:** Rephrase your question to include a specific alternative approach you want evaluated, or provide more context about trade-offs you are considering to prompt more nuanced responses.
+**Solution:** Increase the timeout with `--timeout=600` or use `--quick` to skip iteration.

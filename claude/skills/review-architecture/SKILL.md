@@ -15,7 +15,7 @@ Macro-level review of system structure: how modules, layers, and components fit 
 /review-architecture --staged         # Review staged changes against the surrounding architecture
 /review-architecture --changed        # Review unstaged changes against the surrounding architecture
 /review-architecture --all            # Full system audit (parallel agents per category)
-/review-architecture --multi          # Also get Codex/Gemini opinions
+/review-architecture --multi          # Also get Codex opinion
 ```
 
 ## Scope
@@ -161,14 +161,11 @@ If `--multi` was used, append:
 ```markdown
 ### External Opinions
 
-#### Gemini
-{gemini_response}
-
 #### Codex
 {codex_response}
 
 #### Cross-Model Agreement
-{areas of agreement/disagreement — consensus issues get higher confidence}
+{areas where Codex agrees/disagrees with the Claude review — consensus issues get higher confidence}
 ```
 
 ## Examples
@@ -186,7 +183,7 @@ Parallel agents per category. Finds `lib/utils.ts` imported by 80+ files and its
 **Cross-model architecture review on a contested refactor:**
 > /review-architecture --multi --staged
 
-Runs the 6-category review plus Codex and Gemini. Cross-model agreement highlights that all three reviewers flag the same circular dependency between `orders` and `billing`, raising confidence.
+Runs the 6-category review plus Codex. Cross-model agreement highlights that both reviewers flag the same circular dependency between `orders` and `billing`, raising confidence.
 
 ## Troubleshooting
 

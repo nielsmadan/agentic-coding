@@ -7,16 +7,13 @@
 # Generated files:
 #   claude/settings.json                  (permissions.allow / deny / ask)
 #   codex/rules/permissions.rules
-#   gemini/policies/allowed-tools.toml
-#   gemini/policies/deny-destructive.toml
-#   gemini/policies/ask-confirm.toml
+#   antigravity/settings.json             (permissions.allow / deny / ask)
 #   opencode/opencode.json                (permission.bash)
 #
 # Entries in [shell] are command prefixes — emitted to ALL FOUR agents.
 # An entry ending in `*` is a glob: kept literally for Claude and OpenCode,
-# trailing-`*`-stripped for Gemini's string-prefix matcher, and skipped for
-# Codex (its token matcher can't express a mid-argument glob, so those
-# commands simply fall through to Codex's normal approval prompt).
+# and skipped for Codex and Antigravity (neither matcher can express a
+# mid-argument glob, so those commands fall through to runtime prompts).
 
 [shell]
 
@@ -139,8 +136,6 @@ allow = [
   "ruby --version",
 
   # external advisor commands
-  "gemini -p",
-  "gemini -s --approval-mode",
   "codex exec -s read-only",
 
   # docker — workbench container management

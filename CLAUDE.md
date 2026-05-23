@@ -75,12 +75,12 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 ## Permissions
 
-Shell-command permissions for all four agents (Claude, Codex, Gemini, OpenCode) are generated from a single source of truth: **`permissions/permissions.toml`**.
+Shell-command permissions for all four agents (Claude, Codex, Antigravity, OpenCode) are generated from a single source of truth: **`permissions/permissions.toml`**.
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`sync.py --check`) rejects any drift:
 - `claude/settings.json` (`permissions.allow` / `deny` / `ask`)
 - `codex/rules/permissions.rules`
-- `gemini/policies/allowed-tools.toml`, `deny-destructive.toml`, `ask-confirm.toml`
+- `antigravity/settings.json` (`permissions.allow` / `deny` / `ask`)
 - `opencode/opencode.json` (`permission.bash`)
 
 To change permissions: edit `permissions/permissions.toml`, then run `python3 permissions/sync.py` (also run automatically by `install.sh`). `[shell]` entries (allow/deny/ask) go to all four agents; `[claude.extra]` / `[opencode.extra]` hold tool-native entries (`Skill()`, `mcp__*`, OpenCode toggles) with no cross-agent equivalent. Codex's token matcher can't express glob entries (those ending in `*`), so they fall through to its normal approval prompt.

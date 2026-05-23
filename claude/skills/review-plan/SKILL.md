@@ -16,7 +16,7 @@ Comprehensive review of implementation plans using parallel specialized agents.
 ```
 
 ## Gotchas
-- The External Opinions agent depends on `gemini` and `codex` CLI tools being installed and on PATH. If they're missing, that section of the synthesis is silently blank.
+- The External Opinion agent depends on the `codex` CLI tool being installed and on PATH. If it is missing, that section of the synthesis is silently blank.
 - Vague plans get only generic feedback and soft warnings, giving a false sense of validation. Plans need implementation-level specifics (file paths, function names, data flow) to get useful review.
 
 ## Workflow
@@ -49,7 +49,7 @@ Do NOT invoke one at a time. Do NOT stop after the first agent.
 
 | Agent | Purpose | Tool |
 |-------|---------|------|
-| **External Opinions** | Get Gemini + Codex input | Skill: `second-opinion` |
+| **External Opinion** | Get Codex input | Skill: `second-opinion` |
 | **Alternatives** | Propose 2-4 other solutions | Task: general-purpose |
 | **Robustness** | Check for fragile patterns | Task: general-purpose |
 | **Adversarial** | Maximally critical review | Task: general-purpose |
@@ -64,12 +64,9 @@ Collect all agent results and synthesize:
 ```markdown
 ## Plan Review: {plan_name}
 
-### External Opinions
+### External Opinion
 
-**Gemini:** {summary}
 **Codex:** {summary}
-**Consensus:** {where they agree}
-**Divergence:** {where they disagree}
 
 ### Alternative Approaches
 
@@ -142,7 +139,7 @@ Reviews the auth redesign plan with all agents including the research agent, whi
 ## Notes
 
 - Use the Skill tool for `second-opinion` and `research-code` - do not write slash commands directly
-- External opinions provide model diversity (Gemini + Codex)
+- External opinion provides model diversity (Codex)
 - The adversarial agent should be harsh - that's its job
 - Robustness review catches patterns that "work in testing, fail in prod" - see [references/robustness-patterns.md](references/robustness-patterns.md) for examples
 - Research agent finds relevant practices and known issues online

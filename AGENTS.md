@@ -4,7 +4,7 @@ Guidelines for agentic coding tools operating in this repository.
 
 ## Repository Overview
 
-Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenCode). Contains skills, hooks, permissions, and documentation for customizing AI coding assistants.
+Shared configuration for agentic coding tools (Claude Code, Codex, Antigravity, OpenCode). Contains skills, hooks, permissions, and documentation for customizing AI coding assistants.
 
 ## Project Structure
 
@@ -18,9 +18,8 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenC
 ├── codex/            # OpenAI Codex CLI configuration
 │   ├── rules/        # Permission rules (permissions.rules is GENERATED)
 │   └── skills/       # Codex-specific overrides; install.sh syncs the curated subset of claude/skills/ to ~/.agents/skills/
-├── gemini/           # Gemini CLI configuration
-│   ├── settings.json
-│   └── policies/     # Permission policy TOML (GENERATED)
+├── antigravity/      # Antigravity CLI (`agy`) configuration
+│   └── settings.json # permissions.* arrays are GENERATED (rest of file editable)
 ├── opencode/         # OpenCode configuration
 │   └── opencode.json # permission.bash is GENERATED
 ├── permissions/      # Single source of truth for agent permissions
@@ -35,7 +34,7 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Gemini, OpenC
 Shell-command permissions for all four agents are generated from
 **`permissions/permissions.toml`** by `permissions/sync.py`. Never hand-edit the
 generated permission files (`claude/settings.json` permission arrays,
-`codex/rules/permissions.rules`, `gemini/policies/*.toml`, `opencode/opencode.json`
+`codex/rules/permissions.rules`, `antigravity/settings.json`, `opencode/opencode.json`
 `permission.bash`) — a lefthook pre-commit hook (`sync.py --check`) rejects drift.
 To change permissions: edit the TOML, run `python3 permissions/sync.py`.
 

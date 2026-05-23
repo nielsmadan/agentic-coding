@@ -14,9 +14,8 @@ SYMLINKS=(
   "$SCRIPT_DIR/claude/settings.json:$HOME/.claude/settings.json"
   # Codex
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
-  # Gemini
-  "$SCRIPT_DIR/gemini/settings.json:$HOME/.gemini/settings.json"
-  "$SCRIPT_DIR/gemini/policies:$HOME/.gemini/policies"
+  # Antigravity (agy) — replaced Gemini CLI in May 2026
+  "$SCRIPT_DIR/antigravity/settings.json:$HOME/.gemini/antigravity-cli/settings.json"
   # OpenCode
   "$SCRIPT_DIR/opencode/opencode.json:$HOME/.opencode/opencode.json"
   # Shell
@@ -29,7 +28,7 @@ CODEX_SKILLS=(
   code-review debug-log doc explain frontend-design optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-perf review-plan review-security
-  second-opinion skill-creator temp test theme-factory
+  skill-creator temp test theme-factory
 )
 
 create_symlink() {
@@ -243,6 +242,19 @@ install_claude_mcp_servers() {
 }
 
 install_claude_mcp_servers
+
+check_agy_installed() {
+  echo ""
+  if command -v agy &>/dev/null; then
+    echo "✓  Antigravity CLI (agy) is installed"
+  else
+    echo "⚠️  Antigravity CLI (agy) is not on PATH."
+    echo "   Install with: curl -fsSL https://antigravity.google/cli/install.sh | bash"
+    echo "   (then run 'agy' once to complete OAuth)"
+  fi
+}
+
+check_agy_installed
 
 echo ""
 add_airc_to_zshrc

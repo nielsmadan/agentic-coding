@@ -10,7 +10,7 @@ Code review workflow with optional multi-model feedback.
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
-- `--multi` - Also get reviews from Gemini and Codex
+- `--multi` - Also get a review from Codex
 
 **Example:** `/code-review src/api/ --multi`
 
@@ -216,7 +216,7 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ### /second-opinion
 
-Get input from Gemini and Codex on the current problem or question.
+Get input from Codex on the current problem or question.
 
 **Arguments:**
 - `--quick` - Single pass, no iteration

@@ -36,19 +36,6 @@ _ccli() {
 }
 alias ccli="noglob _ccli"
 
-_gemcli() {
-  local input="$*"
-  if [[ -z "$input" ]]; then
-    local req=""
-    vared -p "gemcli> " req || return 0
-    input="$req"
-  fi
-  local result
-  result=$(gemini -m gemini-2.5-flash -e none --skip-trust "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input")
-  print -z "$result"
-}
-alias gemcli="noglob _gemcli"
-
 _cxcli() {
   local input="$*"
   if [[ -z "$input" ]]; then

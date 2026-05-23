@@ -8,9 +8,7 @@ verify they are up to date (exit 1 with a diff on drift).
 Generated files:
   claude/settings.json                  (permissions.allow / deny / ask)
   codex/rules/permissions.rules
-  gemini/policies/allowed-tools.toml
-  gemini/policies/deny-destructive.toml
-  gemini/policies/ask-confirm.toml
+  antigravity/settings.json             (permissions.allow / deny / ask)
   opencode/opencode.json                (permission.bash)
 """
 
@@ -131,55 +129,24 @@ def render_codex(rules):
 
 
 # --------------------------------------------------------------------------
-# gemini — gemini/policies/*.toml: full regen, one file per decision.
-# commandPrefix is a string-prefix match, so a glob entry just drops its `*`.
+# antigravity — antigravity/settings.json: full regen. agy's permissions
+# schema wraps each entry in command(...) form (per /cli-features docs).
+# The docs only show literal command strings, so glob entries are skipped
+# the same way Codex skips them — they fall through to runtime approval.
 # --------------------------------------------------------------------------
 
-def gemini_prefix(entry):
-    return entry[:-1] if is_glob(entry) else entry
+def antigravity_pattern(entry):
+    return f"command({entry})"
 
 
-def gemini_file(entries, decision, priority, description, deny_message=None):
-    lines = [f"# {line}" for line in HEADER_LINES]
-    lines.append(f"# {description}")
-    prefixes = [gemini_prefix(e) for e in entries]
-    if prefixes:
-        lines += [
-            "",
-            "[[rule]]",
-            'toolName = "run_shell_command"',
-            f'decision = "{decision}"',
-            f"priority = {priority}",
-        ]
-        if deny_message:
-            lines.append(f"denyMessage = {json.dumps(deny_message)}")
-        lines.append("commandPrefix = [")
-        for prefix in prefixes:
-            lines.append(f"  {json.dumps(prefix)},")
-        lines.append("]")
-    return "\n".join(lines) + "\n"
-
-
-def render_gemini(rules):
-    policies = REPO_ROOT / "gemini" / "policies"
-    return {
-        policies / "allowed-tools.toml": gemini_file(
-            rules["allow"], "allow", 100,
-            "Allow-list of read-only / safe shell commands.",
-        ),
-        policies / "deny-destructive.toml": gemini_file(
-            rules["deny"], "deny", 200,
-            "Block remote-publishing and destructive operations.",
-            deny_message=(
-                "Remote-publishing or destructive op blocked. "
-                "Run manually if intended."
-            ),
-        ),
-        policies / "ask-confirm.toml": gemini_file(
-            rules["ask"], "ask_user", 150,
-            "Commands that always require user confirmation.",
-        ),
-    }
+def render_antigravity(rules):
+    path = REPO_ROOT / "antigravity" / "settings.json"
+    settings = json.loads(path.read_text())
+    perms = settings.setdefault("permissions", {})
+    perms["allow"] = [antigravity_pattern(e) for e in rules["allow"] if not is_glob(e)]
+    perms["deny"]  = [antigravity_pattern(e) for e in rules["deny"]  if not is_glob(e)]
+    perms["ask"]   = [antigravity_pattern(e) for e in rules["ask"]   if not is_glob(e)]
+    return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
 
 
 # --------------------------------------------------------------------------
@@ -216,7 +183,7 @@ def render_all():
     files = {}
     files.update(render_claude(rules))
     files.update(render_codex(rules))
-    files.update(render_gemini(rules))
+    files.update(render_antigravity(rules))
     files.update(render_opencode(rules))
     return files
 

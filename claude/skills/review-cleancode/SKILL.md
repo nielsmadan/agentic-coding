@@ -15,7 +15,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 /review-cleancode --staged         # Review staged changes
 /review-cleancode --changed        # Review unstaged changes
 /review-cleancode --all            # Full codebase audit (parallel agents)
-/review-cleancode --multi          # Also get Codex/Gemini opinions
+/review-cleancode --multi          # Also get Codex opinion
 ```
 
 ## Scope
@@ -26,7 +26,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
-| `--multi` | Add external opinions | Combines with any scope above; invokes `second-opinion --quick` for Codex/Gemini input |
+| `--multi` | Add external opinion | Combines with any scope above; invokes `second-opinion --quick` for Codex input |
 
 ## Gotchas
 - Default scope (no flag) uses conversation context, which may be stale if context has shifted during the session.
@@ -134,14 +134,11 @@ If `--multi` was used, append:
 ```markdown
 ### External Opinions
 
-#### Gemini
-{gemini_response}
-
 #### Codex
 {codex_response}
 
 #### Cross-Model Agreement
-{areas of agreement/disagreement — consensus issues get higher confidence}
+{areas where Codex agrees/disagrees with the Claude review — consensus issues get higher confidence}
 ```
 
 ## Examples
@@ -159,7 +156,7 @@ Parallel agents scan by category. Finds `AppService` handling auth, payments, no
 **Get external opinions on clean code quality:**
 > /review-cleancode --multi --staged
 
-Runs the 5-category review plus Codex/Gemini opinions. Cross-model agreement highlights a SOLID violation all three reviewers independently flagged.
+Runs the 5-category review plus Codex opinion. Cross-model agreement highlights a SOLID violation both reviewers independently flagged.
 
 ## Troubleshooting
 

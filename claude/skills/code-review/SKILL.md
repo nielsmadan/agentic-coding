@@ -19,8 +19,8 @@ Review the code related to: **$ARGUMENTS**
 /code-review --all                    # Whole repo
 /code-review --changed                # Unstaged changes only
 /code-review --staged                 # Staged changes only (errors if nothing staged)
-/code-review --multi                  # All aspects + Gemini + Codex
-/code-review --multi --architecture   # Architecture only + Gemini + Codex
+/code-review --multi                  # All aspects + Codex
+/code-review --multi --architecture   # Architecture only + Codex
 /code-review --all --multi            # Whole repo + external opinions
 /code-review --rereview               # Re-review automatically after fixes are applied
 ```
@@ -203,7 +203,7 @@ Use the **Skill tool** to invoke `second-opinion --quick`. Phrase the prompt acc
 
 Then append: "Provide a focused code review in 300 words or less covering: potential bugs or edge cases, security concerns, performance issues, and architecture/pattern violations."
 
-**IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion results (both Gemini and Codex) have been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary.
+**IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion result (Codex) has been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary.
 
 ## Step 4: Independent Confidence Scoring
 
@@ -240,14 +240,11 @@ Only include sections with findings from the agents that actually ran. If an asp
 
 If `--multi` was used, include:
 
-#### Gemini
-{gemini_code_review}
-
 #### Codex
 {codex_code_review}
 
 #### Cross-Model Agreement
-{note areas where external advisors agree/disagree with Claude agents - highlight consensus issues as higher confidence}
+{note areas where Codex agrees/disagrees with Claude agents - highlight consensus issues as higher confidence}
 
 ## Step 6: Offer to Fix
 
@@ -295,7 +292,7 @@ Runs all 9 agents against every file in the repo (`git ls-files`). Use this for 
 **Cross-model consensus review:**
 > /code-review --multi
 
-Runs the same 9 Claude agents plus external reviews from Gemini and Codex. The output includes a cross-model agreement section highlighting issues where all models converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
+Runs the same 9 Claude agents plus an external review from Codex. The output includes a cross-model agreement section highlighting issues where both Claude agents and Codex converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
 
 **Review, fix, then re-review automatically:**
 > /code-review --rereview
