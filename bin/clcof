@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Continue a Claude Code session in a new forked branch with an auto-generated name.
+
+Picks the most recent session for the current cwd from ~/.claude/sessions/*.json,
+strips its trailing 6-hex suffix, appends a fresh one, and execs:
+
+    claude --continue --fork-session --name <base>-<hex> <forwarded args>
+
+Falls back to base name "main" if no prior session exists for this cwd.
+"""
+from __future__ import annotations
+
+import glob
+import json
+import os
+import re
+import secrets
+import sys
+from pathlib import Path
+
+
+SUFFIX_RE = re.compile(r"-[0-9a-f]{6}$")
+
+
+def latest_session_name(cwd: str) -> str | None:
+    best_name: str | None = None
+    best_updated = -1
+    pattern = str(Path.home() / ".claude" / "sessions" / "*.json")
+    for path in glob.iglob(pattern):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if data.get("cwd") != cwd:
+            continue
+        updated = data.get("updatedAt")
+        if not isinstance(updated, (int, float)):
+            continue
+        if updated > best_updated:
+            best_updated = updated
+            best_name = data.get("name") or None
+    return best_name
+
+
+def main() -> int:
+    base = "main"
+    recent = latest_session_name(os.getcwd())
+    if recent:
+        base = SUFFIX_RE.sub("", recent)
+    name = f"{base}-{secrets.token_hex(3)}"
+    argv = ["claude", "--continue", "--fork-session", "--name", name, *sys.argv[1:]]
+    try:
+        os.execvp("claude", argv)
+    except FileNotFoundError:
+        print("clcof: 'claude' not found on PATH", file=sys.stderr)
+        return 127
+
+
+if __name__ == "__main__":
+    sys.exit(main() or 0)

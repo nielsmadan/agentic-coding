@@ -25,6 +25,16 @@ This repository contains shared configuration for agentic coding tools. It inclu
     - `claude-md.md` *(optional)* - markdown snippet appended once to the project's
       `CLAUDE.md` on first install; updates flow through `aiconf sync` afterwards
   - `deploy.py` - copies/merges a type's contents into a target project
+- `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
+- `.airc.d/` - one `.zsh` file per topic, sourced in glob order
+  - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
+- `bin/` - standalone CLI scripts on PATH (e.g. `ccmove`, `clcof`); add new ones here rather than as zsh functions
+
+## Shell Config
+
+Add a new alias or shell function: drop it in the appropriate `.airc.d/<topic>.zsh`, or create a new topic file. Reload with `source ~/.airc` (idempotent — re-sourcing does not duplicate PATH entries).
+
+Add a new CLI command with flags, validation, or non-trivial logic: write it as a Python script under `bin/<name>` (no extension) with `#!/usr/bin/env python3` and `chmod +x`. It becomes available on PATH automatically. Keep zsh wrappers only when shell-specific behavior is needed (e.g. `print -z` to put text on the zle buffer, backgrounding with `& disown`).
 
 ## Skills
 
@@ -133,6 +143,18 @@ into a project-only one, move its directory from `claude/skills/<name>/` to
 
 Templates cover config only; machine prerequisites (e.g. `npx`, `uvx`, `dart` for the Flutter
 MCP servers) must be installed separately.
+
+### Considered but not bundled
+
+- **`chrome-devtools-mcp`** (Chrome DevTools for Agents v1, May 2026) — Chrome team's MCP
+  server with Lighthouse audits, performance traces, heap snapshots, network/CPU throttling,
+  Chrome extension dev, WebMCP debugging. Complements the `web` template's `agent-browser`
+  (driving the page) with DevTools-grade *inspection* of the page. Not bundled by default
+  because most web projects don't need it day-to-day and both speak CDP — running both
+  against the same Chrome requires pointing chrome-devtools-mcp at agent-browser's instance
+  via `--browser-url`, which is fiddly enough to opt into per-project. Install as a Claude
+  Code plugin: `/plugin install chrome-devtools-mcp@chrome-devtools-plugins` after
+  `/plugin marketplace add ChromeDevTools/chrome-devtools-mcp`.
 
 ## Secrets Policy
 
