@@ -9,18 +9,24 @@ Copies/merges the fragments in templates/<type>/ into the target project:
   - <type>/.mcp.json           -> <target>/.mcp.json                  (JSON merge)
   - <type>/settings.local.json -> <target>/.claude/settings.local.json (JSON merge)
   - <type>/skills/<name>/      -> <target>/.claude/skills/<name>/     (recursive copy)
-  - <type>/claude-md.md        -> appended once to <target>/CLAUDE.md (state-gated)
+                                  plus <target>/.agents/skills/<name> symlink
+                                  pointing back at the .claude copy
+  - <type>/instructions.md     -> appended once each to <target>/CLAUDE.md
+                                  and <target>/AGENTS.md (state-gated per target)
 
-All mechanical operations are idempotent. The CLAUDE.md snippet is append-once on first
-install for a given type; subsequent updates flow through `aiconf sync`. State is tracked in
-<target>/.claude/aiconf.state.json (gitignored).
+All mechanical operations are idempotent. The instructions snippet is append-once per
+(type, target-file) pair; subsequent updates flow through `aiconf sync`. State is tracked
+in <target>/.aiconf/state.json (gitignored).
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).resolve().parent
+
+INSTRUCTION_TARGETS = ("CLAUDE.md", "AGENTS.md")
 
 
 def fail(msg):
@@ -123,6 +129,27 @@ def deploy_skill(src_dir, dst_dir):
     return state
 
 
+def ensure_agents_symlink(target, skill_name):
+    """Ensure <target>/.agents/skills/<name> symlinks to ../../.claude/skills/<name>.
+
+    Returns: 'added', 'updated', 'unchanged', or 'skipped (not a symlink)'.
+    """
+    link_path = target / ".agents" / "skills" / skill_name
+    expected = Path("../..") / ".claude" / "skills" / skill_name
+
+    if link_path.is_symlink():
+        if Path(os.readlink(link_path)) == expected:
+            return "unchanged"
+        link_path.unlink()
+        link_path.symlink_to(expected)
+        return "updated"
+    if link_path.exists():
+        return "skipped (not a symlink)"
+    link_path.parent.mkdir(parents=True, exist_ok=True)
+    link_path.symlink_to(expected)
+    return "added"
+
+
 def deploy_skills(type_dir, target):
     skills_src = type_dir / "skills"
     if not skills_src.is_dir():
@@ -130,48 +157,54 @@ def deploy_skills(type_dir, target):
     for skill_src in sorted(skills_src.iterdir()):
         if not skill_src.is_dir():
             continue
-        skill_dst = target / ".claude" / "skills" / skill_src.name
-        state = deploy_skill(skill_src, skill_dst)
-        print(f"  .claude/skills/{skill_src.name}: {state}")
+        name = skill_src.name
+        skill_dst = target / ".claude" / "skills" / name
+        copy_state = deploy_skill(skill_src, skill_dst)
+        link_state = ensure_agents_symlink(target, name)
+        print(f"  .claude/skills/{name}: {copy_state}; .agents/skills/{name}: {link_state}")
 
 
-def deploy_claude_md_snippet(type_name, type_dir, target):
-    """Append <type>/claude-md.md to <target>/CLAUDE.md once per project+type.
+def deploy_instructions_snippet(type_name, type_dir, target):
+    """Append <type>/instructions.md once each to CLAUDE.md and AGENTS.md.
 
-    Subsequent installs read the state file and skip. Updates flow through `aiconf sync`.
+    State at <target>/.aiconf/state.json tracks per (type, target-file) pair, so
+    re-running can fill in a missing target without duplicating an existing one.
+    Updates after first install flow through `aiconf sync`.
     """
-    snippet_path = type_dir / "claude-md.md"
+    snippet_path = type_dir / "instructions.md"
     if not snippet_path.is_file():
         return
 
-    state_path = target / ".claude" / "aiconf.state.json"
+    state_path = target / ".aiconf" / "state.json"
     state = load_json(state_path) or {}
-    installed = state.get("snippet_installed", [])
-
-    if type_name in installed:
-        print(f"  CLAUDE.md: skipped (snippet already installed; use 'aiconf sync' to update)")
-        return
+    installed = state.setdefault("snippet_installed", {})
+    done = list(installed.get(type_name, []))
 
     snippet = snippet_path.read_text()
     if not snippet.endswith("\n"):
         snippet += "\n"
 
-    claude_md = target / "CLAUDE.md"
-    if claude_md.exists():
-        existing = claude_md.read_text()
-        if not existing.endswith("\n"):
-            existing += "\n"
-        claude_md.write_text(existing + "\n" + snippet)
-    else:
-        claude_md.write_text(snippet)
+    appended_any = False
+    for target_name in INSTRUCTION_TARGETS:
+        if target_name in done:
+            print(f"  {target_name}: skipped (already installed; use 'aiconf sync' to update)")
+            continue
+        target_file = target / target_name
+        if target_file.exists():
+            existing = target_file.read_text()
+            if not existing.endswith("\n"):
+                existing += "\n"
+            target_file.write_text(existing + "\n" + snippet)
+        else:
+            target_file.write_text(snippet)
+        done.append(target_name)
+        appended_any = True
+        print(f"  {target_name}: snippet appended")
 
-    state.setdefault("snippet_installed", [])
-    if type_name not in state["snippet_installed"]:
-        state["snippet_installed"].append(type_name)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    write_json(state_path, state)
-
-    print(f"  CLAUDE.md: snippet appended")
+    if appended_any:
+        installed[type_name] = done
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        write_json(state_path, state)
 
 
 def available_types():
@@ -208,7 +241,7 @@ def main():
 
     deploy_skills(type_dir, target)
 
-    deploy_claude_md_snippet(type_name, type_dir, target)
+    deploy_instructions_snippet(type_name, type_dir, target)
 
     print("done")
 

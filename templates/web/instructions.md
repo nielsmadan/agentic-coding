@@ -44,6 +44,31 @@ locally-running pages, or ad-hoc `curl` against `localhost`. The dashboard
 runs on `http://localhost:4848` and proxies session tabs, status, and stream
 traffic — agents should stay on the dashboard origin.
 
+### Modern web guidance (`/modern-web-guidance`)
+
+The `/modern-web-guidance` skill is a **search-based dispatcher** for current
+web-platform best practices: HTML, CSS layout, forms, accessibility, security
+(CSP/COOP/Trusted Types/cookies/CORS), performance (Core Web Vitals, Fetch
+Priority, content-visibility), built-in AI, passkeys, privacy, user
+experience. The SKILL.md itself is small (~5 KB); the actual guide content is
+fetched on demand via `npx -y modern-web-guidance@latest search "<query>"`,
+then `retrieve "<id>"` for the matching guide. So context cost stays low — you
+only pay for the one or two guides that actually apply to the task at hand.
+
+Use it **at the start of any HTML/CSS or client-side JS feature**: search
+first to see if a standardized pattern already exists before reaching for
+custom code or extra dependencies. Skip it for backend, CI/CD, generic
+scripts, or lint/git tasks. Network access is required (`npx` fetches the
+package on first use); the matchers in `.claude/settings.local.json`
+pre-approve the relevant invocations so they don't prompt each time.
+
+Complements `/review-security` (which audits *existing* app code for
+vulnerabilities) and `/review-perf` (which audits algorithmic/runtime
+perf) — `/modern-web-guidance` is the *forward-looking* counterpart, used
+while building, to make sure the patterns you pick are current.
+
+Sourced from GoogleChrome/modern-web-guidance under Apache 2.0.
+
 ### Notes
 
 - `agent-browser` arrives globally via `npm i -g agent-browser && agent-browser

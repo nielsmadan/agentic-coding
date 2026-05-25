@@ -9,8 +9,9 @@ _aiconf() {
       ;;
     help|--help|-h)
       cat <<EOF
-aiconf <type> [dir]   install template into dir (default cwd); appends CLAUDE.md
-                      snippet on first install for that type (state-tracked)
+aiconf <type> [dir]   install template into dir (default cwd); appends instructions
+                      snippet to CLAUDE.md and AGENTS.md on first install for that
+                      type (state-tracked in <dir>/.aiconf/state.json)
 aiconf sync           run from a project dir: compare project against its template;
                       per-file direction (push vs pull) decided by diff + git history
 aiconf sync <dir>     run from ~/ac: same comparison for <dir>

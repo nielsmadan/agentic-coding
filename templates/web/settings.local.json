@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(agent-browser:*)",
-      "Bash(npx agent-browser:*)"
+      "Bash(npx agent-browser:*)",
+      "Bash(npx -y modern-web-guidance:*)",
+      "Bash(npx modern-web-guidance:*)"
     ]
   }
 }

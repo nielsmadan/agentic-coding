@@ -1,12 +1,12 @@
 ---
 name: sync-project-config
-description: Bidirectional sync between a project's deployed Claude config (.mcp.json, .claude/skills/<name>/) and its canonical template in ~/ac/templates/<type>/. Decides per-file whether to pull project→template or push template→project from diff + git history. Use when the user runs `aiconf sync` or asks to mirror project changes back to the template, or push template updates into a project with diff review.
+description: Bidirectional sync between a project's deployed agent config (.mcp.json, .claude/skills/<name>/, CLAUDE.md/AGENTS.md snippets) and its canonical template in ~/ac/templates/<type>/. Decides per-file whether to pull project→template or push template→project from diff + git history. Use when the user runs `aiconf sync` or asks to mirror project changes back to the template, or push template updates into a project with diff review.
 argument-hint: [project-dir]
 ---
 
 # Sync Project Config
 
-Two-way sync between a deployed project's Claude config and its source template.
+Two-way sync between a deployed project's agent config and its source template.
 
 ## Usage
 
@@ -76,13 +76,17 @@ Direction is per-artifact. A single run may pull one file and push another in th
   install so they're always present, and arrays don't have useful directional diffs. If the
   user wants to refresh `settings.local.json` template-side into a project, recommend
   `aiconf <type> <dir>` (mechanical install).
-- **CLAUDE.md snippet** — `$TEMPLATE_REPO/templates/$TYPE/claude-md.md` ↔ a passage somewhere
-  inside `$PROJECT/CLAUDE.md`. **No marker anchor** — the install step appended the snippet
-  once and the user is free to refactor/integrate it afterwards.
+- **Instructions snippet** — `$TEMPLATE_REPO/templates/$TYPE/instructions.md` ↔ a passage
+  inside `$PROJECT/CLAUDE.md` **and** a passage inside `$PROJECT/AGENTS.md`. Treat the two
+  project-side files as **independent** sync targets — a pull from CLAUDE.md does not
+  auto-overwrite AGENTS.md, and vice versa. **No marker anchor** — the install step appended
+  the snippet once per file and the user is free to refactor/integrate afterwards.
+
+  For each of CLAUDE.md and AGENTS.md that exists on the project side:
 
   **Locate the project-side passage (grep-based, in order):**
   1. Extract the snippet's first markdown heading line (e.g., `## Flutter project tooling`).
-     Grep that exact line in `$PROJECT/CLAUDE.md`. If exactly one match → that's the start.
+     Grep that exact line in the target file. If exactly one match → that's the start.
   2. If zero matches, grep for each of the three most distinctive bigrams from the template
      snippet (e.g., MCP server names, skill names like `flutter-upgrade`, characteristic
      compound phrases). If exactly one line matches at least two of the three → use the line
@@ -99,20 +103,32 @@ Direction is per-artifact. A single run may pull one file and push another in th
   - Before any push, show the user the full proposed replacement (start line, end line, and
      content), and require explicit approval — never auto-write without that confirmation.
 
-  Apply the same diff + git-history direction logic as for `.mcp.json` and `skills/<name>/`.
-  Pull → write `$TEMPLATE_REPO/templates/$TYPE/claude-md.md`. Push → replace the located
-  passage inside `$PROJECT/CLAUDE.md`, preserving everything outside it.
+  Apply the same diff + git-history direction logic as for `.mcp.json` and `skills/<name>/`,
+  per target file independently. Pull → write
+  `$TEMPLATE_REPO/templates/$TYPE/instructions.md`. Push → replace the located passage
+  inside the target file, preserving everything outside it. If CLAUDE.md and AGENTS.md
+  *both* hold a divergent passage and both are newer than the template, surface both diffs
+  and let the user pick one to pull (or pull both into the template separately for review).
 
-  **Missing snippet (state-file caveat).** If the snippet is entirely missing from the
-  project's CLAUDE.md and the template has one, do NOT perform a one-off push. Flag it and
-  recommend this two-step recovery:
-  1. Edit `$PROJECT/.claude/aiconf.state.json` and remove `$TYPE` from `snippet_installed`
-     (or delete the file).
-  2. Re-run `aiconf $TYPE $PROJECT` — install will re-append the snippet.
+  **Missing snippet (state-file caveat).** If the snippet is entirely missing from one of
+  the project's instruction files and the template has one, do NOT perform a one-off push.
+  Flag it and recommend this two-step recovery:
+  1. Edit `$PROJECT/.aiconf/state.json` and remove the missing target from
+     `snippet_installed[$TYPE]` (e.g. drop `"AGENTS.md"`), or delete the whole entry to
+     re-install both targets.
+  2. Re-run `aiconf $TYPE $PROJECT` — install will re-append the snippet to the missing
+     target(s) only.
 
   This is the only documented case where the user (not the skill) modifies
-  `aiconf.state.json`. The skill itself does NOT read or write `aiconf.state.json` — that's
-  install-side state and not part of the sync model.
+  `.aiconf/state.json`. The skill itself does NOT read or write `.aiconf/state.json` —
+  that's install-side state and not part of the sync model.
+
+- **`.agents/skills/<name>` symlink** — self-heal only. The deploy step creates a symlink
+  at `$PROJECT/.agents/skills/<name>` pointing to `../../.claude/skills/<name>`. If the
+  symlink is missing or stale (points elsewhere), recreate it with the expected target.
+  Skip silently if `.agents/skills/<name>` exists as a real directory or file — do not
+  clobber user-authored content. This is not a sync operation in the diff/direction sense;
+  it's a one-line repair pass that runs after the main scope decisions.
 
 ### 5. Present, confirm, apply
 

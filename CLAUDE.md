@@ -115,26 +115,32 @@ aiconf sync <dir>     # from ~/ac: bidirectional sync against <dir>
 
 **Install** (`aiconf <type> [dir]`) runs `templates/deploy.py`. It **copies** (not symlinks)
 so the target project owns real, committable files. Each step is idempotent in its own way:
-- `.mcp.json` and `settings.local.json` merge (union arrays, preserve unrelated entries)
+- `.mcp.json` and `settings.local.json` merge (union arrays, preserve unrelated entries).
+  `.mcp.json` is read by all four agents at project root; `settings.local.json` stays
+  Claude-scoped at `.claude/settings.local.json`
 - `skills/<name>/` recursively copy into `<target>/.claude/skills/<name>/`, only writing files
-  whose bytes differ
-- `claude-md.md` (optional) is **appended once** to `<target>/CLAUDE.md` on first install for a
-  given type. State is tracked in `<target>/.claude/aiconf.state.json` so subsequent installs
-  skip the append. After install, the snippet is yours — refactor, integrate, move it freely;
-  use `aiconf sync` to mirror edits between project and template.
+  whose bytes differ. A `.agents/skills/<name>` symlink is added pointing back at the
+  Claude copy, so Codex / Gemini CLI / Antigravity pick up the same project skills
+- `instructions.md` (optional) is **appended once each** to `<target>/CLAUDE.md` and
+  `<target>/AGENTS.md` on first install for a given type. State is tracked per (type,
+  target-file) pair in `<target>/.aiconf/state.json` so subsequent installs skip files that
+  already received the append (and can backfill a missing one). After install, the snippet is
+  yours — refactor, integrate, move it freely; use `aiconf sync` to mirror edits between
+  project and template.
 
-Add `.claude/aiconf.state.json` to a project's `.gitignore` (alongside
-`.claude/settings.local.json`) — it's machine-local install state.
+Add `.aiconf/` to a project's `.gitignore` (alongside `.claude/settings.local.json`) — it's
+machine-local install state.
 
 To update template-side fragments, edit `templates/<type>/` and re-deploy (for the mechanical
-artifacts) or use `aiconf sync` (for the CLAUDE.md snippet, since install doesn't touch it
-after first run).
+artifacts) or use `aiconf sync` (for the instructions snippet, since install doesn't touch
+the CLAUDE.md / AGENTS.md passages after first run).
 
 **Sync** (`aiconf sync [dir]`) opens an interactive Claude session that invokes the
 `/sync-project-config` skill. The skill picks per-file direction (pull project→template or
 push template→project) from `diff` + `git log` / `git status`, scoped to artifacts already
-defined in the template. `settings.local.json` is intentionally out of scope for sync —
-recommend `aiconf <type> <dir>` for mechanical settings refresh.
+defined in the template. CLAUDE.md and AGENTS.md are synced as independent targets — a pull
+from one does not auto-overwrite the other. `settings.local.json` is intentionally out of
+scope for sync — recommend `aiconf <type> <dir>` for mechanical settings refresh.
 
 Project-only skills live *inside* their template (`templates/<type>/skills/<name>/`), not in
 `claude/skills/`, so `install.sh` never exposes them globally. To turn an existing global skill
