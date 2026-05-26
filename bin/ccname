@@ -1,0 +1,368 @@
+#!/usr/bin/env python3
+"""Re-name recent Claude Code sessions for the current project.
+
+Scans sessions modified in the last N days, feeds the last few turns of each
+to `claude -p`, and writes the generated name back the same way `/rename`
+does: an `ai-title` line appended to the session's JSONL, plus an updated
+`summary` field in the project's sessions-index.json.
+
+Default: skip sessions that already carry an ai-title (use --force to redo).
+"""
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import json
+import os
+import subprocess
+import sys
+import textwrap
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+NAME_PROMPT = (
+    "Below is a Claude Code session transcript between a user and the "
+    "assistant. Read it and output a short title (8 words or fewer) "
+    "describing the user's actual goal in that session. Output ONLY the "
+    "title — no quotes, no period, no preamble, no explanation.\n\n"
+    "=== Transcript ===\n"
+)
+
+MAX_NAME_CHARS = 80
+MAX_TURN_CHARS = 500
+MAX_LAST_TURNS = 6
+MAX_TRANSCRIPT_CHARS = 6000
+CLAUDE_TIMEOUT_S = 60
+
+
+def slugify(path: Path) -> str:
+    return str(path).replace("/", "-")
+
+
+def project_dir(project: Path) -> Path:
+    return Path.home() / ".claude" / "projects" / slugify(project.resolve())
+
+
+def parse_iso(ts: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+
+
+def extract_text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                t = block.get("text", "")
+                if t:
+                    parts.append(t)
+        return "\n".join(parts)
+    return ""
+
+
+def build_transcript(jsonl_path: Path) -> tuple[str, bool]:
+    """Return (compact transcript text, has_ai_title)."""
+    first_user: str | None = None
+    turns: list[tuple[str, str]] = []
+    has_ai_title = False
+
+    try:
+        with open(jsonl_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                etype = entry.get("type")
+                if etype == "ai-title":
+                    has_ai_title = True
+                    continue
+                if etype not in ("user", "assistant"):
+                    continue
+                if entry.get("isSidechain"):
+                    continue
+                msg = entry.get("message") or {}
+                role = msg.get("role") or etype
+                text = extract_text(msg.get("content"))
+                text = text.strip()
+                if not text:
+                    continue
+                if len(text) > MAX_TURN_CHARS:
+                    text = text[:MAX_TURN_CHARS] + "…"
+                if role == "user" and first_user is None:
+                    first_user = text
+                turns.append((role, text))
+    except OSError:
+        return "", has_ai_title
+
+    if not turns:
+        return "", has_ai_title
+
+    tail = turns[-MAX_LAST_TURNS:]
+    parts: list[str] = []
+    if first_user and (not tail or tail[0] != ("user", first_user)):
+        parts.append(f"[first user message]\nuser: {first_user}")
+    parts.append("[recent turns]")
+    for role, text in tail:
+        parts.append(f"{role}: {text}")
+    transcript = "\n\n".join(parts)
+    if len(transcript) > MAX_TRANSCRIPT_CHARS:
+        transcript = transcript[:MAX_TRANSCRIPT_CHARS] + "\n…[truncated]"
+    return transcript, has_ai_title
+
+
+def generate_name(transcript: str, model: str) -> str | None:
+    if not transcript.strip():
+        return None
+    prompt = NAME_PROMPT + transcript
+    try:
+        result = subprocess.run(
+            ["claude", "-p", "--model", model,
+             "--no-session-persistence",
+             "--tools", "",
+             "--disable-slash-commands"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=CLAUDE_TIMEOUT_S,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"ccname: claude -p failed: {e}", file=sys.stderr)
+        return None
+    if result.returncode != 0:
+        print(f"ccname: claude -p exit {result.returncode}: {result.stderr.strip()}",
+              file=sys.stderr)
+        return None
+    name = result.stdout.strip().strip('"').strip("'").rstrip(".")
+    name = " ".join(name.split())
+    if not name or not looks_like_name(name):
+        return None
+    if len(name) > MAX_NAME_CHARS:
+        name = name[:MAX_NAME_CHARS].rstrip()
+    return name
+
+
+BAD_NAME_SUBSTRINGS = (
+    "transcript", "please paste", "please provide", "i don't", "i don't see",
+    "i'd be happy", "i need", "i'll need", "to generate", "no content",
+    "not visible", "not provided",
+)
+
+
+def looks_like_name(s: str) -> bool:
+    low = s.lower()
+    if any(bad in low for bad in BAD_NAME_SUBSTRINGS):
+        return False
+    if "?" in s:
+        return False
+    if len(s) > MAX_NAME_CHARS:
+        return False
+    return True
+
+
+def short_id(sid: str) -> str:
+    return sid.split("-", 1)[0] if "-" in sid else sid[:8]
+
+
+def append_ai_title(jsonl_path: Path, session_id: str, name: str) -> None:
+    entry = {"type": "ai-title", "aiTitle": name, "sessionId": session_id}
+    with open(jsonl_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def write_index(index_path: Path, data: dict) -> None:
+    tmp = index_path.with_suffix(index_path.suffix + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, index_path)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        prog="ccname",
+        description="Re-name recent Claude Code sessions for the current project.",
+        epilog=textwrap.dedent("""\
+            Writes match `/rename`: appends an ai-title entry to each session's
+            JSONL and updates the project's sessions-index.json.
+
+            Examples:
+              ccname                    # rename unnamed sessions from last 5 days in cwd
+              ccname --days 2 --force   # re-name *every* session from last 2 days
+              ccname --dry-run          # preview without writing
+        """),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument("--days", type=float, default=5,
+                    help="window in days (default: 5)")
+    ap.add_argument("--project", type=Path, default=Path.cwd(),
+                    help="project dir (default: cwd)")
+    ap.add_argument("--force", action="store_true",
+                    help="re-name sessions that already have an ai-title")
+    ap.add_argument("--dry-run", "-n", action="store_true",
+                    help="print planned changes, don't write")
+    ap.add_argument("--limit", type=int, default=0,
+                    help="max sessions to rename (0 = unlimited)")
+    ap.add_argument("--model", default="haiku",
+                    help="model alias for `claude -p` (default: haiku)")
+    ap.add_argument("--workers", type=int, default=4,
+                    help="parallel claude -p calls (default: 4)")
+    args = ap.parse_args()
+
+    proj_dir = project_dir(args.project)
+    index_path = proj_dir / "sessions-index.json"
+    if not proj_dir.is_dir():
+        print(f"ccname: no Claude session dir for {args.project} ({proj_dir})",
+              file=sys.stderr)
+        return 1
+
+    if index_path.is_file():
+        with open(index_path, encoding="utf-8") as f:
+            index = json.load(f)
+        index_exists = True
+    else:
+        index = {"entries": []}
+        index_exists = False
+    index_by_sid = {e.get("sessionId"): e for e in index.get("entries", [])
+                    if e.get("sessionId")}
+
+    cutoff_ts = (datetime.now(timezone.utc) - timedelta(days=args.days)).timestamp()
+    candidates: list[dict] = []
+    for jsonl in proj_dir.glob("*.jsonl"):
+        try:
+            mtime = jsonl.stat().st_mtime
+        except OSError:
+            continue
+        if mtime < cutoff_ts:
+            continue
+        sid = jsonl.stem
+        existing = index_by_sid.get(sid, {})
+        if existing.get("isSidechain"):
+            continue
+        candidates.append({
+            "sessionId": sid,
+            "modified": datetime.fromtimestamp(mtime, tz=timezone.utc)
+                                .isoformat().replace("+00:00", "Z"),
+            "mtime": mtime,
+            "summary": existing.get("summary", ""),
+        })
+    candidates.sort(key=lambda e: e["mtime"], reverse=True)
+
+    if not candidates:
+        print(f"ccname: no sessions modified in the last {args.days} day(s).")
+        return 0
+
+    plans: list[tuple[dict, str, str]] = []  # (entry, transcript, status)
+    for entry in candidates:
+        sid = entry["sessionId"]
+        jsonl = proj_dir / f"{sid}.jsonl"
+        if not jsonl.is_file():
+            plans.append((entry, "", "missing-jsonl"))
+            continue
+        transcript, has_ai_title = build_transcript(jsonl)
+        if has_ai_title and not args.force:
+            plans.append((entry, "", "skip-has-title"))
+            continue
+        if not transcript:
+            plans.append((entry, "", "skip-empty"))
+            continue
+        plans.append((entry, transcript, "rename"))
+
+    rename_plans = [p for p in plans if p[2] == "rename"]
+    if args.limit > 0:
+        rename_plans = rename_plans[: args.limit]
+
+    if not rename_plans:
+        print(f"ccname: {len(candidates)} session(s) in window; none need renaming "
+              f"(use --force to override).")
+        for entry, _, status in plans:
+            print(f"  - {short_id(entry['sessionId'])}  [{status}]  "
+                  f"{entry.get('summary','')}")
+        return 0
+
+    print(f"ccname: generating names for {len(rename_plans)} session(s) "
+          f"via `claude -p --model {args.model}` "
+          f"({args.workers} workers)…", file=sys.stderr)
+
+    results: dict[str, str | None] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as ex:
+        future_to_sid = {
+            ex.submit(generate_name, transcript, args.model): entry["sessionId"]
+            for entry, transcript, _ in rename_plans
+        }
+        for future in concurrent.futures.as_completed(future_to_sid):
+            sid = future_to_sid[future]
+            try:
+                results[sid] = future.result()
+            except Exception as e:
+                print(f"ccname: name generation failed for {short_id(sid)}: {e}",
+                      file=sys.stderr)
+                results[sid] = None
+
+    print()
+    header = f"{'modified':<20}  {'session':<10}  old → new"
+    print(header)
+    print("-" * len(header))
+    updates: dict[str, str] = {}
+    for entry, _, _ in rename_plans:
+        sid = entry["sessionId"]
+        new = results.get(sid)
+        old = entry.get("summary", "") or ""
+        mod = (entry.get("modified", "") or "")[:19].replace("T", " ")
+        if new and new != old:
+            print(f"{mod:<20}  {short_id(sid):<10}  {old!r} → {new!r}")
+            updates[sid] = new
+        else:
+            reason = "no name returned" if not new else "unchanged"
+            print(f"{mod:<20}  {short_id(sid):<10}  [{reason}] {old!r}")
+
+    if args.dry_run:
+        print(f"\nccname: dry-run — {len(updates)} session(s) would be renamed.")
+        return 0
+
+    if not updates:
+        print("\nccname: nothing to write.")
+        return 0
+
+    failures = 0
+    for entry, _, _ in rename_plans:
+        sid = entry["sessionId"]
+        if sid not in updates:
+            continue
+        try:
+            append_ai_title(proj_dir / f"{sid}.jsonl", sid, updates[sid])
+        except OSError as e:
+            print(f"ccname: failed to append ai-title for {short_id(sid)}: {e}",
+                  file=sys.stderr)
+            failures += 1
+            updates.pop(sid, None)
+
+    index_dirty = False
+    for entry in index.get("entries", []):
+        sid = entry.get("sessionId")
+        if sid in updates:
+            entry["summary"] = updates[sid]
+            index_dirty = True
+
+    if index_exists and index_dirty:
+        try:
+            write_index(index_path, index)
+        except OSError as e:
+            print(f"ccname: failed to write {index_path}: {e}", file=sys.stderr)
+            return 2
+
+    print(f"\nccname: renamed {len(updates)} session(s)"
+          + (f"; {failures} failure(s)" if failures else "")
+          + ".")
+    return 0 if not failures else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
