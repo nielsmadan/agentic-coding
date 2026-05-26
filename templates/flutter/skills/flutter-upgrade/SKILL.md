@@ -24,8 +24,10 @@ Upgrade Flutter SDK and all dependencies to the version specified in $ARGUMENTS 
 
 1. **Pre-upgrade checks:**
    - Run `flutter pub outdated` to see what will be upgraded
-   - If $ARGUMENTS specifies a version, verify it exists: `flutter version` or check https://docs.flutter.dev/release/archive
-   - Check for major version upgrades and research breaking changes on https://docs.flutter.dev/release/breaking-changes
+   - Determine current Flutter version with `flutter --version`
+   - Determine target version: $ARGUMENTS if provided, else look up latest stable on https://docs.flutter.dev/release/archive
+   - Enumerate every stable release between current and target (e.g. 3.32 → 3.44 means 3.33, 3.34, … 3.44). For each one, fetch its entry on https://docs.flutter.dev/release/breaking-changes and its release notes / "What's new" post linked from https://docs.flutter.dev/release/release-notes. Collect every breaking change, deprecation, and required migration that touches this project (check Android/iOS/web/desktop sections based on what the app targets). Do this dynamically — don't rely on a hardcoded list, since this skill won't be updated for every release.
+   - Summarize the collected breaking changes back to the user before proceeding, and note any that require manual code changes vs. those handled by `dart fix --apply` or CLI auto-migration.
    - Ensure git working tree is clean (`git status`)
 
 2. **Upgrade Flutter SDK:**
