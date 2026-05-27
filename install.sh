@@ -12,6 +12,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
   "$SCRIPT_DIR/claude/settings.json:$HOME/.claude/settings.json"
+  "$SCRIPT_DIR/claude/CLAUDE.md:$HOME/.claude/CLAUDE.md"
   # Codex
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
   # Antigravity (agy) — replaced Gemini CLI in May 2026
