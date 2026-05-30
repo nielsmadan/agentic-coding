@@ -1,27 +1,42 @@
 ---
 name: doc
-description: "Documentation review (--review, default) or generation (--generate). Scope --staged, --all, or context. For doc quality and creation."
-argument-hint: "[--review | --generate <target>] [--staged | --all]"
+description: "Documentation review (--review, default), update (--update), or generation (--generate). Scope --staged, --all, or context. For doc quality, freshness, and creation."
+argument-hint: "[--review | --update | --generate <target>] [--staged | --all]"
 ---
 
 # Doc
 
-Review and generate documentation following consistent principles.
+Review, update, and generate documentation following consistent principles.
+
+## Modes
+
+All three modes share one engine — *compare the docs against the current code
+reality* — and differ only in what they do with the result:
+
+| Mode | Intent | Writes? | Default scope |
+|------|--------|---------|---------------|
+| `--review` (default) | Assess accuracy / completeness / quality | No → findings, then interactive apply | context (or `<target>`) |
+| `--update [target]` | Sync existing docs to current code | Yes — in place, replace stale parts | staged code, falling back to unstaged |
+| `--generate <target>` | Create docs that don't exist yet | Yes — new files | the target |
+
+`--review` and `--update` are the same comparison; review reports and lets you pick
+what to apply, update applies directly from a diff. `--generate` is for greenfield.
 
 ## Usage
 
 ```
 /doc                              # Review docs related to current context (default)
-/doc --review                     # Explicit review mode
-/doc --review --staged            # Review staged .md files
+/doc --review payments            # Review docs for a feature, then pick fixes to apply
 /doc --review --all               # Review all docs (parallel agents)
+/doc --update                     # Sync docs for staged code changes (end of a feature)
+/doc --update auth flow           # Sync all docs for a feature/area
 /doc --generate <target>          # Generate docs for file/module/feature
 /doc --generate --staged          # Generate docs for staged code changes
 ```
 
 ## Documentation Principles
 
-Both review and generate modes follow these principles. Review checks conformance; generate applies them.
+All modes follow these. Review checks conformance; update and generate apply them.
 
 ### 1. No Local Paths
 - ❌ `/Users/name/projects/app`, `mathfiend/app2`
@@ -32,87 +47,95 @@ Both review and generate modes follow these principles. Review checks conformanc
 - Focus on project-specific patterns and WHY decisions were made
 - Skip tutorials - show implementation directly
 
-### 3. Single Source of Truth
+### 3. Single Source of Truth — link to code, don't restate it
+- **Code is canonical for signatures.** Reference functions/methods by `file:line`;
+  do not paste signatures into prose (they drift the moment the code changes). Prose
+  carries only what the agent can't derive by reading the source.
+- Same topic at different depths/audiences = OK (overview vs deep dive).
+- Identical text copy-pasted across files = NOT OK — link to the canonical doc.
 
-**OK - Different abstraction levels:**
-- Overview: "Auth uses JWT tokens with refresh"
-- Detailed doc: Full implementation with code samples
+### 4. Separate current-state from why
+- **Current state** ("how it works now") is what `--update` keeps in sync as code
+  changes. Make it the bulk of the doc.
+- **Why** (decisions/rationale) changes rarely — keep it short and distinct, so a
+  sync touches the volatile part and leaves the rationale alone. Omit if there's none.
 
-**OK - Different audiences:**
-- Quick start: "Run `npm start` to begin"
-- Architecture doc: Deep dive with diagrams
+### 5. Index Every Section
+- The repo root has `docs/overview.md` mapping the tree (the entry index).
+- Each `docs/` subdirectory has `overview.md`: high-level concepts + links to detail.
+- Answers: "What's in here and which doc do I need?"
 
-**NOT OK - Copy-paste duplication:**
-- Same paragraph verbatim in multiple files
-- Identical code examples without linking to canonical source
+### 6. Document Gotchas
+- Non-obvious behavior, common mistakes, platform quirks, things that seem like they
+  should work but don't.
 
-**Rule:** Same topic at different depths = OK. Identical text copy-pasted = NOT OK.
-
-### 4. Overview.md in Every Section
-- Each `docs/` subdirectory should have `overview.md`
-- High-level concepts + links to detailed docs
-- Answers: "What's in this section and which doc do I need?"
-
-### 5. Document Gotchas
-- Non-obvious behavior
-- Common mistakes and how to avoid them
-- Platform-specific quirks
-- Things that seem like they should work but don't
-
-### 6. Concrete Examples
-- Show actual code from the project
-- Use relative file paths
-- Reference real implementations: `lib/services/foo.dart:123`
-
-### 7. Agent-Optimized Writing
-- Clear, actionable, factual
-- Short sentences, active voice
-- Code blocks with file context
-- Bullet points over paragraphs where appropriate
+### 7. Concrete Examples & Agent-Optimized Writing
+- Reference real implementations: `lib/services/foo.dart:123`.
+- Clear, factual, active voice; short sentences; bullets over paragraphs.
+- For files longer than ~100 lines, add a table of contents at the top.
 
 ---
 
 ## Gotchas
-- `--generate --staged` documents uncommitted code that may change in review. If the code is revised but generated docs are committed alongside, they immediately drift.
-- `--all` scope includes CLAUDE.md — the skill may propose edits to the project instructions file that governs its own behavior.
+- `--update`/`--generate --staged` document uncommitted code that may change in
+  review. If the code is revised but the docs are committed alongside, they drift.
+- `--all` scope includes CLAUDE.md — the skill may propose edits to the project
+  instructions file that governs its own behavior.
+- `docs/explain/` (the `explain` skill) and `docs/product/` (the `review-product`
+  skill) are owned elsewhere and not code-derived. `doc` leaves them alone: exclude
+  them from `--all` and never sync them to code. `docs/prd/` *is* `doc`'s — the
+  product-behavior layer it keeps in sync with the implementation.
 
 ## Review Mode (`--review`)
 
-Default mode. Checks documentation against the principles above.
+Default mode. Assesses docs against the principles, then offers to apply fixes.
 
 ### Scope
 
 | Flag | Scope | Method |
 |------|-------|--------|
 | (none) | Context-related docs | Find docs related to recent conversation |
+| `<target>` | A feature/area as a whole | Find all docs covering that feature |
 | `--staged` | Staged .md files | `git diff --cached --name-only -- '*.md'` |
-| `--all` | All documentation | Glob `docs/**/*.md` + `README.md` + `CLAUDE.md` |
+| `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`) + `README.md` + `CLAUDE.md` |
 
 ### Workflow
 
-1. **Get file list** based on scope
-2. **Review** (directly if ≤5 files, parallel sub-agents if more)
-3. **Report findings** by priority
+1. **Get file list** based on scope.
+2. **Review** (directly if ≤5 files, parallel sub-agents if more), checking each doc
+   against the current code — prioritize accuracy/completeness/staleness over prose.
+3. **Report findings** by priority (see Output Format). For `docs/prd/` docs, report
+   divergences between the PRD and the implementation in **both directions** (doc
+   describes behavior the code lacks; code has behavior the doc omits) without assuming
+   either side is correct — the user reconciles. This is the implementation side of the
+   three-layer check; `review-product` checks `docs/prd/` ↔ `docs/product/`.
+4. **Offer to apply.** Present the findings as a numbered list and ask the user which
+   to apply — accept multiple selections. Where the tool supports an interactive
+   multi-select prompt, use it; otherwise ask the user to reply with the numbers
+   (e.g. `1,3,4`), `all`, or `none`.
+5. **Apply** the chosen findings using the `--update` apply logic (in-place edits),
+   then report what changed. `none` → stop without writing. Review never rewrites
+   silently — the user always chooses.
 
 ### Checklist
 
 **Accuracy:**
 - [ ] No local paths (`/Users/`, `/home/`, `C:\`)
-- [ ] File paths exist and are correct
-- [ ] Class/function names are current
-- [ ] Code examples work and match actual implementation
+- [ ] File paths / `file:line` references exist and are correct
+- [ ] Class/function names are current; described behavior matches the code
+- [ ] No signatures restated in prose (should reference code instead)
 - [ ] Links to related docs work
 
 **Quality:**
 - [ ] No verbatim duplication across files
-- [ ] Gotchas documented
+- [ ] Current-state and why are separated; gotchas documented
 - [ ] Examples are concrete (not generic placeholders)
 
 **Completeness:**
 - [ ] No incomplete sections, placeholders, or TODOs
-- [ ] Key interfaces documented (APIs, components, hooks, services, utilities)
-- [ ] Missing `overview.md` in doc subdirectories flagged
-- [ ] Required sections present (Purpose, Usage, Gotchas for modules)
+- [ ] Key interfaces covered (APIs, components, hooks, services, utilities)
+- [ ] Missing `overview.md` (root or subdirectory) flagged
+- [ ] Required sections present (Purpose, How it works, Gotchas)
 
 ### Output Format
 
@@ -120,20 +143,55 @@ Default mode. Checks documentation against the principles above.
 ## Documentation Review: {scope}
 
 ### Critical (fix now)
-- {file}:{line} - {issue}
+1. {file}:{line} - {issue}
 
 ### High Priority (fix soon)
-- {file} - {issue}
+2. {file} - {issue}
 
 ### Suggestions
-- {file} - {improvement}
+3. {file} - {improvement}
 ```
+
+Number findings sequentially across all tiers so the user can select by number.
+
+---
+
+## Update Mode (`--update`)
+
+Sync existing docs to the current code — the end-of-feature "make sure what changed
+is reflected" pass. Edits in place; never appends a changelog.
+
+### Scope
+
+| Flag | Scope | Method |
+|------|-------|--------|
+| (none) | Staged code changes | `git diff --cached --name-only`; if empty, fall back to unstaged (`git diff --name-only`) and open with a one-line note: "Nothing staged — syncing docs for unstaged changes instead." |
+| `<target>` | A feature/area as a whole | All docs + code for that feature |
+| `--all` | Whole project | Cross-check `docs/**` against source |
+
+### Workflow
+
+1. **Determine the changed scope** (above).
+2. **Map** changed files/symbols → affected docs: grep `docs/**`, `README.md`,
+   `CLAUDE.md` for the changed symbols/topics to find the docs describing them.
+3. **Apply in place**: edit each affected doc to match the current code — **replace**
+   the stale parts, preserve formatting/style, stay concise (current state, not
+   history). Update the "how it works now" sections; leave "why" alone unless the
+   decision itself changed.
+4. **New behavior with no doc**: if there's a clear home pattern (e.g.
+   `docs/features/<name>.md`), create that doc from the template; otherwise list it
+   as an undocumented gap and suggest `--generate`. Don't create docs with no obvious
+   home.
+5. **Fan out**: if >5 affected files/docs, spawn one sub-agent per doc/area, merge.
+6. **Report**: which docs were edited and what was synced; any gaps left for
+   `--generate`.
 
 ---
 
 ## Generate Mode (`--generate`)
 
-Create documentation for code following the principles above.
+Create documentation for code that isn't documented yet, following the principles
+and `references/generate-templates.md`.
 
 ### Scope
 
@@ -144,55 +202,82 @@ Create documentation for code following the principles above.
 
 ### Workflow
 
-1. **Read the code** - Understand what it does, how it works
-2. **Check for existing docs** - Update vs create new
-3. **Generate documentation** following the principles
-4. **Place appropriately** - In `docs/` with proper structure
-
-### What to Document
-
-For document templates, see `references/generate-templates.md`.
-
-For **staged changes:**
-1. Identify what changed (new feature, modified behavior, etc.)
-2. Find or create relevant doc file
-3. Update to reflect the changes
-4. Ensure gotchas are documented
-
-### Output
-
-Generate docs directly into `docs/` folder with appropriate structure:
-- `docs/tech/` for technical implementation
-- `docs/features/` for feature documentation
-- `docs/api/` for API documentation
-- Create `overview.md` in new directories
+1. **Read the code** - understand what it does and how it works.
+2. **Check for existing docs** - if they exist, prefer `--update` instead.
+3. **Generate** following the templates (current-state + why; `file:line` refs, not
+   restated signatures).
+4. **Place appropriately** in `docs/`:
+   - `docs/prd/` for product behavior / requirements — what each feature does for the
+     user. This is the layer that mirrors `docs/product/` use cases (owned by
+     `review-product`) and tracks the implementation. Document features here as they're
+     built.
+   - `docs/tech/` for technical implementation
+   - `docs/features/` for feature documentation
+   - `docs/api/` for API documentation
+   - Ensure a root `docs/overview.md` index exists and a section `overview.md` in any
+     new subdirectory.
+5. **Install the per-repo update trigger.** After writing docs, append a concise
+   docs note to the project-local `./CLAUDE.md` (or `AGENTS.md` if that's what the
+   project uses) — **idempotent**, skip if already present:
+   > ## Documentation
+   > Project docs live in `docs/` (start at `docs/overview.md`). After completing a
+   > feature, run `doc --update` to keep them current.
+   This is the moment a project opts into maintaining docs, so the trigger is
+   installed exactly here — not globally.
 
 ---
 
 ## Examples
 
+**Sync docs after finishing a feature:**
+> /doc --update
+
+Maps staged code changes to the docs that describe them and rewrites those sections
+in place to match the new behavior, reporting what it touched. Run it while you still
+have the build context.
+
+**Review a feature's docs and pick fixes:**
+> /doc --review payments
+
+Reviews every doc covering payments against the current code, lists numbered findings
+by priority, then asks which to apply — applying your selection in place.
+
 **Generate docs for a new service module:**
 > /doc --generate lib/services/notification_service.dart
 
-Reads the notification service code, checks for existing docs, then generates a full module doc in `docs/tech/` with Purpose, Usage, API, and Gotchas sections following project conventions.
-
-**Review staged docs catches broken links:**
-> /doc --review --staged
-
-Reviews all staged `.md` files against the documentation checklist. Flags broken internal links, stale file references, and any local paths like `/Users/` that slipped in.
+Reads the service, generates a module doc in `docs/tech/` (Purpose, How it works, Key
+entry points, Gotchas, Why), ensures the `docs/overview.md` index exists, and adds the
+update-trigger note to the project's CLAUDE.md.
 
 ## Troubleshooting
 
-### Generated docs miss important sections like Gotchas or API
-**Solution:** Re-run with `--generate` targeting the specific file and explicitly mention the missing sections in your prompt. The generator follows the module/feature templates, so ensure the code has enough context for each section.
+### `--update` reports "nothing staged"
+**Cause:** No staged changes. **Solution:** It falls back to unstaged changes
+automatically (with a note). To target something specific, run `doc --update <feature>`
+or `git add` the files first.
 
-### Review finds no issues but documentation coverage is incomplete
-**Solution:** Use `--all` to scan the full `docs/` tree and cross-reference against source modules. Missing docs for key modules will surface as completeness gaps in the review output.
+### `--update` found new behavior but didn't document it
+**Cause:** No existing doc and no clear home directory for it. **Solution:** It's
+listed as a gap — run `doc --generate <target>` to create the doc, which also wires
+the home into the docs tree.
+
+### Generated docs restate function signatures
+**Cause:** The generator should reference code, not copy it. **Solution:** Re-run
+`--update` on the doc; signatures belong as `file:line` references (principle 3), with
+prose describing the contract and why.
+
+### Review finds no issues but coverage is incomplete
+**Solution:** Use `--all` to scan the full `docs/` tree against source modules; missing
+docs for key modules surface as completeness gaps.
 
 ## Notes
 
-- Default is review mode with context-based scope
-- Both modes use the same principles - review checks, generate applies
-- Use `--staged` before commits to catch issues early
-- Use `--all` periodically for comprehensive review
-- Sub-agents parallelize large reviews/generations
+- Default is review mode with context-based scope.
+- All modes share the same principles and the compare-to-code engine.
+- Use `--update` at the end of feature work; `--review` for periodic human-facing
+  audits; `--generate` only for greenfield docs.
+- Sub-agents parallelize large reviews/updates/generations (>5 files).
+- Three-layer model: `docs/product/` (user/why — owned by `review-product`) →
+  `docs/prd/` (product behavior — owned by `doc`, this layer) → implementation.
+  `doc` keeps `docs/prd/` ↔ code in sync; `review-product` checks `docs/product/` ↔
+  `docs/prd/`. `doc` never touches `docs/product/`.
