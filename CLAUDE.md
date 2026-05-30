@@ -48,7 +48,7 @@ Available in `claude/skills/`:
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
-| `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/prd/` |
+| `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |

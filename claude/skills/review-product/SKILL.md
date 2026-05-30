@@ -13,10 +13,17 @@ it*: it builds a profile of the user, maps the jobs they come to do, then walks
 those jobs through the product to find friction, gaps, and concrete things to
 add or change.
 
-Reusable findings (the persona and the use cases) are persisted to `docs/prd/`
+Reusable findings (the persona and the use cases) are persisted to `docs/product/`
 and **refined** on each run, so the product's understanding of its users
 accumulates instead of being re-derived every time. The review itself is written
-to `docs/prd/<date>-review.md` so it isn't lost.
+to `docs/product/<date>-review.md` so it isn't lost. All of this lives under
+`docs/product/` as a section of the project's `docs/` tree, indexed by
+`docs/product/overview.md` — the same per-section index convention the `doc` skill uses.
+
+`docs/product/` is the **high-level, user-centric** layer (why, for whom, what's
+missing). It is the upstream of `docs/prd/`, which the `doc` skill owns and keeps in
+sync with the implementation. This skill owns `docs/product/` and does not write
+`docs/prd/`; it only *checks* that the PRD reflects the product understanding (Step 7).
 
 ## Usage
 
@@ -47,7 +54,7 @@ code + docs only and says so.
 - **User's job, not the code's structure.** A "friction point" is something that
   slows or blocks the *user*, described in their terms — not a refactor or a code
   smell. Send those to `review-cleancode` / `code-review`.
-- **Refine, don't clobber.** If `docs/prd/persona.md` or `use-cases.md` already
+- **Refine, don't clobber.** If `docs/product/persona.md` or `use-cases.md` already
   exist, edit them — reconcile new evidence with prior content and note what
   changed. Don't overwrite a richer file with a thinner one.
 - Without `--live`, you are reasoning about *intended* behavior from source. State
@@ -58,7 +65,7 @@ code + docs only and says so.
 Create a TodoWrite item per step.
 
 ### Step 1 — Build or refine the user persona
-- Read `docs/prd/persona.md` if it exists. Read the product description (README,
+- Read `docs/product/persona.md` if it exists. Read the product description (README,
   PRD, `docs/`, CLAUDE.md) and survey the codebase (entry points, routes/screens,
   auth, settings) for who the product is built for.
 - Produce the persona(s) using the template in `references/checklist.md`: who they
@@ -67,15 +74,15 @@ Create a TodoWrite item per step.
 - If core facts can't be inferred (who the real user is, what they're optimizing
   for), **ask the user 2-4 focused questions** before continuing — a wrong persona
   invalidates the whole review.
-- Write/refine `docs/prd/persona.md`.
+- Write/refine `docs/product/persona.md`.
 
 ### Step 2 — Map the use cases (jobs-to-be-done)
-- Read `docs/prd/use-cases.md` if present. From the persona's goals plus the
+- Read `docs/product/use-cases.md` if present. From the persona's goals plus the
   product's actual flows, enumerate the jobs the user comes to do, phrased from
   their point of view (When ___, I want to ___, so I can ___).
 - For each: trigger, the path the product requires today (cite screens/routes),
   definition of done, frequency/stakes. Order by centrality to the persona.
-- Write/refine `docs/prd/use-cases.md`.
+- Write/refine `docs/product/use-cases.md`.
 
 ### Step 3 — Walk the experience
 - Trace each **primary** use case end-to-end through the product. Without `--live`,
@@ -103,15 +110,34 @@ Create a TodoWrite item per step.
 
 ### Step 6 — Write the review
 - Run `date +%F` to get today's date. Write the review to
-  `docs/prd/<date>-review.md` using the Output Format below.
+  `docs/product/<date>-review.md` using the Output Format below.
 - If `--multi`, call `second-opinion --quick` with a summary of the findings and
   append a short "Second opinion" section (agreements / dissent / additions).
 - Give the user an inline summary: the headline finding, the top 3 prioritized
   recommendations, and the path to the written review.
 
+### Step 7 — Check the PRD against the product (if `docs/prd/` exists)
+The `doc` skill owns `docs/prd/` and keeps it in sync with the *implementation*; this
+step checks the *other* side — that the PRD reflects the product understanding in
+`docs/product/`. Report-only; do not edit `docs/prd/` (that's `doc`'s job).
+- **Use cases with no PRD coverage**: a job in `use-cases.md` that no `docs/prd/` doc
+  describes → the product intends something the spec doesn't capture.
+- **PRD features serving no use case**: a `docs/prd/` feature that ties to no documented
+  use case or persona need → scope the product can't justify, or a missing use case.
+- List both kinds of divergence so the user can reconcile (update a use case, write a
+  PRD via `doc`, or drop scope). Pair with `doc --review` (PRD ↔ implementation) for
+  the full three-layer check: product ↔ PRD ↔ code.
+
+### Step 8 — Update the docs/product index
+- Write/refresh `docs/product/overview.md` as the section index: a one-line intro,
+  links to `persona.md` and `use-cases.md` (the reusable, current-state artifacts), and
+  a reverse-chronological list of the dated reviews (newest first). Overwrite each run.
+- If a root `docs/overview.md` index exists, ensure it links to `docs/product/`. Don't
+  create the root index when it's absent — that's the `doc` skill's job.
+
 ## Output Format
 
-Written to `docs/prd/<date>-review.md`, and summarized inline:
+Written to `docs/product/<date>-review.md`, and summarized inline:
 
 ```markdown
 # Product Review — <scope> — <date>
@@ -139,6 +165,9 @@ persona on their primary job, and the single most important thing to change.
 1. **<change>** — adds/changes/removes ___, unblocks UC<n>. Severity / effort.
 2. ...
 
+## PRD consistency   (if docs/prd/ exists)
+- Use cases with no PRD coverage / PRD features with no use case (from Step 7).
+
 ## Second opinion   (only with --multi)
 - Agreements / dissent / additions from Codex.
 
@@ -150,12 +179,12 @@ persona on their primary job, and the single most important thing to change.
 
 ### Example 1: First review of a SaaS app
 User says: "review the product"
-Actions: No `docs/prd/persona.md` exists. Read the README + dashboard routes,
+Actions: No `docs/product/persona.md` exists. Read the README + dashboard routes,
 infer a "small-team ops manager" persona, ask 2 questions to confirm their main
 goal. Write `persona.md` and `use-cases.md` (UC1 set up a workspace, UC2 invite
 teammates, UC3 read the daily report). Walk each from code. Find UC2 has no resend
 for a lost invite (High) and the empty dashboard teaches nothing (Medium). Write
-`docs/prd/2026-05-30-review.md`; summarize top 3 fixes inline.
+`docs/product/2026-05-30-review.md`; summarize top 3 fixes inline.
 
 ### Example 2: Live, scoped review
 User says: "review-product --live the onboarding flow"
@@ -189,17 +218,26 @@ component"). Route true code issues to `code-review`.
 logins). If it can't be run, fall back to the code-only review and clearly mark
 which findings are unverified against real behavior.
 
-### docs/prd/ already has reviews and they're drifting
+### docs/product/ already has reviews and they're drifting
 **Cause:** Persona/use-cases edited per-review instead of kept canonical.
 **Solution:** `persona.md` and `use-cases.md` are the single source of truth —
 refine them in place. Dated review files are snapshots and are never rewritten.
 
 ## Notes
 
-- Reusable artifacts live in `docs/prd/` (`persona.md`, `use-cases.md`); each
-  review is a dated snapshot `docs/prd/<date>-review.md`.
+- `docs/product/` layout:
+  ```
+  docs/product/
+  ├── overview.md         # Section index; open this first
+  ├── persona.md          # Reusable, refined in place (current state)
+  ├── use-cases.md        # Reusable, refined in place (current state)
+  └── <date>-review.md    # Dated review snapshots; never rewritten
+  ```
+- Three-layer model: **`docs/product/`** (this skill — user/why, high level) →
+  **`docs/prd/`** (the `doc` skill — concrete product behavior, tracks the code) →
+  **implementation**. This skill checks `docs/product/` ↔ `docs/prd/` (Step 7);
+  `doc --review` checks `docs/prd/` ↔ code. `doc` never syncs `docs/product/` to code.
 - This skill judges the product, not the code. Pair it with `code-review` /
-  `review-cleancode` for implementation quality and `frontend-design` for visual
-  craft.
+  `review-cleancode` for implementation quality and `frontend-design` for visual craft.
 - See `references/checklist.md` for the persona/use-case templates, the friction
   lenses (Nielsen heuristics + product/JTBD), and severity definitions.

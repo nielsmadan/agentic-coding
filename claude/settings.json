@@ -329,6 +329,17 @@
           }
         ]
       }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/juggler/notify.sh StopFailure",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
