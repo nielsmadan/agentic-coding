@@ -74,16 +74,30 @@ Edit the file to:
 2. Keep the correct code
 3. Ensure the result is syntactically valid
 
-### Step 5: Print Next Steps
+### Step 5: Complete the Resolution
 
-Do NOT run git commands yourself. Print the commands the user needs to run:
+The user invoked this skill to resolve **and** finish an in-progress git
+operation, so complete it yourself:
 
-```markdown
-Run these commands to complete the resolution:
+1. Stage the files you resolved: `git add <resolved-files>`.
+2. Run the continue command for the detected operation, using a non-interactive
+   flag so no editor opens and hangs:
 
-git add <resolved-files>
-<continue_command based on operation type>
-```
+   | Operation | Continue command |
+   |-----------|------------------|
+   | Merge | `git commit --no-edit` |
+   | Rebase | `GIT_EDITOR=true git rebase --continue` |
+   | Cherry-pick | `git cherry-pick --continue --no-edit` |
+   | Revert | `git revert --continue --no-edit` |
+   | Stash | `git stash drop` |
+
+**Guardrails — do not run these automatically:**
+- **Aborts** (`git merge/rebase/cherry-pick/revert --abort`) discard work. If
+  resolution isn't viable, stop and tell the user the abort command to run.
+- **`git reset --hard`** (the stash abort path) is hard-blocked at the harness
+  level — the user must run it themselves.
+- If a continue command fails (remaining unmerged paths, a rejected pre-commit
+  hook, etc.), surface the error and stop. Do not force it through.
 
 ## Output Format
 
@@ -100,13 +114,11 @@ git add <resolved-files>
 |------|------|------------|
 | {path} | UU | {simple/moderate/complex} |
 
-### Next Steps
+### Completion
+- Staged: {resolved files}
+- Ran: `{continue_command}` → {result}
 
-Run these commands to complete the resolution:
-1. `git add {files}`
-2. `{continue_command}`
-
-Or to abort:
+If resolution wasn't viable, abort manually:
 - `{abort_command}`
 ```
 
@@ -120,7 +132,7 @@ Detects a merge operation, reads the conflict markers in the session file, and d
 **Rebase conflict with inverted ours/theirs:**
 > /resolve-conflicts
 
-Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, resolves the conflicts in the files, and prints the commands to run (`git add` + `git rebase --continue`).
+Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, resolves the conflicts in the files, stages them, and runs `git add` + `GIT_EDITOR=true git rebase --continue` to finish.
 
 ## Guidelines
 
@@ -134,7 +146,7 @@ Detects a rebase operation and reminds that ours/theirs semantics are inverted d
 
 ### Lock File Conflicts (package-lock.json, yarn.lock)
 
-Regenerate rather than manually resolve. Tell the user to run:
+Regenerate rather than manually resolve. Run:
 ```
 git checkout --theirs package-lock.json  # or --ours
 npm install  # regenerates lock file
@@ -143,7 +155,7 @@ git add package-lock.json
 
 ### Auto-generated Files
 
-Accept one version and regenerate. Tell the user to run:
+Accept one version and regenerate. Run:
 ```
 git checkout --theirs <file>
 # Run generation command
@@ -156,7 +168,7 @@ Usually keep one and incorporate changes from other manually.
 
 ### Deleted vs Modified
 
-Decide: should file exist or not? If yes, keep modified. If no, remove. Tell the user to run the appropriate command:
+Decide: should file exist or not? If yes, keep modified. If no, remove. Run the appropriate command:
 ```
 # Keep the file (accept modification)
 git add <file>
