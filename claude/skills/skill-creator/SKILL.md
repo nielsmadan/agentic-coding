@@ -216,6 +216,24 @@ Run the skill on real tasks. Verify:
 | Execution issues | Inconsistent results or user corrections needed | Improve instructions, add error handling, be more specific |
 | Context bloat | Slow responses, degraded quality | Move content to references/, reduce SKILL.md size |
 
+### Step 6: Deploy in this repo
+
+This repo (`~/ac`) is the single source for skills across all agents. A new skill
+under `claude/skills/<name>/` is picked up by Claude Code automatically (via the
+`claude/skills` → `~/.claude/skills` directory symlink), but two manual hookups
+are needed so it's wired everywhere:
+
+1. **Codex / other agents** — add `<name>` to the `CODEX_SKILLS` array in
+   `install.sh`, unless it's a *project-only template skill* (those live under
+   `templates/<type>/skills/` and are deployed per-project, not globally). Then
+   run `./install.sh` to create the `~/.agents/skills/<name>` symlink. Skipping
+   this leaves the skill Claude-only.
+2. **Skills table** — add a row to the table in `CLAUDE.md` (`| /<name> | … |`)
+   so it's discoverable in the repo's index.
+
+Note: any skill body referencing `docs/` writes into the *target project's*
+`docs/`, not this repo — global skills run in arbitrary projects.
+
 ## Quality Checklist
 
 Before finalizing, verify:
@@ -235,6 +253,8 @@ Before finalizing, verify:
 - [ ] SKILL.md under ~5,000 words
 - [ ] References clearly linked from SKILL.md (if using references/)
 - [ ] File types mentioned in description (if applicable)
+- [ ] Added to `CODEX_SKILLS` in `install.sh` (unless project-only template skill)
+- [ ] Row added to the skills table in `CLAUDE.md`
 
 ## Examples
 
