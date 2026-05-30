@@ -28,8 +28,8 @@ SYMLINKS=(
 CODEX_SKILLS=(
   code-review debug-log doc explain frontend-design optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
-  review-history review-interfaces review-perf review-plan review-security
-  skill-creator temp test theme-factory
+  review-history review-interfaces review-perf review-plan review-product
+  review-security skill-creator temp test theme-factory
 )
 
 create_symlink() {

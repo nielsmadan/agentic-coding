@@ -48,3 +48,15 @@ When the user asks you to commit, aim for a clean final history rather than maxi
 - **Multiple commits are fine** when each represents a logical, self-contained change (e.g. "refactor X" + "add feature Y on top").
 - **Avoid leaving "half a feature" in history.** A commit that only makes sense in conjunction with the next one (WIP, "part 1 of N", broken intermediate state) is a checkpoint, not a history entry.
 - When a task wraps up, proactively suggest squashing checkpoint commits into the smallest set that each stand on their own. Don't rewrite history without explicit approval — propose the squash plan and let the user confirm.
+
+### Commit Message Format
+
+Use only these three types — no others, no scopes:
+
+- **`feat`** — something was added that is noticeable by the user
+- **`fix`** — something was not working correctly and was fixed
+- **`chore`** — everything else (refactoring, fixing tests, internal changes, etc.)
+
+Do **not** use parentheses/scopes: write `feat: add login button`, not `feat(ui): add login button`.
+
+**Body**: keep it short or omit it entirely. The body identifies *what* was done, not *why* or *how*. No essays, no implications, no test counts, no rationale. Max 4 sentences — and don't pad to reach 4. One sentence or no body at all is usually right.

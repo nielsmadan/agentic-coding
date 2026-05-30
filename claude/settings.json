@@ -350,7 +350,7 @@
       ]
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "awaySummaryEnabled": false,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
