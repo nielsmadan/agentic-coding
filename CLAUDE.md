@@ -53,6 +53,7 @@ Available in `claude/skills/`:
 | `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
+| `/squash-commits` | Squash unpushed commits into clean higher-level feat/fix/chore commits per the commit policy (`--conservative`, optional base ref) |
 | `/sync-project-config` | Bidirectional sync of project config (`.mcp.json`, bundled skills) with its template (invoked by `aiconf sync`) |
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
 | `/review-history` | Analyze git history and past issue logs |
