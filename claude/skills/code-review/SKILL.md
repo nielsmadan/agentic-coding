@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Code review workflow. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
-argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--staged] [--all] [--changed] [--multi] [--rereview]
+argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]
 ---
 
 # Code Review: $ARGUMENTS
@@ -19,6 +19,7 @@ Review the code related to: **$ARGUMENTS**
 /code-review --all                    # Whole repo
 /code-review --changed                # Unstaged changes only
 /code-review --staged                 # Staged changes only (errors if nothing staged)
+/code-review --unpushed               # Files changed across all unpushed commits (errors if nothing unpushed)
 /code-review --multi                  # All aspects + Codex
 /code-review --multi --architecture   # Architecture only + Codex
 /code-review --all --multi            # Whole repo + external opinions
@@ -56,13 +57,15 @@ Scope flags determine *which files* the agents review. The resolved scope is pas
 | Flag | Meaning |
 |------|---------|
 | `--staged` | Review staged changes only (`git diff --cached`). |
+| `--unpushed` | Review files changed across unpushed commits only (`git diff <last-pushed>..HEAD`). |
 | `--changed` | Review unstaged changes only (`git diff`). |
 | `--all` | Review the whole repo (`git ls-files`). |
 
 **Scope rules:**
 - Exactly one scope flag may be passed. Multiple → error.
-- **Default (no scope flag):** behave as `--staged` if anything is staged; otherwise auto-fall back to `--changed`. Announce the resolved mode at the start of the run so the user isn't surprised.
+- **Default (no scope flag):** behave as `--staged` if anything is staged; otherwise auto-fall back to `--changed`. Announce the resolved mode at the start of the run so the user isn't surprised. (`--unpushed` is never auto-selected — it's opt-in only.)
 - **Explicit `--staged` with nothing staged:** abort immediately with `Nothing staged. Re-run with --all or --changed.` (Explicit ≠ default — no silent fallback.)
+- **Explicit `--unpushed` with nothing unpushed:** abort immediately with `Nothing unpushed. Re-run with --staged, --changed, or --all.` If there is no remote/upstream (or the range walks back to the root commit) so the range can't be determined reliably, abort and ask the user to pick another scope. (Explicit ≠ default — no silent fallback.)
 - **Target argument wins:** if a non-flag target is provided (e.g. `/code-review src/auth/`), it overrides scope flags entirely. The target is passed to all sub-agents as-is.
 
 ## Gotchas
@@ -81,7 +84,7 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 
 ### 3a. Parse flags
 
-Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`), scope flags (`--staged`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
+Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
 
 If any aspect flags are present, launch ONLY the corresponding agents. Otherwise launch all 9 agents.
 
@@ -91,19 +94,23 @@ If a non-flag target was provided, skip this section — pass the target through
 
 Otherwise, resolve the scope:
 
-1. If more than one scope flag was passed → error: `Pass only one of --staged, --all, --changed.`
+1. If more than one scope flag was passed → error: `Pass only one of --staged, --unpushed, --all, --changed.`
 2. If `--staged` was passed explicitly:
    - Run `git diff --cached --name-only`. If empty → abort: `Nothing staged. Re-run with --all or --changed.`
    - Resolved scope: `staged`.
-3. If `--changed` was passed: resolved scope is `changed`.
-4. If `--all` was passed: resolved scope is `all`.
-5. If no scope flag was passed (default):
+3. If `--unpushed` was passed explicitly:
+   - Resolve the range: `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If empty → abort: `Nothing unpushed. Re-run with --staged, --changed, or --all.` If there is no remote/upstream, or the range walks back to the root commit, abort and ask the user to pick another scope.
+   - Resolved scope: `unpushed`.
+4. If `--changed` was passed: resolved scope is `changed`.
+5. If `--all` was passed: resolved scope is `all`.
+6. If no scope flag was passed (default):
    - Run `git diff --cached --name-only`. If non-empty → resolved scope is `staged`.
    - Otherwise → resolved scope is `changed`.
    - Announce the resolution: `No scope flag — defaulting to --staged` or `No scope flag and nothing staged — defaulting to --changed`.
 
 Compute the file list once based on resolved scope:
 - `staged` → `git diff --cached --name-only`
+- `unpushed` → `git diff --name-only $(git rev-list HEAD --not --remotes | tail -1)^..HEAD`
 - `changed` → `git diff --name-only`
 - `all` → `git ls-files`
 
@@ -120,11 +127,12 @@ Each agent should output a list of issues. For each issue, include: what the pro
 | Resolved scope | Argument passed to sub-skill |
 |---|---|
 | `staged` | `--staged` |
+| `unpushed` | `--unpushed` |
 | `changed` | `--changed` |
 | `all` | `--all` |
 | target given | the target itself (e.g. `src/auth/`) |
 
-All delegated sub-skills (`review-architecture`, `review-security`, `review-perf`, `review-comments`, `review-interfaces`, `review-cleancode`, `test --review`) accept `--staged | --changed | --all`. No special-casing needed.
+All delegated sub-skills (`review-architecture`, `review-security`, `review-perf`, `review-comments`, `review-interfaces`, `review-cleancode`, `test --review`) accept `--staged | --unpushed | --changed | --all`. No special-casing needed.
 
 Inline agents (no delegation) work directly against the file list computed in step 3b.
 
@@ -197,6 +205,7 @@ If `--multi` flag is present in $ARGUMENTS, also get external opinions:
 Use the **Skill tool** to invoke `second-opinion --quick`. Phrase the prompt according to the resolved scope from step 3b:
 
 - `staged` → "Review the staged changes (`git diff --cached`) in this repository."
+- `unpushed` → "Review the changes across all unpushed commits (`git diff` against the last pushed commit) in this repository."
 - `changed` → "Review the unstaged changes (`git diff`) in this repository."
 - `all` → "Review the codebase in this repository as a whole."
 - target given → "Review the following target in this repository: `<target>`."

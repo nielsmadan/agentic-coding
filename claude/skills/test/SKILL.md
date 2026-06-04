@@ -1,7 +1,7 @@
 ---
 name: test
 description: "Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --changed, --all, or context-based. Use for test quality and creation."
-argument-hint: "[--review | --generate <target>] [--staged | --changed | --all]"
+argument-hint: "[--review | --generate <target>] [--staged | --unpushed | --changed | --all]"
 ---
 
 # Test
@@ -14,10 +14,12 @@ Review and generate tests following consistent principles.
 /test                              # Review tests related to current context (default)
 /test --review                     # Explicit review mode
 /test --review --staged            # Review staged test files
+/test --review --unpushed          # Review test files changed across all unpushed commits
 /test --review --changed           # Review unstaged test files
 /test --review --all               # Review all tests (parallel agents)
 /test --generate <target>          # Generate tests for file/module/feature
 /test --generate --staged          # Generate tests for staged code changes
+/test --generate --unpushed        # Generate tests for code changed across unpushed commits
 /test --generate --changed         # Generate tests for unstaged code changes
 ```
 
@@ -67,7 +69,7 @@ For BAD/GOOD code examples of each principle, see `references/principles-example
 ---
 
 ## Gotchas
-- `--staged` and `--changed` review filter by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
+- `--staged`, `--unpushed`, and `--changed` review filter by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
 - Red-Green Verification (run → green, revert → red, re-apply → green) is described for bug fixes only, but is equally important for new feature tests to confirm the test actually validates the implementation.
 
 ## Review Mode (`--review`)
@@ -80,8 +82,11 @@ Default mode. Checks tests against the principles above.
 |------|-------|--------|
 | (none) | Context-related tests | Find tests for recently discussed code |
 | `--staged` | Staged test files | `git diff --cached --name-only -- '*test*' '*spec*'` |
+| `--unpushed` | Test files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD -- '*test*' '*spec*'` |
 | `--changed` | Unstaged test files | `git diff --name-only -- '*test*' '*spec*'` |
 | `--all` | All test files | Glob `**/*test*.{ts,js,py,dart}` etc. |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 ### Workflow
 

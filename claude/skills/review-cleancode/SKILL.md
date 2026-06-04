@@ -1,7 +1,7 @@
 ---
 name: review-cleancode
 description: Review code for clean-code principles — SOLID, DRY, YAGNI, KISS, code smells. Triggers "review clean code", "check DRY/SOLID", "code smells".
-argument-hint: [--staged | --changed | --all | --multi]
+argument-hint: [--staged | --unpushed | --changed | --all | --multi]
 ---
 
 # Review Clean Code
@@ -13,6 +13,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 ```
 /review-cleancode                  # Review context-related code
 /review-cleancode --staged         # Review staged changes
+/review-cleancode --unpushed       # Review files changed across all unpushed commits
 /review-cleancode --changed        # Review unstaged changes
 /review-cleancode --all            # Full codebase audit (parallel agents)
 /review-cleancode --multi          # Also get Codex opinion
@@ -24,9 +25,12 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 |------|-------|--------|
 | (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--unpushed` | Files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
 | `--multi` | Add external opinion | Combines with any scope above; invokes `second-opinion --quick` for Codex input |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope. Like `--staged`, it reviews full file content, not just the diff.
 
 ## Gotchas
 - Default scope (no flag) uses conversation context, which may be stale if context has shifted during the session.

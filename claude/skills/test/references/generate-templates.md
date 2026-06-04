@@ -95,7 +95,7 @@ describe('{ServiceName}', () => {
 - [ ] Error paths are tested, not just happy paths
 - [ ] Edge cases identified in code have corresponding tests
 
-**Pattern Conformance (for --staged/new tests):**
+**Pattern Conformance (for --staged/--unpushed/new tests):**
 - [ ] File naming matches project convention
 - [ ] Test organization matches existing tests (suite grouping and test naming conventions per framework — see `framework-mapping.md`)
 - [ ] Setup/teardown patterns match existing tests (per-test and per-suite setup per framework)

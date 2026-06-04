@@ -1,7 +1,7 @@
 ---
 name: review-architecture
 description: Review system architecture — layering, module boundaries, coupling/cohesion, pattern fit, quality attributes (scalability, resilience, evolvability), and architectural smells. Triggers "review architecture", "architecture review", "system design review", "check architecture".
-argument-hint: [--staged | --changed | --all | --multi]
+argument-hint: [--staged | --unpushed | --changed | --all | --multi]
 ---
 
 # Review Architecture
@@ -13,6 +13,7 @@ Macro-level review of system structure: how modules, layers, and components fit 
 ```
 /review-architecture                  # Review context-related code
 /review-architecture --staged         # Review staged changes against the surrounding architecture
+/review-architecture --unpushed       # Review all unpushed commits against the surrounding architecture
 /review-architecture --changed        # Review unstaged changes against the surrounding architecture
 /review-architecture --all            # Full system audit (parallel agents per category)
 /review-architecture --multi          # Also get Codex opinion
@@ -24,9 +25,12 @@ Macro-level review of system structure: how modules, layers, and components fit 
 |------|-------|--------|
 | (none) | Context-related code | Files from the current conversation context. If no context, ask the user to specify a target or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes + their architectural context | `git diff --cached --name-only`, then read each file's surrounding module/layer to judge fit |
+| `--unpushed` | Unpushed commits + their architectural context | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD`, then read each file's surrounding module/layer to judge fit |
 | `--changed` | Unstaged changes + their architectural context | `git diff --name-only`, then read each file's surrounding module/layer to judge fit |
 | `--all` | Full system | Map directory/module structure, then parallel agents per category |
 | `--multi` | Add external opinions | Combines with any scope; invokes `second-opinion --quick` |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 ## Gotchas
 - Architecture issues are **structural** — a small staged diff can introduce a major architectural problem (e.g., a UI file importing from the database layer). Always read the surrounding module, not only the diff.

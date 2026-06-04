@@ -1,7 +1,7 @@
 ---
 name: review-security
 description: Security audit for vulnerabilities, secrets, and unsafe patterns. Use before releases, after adding auth code, or when reviewing third-party integrations.
-argument-hint: [--staged | --changed | --all]
+argument-hint: [--staged | --unpushed | --changed | --all]
 ---
 
 # Review Security
@@ -13,6 +13,7 @@ Security audit for common vulnerabilities and unsafe patterns.
 ```
 /review-security              # Review context-related code
 /review-security --staged     # Review staged changes
+/review-security --unpushed   # Review files changed across all unpushed commits
 /review-security --changed    # Review unstaged changes
 /review-security --all        # Full codebase audit (parallel agents)
 ```
@@ -23,8 +24,11 @@ Security audit for common vulnerabilities and unsafe patterns.
 |------|-------|--------|
 | (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--unpushed` | Files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 **Do NOT skip checks:**
 - "This code is internal only" -- Internal code gets compromised too
@@ -33,7 +37,7 @@ Security audit for common vulnerabilities and unsafe patterns.
 
 ## Gotchas
 - Dependency audit commands (`pip-audit`, `safety check`, `bundle audit`, `govulncheck`) must be installed separately. If missing, they silently produce no output rather than erroring.
-- `--staged` and `--changed` review the full file content, not just the diff. Pre-existing vulnerabilities in the file are flagged even if the staged/unstaged change is unrelated.
+- `--staged`, `--unpushed`, and `--changed` review the full file content, not just the diff. Pre-existing vulnerabilities in the file are flagged even if the staged/unstaged/unpushed change is unrelated.
 
 ## Workflow
 

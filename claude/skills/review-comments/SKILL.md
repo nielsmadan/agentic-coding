@@ -1,7 +1,7 @@
 ---
 name: review-comments
 description: Review and clean up low-quality code comments. Use when you notice "what" comments that should be "why" comments, or want to clean up comment noise before a PR.
-argument-hint: [--all | --staged | --changed | --fix]
+argument-hint: [--all | --staged | --unpushed | --changed | --fix]
 ---
 
 # Review Comments
@@ -11,6 +11,7 @@ Review code comments for quality, then offer to fix issues found.
 ## Flags
 
 - `--staged` - git staged files
+- `--unpushed` - files changed across all unpushed commits
 - `--changed` - git unstaged changes
 - `--all` - entire codebase (parallel agents)
 - `--fix` - auto-apply fixes (remove + refactor) without prompting
@@ -39,6 +40,7 @@ From `$ARGUMENTS`, determine scope:
 | (none) | `--staged --changed` |
 | `--all` | Entire codebase |
 | `--staged` | Staged files only |
+| `--unpushed` | Files changed across unpushed commits |
 | `--changed` | Unstaged files only |
 | `--staged --changed` | Both |
 
@@ -48,6 +50,13 @@ From `$ARGUMENTS`, determine scope:
 ```bash
 git diff --cached --name-only
 ```
+
+**For --unpushed:**
+```bash
+# Range from oldest unpushed commit's parent to HEAD.
+git diff --name-only "$(git rev-list HEAD --not --remotes | tail -1)^"..HEAD
+```
+If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 **For --changed:**
 ```bash

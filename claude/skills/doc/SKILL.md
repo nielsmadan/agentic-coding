@@ -32,6 +32,7 @@ what to apply, update applies directly from a diff. `--generate` is for greenfie
 /doc --update auth flow           # Sync all docs for a feature/area
 /doc --generate <target>          # Generate docs for file/module/feature
 /doc --generate --staged          # Generate docs for staged code changes
+/doc --generate --unpushed        # Generate docs for code changed across unpushed commits
 ```
 
 ## Documentation Principles
@@ -97,7 +98,10 @@ Default mode. Assesses docs against the principles, then offers to apply fixes.
 | (none) | Context-related docs | Find docs related to recent conversation |
 | `<target>` | A feature/area as a whole | Find all docs covering that feature |
 | `--staged` | Staged .md files | `git diff --cached --name-only -- '*.md'` |
+| `--unpushed` | .md files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD -- '*.md'` |
 | `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`) + `README.md` + `CLAUDE.md` |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 ### Workflow
 
@@ -199,6 +203,7 @@ and `references/generate-templates.md`.
 |------|-------|--------|
 | `<target>` | Specific file/module/feature | Read the code, generate docs |
 | `--staged` | Staged code changes | Generate docs for what changed |
+| `--unpushed` | Unpushed code changes | Generate docs for what changed across unpushed commits (`git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD`). If nothing is unpushed or detection is unreliable (no remote/upstream, root-commit walk-back), stop and ask. |
 
 ### Workflow
 

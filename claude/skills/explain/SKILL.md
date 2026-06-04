@@ -1,7 +1,7 @@
 ---
 name: explain
 description: "Generate project explanation docs in docs/explain/ covering architecture, flows, syntax, system APIs, infra, testing. Per-aspect flags + optional topic filter."
-argument-hint: "[--all | --architecture | --flows | --syntax | --system | --infra | --test] [--staged] [topic]"
+argument-hint: "[--all | --architecture | --flows | --syntax | --system | --infra | --test] [--staged | --unpushed] [topic]"
 ---
 
 # Explain
@@ -20,6 +20,7 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 | `--test` | Testing infrastructure: frameworks, test types, fixtures, how to run. |
 | `--all` | All six aspects above, dispatched to parallel sub-agents. |
 | `--staged` | Scope to files returned by `git diff --cached --name-only`. Combines with any aspect flag(s). |
+| `--unpushed` | Scope to files changed across unpushed commits (`git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD`). Combines with any aspect flag(s). |
 | _topic_ | A positional word after an aspect flag narrows the focus (e.g. `--architecture database` = architecture of the database layer only, `--flows login` = just the login flow). |
 
 ## Usage
@@ -31,6 +32,7 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 /explain --flows                    # End-to-end walkthroughs of representative code paths
 /explain --flows login              # Walk through just the login flow
 /explain --staged --architecture    # Architecture needed to understand staged changes
+/explain --unpushed --architecture  # Architecture needed to understand unpushed changes
 /explain --staged --all             # All aspects, scoped to staged files
 /explain --infra                    # CI/CD + local setup
 ```
@@ -39,7 +41,7 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 
 ### 1. Parse arguments
 - Collect requested aspect flags. `--all` expands to all six.
-- Check for `--staged`.
+- Check for `--staged` / `--unpushed`.
 - Capture any positional topic filter that follows an aspect flag, and pass it to that aspect's sub-agent only.
 - If no aspect flag and no `--all` was given, ask the user which aspect(s) to cover before proceeding.
 
@@ -48,9 +50,10 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 | Mode | Scope |
 |------|-------|
 | `--staged` set | Output of `git diff --cached --name-only` |
-| `--staged` not set | Whole project (respect `.gitignore`, skip `node_modules/`, `build/`, `dist/`, lockfiles, binaries) |
+| `--unpushed` set | Output of `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
+| neither set | Whole project (respect `.gitignore`, skip `node_modules/`, `build/`, `dist/`, lockfiles, binaries) |
 
-Empty scope: if `--staged` is set but nothing is staged, tell the user to stage files first or drop `--staged`. Do not proceed.
+Empty scope: if `--staged` is set but nothing is staged, tell the user to stage files first or drop `--staged`. Do not proceed. Likewise, if `--unpushed` is set but nothing is unpushed — or there is no remote/upstream so the range can't be determined reliably (or it walks back to the root commit) — tell the user and do not proceed.
 
 ### 3. Write `preliminary.md` first
 Before dispatching aspect sub-agents, write `docs/explain/preliminary.md`. Keep it tight — just enough shared context that a new reader can follow the other docs:

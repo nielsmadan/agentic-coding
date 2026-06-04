@@ -35,6 +35,7 @@ Documentation review and generation.
 - `--review` - Check existing docs against standards (default)
 - `--generate <target>` - Create docs for specified code
 - `--staged` - Scope to git staged files
+- `--unpushed` - Scope to files changed across all unpushed commits
 - `--all` - Scope to entire codebase
 
 **Examples:**
@@ -49,6 +50,7 @@ Explain unfamiliar code grouped by logical concepts. For language learners, incl
 
 **Arguments:**
 - `--staged` - Explain code in git staged files
+- `--unpushed` - Explain code changed across all unpushed commits
 - `--all` - Interactive file/directory selection
 - `--code` - Include language syntax explanations and alternatives
 - Default: explain code related to current conversation context
@@ -157,6 +159,7 @@ Review code comments for quality. Ensures comments explain "why" not "what".
 **Arguments:**
 - `--all` - Entire codebase (uses parallel agents)
 - `--staged` - Git staged files
+- `--unpushed` - Files changed across all unpushed commits
 - `--changed` - Git unstaged changes
 - Default: `--staged --changed` combined
 
@@ -196,6 +199,7 @@ Static performance analysis for algorithmic complexity, memory leaks, N+1 querie
 
 **Arguments:**
 - `--staged` - Git staged files (default)
+- `--unpushed` - Files changed across all unpushed commits
 - `--all` - Entire codebase
 
 **Example:** `/review-perf --staged`
@@ -208,6 +212,7 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 **Arguments:**
 - `--staged` - Git staged files (default)
+- `--unpushed` - Files changed across all unpushed commits
 - `--all` - Entire codebase
 
 **Example:** `/review-security --all`
@@ -253,6 +258,7 @@ Test review and generation.
 - `--review` - Check test quality (default)
 - `--generate <target>` - Create tests for specified code
 - `--staged` - Scope to git staged files
+- `--unpushed` - Scope to files changed across all unpushed commits
 - `--all` - Scope to entire codebase
 
 **Examples:**

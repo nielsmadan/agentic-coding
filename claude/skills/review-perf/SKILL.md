@@ -1,7 +1,7 @@
 ---
 name: review-perf
 description: Performance analysis for algorithmic complexity, memory leaks, N+1 queries, and render issues. Use when code feels slow, after adding loops/queries, or before scaling up.
-argument-hint: [--staged | --changed | --all]
+argument-hint: [--staged | --unpushed | --changed | --all]
 ---
 
 # Review Performance
@@ -13,6 +13,7 @@ Performance analysis for common bottlenecks and inefficiencies.
 ```
 /review-perf                  # Review context-related code
 /review-perf --staged         # Review staged changes
+/review-perf --unpushed       # Review files changed across all unpushed commits
 /review-perf --changed        # Review unstaged changes
 /review-perf --all            # Full codebase audit (parallel agents)
 ```
@@ -23,8 +24,11 @@ Performance analysis for common bottlenecks and inefficiencies.
 |------|-------|--------|
 | (none) | Context-related code | Files from the current conversation context: any files the user has discussed, opened, or that you have read/edited in this session. If no conversation context exists, ask the user to specify files or use `--staged`/`--changed`/`--all`. |
 | `--staged` | Staged changes | `git diff --cached --name-only` |
+| `--unpushed` | Files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
+
+`--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
 ## Gotchas
 - Default scope (no flag) uses conversation context, which may be stale from an earlier part of the session. The review silently targets the wrong files if context has shifted.
