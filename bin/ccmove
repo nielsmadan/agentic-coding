@@ -5,6 +5,11 @@ Renames the slug dir under ~/.claude/projects/. JSONL transcripts are NOT
 rewritten: old absolute paths remain in historical tool calls/results; cwd
 for new turns picks up the new project path.
 
+If the target slug dir already exists, its sessions are kept and the source's
+sessions are merged in. On a filename collision the incoming file is renamed
+`<stem>-N`, and a colliding .jsonl has its internal sessionId rewritten to
+match so it stays resumable.
+
 The session slug is the absolute project path with `/` replaced by `-`.
 """
 from __future__ import annotations
@@ -21,12 +26,39 @@ def slugify(path: Path) -> str:
     return str(path).replace("/", "-")
 
 
-def rmtree_path(p: Path) -> None:
-    # Remove an existing target, whether it's a file/symlink or a directory.
-    if p.is_dir() and not p.is_symlink():
-        shutil.rmtree(p)
-    else:
-        p.unlink()
+def free_name(directory: Path, name: str) -> Path:
+    # First free `<stem>-N<suffix>` in `directory` (N starts at 1).
+    p = Path(name)
+    stem, suffix = p.stem, p.suffix
+    i = 1
+    while True:
+        cand = directory / f"{stem}-{i}{suffix}"
+        if not cand.exists():
+            return cand
+        i += 1
+
+
+def merge_dir(src_dir: Path, tgt_dir: Path) -> tuple[int, list[tuple[str, str]]]:
+    # Move every entry of src_dir into tgt_dir, keeping both sides' sessions.
+    # On a name collision, rename to `<stem>-N`; for a colliding .jsonl that
+    # also renames the session, rewrite its internal sessionId to match the new
+    # filename so the session stays self-consistent (stem == sessionId).
+    moved = 0
+    renamed: list[tuple[str, str]] = []
+    for entry in sorted(src_dir.iterdir()):
+        dest = tgt_dir / entry.name
+        if dest.exists():
+            dest = free_name(tgt_dir, entry.name)
+            shutil.move(str(entry), str(dest))
+            if dest.suffix == ".jsonl" and dest.is_file():
+                text = dest.read_text()
+                dest.write_text(text.replace(entry.stem, dest.stem))
+            renamed.append((entry.name, dest.name))
+        else:
+            shutil.move(str(entry), str(dest))
+        moved += 1
+    src_dir.rmdir()  # everything moved out; remove the now-empty source slug dir
+    return moved, renamed
 
 
 def normalize(p: Path) -> Path:
@@ -44,26 +76,37 @@ def main() -> int:
               - By default, operates on session storage only. Move the actual
                 project folder yourself (mv, git mv, etc.) before or after
                 running ccmove, or pass --include-dir to move it too.
-              - JSONL transcripts are NOT rewritten. Old absolute paths remain
-                in historical tool calls/results; cwd for new turns picks up
-                the new path.
+              - If the target session dir exists, its sessions are kept and the
+                source's are merged in (colliding files are renamed).
+              - JSONL transcripts are NOT rewritten, except a colliding merged
+                file's sessionId. Old absolute paths remain in history; cwd for
+                new turns picks up the new path.
         """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    ap.add_argument("-s", "--source", required=True, type=Path,
+    ap.add_argument("source_pos", nargs="?", type=Path, metavar="SOURCE",
+                    help="source project directory (old path), positional form")
+    ap.add_argument("target_pos", nargs="?", type=Path, metavar="TARGET",
+                    help="target project directory (new path), positional form")
+    ap.add_argument("-s", "--source", type=Path,
                     help="source project directory (old path)")
-    ap.add_argument("-t", "--target", required=True, type=Path,
+    ap.add_argument("-t", "--target", type=Path,
                     help="target project directory (new path)")
     ap.add_argument("-d", "--include-dir", action="store_true",
                     help="also move the project folder on disk (source -> target)")
-    ap.add_argument("-f", "--force", action="store_true",
-                    help="overwrite the target if it already exists")
     ap.add_argument("-n", "--dry-run", action="store_true",
                     help="print planned move, don't run")
     args = ap.parse_args()
 
-    src = normalize(args.source)
-    tgt = normalize(args.target)
+    # Accept source/target via flags or positionally; a flag wins if both given.
+    source = args.source if args.source is not None else args.source_pos
+    target = args.target if args.target is not None else args.target_pos
+    missing = [n for n, v in (("source", source), ("target", target)) if v is None]
+    if missing:
+        ap.error("the following arguments are required: " + ", ".join(missing))
+
+    src = normalize(source)
+    tgt = normalize(target)
     src_slug = slugify(src)
     tgt_slug = slugify(tgt)
     base = Path.home() / ".claude" / "projects"
@@ -77,42 +120,46 @@ def main() -> int:
     if not src_dir.is_dir():
         print(f"ccmove: source session dir does not exist: {src_dir}", file=sys.stderr)
         return 1
-    if tgt_dir.exists() and not args.force:
-        print(f"ccmove: target session dir already exists: {tgt_dir} "
-              "(refusing to overwrite; use --force)", file=sys.stderr)
-        return 1
+    # An existing target session dir is merged into; the on-disk project folder
+    # is never merged — refuse if its target already exists.
     if args.include_dir:
         if not src.is_dir():
             print(f"ccmove: source project dir does not exist: {src}", file=sys.stderr)
             return 1
-        if tgt.exists() and not args.force:
-            print(f"ccmove: target project dir already exists: {tgt} "
-                  "(refusing to overwrite; use --force)", file=sys.stderr)
+        if tgt.exists():
+            print(f"ccmove: target project dir already exists: {tgt} (refusing to overwrite)",
+                  file=sys.stderr)
             return 1
 
     if args.dry_run:
         print("ccmove: dry-run — would run:")
         if args.include_dir:
-            if tgt.exists():
-                print(f"  rm -rf {tgt}")
             print(f"  mv {src} {tgt}")
         if tgt_dir.exists():
-            print(f"  rm -rf {tgt_dir}")
-        print(f"  mv {src_dir} {tgt_dir}")
+            entries = list(src_dir.iterdir())
+            collisions = [e.name for e in entries if (tgt_dir / e.name).exists()]
+            print(f"  merge {len(entries)} item(s) from {src_dir} into existing {tgt_dir}")
+            if collisions:
+                print(f"    rename {len(collisions)} colliding item(s) (sessionId rewritten): "
+                      + ", ".join(sorted(collisions)))
+        else:
+            print(f"  mv {src_dir} {tgt_dir}")
         return 0
 
     if args.include_dir:
-        if tgt.exists():
-            rmtree_path(tgt)
         tgt.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(src), str(tgt))
         print(f"ccmove: moved project folder {src} -> {tgt}")
 
     if tgt_dir.exists():
-        rmtree_path(tgt_dir)
-    shutil.move(str(src_dir), str(tgt_dir))
-    n = sum(1 for _ in tgt_dir.glob("*.jsonl"))
-    print(f"ccmove: moved {n} session file(s) to {tgt_dir}")
+        moved, renamed = merge_dir(src_dir, tgt_dir)
+        print(f"ccmove: merged {moved} item(s) into existing {tgt_dir}")
+        for old, new in renamed:
+            print(f"  renamed on collision: {old} -> {new} (sessionId rewritten)")
+    else:
+        shutil.move(str(src_dir), str(tgt_dir))
+        n = sum(1 for _ in tgt_dir.glob("*.jsonl"))
+        print(f"ccmove: moved {n} session file(s) to {tgt_dir}")
     print("  note: JSONL transcripts retain old absolute paths in their history;")
     print("        cwd for new turns will reflect the new project path.")
     return 0
