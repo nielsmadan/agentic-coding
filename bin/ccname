@@ -3,8 +3,7 @@
 
 Scans sessions modified in the last N days, feeds the last few turns of each
 to `claude -p`, and writes the generated name back the same way `/rename`
-does: an `ai-title` line appended to the session's JSONL, plus an updated
-`summary` field in the project's sessions-index.json.
+does: an `ai-title` line appended to the session's JSONL.
 
 Default: skip sessions that already carry an ai-title (use --force to redo).
 """
@@ -13,7 +12,6 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import json
-import os
 import subprocess
 import sys
 import textwrap
@@ -64,11 +62,12 @@ def extract_text(content) -> str:
     return ""
 
 
-def build_transcript(jsonl_path: Path) -> tuple[str, bool]:
-    """Return (compact transcript text, has_ai_title)."""
+def build_transcript(jsonl_path: Path) -> tuple[str, bool, str]:
+    """Return (compact transcript text, has_ai_title, existing_title)."""
     first_user: str | None = None
     turns: list[tuple[str, str]] = []
     has_ai_title = False
+    existing_title = ""
 
     try:
         with open(jsonl_path, encoding="utf-8") as f:
@@ -83,6 +82,7 @@ def build_transcript(jsonl_path: Path) -> tuple[str, bool]:
                 etype = entry.get("type")
                 if etype == "ai-title":
                     has_ai_title = True
+                    existing_title = entry.get("aiTitle", "") or existing_title
                     continue
                 if etype not in ("user", "assistant"):
                     continue
@@ -100,10 +100,10 @@ def build_transcript(jsonl_path: Path) -> tuple[str, bool]:
                     first_user = text
                 turns.append((role, text))
     except OSError:
-        return "", has_ai_title
+        return "", has_ai_title, existing_title
 
     if not turns:
-        return "", has_ai_title
+        return "", has_ai_title, existing_title
 
     tail = turns[-MAX_LAST_TURNS:]
     parts: list[str] = []
@@ -115,7 +115,7 @@ def build_transcript(jsonl_path: Path) -> tuple[str, bool]:
     transcript = "\n\n".join(parts)
     if len(transcript) > MAX_TRANSCRIPT_CHARS:
         transcript = transcript[:MAX_TRANSCRIPT_CHARS] + "\n…[truncated]"
-    return transcript, has_ai_title
+    return transcript, has_ai_title, existing_title
 
 
 def generate_name(transcript: str, model: str) -> str | None:
@@ -177,21 +177,13 @@ def append_ai_title(jsonl_path: Path, session_id: str, name: str) -> None:
         f.write(json.dumps(entry) + "\n")
 
 
-def write_index(index_path: Path, data: dict) -> None:
-    tmp = index_path.with_suffix(index_path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
-    os.replace(tmp, index_path)
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(
         prog="ccname",
         description="Re-name recent Claude Code sessions for the current project.",
         epilog=textwrap.dedent("""\
             Writes match `/rename`: appends an ai-title entry to each session's
-            JSONL and updates the project's sessions-index.json.
+            JSONL.
 
             Examples:
               ccname                    # rename unnamed sessions from last 5 days in cwd
@@ -217,21 +209,10 @@ def main() -> int:
     args = ap.parse_args()
 
     proj_dir = project_dir(args.project)
-    index_path = proj_dir / "sessions-index.json"
     if not proj_dir.is_dir():
         print(f"ccname: no Claude session dir for {args.project} ({proj_dir})",
               file=sys.stderr)
         return 1
-
-    if index_path.is_file():
-        with open(index_path, encoding="utf-8") as f:
-            index = json.load(f)
-        index_exists = True
-    else:
-        index = {"entries": []}
-        index_exists = False
-    index_by_sid = {e.get("sessionId"): e for e in index.get("entries", [])
-                    if e.get("sessionId")}
 
     cutoff_ts = (datetime.now(timezone.utc) - timedelta(days=args.days)).timestamp()
     candidates: list[dict] = []
@@ -243,15 +224,12 @@ def main() -> int:
         if mtime < cutoff_ts:
             continue
         sid = jsonl.stem
-        existing = index_by_sid.get(sid, {})
-        if existing.get("isSidechain"):
-            continue
         candidates.append({
             "sessionId": sid,
             "modified": datetime.fromtimestamp(mtime, tz=timezone.utc)
                                 .isoformat().replace("+00:00", "Z"),
             "mtime": mtime,
-            "summary": existing.get("summary", ""),
+            "summary": "",
         })
     candidates.sort(key=lambda e: e["mtime"], reverse=True)
 
@@ -266,7 +244,8 @@ def main() -> int:
         if not jsonl.is_file():
             plans.append((entry, "", "missing-jsonl"))
             continue
-        transcript, has_ai_title = build_transcript(jsonl)
+        transcript, has_ai_title, existing_title = build_transcript(jsonl)
+        entry["summary"] = existing_title
         if has_ai_title and not args.force:
             plans.append((entry, "", "skip-has-title"))
             continue
@@ -343,20 +322,6 @@ def main() -> int:
                   file=sys.stderr)
             failures += 1
             updates.pop(sid, None)
-
-    index_dirty = False
-    for entry in index.get("entries", []):
-        sid = entry.get("sessionId")
-        if sid in updates:
-            entry["summary"] = updates[sid]
-            index_dirty = True
-
-    if index_exists and index_dirty:
-        try:
-            write_index(index_path, index)
-        except OSError as e:
-            print(f"ccname: failed to write {index_path}: {e}", file=sys.stderr)
-            return 2
 
     print(f"\nccname: renamed {len(updates)} session(s)"
           + (f"; {failures} failure(s)" if failures else "")
