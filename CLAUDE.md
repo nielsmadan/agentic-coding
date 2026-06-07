@@ -49,6 +49,7 @@ Available in `claude/skills/`:
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
+| `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
@@ -233,6 +234,8 @@ When the user's prompt contains "second opinion", automatically invoke the `/sec
 When the user's prompt contains "research online", automatically invoke whichever skill fits the topic: `/research-code` for programming, library docs, code patterns, error debugging, or version-specific issues; `/research-general` for non-programming topics — academic, historical, current events, regional/regulatory, consumer, fact-checking. If the topic is genuinely ambiguous, default to `/research-general`.
 
 When the user's prompt contains "review plan", "review the plan", or "review my plan", automatically invoke the `/review-plan` skill to get multi-agent feedback before implementation.
+
+When the user's prompt contains "ideation", automatically invoke the `/ideation` skill to generate structured ideas.
 
 When the user's prompt contains "add debug logs" or "debug logging", automatically invoke the `/debug-log` skill to instrument code with tracing.
 
