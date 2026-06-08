@@ -10,20 +10,55 @@ sessions are merged in. On a filename collision the incoming file is renamed
 `<stem>-N`, and a colliding .jsonl has its internal sessionId rewritten to
 match so it stays resumable.
 
-The session slug is the absolute project path with `/` replaced by `-`.
+The session slug is the absolute project path with every non-alphanumeric
+character replaced by `-` (so `/`, `.`, `_`, `@`, spaces, etc. all collapse to
+`-` individually, without merging runs). If the result exceeds 200 chars, Claude
+Code truncates it to 200 and appends `-<hash>`, where <hash> is base36 of the
+absolute value of a 31-multiplier rolling hash over the original path. This
+mirrors Claude Code's own slug function exactly.
 """
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import sys
 import textwrap
 from pathlib import Path
 
+SLUG_MAX_LEN = 200  # Claude Code truncates longer slugs and appends a hash.
+
+
+def _rolling_hash(s: str) -> int:
+    # Replicates Claude Code's `h = (h << 5) - h + charCode | 0` (hash*31 + c,
+    # truncated to a signed 32-bit int each step).
+    h = 0
+    for ch in s:
+        h = (h << 5) - h + ord(ch)
+        h &= 0xFFFFFFFF
+        if h >= 0x80000000:
+            h -= 0x100000000
+    return h
+
+
+def _base36(n: int) -> str:
+    if n == 0:
+        return "0"
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+    out = ""
+    while n:
+        n, r = divmod(n, 36)
+        out = digits[r] + out
+    return out
+
 
 def slugify(path: Path) -> str:
-    return str(path).replace("/", "-")
+    raw = str(path)
+    slug = re.sub(r"[^a-zA-Z0-9]", "-", raw)
+    if len(slug) <= SLUG_MAX_LEN:
+        return slug
+    return slug[:SLUG_MAX_LEN] + "-" + _base36(abs(_rolling_hash(raw)))
 
 
 def free_name(directory: Path, name: str) -> Path:
