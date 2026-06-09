@@ -7,6 +7,7 @@ verify they are up to date (exit 1 with a diff on drift).
 
 Generated files:
   claude/settings.json                  (permissions.allow / deny / ask)
+  claude/settings.autonomous.json       (autonomous-dev profile, Claude only)
   codex/rules/permissions.rules
   antigravity/settings.json             (permissions.allow / deny / ask)
   opencode/opencode.json                (permission.bash)
@@ -83,6 +84,24 @@ def render_claude(rules):
         rules["claude_extra_deny"]
     )
     perms["ask"] = [claude_pattern(e) for e in rules["ask"]]
+    return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
+
+
+# --------------------------------------------------------------------------
+# claude (autonomous) — claude/settings.autonomous.json: same template as the
+# normal file, but with allow/deny/ask all emptied so the auto-mode classifier
+# judges every tool call. Clearing `deny` is what lets git push etc. through
+# (deny overrides every mode); the allow/ask lists would otherwise pre-empt or
+# block the classifier. Symlinked by `install.sh --autonomous`.
+# --------------------------------------------------------------------------
+
+def render_claude_autonomous(rules):
+    path = REPO_ROOT / "claude" / "settings.autonomous.json"
+    settings = json.loads((REPO_ROOT / "claude" / "settings.json").read_text())
+    perms = settings["permissions"]
+    perms["allow"] = []
+    perms["deny"] = []
+    perms["ask"] = []
     return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
 
 
@@ -182,6 +201,7 @@ def render_all():
     rules = parse_source()
     files = {}
     files.update(render_claude(rules))
+    files.update(render_claude_autonomous(rules))
     files.update(render_codex(rules))
     files.update(render_antigravity(rules))
     files.update(render_opencode(rules))

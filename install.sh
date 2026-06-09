@@ -6,13 +6,42 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Profile selection. The default profile is for normal machines; --autonomous
+# selects the more-permissive autonomous-dev profile (allows git push etc.) by
+# pointing the Claude settings + global CLAUDE.md symlinks at the *.autonomous
+# variants. Everything else is identical across profiles.
+PROFILE="normal"
+SETTINGS_SRC="$SCRIPT_DIR/claude/settings.json"
+CLAUDEMD_SRC="$SCRIPT_DIR/claude/CLAUDE.md"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --autonomous)
+      PROFILE="autonomous"
+      SETTINGS_SRC="$SCRIPT_DIR/claude/settings.autonomous.json"
+      CLAUDEMD_SRC="$SCRIPT_DIR/claude/CLAUDE.autonomous.md"
+      ;;
+    -h|--help)
+      echo "Usage: $0 [--autonomous]"
+      echo "  --autonomous   install the autonomous-dev profile (broader git/permissions)"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $0 [--autonomous]" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
 # Define symlinks: "source:destination"
 SYMLINKS=(
   # Claude
   "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
-  "$SCRIPT_DIR/claude/settings.json:$HOME/.claude/settings.json"
-  "$SCRIPT_DIR/claude/CLAUDE.md:$HOME/.claude/CLAUDE.md"
+  "$SETTINGS_SRC:$HOME/.claude/settings.json"
+  "$CLAUDEMD_SRC:$HOME/.claude/CLAUDE.md"
   # Codex
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
   # Antigravity (agy) — replaced Gemini CLI in May 2026
@@ -198,7 +227,7 @@ generate_permissions() {
   fi
 }
 
-echo "Installing agentic coding config..."
+echo "Installing agentic coding config... (${PROFILE} profile)"
 echo ""
 
 generate_permissions

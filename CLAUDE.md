@@ -92,11 +92,18 @@ Shell-command permissions for all four agents (Claude, Codex, Antigravity, OpenC
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`sync.py --check`) rejects any drift:
 - `claude/settings.json` (`permissions.allow` / `deny` / `ask`)
+- `claude/settings.autonomous.json` (autonomous-dev profile — see below)
 - `codex/rules/permissions.rules`
 - `antigravity/settings.json` (`permissions.allow` / `deny` / `ask`)
 - `opencode/opencode.json` (`permission.bash`)
 
 To change permissions: edit `permissions/permissions.toml`, then run `python3 permissions/sync.py` (also run automatically by `install.sh`). `[shell]` entries (allow/deny/ask) go to all four agents; `[claude.extra]` / `[opencode.extra]` hold tool-native entries (`Skill()`, `mcp__*`, OpenCode toggles) with no cross-agent equivalent. Codex's token matcher can't express glob entries (those ending in `*`), so they fall through to its normal approval prompt.
+
+### Autonomous-dev profile
+
+For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `sync.py` always generates both `claude/settings.json` and `claude/settings.autonomous.json`; the autonomous variant keeps `defaultMode: "auto"` but **empties `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops — keep it in sync with `claude/CLAUDE.md` (only its Git Policy section differs).
+
+Install the autonomous profile with `./install.sh --autonomous`, which symlinks the `*.autonomous` variants to `~/.claude/settings.json` and `~/.claude/CLAUDE.md` instead of the defaults. Plain `./install.sh` installs the normal profile. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
 
 ## Project Templates
 
