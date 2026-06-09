@@ -16,19 +16,29 @@ Resolve git conflicts from any operation with proper continuation workflow.
 ```
 
 ## Gotchas
+- A conflicted tree with **no sentinel file** is not automatically a stash/manual conflict. The most common trap is a `git pull --rebase` (autostash) whose re-apply conflicted: the rebase already finished, so no `rebase-merge/` exists, but the markers are real. Read the reflog + stash list before classifying — see Step 1.
 - During rebase, ours/theirs semantics are INVERTED. "Ours" is the branch being rebased onto (the target), not your working branch. This causes wrong-direction resolutions if you forget.
 - Lock file conflicts (package-lock.json, yarn.lock, Podfile.lock) must NEVER be manually resolved. Delete the lock file and regenerate it — manual merging produces corrupt files.
 
 ## Workflow
 
-### Step 1: Detect Operation Type
+### Step 1: Detect State
 
-Use Glob to check for these sentinel files in the `.git/` directory:
+Never infer the state from the conflict markers alone, and never assume "no
+sentinel file" means a simple manual conflict. Gather the full picture first
+with one command, then classify:
+
+```bash
+git status; echo "=== STASH ==="; git stash list; echo "=== REFLOG ==="; git reflog -n 6
+```
+
+Then use Glob to check for sentinel files in `.git/`:
 - `.git/MERGE_HEAD` → **Merge**
 - `.git/rebase-merge` or `.git/rebase-apply` → **Rebase**
 - `.git/CHERRY_PICK_HEAD` → **Cherry-pick**
 - `.git/REVERT_HEAD` → **Revert**
-- None of the above → **Stash** (or manual conflict)
+- **None of the above → do NOT stop at "stash/manual".** Disambiguate using the
+  reflog + stash list you already gathered (see below).
 
 | Operation | Detection | Continue | Abort |
 |-----------|-----------|----------|-------|
@@ -36,7 +46,26 @@ Use Glob to check for these sentinel files in the `.git/` directory:
 | Rebase | `rebase-merge/` or `rebase-apply/` | `git rebase --continue` | `git rebase --abort` |
 | Cherry-pick | `CHERRY_PICK_HEAD` exists | `git cherry-pick --continue` | `git cherry-pick --abort` |
 | Revert | `REVERT_HEAD` exists | `git revert --continue` | `git revert --abort` |
-| Stash | None of above | `git stash drop` | `git checkout --theirs .` or `git reset --hard` |
+| Stash apply | No sentinel; reflog shows manual `stash pop`/`apply` | `git stash drop` | `git checkout --merge` or restore from stash |
+| Autostash re-apply | No sentinel; reflog shows `pull --rebase`/`rebase (finish)` + an `autostash` stash entry | `git stash drop` (the rebase already finished — do **not** `git rebase --continue`) | leave the autostash in the list; `git checkout --merge .` |
+| Manual / committed | No sentinel, no stash entry, no recent operation | nothing to continue — just `git add` | `git checkout --merge <file>` |
+
+**Disambiguating the no-sentinel case (this is where detection usually goes wrong):**
+
+A `git pull --rebase` (or any `rebase --autostash`) stashes your dirty tree,
+replays/fast-forwards, then re-applies the autostash. If that re-apply
+conflicts, the rebase has **already completed** — so there is no `rebase-merge/`
+sentinel, yet the working tree has real conflict markers. This looks identical
+to a plain stash conflict until you read the reflog. The tells:
+- The reflog's top entries show the finished rebase/pull (`rebase (finish)`,
+  `pull --rebase`, a fast-forward) and a `stash` push labeled `autostash`.
+- `git stash list` still contains the autostash entry (git keeps it on a failed
+  apply — it is not auto-dropped).
+
+In this case the only remaining work is to resolve the markers, `git add`, and
+then `git stash drop` the autostash once you've confirmed the resolution. Do
+**not** attempt `git rebase --continue` — it will fail because no rebase is in
+progress.
 
 ### Step 2: List Conflicted Files
 
@@ -89,7 +118,9 @@ operation, so complete it yourself:
    | Rebase | `GIT_EDITOR=true git rebase --continue` |
    | Cherry-pick | `git cherry-pick --continue --no-edit` |
    | Revert | `git revert --continue --no-edit` |
-   | Stash | `git stash drop` |
+   | Stash apply | `git stash drop` |
+   | Autostash re-apply | `git stash drop` (rebase already finished — never `git rebase --continue` here) |
+   | Manual / committed | nothing to run — the `git add` is the completion |
 
 **Guardrails — do not run these automatically:**
 - **Aborts** (`git merge/rebase/cherry-pick/revert --abort`) discard work. If
@@ -133,6 +164,11 @@ Detects a merge operation, reads the conflict markers in the session file, and d
 > /resolve-conflicts
 
 Detects a rebase operation and reminds that ours/theirs semantics are inverted during rebase. Walks through each conflicted file, explains what the rebased commit intended versus the target branch state, resolves the conflicts in the files, stages them, and runs `git add` + `GIT_EDITOR=true git rebase --continue` to finish.
+
+**Autostash re-apply conflict after `git pull --rebase`:**
+> /resolve-conflicts
+
+Finds UU conflicts but no `.git/rebase-merge` sentinel. Instead of guessing, the gathering command's reflog shows `pull --rebase` finishing with a fast-forward and an `autostash` push, and `git stash list` still holds the autostash. Classifies this as an autostash re-apply conflict (rebase already complete), resolves the markers, runs `git add`, then `git stash drop` — and does **not** try `git rebase --continue`.
 
 ## Guidelines
 
