@@ -135,8 +135,10 @@ allow = [
   "python --version",
   "ruby --version",
 
-  # external advisor commands
+  # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",
+  "opencode run",
+  "~/.local/bin/agy --prompt",
 
   # docker — workbench container management
   "docker exec cc-workbench",

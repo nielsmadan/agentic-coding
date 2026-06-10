@@ -1,12 +1,12 @@
 ---
 name: second-opinion
-description: Get an external AI opinion on a problem or question. Use when you want an outside perspective from Codex.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Antigravity, and OpenCode+DeepSeek.
 argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
 
-Get input from Codex on the current problem or question. By default, iterates if the response lacks confidence.
+Get input from three independent advisors — Codex (GPT), Antigravity (Gemini), and OpenCode+DeepSeek — on the current problem or question. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -28,21 +28,25 @@ Get input from Codex on the current problem or question. By default, iterates if
 
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
-- The `codex` CLI tool must be installed and on PATH. If it is missing, the command fails silently.
+- The three CLIs (`codex`, `agy`, `opencode`) must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
+- **The advisors are meant to read the code** — that's the point. All three run in *read-only* mode (`codex -s read-only`, `opencode --agent plan`, `agy` plain) so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on `codex`/`opencode`.
+- **Codex** blocks on "Reading additional input from stdin..." unless stdin is closed (`</dev/null`), and prompts for confirmation outside a git repo unless given `--skip-git-repo-check`.
+- **Antigravity** (`agy`) is not on the default `PATH` — invoke it by full path `~/.local/bin/agy`. Pass the *prompt itself* inline via `$(cat …)` (it reads code files fine through its allow-listed `cat`/`grep`/`rg`, but feeding the prompt as a file is needless). Do **not** add `--sandbox` (it hijacks into a scratch-dir assistant and ignores the prompt) or `--dangerously-skip-permissions` (auto-mode blocks it, and read-only doesn't need it). Effort is set via `--model` (e.g. `Gemini 3.5 Flash (Low)` fastest → `Gemini 3.1 Pro (High)` strongest); see `~/.local/bin/agy models` for the list.
+- **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan`, **not** the default `build` agent: `plan` can read/explore the repo but has no write tools, so it gives a code-aware opinion without editing anything.
 
 ## How It Works
 
 ### Default Flow (Iterative)
 
 1. Summarize the current problem/question from the conversation (or use what the user provides)
-2. Query Codex for its perspective
-3. Evaluate confidence in the response
-4. If confidence is LOW, re-query with additional context (up to 2 iterations)
+2. Query Codex, Antigravity, and OpenCode+DeepSeek in parallel for their perspectives
+3. Evaluate confidence in all responses
+4. If confidence is LOW for any advisor, re-query with additional context (up to 2 iterations)
 5. Present final results with your synthesis
 
 ### Quick Mode (`--quick`)
 
-1. Query Codex once
+1. Query all advisors once
 2. Present results immediately without iteration
 3. Useful when you just want fast input without refinement
 
@@ -53,16 +57,18 @@ Get input from Codex on the current problem or question. By default, iterates if
 Extract or use the user's question/problem. If not explicitly provided, summarize:
 - What is the current task or problem?
 - What approaches are being considered?
-- Any relevant file paths or code context
+- **The relevant file paths** — list them so the advisors know where to look. This is what makes the opinion code-aware rather than generic; spend effort here.
 
-Write the prompt to `.second-opinion.md` in the current working directory (dotfile so it stays out of the way; in the project directory so sandboxed agents like Codex can read it). Use this exact filename for all subsequent steps:
+Write the prompt to `.second-opinion.md` in the current working directory (dotfile so it stays out of the way; in the project directory so the advisors can read both it and the code it points to). Use this exact filename for all subsequent steps:
 
 ```markdown
-Read-only consultation. Do not modify any files.
+Read-only consultation. Do not modify any files — but DO read the relevant code in this project before answering.
 
 I need a second opinion: {problem_summary}
 
-Give your perspective in {words} words or less. Focus on:
+Relevant files/areas to look at: {file_paths}
+
+Read those (and anything else in the project you need) and give your perspective in {words} words or less. Reference specific functions/files so I know what you looked at. Focus on:
 - Key considerations I might be missing
 - Potential issues with the current approach
 - Alternative approaches worth considering
@@ -70,17 +76,36 @@ Give your perspective in {words} words or less. Focus on:
 If you need more context to give a confident answer, say so clearly.
 ```
 
-### Step 2: Query Codex
+### Step 2: Query Advisors (in parallel)
 
-Run Codex using the Bash tool timeout set to `{timeout}` seconds.
+Run all three commands in parallel, using `{timeout}` as the Bash timeout. Each
+inlines the prompt via `$(cat .second-opinion.md)` and closes stdin with `</dev/null`
+(without it, `codex exec` blocks on "Reading additional input from stdin..."). All
+three run read-only and read the files the prompt points them at, typically answering
+in ~15–25s; allow longer for a question that spans many files.
 
-Prefix with the `command` builtin: in some shells `codex` is a `sops exec-env`
-wrapper function that depends on an interactive-shell variable not present in
-the agent's environment; `command` bypasses the wrapper and runs the real
-binary, which authenticates via its own on-disk credentials.
+Prefix `codex` and `opencode` with the `command` builtin: in some shells they are
+`sops exec-env` wrapper functions that depend on an interactive-shell variable not
+present in the agent's environment; `command` bypasses the wrapper and runs the real
+binary, which authenticates via its own on-disk credentials. `agy` is invoked by full
+path (not on `PATH`) and authenticates via its on-disk Google OAuth.
 
+**Codex (GPT):** `--skip-git-repo-check` so it works outside a git repo:
 ```bash
-command codex exec -s read-only "Read the file at .second-opinion.md and follow the instructions within it."
+command codex exec -s read-only --skip-git-repo-check "$(cat .second-opinion.md)" </dev/null
+```
+
+**Antigravity (Gemini):** prompt is passed inline; it reads code files itself via its
+allow-listed `cat`/`grep`/`rg`. The model name carries the effort tier — `(Low)` keeps
+it fast; bump to `Gemini 3.1 Pro (High)` for harder questions, or `Gemini 3.5 Flash (Low)` for the quickest take:
+```bash
+~/.local/bin/agy --model "Gemini 3.1 Pro (Low)" --prompt "$(cat .second-opinion.md)"
+```
+
+**OpenCode+DeepSeek:** `--agent plan` is read-only (reads/explores the repo, cannot edit
+files) — unlike the default `build` agent, which has write tools:
+```bash
+command opencode run --agent plan -m openrouter/deepseek/deepseek-v3.2 "$(cat .second-opinion.md)" </dev/null
 ```
 
 ### Step 3: Evaluate Confidence
@@ -102,13 +127,13 @@ After receiving responses, evaluate each for confidence level:
 
 ### Step 4: Iterate If Needed (Default Mode Only)
 
-If confidence is LOW:
+If confidence is LOW for any advisor:
 
-1. Identify what context is missing based on Codex's feedback
+1. Identify what context is missing based on their feedback
 2. Gather additional context (read relevant files, clarify requirements)
 3. Overwrite `.second-opinion.md` with enhanced context
-4. Re-query Codex using the same file-reference command
-5. Can iterate up to 2 times
+4. Re-query the low-confidence advisor using the same command
+5. Can iterate up to 2 times per advisor
 
 Skip this step entirely if `--quick` flag was used.
 
@@ -117,13 +142,19 @@ Skip this step entirely if `--quick` flag was used.
 Format the responses for the user:
 
 ```markdown
-## Second Opinion
+## Second Opinions
 
-### Codex
+### Codex (GPT)
 {codex_response}
 
+### Antigravity (Gemini)
+{antigravity_response}
+
+### OpenCode (DeepSeek)
+{deepseek_response}
+
 ### My Take
-{your brief synthesis - key takeaways and your recommendation}
+{your brief synthesis - where they agree, disagree, and your recommendation}
 ```
 
 If iteration occurred, note it:
@@ -144,7 +175,8 @@ Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 ## Error Handling
 
-- If Codex fails, inform the user and offer to retry
+- If one advisor fails, continue with the others
+- If all fail, inform the user and offer to retry
 
 ## Key Differences from /debate
 
