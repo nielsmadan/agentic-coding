@@ -23,7 +23,7 @@ External URLs are best fetched through the Jina MCP server, which renders JS ser
 
 ## Secrets
 
-API keys are deliberately kept **out of Claude Code's reach**. They live in a SOPS-encrypted file outside this conversation's read scope, and the zsh wrappers around `claude`/`codex`/`agy`/`opencode`/`nvim`/`mvim`/`neovide` inject only the values needed into each subprocess. The point of this setup is that the model cannot enumerate, read, or echo secrets — not that the model needs convenience access to them.
+API keys live in a SOPS-encrypted file (encrypted at rest, outside this conversation's read scope). The zsh wrappers around `claude`/`codex`/`agy`/`opencode`/`nvim`/`mvim`/`neovide` run each tool through `sops exec-env`, injecting the decrypted values into **that tool's subprocess only** — never the parent shell or unrelated processes.
 
 What this means for you (the agent):
 

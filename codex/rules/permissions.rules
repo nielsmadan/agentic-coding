@@ -146,6 +146,9 @@ prefix_rule(pattern = ["git", "clean", "-fdx"], decision = "forbidden")
 prefix_rule(pattern = ["git", "clean", "-fx"], decision = "forbidden")
 
 prefix_rule(pattern = ["heroku"], decision = "prompt")
+prefix_rule(pattern = ["vercel"], decision = "prompt")
+prefix_rule(pattern = ["wrangler"], decision = "prompt")
+prefix_rule(pattern = ["railway"], decision = "prompt")
 
 # Skipped — glob entries Codex's token matcher can't express
 # (these fall through to Codex's normal approval prompt):

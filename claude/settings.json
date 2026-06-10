@@ -192,7 +192,10 @@
       "Bash(git clean -fx:*)"
     ],
     "ask": [
-      "Bash(heroku:*)"
+      "Bash(heroku:*)",
+      "Bash(vercel:*)",
+      "Bash(wrangler:*)",
+      "Bash(railway:*)"
     ],
     "defaultMode": "auto"
   },

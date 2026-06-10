@@ -185,6 +185,9 @@ deny = [
 # ask — always prompt for confirmation, even in auto/auto-accept modes.
 ask = [
   "heroku",
+  "vercel",
+  "wrangler",
+  "railway",
 ]
 
 # Tool-native permission entries with no cross-agent shell-command

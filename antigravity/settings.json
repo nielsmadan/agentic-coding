@@ -143,7 +143,10 @@
       "command(git clean -fx)"
     ],
     "ask": [
-      "command(heroku)"
+      "command(heroku)",
+      "command(vercel)",
+      "command(wrangler)",
+      "command(railway)"
     ]
   }
 }

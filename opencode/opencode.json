@@ -293,7 +293,13 @@
       "git clean -fx": "deny",
       "git clean -fx *": "deny",
       "heroku": "ask",
-      "heroku *": "ask"
+      "heroku *": "ask",
+      "vercel": "ask",
+      "vercel *": "ask",
+      "wrangler": "ask",
+      "wrangler *": "ask",
+      "railway": "ask",
+      "railway *": "ask"
     },
     "skill": "allow",
     "webfetch": "allow",
