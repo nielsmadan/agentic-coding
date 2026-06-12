@@ -45,6 +45,7 @@ Available in `claude/skills/`:
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
 | `/code-review` | Code review workflow |
 | `/frontend-design` | Build distinctive frontend interfaces with high design quality |
+| `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
