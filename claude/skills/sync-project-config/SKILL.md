@@ -1,12 +1,13 @@
 ---
 name: sync-project-config
-description: Bidirectional sync between a project's deployed agent config (.mcp.json, .claude/skills/<name>/, CLAUDE.md/AGENTS.md snippets) and its canonical template in ~/ac/templates/<type>/. Decides per-file whether to pull project→template or push template→project from diff + git history. Use when the user runs `aiconf sync` or asks to mirror project changes back to the template, or push template updates into a project with diff review.
+description: Bidirectional sync between a project's deployed agent config (.mcp.json, .claude/skills/<name>/, CLAUDE.md/AGENTS.md snippets) and its canonical template in ~/ac/templates/<type>/. Decides per-file whether to pull project→template, push template→project, or — when both sides diverged — semantically merge them, from diff + git history. Use when the user runs `aiconf sync` or asks to mirror project changes back to the template, or push template updates into a project with diff review.
 argument-hint: [project-dir]
 ---
 
 # Sync Project Config
 
-Two-way sync between a deployed project's agent config and its source template.
+Two-way sync between a deployed project's agent config and its source template. Per artifact
+it pulls, pushes, or — when both sides have diverged — semantically merges the two.
 
 ## Usage
 
@@ -41,28 +42,56 @@ List the type directories under `$TEMPLATE_REPO/templates/`. For each, count ove
 Best overlap wins. If tied, or zero overlap, ask the user which type. Call the result `$TYPE`.
 The template root is then `$TEMPLATE_REPO/templates/$TYPE/`.
 
-### 3. Decide per-artifact direction (diff + git history)
+### 3. Decide per-artifact outcome (diff + git history)
 
 For each artifact in scope (next section), compute the byte diff between the template's
-version and the project's version. If identical → skip. Otherwise:
+version and the project's version. If identical → skip. Otherwise gather, in each repo
+(template repo and project repo):
+- `git status --porcelain -- <path-relative-to-repo>` to detect uncommitted changes
+- `git log -p -n 5 -- <path>` for recent change history on that path
+- the working-tree-vs-HEAD diff if the side is dirty
 
-1. Run in each repo (template repo and project repo):
-   - `git status --porcelain -- <path-relative-to-repo>` to detect uncommitted changes
-   - `git log -1 --format='%ct %H' -- <path>` to get the file's last-commit timestamp
+**First classify whether this is a one-sided update or a genuine divergence.** Use the two
+current versions plus the history above — *not* a last-commit-timestamp race:
 
-2. Decide:
-   - **Uncommitted on one side, clean on the other** → uncommitted side is authoritative.
-     Propose syncing the clean side toward it.
-   - **Both clean, different last-commit timestamps** → newer timestamp wins. Propose syncing
-     the older side toward the newer.
-   - **Both have uncommitted changes** → flag as conflict. Show both diffs (template vs
-     project, plus each side's working-tree-vs-HEAD diff). Ask the user to resolve manually.
-   - **File on only one side** → flag for explicit confirmation; do not auto-create on the
-     other side.
-   - **One side has no git history for the file** (e.g., it's a brand-new untracked file) →
-     treat as uncommitted on that side.
+- **One side strictly ahead** — only one side has unique changes since the two last agreed;
+  the other side's content is an older state of the same thing, with nothing the ahead side
+  lacks. This covers "uncommitted on one side, clean on the other" and "only one side has
+  commits/edits touching the path." → **plain push/pull**: propose syncing the unchanged
+  (behind) side toward the ahead side. Direction is per-artifact; a single run may pull one
+  file and push another.
 
-Direction is per-artifact. A single run may pull one file and push another in the same review.
+- **Both sides diverged** — each side has unique changes the other lacks (formerly the
+  "newer timestamp wins" and "both uncommitted → bail" cases). Do **not** pick a winner and
+  do **not** overwrite one side wholesale. → **semantic merge** (next).
+
+- **File on only one side** → flag for explicit confirmation; do not auto-create on the
+  other side.
+
+- **One side has no git history for the file** (e.g., a brand-new untracked file) → treat
+  as uncommitted/ahead on that side.
+
+#### Semantic merge (genuine divergence)
+
+When both sides diverged, reconcile them by reasoning about *what changed on each side*,
+not by stitching text hunks. Read both current working-tree versions and both sides'
+recent history (the `git log -p` above tells deliberate **deletions** apart from the other
+side's **additions**). Then produce a single reconciled version:
+
+- **template-only addition** / **project-only addition** → keep both (union).
+- **both added content on the same topic** → fold into one coherent passage; do **not**
+  duplicate the advice.
+- **deliberate deletion on one side** → honor the removal; do not resurrect content the
+  history shows was intentionally dropped.
+- **genuine contradiction** (the two state opposing things) → you cannot silently pick.
+  Surface that specific spot to the user and let them choose; leave the rest merged.
+
+For **`.mcp.json`** (and any JSON artifact) reconcile **structurally**, not as prose: union
+the `mcpServers`, and for a server present on both sides combine its keys, flagging only
+genuinely conflicting values. Do not prose-merge JSON.
+
+A semantic merge is **not a direction** — the reconciled result is written to **both** the
+template and the project so they re-converge to an identical state. See step 5.
 
 ### 4. Scope (template-shape-filtered)
 
@@ -103,12 +132,15 @@ Direction is per-artifact. A single run may pull one file and push another in th
   - Before any push, show the user the full proposed replacement (start line, end line, and
      content), and require explicit approval — never auto-write without that confirmation.
 
-  Apply the same diff + git-history direction logic as for `.mcp.json` and `skills/<name>/`,
+  Apply the same diff + git-history outcome logic as for `.mcp.json` and `skills/<name>/`,
   per target file independently. Pull → write
   `$TEMPLATE_REPO/templates/$TYPE/instructions.md`. Push → replace the located passage
-  inside the target file, preserving everything outside it. If CLAUDE.md and AGENTS.md
-  *both* hold a divergent passage and both are newer than the template, surface both diffs
-  and let the user pick one to pull (or pull both into the template separately for review).
+  inside the target file, preserving everything outside it. **Merge** (the passage and the
+  template snippet diverged) → reconcile semantically per step 3, then write the merged
+  passage back into the located target-file passage **and** into the template snippet.
+  Because CLAUDE.md and AGENTS.md are independent targets, each can resolve differently
+  (e.g. AGENTS.md a clean pull while CLAUDE.md needs a merge); reconcile each against the
+  template snippet on its own.
 
   **Missing snippet (state-file caveat).** If the snippet is entirely missing from one of
   the project's instruction files and the template has one, do NOT perform a one-off push.
@@ -132,13 +164,21 @@ Direction is per-artifact. A single run may pull one file and push another in th
 
 ### 5. Present, confirm, apply
 
-Group proposals by file with a direction label per item:
+Group proposals by file with an outcome label per item:
 - `←` pull (write into `$TEMPLATE_REPO/templates/$TYPE/<path>`)
 - `→` push (write into `$PROJECT/<path>`)
-- `⚠` conflict / one-sided / needs manual decision
+- `⇄` merge (write the reconciled result into **both** sides — see step 3's semantic merge)
+- `⚠` one-sided / unresolved contradiction / needs manual decision
 
-For each diffable item, show `diff -u` output. Then ask: approve all / pick subset / abort.
-Apply only approved changes by overwriting the destination file with the source file's bytes.
+For each item, show the proposal as `diff -u`:
+- For `←`/`→`, the diff is source-vs-destination.
+- For `⇄`, show the reconciled version diffed against **both** current versions (template
+  and project), so the user sees exactly what each side gains and loses. Call out any spot
+  flagged as a contradiction and let the user decide it before applying.
+
+Then ask: approve all / pick subset / abort. Apply only approved changes:
+- `←`/`→` → overwrite the destination file with the source file's bytes.
+- `⇄` → write the reconciled bytes to both the template and the project path.
 
 Never delete files. Never write outside the matched template's scope. Never modify
 `settings.local.json` from this skill.
