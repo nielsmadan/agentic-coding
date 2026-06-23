@@ -20,8 +20,8 @@ Review the code related to: **$ARGUMENTS**
 /code-review --changed                # Unstaged changes only
 /code-review --staged                 # Staged changes only (errors if nothing staged)
 /code-review --unpushed               # Files changed across all unpushed commits (errors if nothing unpushed)
-/code-review --multi                  # All aspects + Codex
-/code-review --multi --architecture   # Architecture only + Codex
+/code-review --multi                  # All aspects + external advisors
+/code-review --multi --architecture   # Architecture only + external advisors
 /code-review --all --multi            # Whole repo + external opinions
 /code-review --rereview               # Re-review automatically after fixes are applied
 ```
@@ -202,7 +202,7 @@ Invoke `review-cleancode` with the scope-translated arguments per the table abov
 
 If `--multi` flag is present in $ARGUMENTS, also get external opinions:
 
-Use the **Skill tool** to invoke `second-opinion --quick`. Phrase the prompt according to the resolved scope from step 3b:
+Use the **Skill tool** to invoke `second-opinion --quick`, which queries every external advisor it has configured, in parallel. (The advisor roster lives in the `second-opinion` skill — don't enumerate it here.) Phrase the prompt according to the resolved scope from step 3b:
 
 - `staged` → "Review the staged changes (`git diff --cached`) in this repository."
 - `unpushed` → "Review the changes across all unpushed commits (`git diff` against the last pushed commit) in this repository."
@@ -212,7 +212,7 @@ Use the **Skill tool** to invoke `second-opinion --quick`. Phrase the prompt acc
 
 Then append: "Provide a focused code review in 300 words or less covering: potential bugs or edge cases, security concerns, performance issues, and architecture/pattern violations."
 
-**IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion result (Codex) has been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary.
+**IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion results have been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary. If an advisor is missing or errors out, continue with whichever responded — don't drop the others.
 
 ## Step 4: Independent Confidence Scoring
 
@@ -247,13 +247,13 @@ Only include sections with findings from the agents that actually ran. If an asp
 
 ### External Advisor Reviews (--multi only)
 
-If `--multi` was used, include:
+If `--multi` was used, add one subsection per advisor that responded, titled with the advisor's name as reported by `second-opinion`:
 
-#### Codex
-{codex_code_review}
+#### {advisor name}
+{that advisor's review}
 
 #### Cross-Model Agreement
-{note areas where Codex agrees/disagrees with Claude agents - highlight consensus issues as higher confidence}
+{note areas where the external advisors agree/disagree with the Claude agents - highlight consensus issues (flagged by multiple models) as higher confidence}
 
 ## Step 6: Offer to Fix
 
@@ -301,7 +301,7 @@ Runs all 9 agents against every file in the repo (`git ls-files`). Use this for 
 **Cross-model consensus review:**
 > /code-review --multi
 
-Runs the same 9 Claude agents plus an external review from Codex. The output includes a cross-model agreement section highlighting issues where both Claude agents and Codex converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
+Runs the same 9 Claude agents plus external reviews from every advisor `second-opinion` has configured. The output includes a cross-model agreement section highlighting issues where the Claude agents and the external advisors converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
 
 **Review, fix, then re-review automatically:**
 > /code-review --rereview

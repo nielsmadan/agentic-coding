@@ -16,7 +16,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 /review-cleancode --unpushed       # Review files changed across all unpushed commits
 /review-cleancode --changed        # Review unstaged changes
 /review-cleancode --all            # Full codebase audit (parallel agents)
-/review-cleancode --multi          # Also get Codex opinion
+/review-cleancode --multi          # Also get external advisor opinions
 ```
 
 ## Scope
@@ -28,7 +28,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 | `--unpushed` | Files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
 | `--all` | Full codebase | Glob source files, parallel agents |
-| `--multi` | Add external opinion | Combines with any scope above; invokes `second-opinion --quick` for Codex input |
+| `--multi` | Add external opinions | Combines with any scope above; invokes `second-opinion --quick` |
 
 `--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope. Like `--staged`, it reviews full file content, not just the diff.
 
@@ -43,7 +43,7 @@ Language-agnostic clean code review covering SOLID, DRY, YAGNI, KISS, design pri
 2. **Read CLAUDE.md** in the repository root to understand project-specific conventions
 3. **Review each file** against all 5 categories in the Clean Code Checklist below
 4. **Parallelize** if scope has >5 files: spawn one sub-agent per category, each scanning all files for that category. Merge results and deduplicate.
-5. **External opinions** (if `--multi`): invoke `second-opinion --quick` with this prompt:
+5. **External opinions** (if `--multi`): invoke `second-opinion --quick`, which queries every advisor it has configured, in parallel (the roster lives in the `second-opinion` skill), with this prompt:
 
 ```
 Read-only clean code review. Review the code in this repository (use `git diff --cached` for `--staged`, `git diff` for `--changed`, or read the relevant files). Evaluate against clean code principles: SOLID, DRY, YAGNI, KISS, Law of Demeter, code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery). Provide a focused review in 300 words or less.
@@ -138,11 +138,13 @@ If `--multi` was used, append:
 ```markdown
 ### External Opinions
 
-#### Codex
-{codex_response}
+Add one subsection per advisor that responded, titled with the advisor's name as reported by `second-opinion`:
+
+#### {advisor name}
+{that advisor's review}
 
 #### Cross-Model Agreement
-{areas where Codex agrees/disagrees with the Claude review — consensus issues get higher confidence}
+{areas where the external advisors agree/disagree with the Claude review — consensus issues (flagged by multiple models) get higher confidence}
 ```
 
 ## Examples
@@ -160,7 +162,7 @@ Parallel agents scan by category. Finds `AppService` handling auth, payments, no
 **Get external opinions on clean code quality:**
 > /review-cleancode --multi --staged
 
-Runs the 5-category review plus Codex opinion. Cross-model agreement highlights a SOLID violation both reviewers independently flagged.
+Runs the 5-category review plus the external advisors. Cross-model agreement highlights a SOLID violation multiple reviewers independently flagged.
 
 ## Troubleshooting
 

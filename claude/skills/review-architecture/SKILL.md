@@ -16,7 +16,7 @@ Macro-level review of system structure: how modules, layers, and components fit 
 /review-architecture --unpushed       # Review all unpushed commits against the surrounding architecture
 /review-architecture --changed        # Review unstaged changes against the surrounding architecture
 /review-architecture --all            # Full system audit (parallel agents per category)
-/review-architecture --multi          # Also get Codex opinion
+/review-architecture --multi          # Also get external advisor opinions
 ```
 
 ## Scope
@@ -48,7 +48,7 @@ Macro-level review of system structure: how modules, layers, and components fit 
    - For `--all`: build a quick mental map of top-level modules, their dependencies, and the dominant pattern (layered, hexagonal, event-driven, modular monolith, microservices).
 4. **Review against the 6 categories** in the Architecture Checklist below.
 5. **Parallelize** if `--all` or the diff scope spans >5 modules: spawn one sub-agent per category, each scanning across the scope. Merge and deduplicate findings.
-6. **External opinions** (if `--multi`): invoke `second-opinion --quick`. Phrase the diff source according to the resolved scope (`git diff --cached` for `--staged`, `git diff` for `--changed`, the whole repository for `--all`):
+6. **External opinions** (if `--multi`): invoke `second-opinion --quick`, which queries every advisor it has configured, in parallel (the roster lives in the `second-opinion` skill). Phrase the diff source according to the resolved scope (`git diff --cached` for `--staged`, `git diff` for `--changed`, the whole repository for `--all`):
 
 ```
 Read-only architecture review. Review the architecture of the <diff source> and their surrounding modules in this repository. Focus on: module boundaries and coupling, layering violations, pattern consistency, support for stated quality attributes (scalability, resilience, evolvability), and architectural smells (god modules, circular deps, leaky abstractions, manager classes, modular mirage). Provide a focused review in 300 words or less.
@@ -165,11 +165,13 @@ If `--multi` was used, append:
 ```markdown
 ### External Opinions
 
-#### Codex
-{codex_response}
+Add one subsection per advisor that responded, titled with the advisor's name as reported by `second-opinion`:
+
+#### {advisor name}
+{that advisor's review}
 
 #### Cross-Model Agreement
-{areas where Codex agrees/disagrees with the Claude review — consensus issues get higher confidence}
+{areas where the external advisors agree/disagree with the Claude review — consensus issues (flagged by multiple models) get higher confidence}
 ```
 
 ## Examples
@@ -187,7 +189,7 @@ Parallel agents per category. Finds `lib/utils.ts` imported by 80+ files and its
 **Cross-model architecture review on a contested refactor:**
 > /review-architecture --multi --staged
 
-Runs the 6-category review plus Codex. Cross-model agreement highlights that both reviewers flag the same circular dependency between `orders` and `billing`, raising confidence.
+Runs the 6-category review plus the external advisors. Cross-model agreement highlights that multiple reviewers flag the same circular dependency between `orders` and `billing`, raising confidence.
 
 ## Troubleshooting
 

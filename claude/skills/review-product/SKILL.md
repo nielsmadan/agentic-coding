@@ -30,7 +30,7 @@ sync with the implementation. This skill owns `docs/product/` and does not write
 ```
 review-product                 # codebase + product description (default)
 review-product --live          # also drive the running app to verify real behavior (slow)
-review-product --multi         # add a second-model opinion (Codex) on the findings
+review-product --multi         # add external advisor opinions on the findings
 review-product checkout flow   # scope the review to a feature/area
 ```
 
@@ -40,7 +40,7 @@ review-product checkout flow   # scope the review to a feature/area
 |----------|-----------------|------|
 | (none) | Infers the experience from the **codebase + any product description** (README, PRD, CLAUDE.md, docs). Default. | Fast |
 | `--live` | Adds to the default: launches/exercises the **running app** to confirm what really happens (use `run` or browser tooling). Don't assume — observe. | Slow |
-| `--multi` | After the review, calls `second-opinion --quick` with the findings and adds a short cross-model section. | +1 model |
+| `--multi` | After the review, calls `second-opinion --quick` with the findings and adds a short cross-model section. | +external advisors |
 | free text | Scopes persona/use-cases/audit to the named feature or area instead of the whole product. | — |
 
 `--live` is opt-in because exercising the app is slow; the default reasons from
@@ -111,8 +111,10 @@ Create a TodoWrite item per step.
 ### Step 6 — Write the review
 - Run `date +%F` to get today's date. Write the review to
   `docs/product/<date>-review.md` using the Output Format below.
-- If `--multi`, call `second-opinion --quick` with a summary of the findings and
-  append a short "Second opinion" section (agreements / dissent / additions).
+- If `--multi`, call `second-opinion --quick` (which queries every advisor it has
+  configured, in parallel) with a summary of the findings and append a short
+  "Second opinion" section (agreements / dissent / additions), attributing points
+  to each advisor that responded by name.
 - Give the user an inline summary: the headline finding, the top 3 prioritized
   recommendations, and the path to the written review.
 
@@ -169,7 +171,7 @@ persona on their primary job, and the single most important thing to change.
 - Use cases with no PRD coverage / PRD features with no use case (from Step 7).
 
 ## Second opinion   (only with --multi)
-- Agreements / dissent / additions from Codex.
+- Agreements / dissent / additions from each advisor that responded, attributed by name. Note where multiple advisors converge — consensus raises confidence.
 
 ## Verify with users / open questions
 - Assumptions that real user behavior or `--live` testing would confirm.
@@ -196,8 +198,9 @@ email-verification step dead-ends on mobile (Critical) and time-to-first-value i
 ### Example 3: Cross-model check before a roadmap meeting
 User says: "review product --multi"
 Actions: Run the full review, then pass the findings to `second-opinion --quick`.
-Codex agrees on the missing undo, dissents on severity of one item, adds a
-discoverability gap. Append the "Second opinion" section.
+The advisors variously agree on the missing undo, dissent on severity of one item,
+and add a discoverability gap. Append the "Second opinion" section attributing each
+point to the advisor that raised it.
 
 ## Troubleshooting
 
