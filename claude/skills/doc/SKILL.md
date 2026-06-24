@@ -1,31 +1,35 @@
 ---
 name: doc
-description: "Documentation review (--review, default), update (--update), generation (--generate), or harvest a session log into the docs (--session). Scope --staged, --all, or context. For doc quality, freshness, and creation."
-argument-hint: "[--review | --update | --generate <target> | --session --md <file>] [--staged | --all]"
+description: "Assess documentation state and run the right action (default, no args): survey what exists, find gaps / staleness / quality issues, then route into generate, update, or review. Explicit modes: review (--review), update (--update), generate (--generate <target>), harvest a session log (--session). Scope --staged, --all, or context. Use when unsure what the docs need, or for doc creation, freshness, and quality."
+argument-hint: "[ (no args = assess) | --review | --update | --generate <target> | --session --md <file>] [--staged | --all]"
 ---
 
 # Doc
 
-Review, update, and generate documentation following consistent principles.
+Assess, review, update, and generate documentation following consistent principles.
 
 ## Modes
 
-All three modes share one engine — *compare the docs against the current code
+All modes share one engine — *compare the docs against the current code
 reality* — and differ only in what they do with the result:
 
 | Mode | Intent | Writes? | Default scope |
 |------|--------|---------|---------------|
-| `--review` (default) | Assess accuracy / completeness / quality | No → findings, then interactive apply | context (or `<target>`) |
+| **(no args) — assess** | Survey docs state, propose & run an action plan | No → plan, then runs your picks | whole docs tree + key source |
+| `--review [target]` | Assess accuracy / completeness / quality | No → findings, then interactive apply | context (or `<target>`) |
 | `--update [target]` | Sync existing docs to current code | Yes — in place, replace stale parts | staged code, falling back to unstaged |
 | `--generate <target>` | Create docs that don't exist yet | Yes — new files | the target |
 
-`--review` and `--update` are the same comparison; review reports and lets you pick
-what to apply, update applies directly from a diff. `--generate` is for greenfield.
+**Assess is the default.** Use it when you don't know what the docs need — it
+surveys, classifies, and routes into the three modes below. `--review` and
+`--update` are the same comparison (review reports and lets you pick what to
+apply; update applies directly from a diff); `--generate` is for greenfield.
 
 ## Usage
 
 ```
-/doc                              # Review docs related to current context (default)
+/doc                              # Assess docs state, propose an action plan, run your picks (default)
+/doc --staged                     # Assess, but scoped to what staged changes touch
 /doc --review payments            # Review docs for a feature, then pick fixes to apply
 /doc --review --all               # Review all docs (parallel agents)
 /doc --update                     # Sync docs for staged code changes (end of a feature)
@@ -86,6 +90,72 @@ All modes follow these. Review checks conformance; update and generate apply the
   skill) are owned elsewhere and not code-derived. `doc` leaves them alone: exclude
   them from `--all` and never sync them to code. `docs/prd/` *is* `doc`'s — the
   product-behavior layer it keeps in sync with the implementation.
+
+## Assess Mode (default)
+
+The no-args entry point. Use it when you don't know what the docs need: it
+surveys the current state, classifies what's required, hands you a prioritized
+action plan, then runs the parts you choose by delegating to the other modes.
+It never writes without your go-ahead — the plan comes first.
+
+### Workflow
+
+1. **Survey the landscape.** Establish what exists:
+   - `docs/` present? Root `docs/overview.md`? Per-subdir `overview.md`?
+     `README.md`? A `## Documentation` note in `CLAUDE.md`/`AGENTS.md`?
+   - Glob `docs/**/*.md` (exclude `docs/explain/`, `docs/product/` — owned
+     elsewhere); note the count and tree.
+   - Sketch the code surface worth documenting: top-level modules, features,
+     services, APIs.
+   - For a large tree (>~15 docs or a big codebase), fan out — one sub-agent per
+     check in step 2 — and merge.
+
+2. **Classify the situation:**
+   - **No docs (or only a stub):** greenfield. Don't propose documenting
+     everything — pick a starter set (root `overview.md` + the few
+     highest-value modules) and route those to **Generate**.
+   - **Docs exist:** run the three checks that map to the three actions:
+     - **Gaps → Generate.** Key source areas with no doc; a missing root or
+       subdir `overview.md`.
+     - **Staleness → Update.** Docs whose code changed after the doc was last
+       touched (`git log -1 --format=%cd -- <doc>` vs recent commits to the code
+       it covers), and docs referencing files / `file:line` / symbols that no
+       longer exist.
+     - **Quality → Review.** A light principles pass: local paths, restated
+       signatures, verbatim duplication, placeholders/TODOs, missing required
+       sections.
+
+3. **Report state + action plan.** One categorized, sequentially-numbered list:
+   ```markdown
+   ## Docs Assessment: {repo/scope}
+   State: {N docs · overview index present/missing · last synced ~when}
+
+   ### Generate (missing)
+   1. {area} — no doc; {why it matters}
+
+   ### Update (stale)
+   2. {doc} — {code changed / broken ref}
+
+   ### Review (quality)
+   3. {doc} — {issue}
+
+   ### Healthy
+   - {what's already fine — so the user knows it was checked}
+   ```
+   Number findings sequentially across all tiers so the user can select by number.
+
+4. **Offer to execute.** Ask which to run (numbers, `all`, or `none`;
+   multi-select where supported). Each selection runs the matching mode's logic
+   from this skill — **Generate** / **Update** / **Review** — on that target.
+   `none` → stop. Nothing is written without a selection.
+
+### Scope
+
+Defaults to the whole docs tree + key source. To bias toward recent work, add
+`--staged` / `--unpushed` (assess only what those changes touch) or a `<target>`
+(assess one feature/area).
+
+---
 
 ## Session Mode (`--session`)
 
@@ -268,6 +338,14 @@ and `references/generate-templates.md`.
 
 ## Examples
 
+**Not sure what the docs need — just triage them:**
+> /doc
+
+Surveys `docs/` (presence, overview index, tree) and the code surface, then
+reports a numbered plan: which areas have no docs (Generate), which docs are
+stale vs the code (Update), which have quality issues (Review), and what's
+healthy. Asks which to run and executes your picks in place.
+
 **Sync docs after finishing a feature:**
 > /doc --update
 
@@ -290,6 +368,18 @@ update-trigger note to the project's CLAUDE.md.
 
 ## Troubleshooting
 
+### Assess proposes documenting the entire codebase on a fresh repo
+**Cause:** Greenfield triage over-reaching. **Solution:** Assess should pick a
+*starter set* — root `overview.md` plus the few highest-value modules — not one
+doc per file. If it listed everything, narrow to the entry points and core
+modules; the rest follows as those areas are built (via `--update`/`--generate`).
+
+### Assess flags a doc as stale that's actually fine (or misses a stale one)
+**Cause:** Staleness is a heuristic (doc edit time vs code change time, broken
+refs) and can mis-fire. **Solution:** Assess only *proposes* — confirm before
+running Update. For a definitive check, run `--review <target>`, which compares
+the doc against the code directly.
+
 ### `--update` reports "nothing staged"
 **Cause:** No staged changes. **Solution:** It falls back to unstaged changes
 automatically (with a note). To target something specific, run `doc --update <feature>`
@@ -311,10 +401,13 @@ docs for key modules surface as completeness gaps.
 
 ## Notes
 
-- Default is review mode with context-based scope.
+- Default (no args) is assess mode: survey the docs state, propose an action
+  plan, and run the user's picks. It's the entry point when you don't yet know
+  what the docs need.
 - All modes share the same principles and the compare-to-code engine.
-- Use `--update` at the end of feature work; `--review` for periodic human-facing
-  audits; `--generate` only for greenfield docs.
+- Reach for an explicit mode when you already know the action: `--update` at the
+  end of feature work; `--review` for a periodic human-facing audit;
+  `--generate` for greenfield docs; assess when unsure.
 - Sub-agents parallelize large reviews/updates/generations (>5 files).
 - Three-layer model: `docs/product/` (user/why — owned by `review-product`) →
   `docs/prd/` (product behavior — owned by `doc`, this layer) → implementation.

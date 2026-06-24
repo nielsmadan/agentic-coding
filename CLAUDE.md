@@ -50,9 +50,12 @@ Available in `claude/skills/`:
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/review-plan` | Multi-agent review of implementation plans |
+| `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
+| `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
 | `/read-docs` | Search internal project documentation (proactive) |
+| `/cld-md-improver` | Audit and improve CLAUDE.md files (project-memory optimization) |
 | `/research-code` | Research a programming topic online using parallel agents |
 | `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
@@ -67,16 +70,18 @@ Available in `claude/skills/`:
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review - SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
-| `/doc` | Documentation review, update, and generation (--review, --update, --generate) |
+| `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
 | `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/test` | Test review and generation (--review, --generate) |
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
+| `/time-reconstruct` | Reconstruct what you worked on from git history for time tracking — real complexity assessment from the diff, not its size |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
 | `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
+| `/use-railway` | Operate Railway infrastructure — accounts, projects, services, deployments, buckets, domains, metrics, docs |
 | `/skill-creator` | Guide for creating skills |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 
