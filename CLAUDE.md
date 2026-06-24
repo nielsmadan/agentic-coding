@@ -61,6 +61,7 @@ Available in `claude/skills/`:
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
+| `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
 | `/review-perf` | Performance analysis (--staged, --all) |
 | `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
