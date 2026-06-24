@@ -1,18 +1,46 @@
 ---
 name: test
-description: "Test review and generation. Modes: --review (check test quality, default), --generate (create tests for code). Scope: --staged, --changed, --all, or context-based. Use for test quality and creation."
-argument-hint: "[--review | --generate <target>] [--staged | --unpushed | --changed | --all]"
+description: "Assess test state and run the right action (default, no args): run the suite, then find failures, coverage gaps, and quality issues and route into fix, generate, or review. Explicit modes: review (--review, check test quality), generate (--generate <target>, create tests). Scope: --staged, --changed, --all, or context-based. Use when unsure what the tests need, or for test quality and creation."
+argument-hint: "[ (no args = assess) | --review | --generate <target>] [--staged | --unpushed | --changed | --all]"
 ---
 
 # Test
 
-Review and generate tests following consistent principles.
+Assess, review, and generate tests following consistent principles.
+
+## Which mode runs — read first
+
+**Bare `/test` with no mode flag → Assess, over the whole suite. Always.**
+
+- Do **not** infer `--review` or `--generate` from conversation context. "We
+  just finished a feature", "just committed", or "recent changes" do **not**
+  narrow a bare `/test` — assess runs the whole suite and surveys the full state.
+- Run an explicit mode **only when the user types the flag** (`--review`,
+  `--generate`). Don't pick one for them.
+- Don't substitute "I know what's needed, so I'll just review/generate." Run the
+  full assess and let its plan (Fix/Generate/Review) surface what you'd skip.
+
+## Modes
+
+All modes share one lens — *compare the tests against the code and the
+principles* — and differ in what they do with the result:
+
+| Mode | Intent | Writes? | Default scope |
+|------|--------|---------|---------------|
+| **(no args) — assess** | Run the suite, survey failures / gaps / quality, propose & run an action plan | No → plan, then runs your picks | whole suite + code surface |
+| `--review [target]` | Check test quality against the principles | No → findings | context (or `<target>`) |
+| `--generate <target>` | Create tests for code that lacks them | Yes — new/extended test files | the target |
+
+**Assess is the default** — it's what a bare `/test` runs (see "Which mode runs"
+above). It runs the suite, classifies what's required, and routes into the modes
+below. The explicit modes are opt-in via their flag.
 
 ## Usage
 
 ```
-/test                              # Review tests related to current context (default)
-/test --review                     # Explicit review mode
+/test                              # Assess test state (run suite, find failures/gaps/issues), propose a plan, run your picks (default)
+/test --staged                     # Assess, scoped to what staged changes touch
+/test --review                     # Explicit review mode (quality only)
 /test --review --staged            # Review staged test files
 /test --review --unpushed          # Review test files changed across all unpushed commits
 /test --review --changed           # Review unstaged test files
@@ -72,9 +100,81 @@ For BAD/GOOD code examples of each principle, see `references/principles-example
 - `--staged`, `--unpushed`, and `--changed` review filter by filename pattern (`*test*`, `*spec*`). A test file in `__tests__/payment.ts` (no "test" in the filename) is missed by the glob.
 - Red-Green Verification (run → green, revert → red, re-apply → green) is described for bug fixes only, but is equally important for new feature tests to confirm the test actually validates the implementation.
 
+## Assess Mode (default)
+
+The no-args entry point. Use it when you don't know what the tests need: it
+establishes the current state of the suite, classifies what's required, hands
+you a prioritized action plan, then runs the parts you choose. It never
+generates or rewrites without your go-ahead — the plan comes first.
+
+### Workflow
+
+1. **Establish the suite state.**
+   - Detect the framework and test command (`package.json` scripts,
+     `pyproject.toml`/`pytest`, `go test`, `flutter test`, `Makefile`). Show the
+     command before running it.
+   - **Run the suite** — or the scoped subset (see Scope). Capture pass/fail
+     counts and each failure. If it's long-running, run it in the background. If
+     running isn't feasible or safe (missing deps, integration tests that hit
+     real services), say so and fall back to static analysis only.
+   - If a coverage script exists, run it (or read the latest report) for the
+     in-scope files.
+   - Map the code surface → existing tests to find untested modules/functions.
+
+2. **Classify into action lanes (priority order):**
+   - **Failing tests → Fix (top priority).** A red suite outranks everything;
+     per the repo's "all green" policy, don't generate or review on top of a
+     broken suite. List each failure as `file:test` with the error. Escalate per
+     policy: after 2 failed fix attempts use `second-opinion`, after 4 use
+     `hard-fix`; for failures waved off as "pre-existing" use `pre-existing`.
+   - **Coverage / untested code → Generate.** Functions, modules, and branches
+     with no tests; missing error paths and edge cases.
+   - **Quality issues → Review.** Existing tests that violate the principles
+     (over-mocking internals, no meaningful assertions, brittle timing,
+     order-dependence, implementation-coupling).
+
+3. **Report state + action plan.** One categorized, sequentially-numbered list:
+   ```markdown
+   ## Test Assessment: {scope}
+   State: {suite green/red — X passed, Y failed} · coverage {Z}% · {N} untested modules in scope
+
+   ### Fix (failing — do first)
+   1. {file}:{test} — {error}
+
+   ### Generate (missing)
+   2. {code_file}:{fn} — no tests / missing {edge case}
+
+   ### Review (quality)
+   3. {test_file} — {smell}
+
+   ### Healthy
+   - {what's already solid — so the user knows it was checked}
+   ```
+   Always emit *this* assess report (titled **Test Assessment**) with **every
+   lane present even when empty** (write "none — …" with the reason). Don't let
+   a passing suite collapse assess into a plain quality review and skip the
+   **Generate** (coverage/gaps) lane — checking existing tests is only one lane.
+   Number actionable findings sequentially across tiers so the user can select by number.
+
+4. **Offer to execute.** Ask which to run (numbers, `all`, or `none`;
+   multi-select where supported). **Generate** and **Review** run the matching
+   mode's logic from this skill; **Fix** drives the failing tests back to green
+   (escalating per the policy above). `none` → stop. Nothing is generated or
+   rewritten without a selection.
+
+### Scope
+
+Defaults to the whole suite + code surface. To bias toward recent work, add
+`--staged` / `--unpushed` / `--changed` (assess only what those changes touch —
+run just those tests, check coverage/gaps there) or a `<target>` (assess one
+feature/area).
+
+---
+
 ## Review Mode (`--review`)
 
-Default mode. Checks tests against the principles above.
+Checks tests against the principles above. (Assess routes here for the quality
+lane; run it explicitly to review without running the suite first.)
 
 ### Scope
 
@@ -228,6 +328,15 @@ Generating tests following these patterns...
 
 ## Examples
 
+**Not sure what the tests need — just triage them:**
+> /test
+
+Detects the framework, runs the suite, and checks coverage, then reports a
+numbered plan: failing tests to fix first, untested code to generate tests for,
+and existing tests with quality smells to review — plus what's already solid.
+Asks which to run and executes your picks (fixing red tests, generating, or
+reviewing).
+
 **Generate tests for a payment function:**
 > /test --generate lib/services/payment.ts
 
@@ -246,10 +355,26 @@ Reviews staged test files against the testing principles. Flags tests that mock 
 ### Cannot detect the project's test framework
 **Solution:** Ensure a framework config file exists (`jest.config.*`, `vitest.config.*`, `pytest.ini`, or `pyproject.toml` with pytest section). If the project uses a non-standard setup, run `test --generate <target>` and specify the framework in your prompt.
 
+### Assess wants to run a slow suite, or one that hits real services
+**Cause:** Assess runs the suite to establish state. **Solution:** Scope it
+(`/test --staged` or a `<target>`) to run only the relevant tests, let it run in
+the background, or — if running isn't safe — tell it to skip the run and do a
+static gap/quality assessment instead.
+
+### Assess proposes generating tests while the suite is red
+**Cause:** Misread priority. **Solution:** The plan orders **Fix** before
+**Generate** for a reason — don't pile new tests on a broken suite. Fix the
+failures first, then re-assess for gaps.
+
 ## Notes
 
-- Default is review mode with context-based scope
-- Both modes use the same principles - review checks, generate applies
+- Default (no args) is assess mode: run the suite, survey failures/gaps/quality,
+  propose a plan, and run the user's picks. It's the entry point when you don't
+  yet know what the tests need.
+- All modes share the same principles — review checks, generate applies, assess
+  triages and routes.
+- Reach for an explicit mode when you already know the action: `--review` for a
+  quality pass; `--generate <target>` for new tests; assess when unsure.
 - Use `--staged` before commits to catch issues or generate missing tests
 - Use `--all` periodically for comprehensive review
 - Sub-agents parallelize large reviews/generations

@@ -8,6 +8,22 @@ argument-hint: "[ (no args = assess) | --review | --update | --generate <target>
 
 Assess, review, update, and generate documentation following consistent principles.
 
+## Which mode runs — read first
+
+**Bare `/doc` with no mode flag → Assess, over the whole repo. Always.**
+
+- Do **not** infer `--update` or `--review` from conversation context. "We just
+  finished a feature", "just committed", or "recent changes" do **not** narrow a
+  bare `/doc` — assess surveys the *entire* docs state. Bare `/doc` is **not**
+  the end-of-feature sync.
+- Run an explicit mode **only when the user types the flag** (`--update`,
+  `--review`, `--generate`, `--session`). Don't pick one for them.
+- Don't substitute "I know what's needed, so I'll just update/review." That
+  shortcut is exactly the bug assess exists to prevent — run the full assess and
+  let its plan (which includes Generate/structure) surface what you'd skip.
+- If you catch yourself about to run update or review from a bare `/doc`, stop
+  and run assess instead.
+
 ## Modes
 
 All modes share one engine — *compare the docs against the current code
@@ -20,10 +36,11 @@ reality* — and differ only in what they do with the result:
 | `--update [target]` | Sync existing docs to current code | Yes — in place, replace stale parts | staged code, falling back to unstaged |
 | `--generate <target>` | Create docs that don't exist yet | Yes — new files | the target |
 
-**Assess is the default.** Use it when you don't know what the docs need — it
-surveys, classifies, and routes into the three modes below. `--review` and
-`--update` are the same comparison (review reports and lets you pick what to
-apply; update applies directly from a diff); `--generate` is for greenfield.
+**Assess is the default** — it's what a bare `/doc` runs (see "Which mode runs"
+above). It surveys, classifies, and routes into the three modes below. The
+explicit modes are opt-in via their flag: `--review` and `--update` are the same
+comparison (review reports and lets you pick what to apply; update applies
+directly from a diff); `--generate` is for greenfield.
 
 ## Usage
 
@@ -86,9 +103,12 @@ All modes follow these. Review checks conformance; update and generate apply the
   review. If the code is revised but the docs are committed alongside, they drift.
 - `--all` scope includes CLAUDE.md — the skill may propose edits to the project
   instructions file that governs its own behavior.
-- `docs/explain/` (the `explain` skill) and `docs/product/` (the `review-product`
-  skill) are owned elsewhere and not code-derived. `doc` leaves them alone: exclude
-  them from `--all` and never sync them to code. `docs/prd/` *is* `doc`'s — the
+- `docs/explain/` (the `explain` skill), `docs/product/` (the `review-product`
+  skill), and frozen planning artifacts like `docs/superpowers/` (plans/specs)
+  are owned elsewhere / not code-derived. `doc` leaves them alone: exclude them
+  from `--all` and never sync them to code. Crucially, their presence does **not**
+  count as a docs tree — a repo whose only `docs/` content is `docs/superpowers/`
+  is greenfield for assess's purposes. `docs/prd/` *is* `doc`'s — the
   product-behavior layer it keeps in sync with the implementation.
 
 ## Assess Mode (default)
@@ -100,49 +120,73 @@ It never writes without your go-ahead — the plan comes first.
 
 ### Workflow
 
-1. **Survey the landscape.** Establish what exists:
-   - `docs/` present? Root `docs/overview.md`? Per-subdir `overview.md`?
-     `README.md`? A `## Documentation` note in `CLAUDE.md`/`AGENTS.md`?
-   - Glob `docs/**/*.md` (exclude `docs/explain/`, `docs/product/` — owned
-     elsewhere); note the count and tree.
-   - Sketch the code surface worth documenting: top-level modules, features,
-     services, APIs.
+1. **Survey the landscape.** Separate the **two doc layers** — they're assessed
+   differently and conflating them is the classic mistake (a repo with a README
+   looks "documented" when it has no real docs tree):
+   - **Ad-hoc top-level docs** — `README.md`, `CLAUDE.md`, `AGENTS.md`. Nearly
+     every repo has these; their existence does **not** mean the project has a
+     docs tree.
+   - **Structured `docs/` tree** — `docs/prd/` (product behavior), `docs/tech/`
+     (implementation), `docs/features/`, `docs/api/`, with `overview.md`
+     indexes. This is the layer `--update`/`--generate` maintain.
+   - **Owned elsewhere / frozen — do NOT count as the structured layer:**
+     `docs/explain/` (the `explain` skill), `docs/product/` (`review-product`),
+     and frozen planning artifacts like `docs/superpowers/` (plans/specs). Their
+     presence does **not** make a project "documented" — exclude them from the
+     glob and never sync them to code.
+   - Glob `docs/**/*.md` (minus the excluded dirs); note count and tree. Sketch
+     the code surface worth documenting: top-level modules, features, services,
+     APIs.
    - For a large tree (>~15 docs or a big codebase), fan out — one sub-agent per
      check in step 2 — and merge.
 
-2. **Classify the situation:**
-   - **No docs (or only a stub):** greenfield. Don't propose documenting
-     everything — pick a starter set (root `overview.md` + the few
-     highest-value modules) and route those to **Generate**.
-   - **Docs exist:** run the three checks that map to the three actions:
-     - **Gaps → Generate.** Key source areas with no doc; a missing root or
-       subdir `overview.md`.
-     - **Staleness → Update.** Docs whose code changed after the doc was last
-       touched (`git log -1 --format=%cd -- <doc>` vs recent commits to the code
-       it covers), and docs referencing files / `file:line` / symbols that no
-       longer exist.
-     - **Quality → Review.** A light principles pass: local paths, restated
-       signatures, verbatim duplication, placeholders/TODOs, missing required
-       sections.
+2. **Run all three checks and reach a verdict for EACH lane.** Never silently
+   skip a lane: if a lane has nothing, say so *and why* (this is what stops
+   assess from quietly collapsing into "just review the existing docs").
+   - **Gaps → Generate.** *The lane most often missed.* First answer the
+     structure question explicitly: **is there a structured `docs/` tree
+     (`docs/prd` and/or `docs/tech`)?** If not — only top-level docs and/or
+     frozen artifacts — decide *out loud* whether to propose creating one
+     (`docs/prd/` for what each feature does, `docs/tech/` for how it's built),
+     sized to the project:
+       - Non-trivial app/library (multiple features or modules) → **recommend
+         generating** the starter structure (root `docs/overview.md` + a
+         `docs/prd` and/or `docs/tech` seed for the highest-value areas).
+       - Tiny project where `README` + `CLAUDE.md` genuinely cover everything →
+         record it as **considered and skipped, with the reason** — do not just
+         omit it. The user decides if it's worth it.
+     Then the ordinary gaps: source areas with no doc, missing `overview.md`.
+     Don't over-reach to one-doc-per-file.
+   - **Staleness → Update.** Docs whose code changed after the doc was last
+     touched (`git log -1 --format=%cd -- <doc>` vs recent commits to the code
+     it covers), and docs referencing files / `file:line` / symbols that no
+     longer exist.
+   - **Quality → Review.** A light principles pass: local paths, restated
+     signatures, verbatim duplication, placeholders/TODOs, missing required
+     sections.
 
-3. **Report state + action plan.** One categorized, sequentially-numbered list:
+3. **Report state + action plan.** Always emit *this* assess report (titled
+   **Docs Assessment**) — not a plain "Documentation Review". Reviewing existing
+   docs is only the Quality lane; it must never replace the Generate (structure/
+   gaps) and Update (staleness) lanes. One categorized, sequentially-numbered
+   list, with **every lane present even when empty**:
    ```markdown
    ## Docs Assessment: {repo/scope}
-   State: {N docs · overview index present/missing · last synced ~when}
+   State: {top-level docs: README/CLAUDE/AGENTS present?} · {structured docs tree: yes / NONE (only top-level + frozen artifacts)} · {N living docs · overview index present/missing}
 
-   ### Generate (missing)
-   1. {area} — no doc; {why it matters}
+   ### Generate (missing / structure)
+   1. {e.g. "No docs/ tree — recommend docs/prd + docs/tech seed" OR "Considered a docs/ tree — skipped: small library, README+CLAUDE cover it"}
 
    ### Update (stale)
-   2. {doc} — {code changed / broken ref}
+   2. {doc} — {code changed / broken ref}   (or: "none — docs match code")
 
    ### Review (quality)
-   3. {doc} — {issue}
+   3. {doc} — {issue}   (or: "none — checked, conforms")
 
    ### Healthy
    - {what's already fine — so the user knows it was checked}
    ```
-   Number findings sequentially across all tiers so the user can select by number.
+   Number actionable findings sequentially across tiers so the user can select by number.
 
 4. **Offer to execute.** Ask which to run (numbers, `all`, or `none`;
    multi-select where supported). Each selection runs the matching mode's logic
@@ -373,6 +417,16 @@ update-trigger note to the project's CLAUDE.md.
 *starter set* — root `overview.md` plus the few highest-value modules — not one
 doc per file. If it listed everything, narrow to the entry points and core
 modules; the rest follows as those areas are built (via `--update`/`--generate`).
+
+### Assess only reviewed the existing docs and never considered creating a `docs/` tree
+**Cause:** Top-level docs (README/CLAUDE/AGENTS) — or frozen `docs/superpowers/`
+artifacts — made it conclude "docs exist, just check them," collapsing into a
+plain review and skipping the **Generate** lane. **Solution:** Assess must reach
+a verdict on *every* lane, including the structure question ("is there a
+`docs/prd`/`docs/tech` tree? if not, recommend one or record why it's skipped").
+A README is not a docs tree; frozen plan/spec artifacts don't count. If assess
+output is titled "Documentation Review" rather than "Docs Assessment," it ran the
+wrong mode — re-run bare `/doc`.
 
 ### Assess flags a doc as stale that's actually fine (or misses a stale one)
 **Cause:** Staleness is a heuristic (doc edit time vs code change time, broken
