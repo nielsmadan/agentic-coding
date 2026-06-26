@@ -1,5 +1,6 @@
 # Single-shot "describe a shell command in English, get it on the prompt" helpers.
-# Backed by three different LLM CLIs. Output lands on the zle buffer via `print -z`
+# Backed by four different LLM CLIs (apfli runs Apple's on-device model, fully
+# offline). Output lands on the zle buffer via `print -z`
 # so the user can edit before executing — that's why this stays in zsh.
 
 _llmcli() {
@@ -29,6 +30,11 @@ _llmcli() {
       result=$(opencode run -m openrouter/z-ai/glm-5 \
         "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input" | tail -1)
       ;;
+    apfli)
+      result=$(apfel -q --temperature 0 \
+        -s "You are a shell command generator. Return ONLY a single shell command. No explanation, no markdown, no code blocks." \
+        -- "$input")
+      ;;
     *)
       echo "_llmcli: unknown backend '$backend'" >&2
       return 2
@@ -41,6 +47,8 @@ _llmcli() {
 _ccli()  { _llmcli ccli  "$@" }
 _cxcli() { _llmcli cxcli "$@" }
 _occli() { _llmcli occli "$@" }
+_apfli() { _llmcli apfli "$@" }
 alias ccli='noglob _ccli'
 alias cxcli='noglob _cxcli'
 alias occli='noglob _occli'
+alias apfli='noglob _apfli'
