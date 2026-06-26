@@ -20,11 +20,13 @@ mirrors Claude Code's own slug function exactly.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
 import sys
 import textwrap
+from datetime import datetime
 from pathlib import Path
 
 SLUG_MAX_LEN = 200  # Claude Code truncates longer slugs and appends a hash.
@@ -96,6 +98,132 @@ def merge_dir(src_dir: Path, tgt_dir: Path) -> tuple[int, list[tuple[str, str]]]
     return moved, renamed
 
 
+# Durable name entries Claude Code appends to a transcript. A session can be
+# renamed repeatedly, so each may appear many times; the last value is current.
+NAME_KEYS = ("customTitle", "agentName", "aiTitle")
+
+
+def session_names(jsonl_path: Path) -> tuple[set[str], str]:
+    """Return (all_names, current_name) for a session transcript.
+
+    Scans the name entries Claude Code writes — customTitle (/rename), agentName,
+    aiTitle. `all_names` is every name the session has ever carried (rename
+    history included); `current` is the latest customTitle, else agentName, else
+    aiTitle. Matching on the full history is what lets a since-renamed session
+    still resolve by an older name (e.g. its original --name / resume name).
+    """
+    all_names: set[str] = set()
+    latest: dict[str, str] = {}
+    try:
+        with open(jsonl_path, encoding="utf-8") as f:
+            for line in f:
+                if 'Title"' not in line and 'Name"' not in line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                for k in NAME_KEYS:
+                    v = entry.get(k)
+                    if isinstance(v, str) and v:
+                        all_names.add(v)
+                        latest[k] = v
+    except OSError:
+        return set(), ""
+    current = latest.get("customTitle") or latest.get("agentName") or latest.get("aiTitle") or ""
+    return all_names, current
+
+
+def registry_names() -> dict[str, str]:
+    """Map sessionId -> launch/resume name from ~/.claude/sessions/*.json.
+
+    This is the `--name` / `claude --resume "<name>"` identifier. It's runtime
+    state (pruned for stopped sessions), so it only augments the durable
+    transcript names — it isn't relied on alone.
+    """
+    out: dict[str, str] = {}
+    sessions = Path.home() / ".claude" / "sessions"
+    if not sessions.is_dir():
+        return out
+    for p in sessions.glob("*.json"):
+        try:
+            d = json.loads(p.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        sid, name = d.get("sessionId"), d.get("name")
+        if sid and name:
+            out[sid] = name
+    return out
+
+
+def find_session(src_dir: Path, query: str):
+    """Locate the single session matching `query`, returning (jsonl, candidates).
+
+    Precedence: an exact sessionId (filename stem) wins; then an exact match
+    (case-insensitive) against any name the session carries — customTitle,
+    agentName, aiTitle, or its --resume name; only if neither is unique do we
+    fall back to sessionId prefix and name substring. Exactly one match returns
+    (path, []). Zero or many returns (None, candidates), candidates being
+    (sessionId, current_name, mtime) tuples sorted newest-first.
+    """
+    jsonls = sorted(p for p in src_dir.glob("*.jsonl") if p.is_file())
+    for p in jsonls:
+        if p.stem == query:
+            return p, []
+    reg = registry_names()
+    q = query.lower()
+    info: dict[Path, tuple[set[str], str, float]] = {}
+    for p in jsonls:
+        names, current = session_names(p)
+        if p.stem in reg:
+            names = names | {reg[p.stem]}
+            current = current or reg[p.stem]
+        info[p] = ({n.lower() for n in names}, current, p.stat().st_mtime)
+
+    exact = [p for p in jsonls if q in info[p][0]]
+    if len(exact) == 1:
+        return exact[0], []
+    matches = [p for p in jsonls
+               if p.stem.startswith(query) or any(q in n for n in info[p][0])]
+    if len(matches) == 1:
+        return matches[0], []
+    # Report the exact-name set when it's the source of ambiguity, else the
+    # broader substring matches.
+    pool = exact or matches
+    cands = sorted(((p.stem, info[p][1], info[p][2]) for p in pool),
+                   key=lambda c: c[2], reverse=True)
+    return None, cands
+
+
+def free_stem(directory: Path, stem: str) -> str:
+    # First `<stem>-N` whose `.jsonl` and sidecar dir are both free in directory.
+    i = 1
+    while True:
+        cand = f"{stem}-{i}"
+        if not (directory / f"{cand}.jsonl").exists() and not (directory / cand).exists():
+            return cand
+        i += 1
+
+
+def move_one_session(src_dir: Path, tgt_dir: Path, jsonl: Path) -> tuple[str, str, bool]:
+    # Move one session (its .jsonl and optional `<sessionId>/` sidecar dir) into
+    # tgt_dir. On a name collision, rename both to `<stem>-N` and rewrite the
+    # .jsonl's internal sessionId to match. Returns (old_stem, new_stem, renamed).
+    stem = jsonl.stem
+    sidecar = src_dir / stem
+    has_sidecar = sidecar.is_dir()
+    collision = (tgt_dir / f"{stem}.jsonl").exists() or (has_sidecar and (tgt_dir / stem).exists())
+    new_stem = free_stem(tgt_dir, stem) if collision else stem
+
+    dest_jsonl = tgt_dir / f"{new_stem}.jsonl"
+    shutil.move(str(jsonl), str(dest_jsonl))
+    if collision:
+        dest_jsonl.write_text(dest_jsonl.read_text().replace(stem, new_stem))
+    if has_sidecar:
+        shutil.move(str(sidecar), str(tgt_dir / new_stem))
+    return stem, new_stem, collision
+
+
 def normalize(p: Path) -> Path:
     # abspath: expand to absolute and normalize ., .. — without following symlinks
     # (matches the zsh `:a` modifier used in the previous implementation).
@@ -111,6 +239,11 @@ def main() -> int:
               - By default, operates on session storage only. Move the actual
                 project folder yourself (mv, git mv, etc.) before or after
                 running ccmove, or pass --include-dir to move it too.
+              - With -n/--name, only the one matching session (its .jsonl plus
+                any `<sessionId>/` sidecar dir) is moved; the rest of the
+                source's sessions stay put. Match is by sessionId, a unique
+                sessionId prefix, or session name — the --resume name, /rename
+                title, or ai-title (current or any past name), exact-match first.
               - If the target session dir exists, its sessions are kept and the
                 source's are merged in (colliding files are renamed).
               - JSONL transcripts are NOT rewritten, except a colliding merged
@@ -129,7 +262,12 @@ def main() -> int:
                     help="target project directory (new path)")
     ap.add_argument("-d", "--include-dir", action="store_true",
                     help="also move the project folder on disk (source -> target)")
-    ap.add_argument("-n", "--dry-run", action="store_true",
+    ap.add_argument("-n", "--name", dest="session", metavar="SESSION",
+                    help="move only the one session matching SESSION (sessionId, "
+                         "unique sessionId prefix, or session name — the --resume "
+                         "name, /rename title, or ai-title, current or historical) "
+                         "instead of the whole project's session storage")
+    ap.add_argument("--dry-run", action="store_true",
                     help="print planned move, don't run")
     args = ap.parse_args()
 
@@ -155,6 +293,57 @@ def main() -> int:
     if not src_dir.is_dir():
         print(f"ccmove: source session dir does not exist: {src_dir}", file=sys.stderr)
         return 1
+
+    if args.session is not None:
+        if args.include_dir:
+            print("ccmove: -n/--name moves a single session and can't be combined with "
+                  "-d/--include-dir", file=sys.stderr)
+            return 1
+        jsonl, candidates = find_session(src_dir, args.session)
+        if jsonl is None:
+            if candidates:
+                print(f"ccmove: {len(candidates)} sessions match {args.session!r}; "
+                      "pass a sessionId (or prefix) to pick one:", file=sys.stderr)
+                for i, (sid, title, mtime) in enumerate(candidates):
+                    when = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+                    tag = "  <- most recently active" if i == 0 else ""
+                    print(f"  {sid}  {when}  {title}{tag}".rstrip(), file=sys.stderr)
+            else:
+                print(f"ccmove: no session in {src_dir} matched {args.session!r}",
+                      file=sys.stderr)
+            return 1
+
+        stem = jsonl.stem
+        has_sidecar = (src_dir / stem).is_dir()
+        label = f"session {stem}" + (" (+ sidecar dir)" if has_sidecar else "")
+        if args.dry_run:
+            collision = tgt_dir.exists() and (
+                (tgt_dir / f"{stem}.jsonl").exists()
+                or (has_sidecar and (tgt_dir / stem).exists())
+            )
+            print("ccmove: dry-run — would run:")
+            if collision:
+                new_stem = free_stem(tgt_dir, stem)
+                print(f"  move {label} into {tgt_dir} as {new_stem} "
+                      "(renamed on collision, sessionId rewritten)")
+            else:
+                where = "existing " if tgt_dir.exists() else "new "
+                print(f"  move {label} into {where}{tgt_dir}")
+            return 0
+
+        tgt_dir.mkdir(parents=True, exist_ok=True)
+        old_stem, new_stem, renamed = move_one_session(src_dir, tgt_dir, jsonl)
+        if renamed:
+            print(f"ccmove: moved session {old_stem} -> {tgt_dir}/{new_stem} "
+                  "(renamed on collision, sessionId rewritten)")
+        else:
+            print(f"ccmove: moved session {new_stem} to {tgt_dir}")
+        if has_sidecar:
+            print("  included session sidecar directory (subagents/tool-results)")
+        print("  note: JSONL transcript retains old absolute paths in its history;")
+        print("        cwd for new turns will reflect the new project path.")
+        return 0
+
     # An existing target session dir is merged into; the on-disk project folder
     # is never merged — refuse if its target already exists.
     if args.include_dir:
