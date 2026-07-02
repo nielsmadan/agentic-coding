@@ -12,6 +12,7 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Antigravity, 
 /
 ├── claude/           # Claude Code + Claude Desktop configuration
 │   ├── settings.json # Hooks, status line; permissions.* arrays are GENERATED
+│   ├── CLAUDE.md, CLAUDE.autonomous.md  # global Claude guidance — GENERATED (see Global Instructions)
 │   ├── skills/       # Claude Code skills (<name>/SKILL.md)
 │   ├── desktop/      # Claude Desktop skills (zip-and-upload)
 │   └── hooks/        # Shell scripts for event triggers
@@ -25,6 +26,10 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Antigravity, 
 ├── permissions/      # Single source of truth for agent permissions
 │   ├── permissions.toml  # the source — edit this
 │   └── sync.py           # regenerates every agent's permission config
+├── global/           # Single source of truth for agents' GLOBAL instructions
+│   ├── fragments/    # shared prose sections — edit these
+│   ├── sync.py       # assembles fragments into each agent's global instruction file
+│   └── AGENTS.md     # GENERATED shared file for every non-Claude agent → ~/.codex/AGENTS.md + ~/.gemini/GEMINI.md
 ├── docs/             # Documentation
 └── CLAUDE.md         # Main project instructions
 ```
@@ -37,6 +42,19 @@ generated permission files (`claude/settings.json` permission arrays,
 `codex/rules/permissions.rules`, `antigravity/settings.json`, `opencode/opencode.json`
 `permission.bash`) — a lefthook pre-commit hook (`sync.py --check`) rejects drift.
 To change permissions: edit the TOML, run `python3 permissions/sync.py`.
+
+## Global Instructions
+
+Each agent's global (machine-wide) natural-language guidance is generated from the
+fragments in **`global/fragments/`** by `global/sync.py` — the same generate-and-check
+pattern as permissions. Never hand-edit the generated files (`claude/CLAUDE.md`,
+`claude/CLAUDE.autonomous.md`, `global/AGENTS.md`); a lefthook hook
+(`global/sync.py --check`) rejects drift. To change global guidance: edit a fragment,
+run `python3 global/sync.py`. Only Claude gets its own file (it needs the Jina section
+and the autonomous variant); every other agent shares `global/AGENTS.md`, symlinked to
+`~/.codex/AGENTS.md` and `~/.gemini/GEMINI.md`. A generator (not native `@imports`) is
+used because Codex and OpenCode have no in-file import mechanism. OpenCode has no file
+of its own — it inherits `~/.claude/CLAUDE.md`.
 
 ## Build/Lint/Test Commands
 

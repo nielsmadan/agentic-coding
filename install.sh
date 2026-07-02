@@ -44,8 +44,11 @@ SYMLINKS=(
   "$CLAUDEMD_SRC:$HOME/.claude/CLAUDE.md"
   # Codex
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
+  "$SCRIPT_DIR/global/AGENTS.md:$HOME/.codex/AGENTS.md"
   # Antigravity (agy) — replaced Gemini CLI in May 2026
   "$SCRIPT_DIR/antigravity/settings.json:$HOME/.gemini/antigravity-cli/settings.json"
+  # agy reads global instructions from ~/.gemini/GEMINI.md — same shared file as Codex
+  "$SCRIPT_DIR/global/AGENTS.md:$HOME/.gemini/GEMINI.md"
   # OpenCode
   "$SCRIPT_DIR/opencode/opencode.json:$HOME/.opencode/opencode.json"
   # Shell
@@ -228,10 +231,34 @@ generate_permissions() {
   fi
 }
 
+generate_global() {
+  local script="$SCRIPT_DIR/global/sync.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  Global-instructions generator not found: $script (skipping)"
+    return
+  fi
+
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping global-instructions generation"
+    echo "    (the committed instruction files will be used as-is)"
+    return
+  fi
+
+  echo "Generating global agent instructions from global/fragments/..."
+  if python3 "$script"; then
+    echo "✓  Global instructions up to date"
+  else
+    echo "⚠️  Global-instructions generation failed — using committed files"
+  fi
+}
+
 echo "Installing agentic coding config... (${PROFILE} profile)"
 echo ""
 
 generate_permissions
+echo ""
+generate_global
 echo ""
 
 for entry in "${SYMLINKS[@]}"; do
@@ -242,6 +269,16 @@ done
 
 install_codex_skills
 
+# HTTP MCP servers to register at user scope. Each entry is
+# "name|url|ENV_VAR" — the token is read from ENV_VAR at runtime via Claude
+# Code's ${...} header interpolation (the value is never stored in config).
+# The matching secret must be in the SOPS store so the claude wrapper injects
+# it; see ~/rc/CLAUDE.md.
+CLAUDE_MCP_SERVERS=(
+  "todoist|https://ai.todoist.net/mcp|TODOIST_API_TOKEN"
+  "jina|https://mcp.jina.ai/v1|JINA_API_KEY"
+)
+
 install_claude_mcp_servers() {
   echo ""
   echo "Installing Claude MCP servers..."
@@ -251,25 +288,33 @@ install_claude_mcp_servers() {
     return
   fi
 
-  # Todoist MCP (requires TODOIST_API_TOKEN env var at runtime)
   local existing
   existing="$(claude mcp list 2>/dev/null)"
-  if echo "$existing" | grep -q "todoist"; then
-    echo "✓  Todoist MCP server already configured"
-  else
+
+  local entry name url var
+  for entry in "${CLAUDE_MCP_SERVERS[@]}"; do
+    name="${entry%%|*}"
+    var="${entry##*|}"
+    url="${entry#*|}"; url="${url%|*}"
+
+    if echo "$existing" | grep -q "^$name:"; then
+      echo "✓  $name MCP server already configured"
+      continue
+    fi
+
     echo ""
-    read -p "Add Todoist MCP server? (requires TODOIST_API_TOKEN env var) [y/n] " choice
+    read -p "Add $name MCP server? (requires \$$var env var) [y/n] " choice
     case "$choice" in
       y|Y)
-        claude mcp add --transport http --scope user todoist https://ai.todoist.net/mcp \
-          --header 'Authorization: Bearer ${TODOIST_API_TOKEN}'
-        echo "✓  Added Todoist MCP server"
+        claude mcp add --transport http --scope user "$name" "$url" \
+          --header "Authorization: Bearer \${$var}"
+        echo "✓  Added $name MCP server"
         ;;
       *)
-        echo "⏭️  Skipped Todoist MCP server"
+        echo "⏭️  Skipped $name MCP server"
         ;;
     esac
-  fi
+  done
 }
 
 install_claude_mcp_servers

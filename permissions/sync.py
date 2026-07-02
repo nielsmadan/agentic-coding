@@ -102,6 +102,14 @@ def render_claude_autonomous(rules):
     perms["allow"] = []
     perms["deny"] = []
     perms["ask"] = []
+    # Autonomous (headless) runs have no human to answer AskUserQuestion; the
+    # 60s "proceed with best judgment" fall-through is what keeps them moving.
+    # Drop the interactive-only AFK-timeout override so it doesn't deadlock them.
+    env = settings.get("env")
+    if env:
+        env.pop("CLAUDE_AFK_TIMEOUT_MS", None)
+        if not env:
+            settings.pop("env")
     return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
 
 

@@ -10,14 +10,21 @@ This repository contains shared configuration for agentic coding tools. It inclu
 
 - `claude/` - Claude Code specific configuration
   - `settings.json` - Permissions, hooks, and status line config (the `permissions.*` arrays are **generated** — see Permissions below)
+  - `CLAUDE.md`, `CLAUDE.autonomous.md` - global Claude guidance (**generated** — see Global Instructions below)
   - `skills/` - Custom skills in `<skill-name>/SKILL.md` format
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
   - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
+- `antigravity/` - Antigravity (`agy`) configuration
+  - `settings.json` - permissions.* arrays are **generated** (rest editable)
 - `permissions/` - Single source of truth for agent shell-command permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
+- `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
+  - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
+  - `sync.py` - assembles the fragments into each agent's global instruction file
+  - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.gemini/GEMINI.md`); see Global Instructions below
 - `templates/` - Project-type config + skills deployed per-project (see Project Templates below)
   - `<type>/` - config fragments and project-only skills for a project type (e.g. `flutter/`)
     - `.mcp.json`, `settings.local.json` - merged into the target project
@@ -118,9 +125,25 @@ To change permissions: edit `permissions/permissions.toml`, then run `python3 pe
 
 ### Autonomous-dev profile
 
-For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `sync.py` always generates both `claude/settings.json` and `claude/settings.autonomous.json`; the autonomous variant keeps `defaultMode: "auto"` but **empties `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops — keep it in sync with `claude/CLAUDE.md` (only its Git Policy section differs).
+For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `sync.py` always generates both `claude/settings.json` and `claude/settings.autonomous.json`; the autonomous variant keeps `defaultMode: "auto"` but **empties `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops. Both `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
 
 Install the autonomous profile with `./install.sh --autonomous`, which symlinks the `*.autonomous` variants to `~/.claude/settings.json` and `~/.claude/CLAUDE.md` instead of the defaults. Plain `./install.sh` installs the normal profile. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
+
+## Global Instructions
+
+Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`global/fragments/`**. `global/sync.py` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
+
+**Never hand-edit these generated files** — a lefthook pre-commit hook (`global/sync.py --check`) rejects any drift:
+- `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` → symlinked to `~/.claude/CLAUDE.md`
+- `global/AGENTS.md` → symlinked to **both** `~/.codex/AGENTS.md` (Codex) and `~/.gemini/GEMINI.md` (Antigravity's `agy`)
+
+**Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one `global/AGENTS.md` — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md`, `agy` from `~/.gemini/GEMINI.md`; the destinations differ but point at the same source.)
+
+To change global guidance: edit a fragment in `global/fragments/`, then run `python3 global/sync.py` (also run automatically by `install.sh`). Each target's fragment list lives in `TARGETS` in `sync.py`, so the differences that exist are explicit — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment.
+
+**Why a generator, not native `@imports`:** only Claude Code and Gemini CLI expand in-file `@path` imports; Codex and OpenCode have no import mechanism, and Antigravity's `agy` (a closed-source rewrite) is unverified. A generator is the only DRY approach that works uniformly across every agent.
+
+**OpenCode** gets no file of its own: it reads `~/.claude/CLAUDE.md` as a global-rules fallback. Per OpenCode's docs it treats that file as plain rules and does not expand `@imports` — moot here, since the generated file is already fully expanded. Disable via `OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1` if ever unwanted.
 
 ## Project Templates
 
