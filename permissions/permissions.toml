@@ -224,6 +224,8 @@ allow = [
   "Skill(review-history)",
   "Skill(review-perf)",
   "Skill(review-security)",
+  "Skill(review-typescript)",
+  "Skill(review-project)",
   "Skill(second-opinion)",
   "Skill(skill-creator)",
   "Skill(summary)",

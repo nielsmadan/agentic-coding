@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Code review workflow. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
-argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]
+argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--typescript] [--project] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]
 ---
 
 # Code Review: $ARGUMENTS
@@ -16,6 +16,8 @@ Review the code related to: **$ARGUMENTS**
 /code-review --architecture           # Architecture only
 /code-review --security --performance # Two aspects
 /code-review --logic src/auth/        # One aspect, scoped to target
+/code-review --typescript             # TypeScript-specific review only
+/code-review --project                # Project's own review-project checks only
 /code-review --all                    # Whole repo
 /code-review --changed                # Unstaged changes only
 /code-review --staged                 # Staged changes only (errors if nothing staged)
@@ -44,11 +46,37 @@ Aspect flags let you run a subset of the review agents instead of all 9. Flags a
 | `--interface` | Agent 7: Interface Design (delegates to `/review-interfaces`) |
 | `--clean-code` | Agent 8: Clean Code (delegates to `/review-cleancode`) |
 
+Two further aspects are **conditional add-ons** — in the default (no-aspect-flag) run they are included automatically when they apply; with explicit aspect flags they run only if their own flag is passed (see Step 3b.5 for detection):
+
+| Flag | Maps to |
+|------|---------|
+| `--typescript` | Agent 9: Language Review — delegates to the matching `review-<language>` skill (e.g. `review-typescript`). Auto-included when the scoped files are TypeScript. |
+| `--project` | Agent 10: Project-Specific Review — delegates to the project's own `review-project` skill. Auto-included when that skill exists in the repo. |
+
 **Aspect rules:**
-- No aspect flags → run all 9 agents.
-- One or more aspect flags → run only those agents, skip the rest.
+- No aspect flags → run all 9 core agents, **plus** any detected language review and the project review if present.
+- One or more aspect flags → run only those agents, skip the rest. The conditional add-ons run only if `--typescript` / `--project` (or another `--<language>`) is among the flags.
 - `--multi` composes with any aspect selection.
 - The non-flag portion of `$ARGUMENTS` is the review target (e.g. `src/auth/`).
+
+### Language & project reviews (plug-and-play)
+
+Language reviews and the project review are the extensible layer on top of the 9 language-agnostic aspects:
+
+- **Language reviews** live globally in `claude/skills/review-<language>/`. They hold checks that apply to *every* project in that language (e.g. `review-typescript` flags unnecessary `as`/`!` casts, `any`, `@ts-ignore`). To add a new language, create a `review-<language>` skill and add a row to the detection registry in Step 3b.5 — `code-review` will auto-route to it. Nothing else to wire.
+- **The project review** is a skill the *project* defines at `.claude/skills/review-project/` for issues unique to that one codebase (conventions, gotchas, house rules that don't generalize). `code-review` calls it only when it exists — projects without one are unaffected. Minimal shape:
+
+  ```markdown
+  ---
+  name: review-project
+  description: Project-specific review checks for <this project>.
+  argument-hint: [--staged | --unpushed | --changed | --all]
+  ---
+  # Review Project
+  Review the scoped files (accept --staged/--unpushed/--changed/--all or a target)
+  against this project's specific rules: <list the project-specific things reviewers
+  keep missing>. Output findings as {file}:{line} — {issue} + fix, grouped by severity.
+  ```
 
 ## Scope Selection
 
@@ -84,9 +112,9 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 
 ### 3a. Parse flags
 
-Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
+Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`, `--typescript`, `--project`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
 
-If any aspect flags are present, launch ONLY the corresponding agents. Otherwise launch all 9 agents.
+If any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when `--typescript`/`--project` is passed). Otherwise launch all 9 core agents plus whatever Step 3b.5 detects.
 
 ### 3b. Resolve scope
 
@@ -116,6 +144,22 @@ Compute the file list once based on resolved scope:
 
 This file list is passed to inline agents and is also used to build the target argument for sub-skills that don't natively support `--changed` (see 3c).
 
+### 3b.5. Detect language & project reviews
+
+Determine which conditional add-on agents apply. Skip this entirely if explicit aspect flags were passed **and** none of them is `--typescript`/`--project`/another `--<language>` — in that case the user asked for a specific subset and add-ons don't run.
+
+**Language detection registry.** For each language below, it applies if the resolved file list matches its extensions, or (for the `all` scope / when the file list is empty) the repo root has its marker file. If it applies **and** a `review-<language>` skill is installed, include that agent.
+
+| Language | File extensions | Repo marker | Skill |
+|---|---|---|---|
+| TypeScript | `.ts` `.tsx` `.mts` `.cts` | `tsconfig.json` | `review-typescript` |
+
+*(To add a language: create a `review-<language>` skill and add a row here.)*
+
+**Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md`, include the project review agent. If it doesn't exist, skip silently.
+
+Announce what got auto-included, e.g. `Detected TypeScript — adding review-typescript` or `Found project review skill — adding review-project`.
+
 ### 3c. Launch agents
 
 Launch the selected review perspectives IN PARALLEL.
@@ -132,7 +176,7 @@ Each agent should output a list of issues. For each issue, include: what the pro
 | `all` | `--all` |
 | target given | the target itself (e.g. `src/auth/`) |
 
-All delegated sub-skills (`review-architecture`, `review-security`, `review-perf`, `review-comments`, `review-interfaces`, `review-cleancode`, `test --review`) accept `--staged | --unpushed | --changed | --all`. No special-casing needed.
+All delegated sub-skills (`review-architecture`, `review-security`, `review-perf`, `review-comments`, `review-interfaces`, `review-cleancode`, `review-typescript`, `test --review`) accept `--staged | --unpushed | --changed | --all`. No special-casing needed. The project's `review-project` skill is expected to accept the same scope flags (see the minimal shape above) — if it doesn't, pass it the target/file list instead.
 
 Inline agents (no delegation) work directly against the file list computed in step 3b.
 
@@ -197,6 +241,13 @@ Invoke `review-cleancode` with the scope-translated arguments per the table abov
 - Flag DRY violations, YAGNI, unnecessary complexity (KISS)
 - Identify code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery)
 - Check design principles (Law of Demeter, separation of concerns, composition over inheritance)
+
+### Agent 9: Language Review (`--typescript` / other `--<language>`) — conditional
+Only if Step 3b.5 detected a language (or the flag was passed explicitly). For each applicable language, invoke its `review-<language>` skill with the scope-translated arguments per the table above.
+- TypeScript → `review-typescript`: unnecessary type assertions (`as`) and non-null assertions (`!`), `any`/`as any`/`as unknown as`, `@ts-ignore`/`@ts-expect-error` without justification, casts that hide a type-modeling problem, missing narrowing/exhaustiveness.
+
+### Agent 10: Project-Specific Review (`--project`) — conditional
+Only if Step 3b.5 found a `review-project` skill in the repo (or the flag was passed explicitly). Invoke the project's `review-project` skill with the scope-translated arguments per the table above. This agent checks issues unique to this codebase that the language-agnostic and language-specific agents don't know about.
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 

@@ -59,7 +59,7 @@ CODEX_SKILLS=(
   code-review debug-log deslop doc explain frontend-design guide ideation optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-perf review-plan review-product
-  review-security skill-creator squash-commits temp test theme-factory
+  review-security review-typescript skill-creator squash-commits temp test theme-factory
 )
 
 create_symlink() {

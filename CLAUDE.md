@@ -43,7 +43,8 @@ Available in `claude/skills/`:
 | Skill | Purpose |
 |-------|---------|
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
-| `/code-review` | Code review workflow |
+| `/code-review` | Code review workflow. Runs 9 language-agnostic aspects, plus auto-detected language reviews (`review-<lang>`) and a per-project `review-project` skill when present |
+| `/review-typescript` | TypeScript-specific review — unnecessary `as`/`!` casts, `any`, `@ts-ignore`, unsafe narrowing. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
 | `/frontend-design` | Build distinctive frontend interfaces with high design quality |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/debug-log` | Add debug logging to trace code execution |
@@ -84,6 +85,14 @@ Available in `claude/skills/`:
 | `/use-railway` | Operate Railway infrastructure — accounts, projects, services, deployments, buckets, domains, metrics, docs |
 | `/skill-creator` | Guide for creating skills |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
+
+### Extending code-review per language / per project
+
+`code-review` layers three tiers of checks:
+
+1. **9 language-agnostic aspects** — always run (logic, architecture, security, …).
+2. **Language reviews** — global skills named `review-<language>` in `claude/skills/`. Auto-invoked when `code-review` detects that language in the scoped files. `review-typescript` is the first. Add a new language by creating `review-<language>/SKILL.md` and adding a row to the detection registry in `code-review`'s Step 3b.5.
+3. **Project review** — an *individual project* can define `.claude/skills/review-project/SKILL.md` for checks unique to that codebase. `code-review` calls it only when it exists; projects without one are unaffected. The minimal shape is documented in `code-review`'s "Language & project reviews" section.
 
 ## Claude Desktop Skills
 
