@@ -63,7 +63,7 @@ Two further aspects are **conditional add-ons** — in the default (no-aspect-fl
 
 Language reviews and the project review are the extensible layer on top of the 9 language-agnostic aspects:
 
-- **Language reviews** live globally in `claude/skills/review-<language>/`. They hold checks that apply to *every* project in that language (e.g. `review-typescript` flags unnecessary `as`/`!` casts, `any`, `@ts-ignore`). To add a new language, create a `review-<language>` skill and add a row to the detection registry in Step 3b.5 — `code-review` will auto-route to it. Nothing else to wire.
+- **Language reviews** live globally in `claude/skills/review-<language>/`. They hold checks that apply to *every* project in that language (e.g. `review-typescript` covers judgment-level type design a linter can't decide — type modeling, inference-vs-annotation, casts/`any` that hide a modeling problem; it deliberately does not duplicate typescript-eslint). To add a new language, create a `review-<language>` skill and add a row to the detection registry in Step 3b.5 — `code-review` will auto-route to it. Nothing else to wire.
 - **The project review** is a skill the *project* defines at `.claude/skills/review-project/` for issues unique to that one codebase (conventions, gotchas, house rules that don't generalize). `code-review` calls it only when it exists — projects without one are unaffected. Minimal shape:
 
   ```markdown
@@ -244,7 +244,7 @@ Invoke `review-cleancode` with the scope-translated arguments per the table abov
 
 ### Agent 9: Language Review (`--typescript` / other `--<language>`) — conditional
 Only if Step 3b.5 detected a language (or the flag was passed explicitly). For each applicable language, invoke its `review-<language>` skill with the scope-translated arguments per the table above.
-- TypeScript → `review-typescript`: unnecessary type assertions (`as`) and non-null assertions (`!`), `any`/`as any`/`as unknown as`, `@ts-ignore`/`@ts-expect-error` without justification, casts that hide a type-modeling problem, missing narrowing/exhaustiveness.
+- TypeScript → `review-typescript`: judgment-level type design a linter can't decide — type modeling (make invalid states unrepresentable, unions of interfaces, outputs no wider than needed), inference-vs-annotation calls, and casts/`any` that compile but hide a wrong upstream type or unvalidated boundary data. Deliberately non-overlapping with typescript-eslint.
 
 ### Agent 10: Project-Specific Review (`--project`) — conditional
 Only if Step 3b.5 found a `review-project` skill in the repo (or the flag was passed explicitly). Invoke the project's `review-project` skill with the scope-translated arguments per the table above. This agent checks issues unique to this codebase that the language-agnostic and language-specific agents don't know about.

@@ -51,7 +51,7 @@ Available in `claude/skills/`:
 |-------|---------|
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
 | `/code-review` | Code review workflow. Runs 9 language-agnostic aspects, plus auto-detected language reviews (`review-<lang>`) and a per-project `review-project` skill when present |
-| `/review-typescript` | TypeScript-specific review — unnecessary `as`/`!` casts, `any`, `@ts-ignore`, unsafe narrowing. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
+| `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling (make invalid states unrepresentable), inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
 | `/frontend-design` | Build distinctive frontend interfaces with high design quality |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/debug-log` | Add debug logging to trace code execution |
