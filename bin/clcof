@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Continue a Claude Code session in a new forked branch with an auto-generated name.
+"""Print a fresh fork-session name for the current cwd's most recent session.
 
 Picks the most recent session for the current cwd from ~/.claude/sessions/*.json,
-strips its trailing 6-hex suffix, appends a fresh one, and execs:
+strips its trailing 6-hex suffix, appends a fresh one, and prints:
 
-    claude --continue --fork-session --name <base>-<hex> <forwarded args>
+    <base>-<hex>
 
 Falls back to base name "main" if no prior session exists for this cwd.
+
+This only emits the name — the actual `claude --continue --fork-session` launch
+is done by the `clcof` zsh function (see .airc.d/claude.zsh), which routes
+through the sops-wrapped `claude` shell function so the injected auth token
+reaches the subprocess. Exec'ing `claude` here would bypass that wrapper and
+trigger a login prompt.
 """
 from __future__ import annotations
 
@@ -15,7 +21,6 @@ import json
 import os
 import re
 import secrets
-import sys
 from pathlib import Path
 
 
@@ -48,14 +53,9 @@ def main() -> int:
     recent = latest_session_name(os.getcwd())
     if recent:
         base = SUFFIX_RE.sub("", recent)
-    name = f"{base}-{secrets.token_hex(3)}"
-    argv = ["claude", "--continue", "--fork-session", "--name", name, *sys.argv[1:]]
-    try:
-        os.execvp("claude", argv)
-    except FileNotFoundError:
-        print("clcof: 'claude' not found on PATH", file=sys.stderr)
-        return 127
+    print(f"{base}-{secrets.token_hex(3)}")
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main() or 0)
+    raise SystemExit(main())

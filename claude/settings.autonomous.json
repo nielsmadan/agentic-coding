@@ -196,5 +196,6 @@
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
-  }
+  },
+  "skipWorkflowUsageWarning": true
 }

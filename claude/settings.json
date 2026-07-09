@@ -2,12 +2,12 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "cleanupPeriodDays": 9999,
   "skillListingBudgetFraction": 0.02,
+  "env": {
+    "CLAUDE_AFK_TIMEOUT_MS": "2147483647"
+  },
   "attribution": {
     "commit": "",
     "pr": ""
-  },
-  "env": {
-    "CLAUDE_AFK_TIMEOUT_MS": "2147483647"
   },
   "permissions": {
     "allow": [
@@ -388,5 +388,6 @@
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754048282688
-  }
+  },
+  "skipWorkflowUsageWarning": true
 }
