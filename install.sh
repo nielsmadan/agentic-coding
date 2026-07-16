@@ -49,8 +49,8 @@ SYMLINKS=(
   "$SCRIPT_DIR/antigravity/settings.json:$HOME/.gemini/antigravity-cli/settings.json"
   # agy reads global instructions from ~/.gemini/GEMINI.md — same shared file as Codex
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.gemini/GEMINI.md"
-  # OpenCode
-  "$SCRIPT_DIR/opencode/opencode.json:$HOME/.opencode/opencode.json"
+  # OpenCode (reads global config from XDG ~/.config/opencode, not legacy ~/.opencode)
+  "$SCRIPT_DIR/opencode/opencode.json:$HOME/.config/opencode/opencode.json"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
 )
