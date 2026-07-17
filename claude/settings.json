@@ -307,6 +307,16 @@
     ],
     "PermissionRequest": [
       {
+        "matcher": "mcp__jina__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/auto-approve-jina.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "*",
         "hooks": [
           {
