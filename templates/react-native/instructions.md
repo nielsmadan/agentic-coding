@@ -1,16 +1,38 @@
 ## React Native project tooling
 
 This project ships with a React Native-aware Claude setup deployed by `aiconf react-native` —
-device-control MCP servers and a project-scoped upgrade skill. Use them where they help.
+a device-automation CLI and a project-scoped upgrade skill. Use them where they help.
 
-### When to reach for the deployed MCPs
+### Driving the app (`agent-device`)
 
-- **`ios-sim`** — driving the booted iOS simulator: screenshots, view tree dumps, taps,
-  swipes, text input, point-to-element introspection. Use it for UI smoke checks and
-  reproducing visual issues after a code change. Works for any iOS app — RN's bridge to
-  native is invisible to it.
-- **`android`** — analogous control over Android devices/emulators when working on the
-  Android target.
+Use [`agent-device`](https://github.com/callstack/agent-device) (Callstack's device-automation
+CLI, installed globally, on `PATH`) to drive the running app — booted iOS simulator, Android
+emulator, or a physical device — to verify a UI change, reproduce a click-path, or grab a
+screenshot. It's the device counterpart to `agent-browser`: text-first output, low token cost,
+and a token-efficient accessibility snapshot with stable `@e` refs instead of brittle
+coordinates. One CLI covers both platforms (iOS via XCTest, Android via ADB).
+
+**Start here**: run `agent-device help workflow` once per session for the full command
+reference and workflow patterns — the installed CLI help is the source of truth. Run
+`agent-device doctor` to verify local setup. Prefer that over guessing flags.
+
+**Core loop** (the session is stateful and persists across invocations until `close`, so each
+command below is its own shell call against the same live session):
+- `agent-device apps --platform ios|android` — list installed apps.
+- `agent-device open <App> --platform ios|android` — start a session.
+- `agent-device snapshot -i` — accessibility tree, interactive elements only, with refs like
+  `@e1`, `@e2`. Use those refs to target elements.
+- `agent-device tap @e2` / `fill @e3 "<text>"` — interact using those refs. See
+  `agent-device help workflow` for the full command set (typing, swipe, scroll, gestures,
+  wait, assert, alerts, …).
+- `agent-device screenshot <path>` — save a PNG (then read it to see the screen).
+- `agent-device close` — end the session.
+
+Refs are only valid for the **latest** snapshot — after scrolling or changing screens, take a
+fresh `snapshot`. Snapshots come from the app's accessibility tree, so it works for any app
+(native, RN, Expo, Flutter) and RN's JS↔native bridge is invisible to it — good accessibility
+labels and test IDs make runs far more reliable. Reach for this whenever you need to see or
+interact with the actual app; for JS-side runtime logs use `rn-logs` (below).
 
 There is no JavaScript/TypeScript MCP server bundled. For static analysis and tests use the
 project's own scripts directly (`yarn type-check`, `yarn lint`, `yarn test`); for library
@@ -48,11 +70,11 @@ Notes:
 
 ### Notes
 
-- These MCPs and the skill arrive via `aiconf react-native`. Re-running it refreshes their
+- This tooling and the skill arrive via `aiconf react-native`. Re-running it refreshes their
   config but leaves this CLAUDE.md section alone — use `aiconf sync` to mirror edits back to
   the template or pull template changes into this section.
-- Only the `ios-sim` tools are pre-approved in `.claude/settings.local.json`. The first call
-  to an `android` tool will trigger a permission prompt — approve there, and add the specific
-  tool name to `permissions.allow` if you want it auto-approved going forward.
-- Machine prerequisites: `npx` and `uvx` for the MCP servers; `rn-logs-cli` installed
-  globally for log streaming (`npm install -g rn-logs-cli` or `bun add -g rn-logs-cli`).
+- `agent-device` and `rn-logs` are pre-approved in `.claude/settings.local.json`
+  (`Bash(agent-device:*)`, `Bash(rn-logs:*)`), so their subcommands run without a prompt.
+- Machine prerequisites: `agent-device` installed globally (`npm install -g agent-device`,
+  Node.js 22+; plus Xcode for iOS and the Android SDK + ADB for Android); `rn-logs-cli`
+  installed globally for log streaming (`npm install -g rn-logs-cli` or `bun add -g rn-logs-cli`).

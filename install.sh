@@ -58,7 +58,7 @@ SYMLINKS=(
 # Skills shared with Codex (subset of claude/skills/). A name with a real dir
 # in codex/skills/ uses that override; otherwise it links from claude/skills/.
 CODEX_SKILLS=(
-  check-claude-projects
+  check-claude-projects check-notes
   code-review debug-log deslop doc explain frontend-design guide ideation optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-perf review-plan review-product
