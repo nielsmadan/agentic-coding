@@ -30,7 +30,7 @@ _llmcli_run() {
       rm -f "$outfile"
       ;;
     occli)
-      opencode run -m openrouter/z-ai/glm-5 \
+      opencode run -m openrouter/z-ai/glm-5.2 \
         "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input" | tail -1
       ;;
     *)

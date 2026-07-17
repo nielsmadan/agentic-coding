@@ -1,12 +1,12 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Antigravity, and OpenCode+DeepSeek.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Antigravity, and OpenCode+GLM.
 argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
 
-Get input from three independent advisors — Codex (GPT), Antigravity (Gemini), and OpenCode+DeepSeek — on the current problem or question. By default, iterates if responses lack confidence.
+Get input from three independent advisors — Codex (GPT), Antigravity (Gemini), and OpenCode+GLM — on the current problem or question. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -39,7 +39,7 @@ Get input from three independent advisors — Codex (GPT), Antigravity (Gemini),
 ### Default Flow (Iterative)
 
 1. Summarize the current problem/question from the conversation (or use what the user provides)
-2. Query Codex, Antigravity, and OpenCode+DeepSeek in parallel for their perspectives
+2. Query Codex, Antigravity, and OpenCode+GLM in parallel for their perspectives
 3. Evaluate confidence in all responses
 4. If confidence is LOW for any advisor, re-query with additional context (up to 2 iterations)
 5. Present final results with your synthesis
@@ -102,10 +102,10 @@ it fast; bump to `Gemini 3.1 Pro (High)` for harder questions, or `Gemini 3.5 Fl
 ~/.local/bin/agy --model "Gemini 3.1 Pro (Low)" --prompt "$(cat .second-opinion.md)"
 ```
 
-**OpenCode+DeepSeek:** `--agent plan` is read-only (reads/explores the repo, cannot edit
+**OpenCode+GLM:** `--agent plan` is read-only (reads/explores the repo, cannot edit
 files) — unlike the default `build` agent, which has write tools:
 ```bash
-command opencode run --agent plan -m openrouter/deepseek/deepseek-v3.2 "$(cat .second-opinion.md)" </dev/null
+command opencode run --agent plan -m openrouter/z-ai/glm-5.2 "$(cat .second-opinion.md)" </dev/null
 ```
 
 ### Step 3: Evaluate Confidence
@@ -150,8 +150,8 @@ Format the responses for the user:
 ### Antigravity (Gemini)
 {antigravity_response}
 
-### OpenCode (DeepSeek)
-{deepseek_response}
+### OpenCode (GLM)
+{glm_response}
 
 ### My Take
 {your brief synthesis - where they agree, disagree, and your recommendation}
