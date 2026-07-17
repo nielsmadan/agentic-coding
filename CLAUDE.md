@@ -50,6 +50,7 @@ Available in `claude/skills/`:
 | Skill | Purpose |
 |-------|---------|
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
+| `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
 | `/code-review` | Code review workflow. Runs 9 language-agnostic aspects, plus auto-detected language reviews (`review-<lang>`) and a per-project `review-project` skill when present |
 | `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling (make invalid states unrepresentable), inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
 | `/frontend-design` | Build distinctive frontend interfaces with high design quality |
