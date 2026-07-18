@@ -18,12 +18,14 @@ and **refined** on each run, so the product's understanding of its users
 accumulates instead of being re-derived every time. The review itself is written
 to `docs/product/<date>-review.md` so it isn't lost. All of this lives under
 `docs/product/` as a section of the project's `docs/` tree, indexed by
-`docs/product/overview.md` — the same per-section index convention the `doc` skill uses.
+`docs/product/overview.md` once the section has several files (consistent with the
+`doc` skill's "index when warranted" convention).
 
 `docs/product/` is the **high-level, user-centric** layer (why, for whom, what's
-missing). It is the upstream of `docs/prd/`, which the `doc` skill owns and keeps in
-sync with the implementation. This skill owns `docs/product/` and does not write
-`docs/prd/`; it only *checks* that the PRD reflects the product understanding (Step 7).
+missing). It is the upstream of `docs/features/` (the "what it does" layer the `doc`
+skill owns and keeps in sync with the implementation; formerly `docs/prd/`). This
+skill owns `docs/product/` and does not write `docs/features/`; it only *checks* that
+the feature docs reflect the product understanding (Step 7).
 
 ## Usage
 
@@ -38,7 +40,7 @@ review-product checkout flow   # scope the review to a feature/area
 
 | Argument | What it reviews | Cost |
 |----------|-----------------|------|
-| (none) | Infers the experience from the **codebase + any product description** (README, PRD, CLAUDE.md, docs). Default. | Fast |
+| (none) | Infers the experience from the **codebase + any product description** (README, `docs/features/`, CLAUDE.md, docs). Default. | Fast |
 | `--live` | Adds to the default: launches/exercises the **running app** to confirm what really happens (use `run` or browser tooling). Don't assume — observe. | Slow |
 | `--multi` | After the review, calls `second-opinion --quick` with the findings and adds a short cross-model section. | +external advisors |
 | free text | Scopes persona/use-cases/audit to the named feature or area instead of the whole product. | — |
@@ -66,7 +68,7 @@ Create a TodoWrite item per step.
 
 ### Step 1 — Build or refine the user persona
 - Read `docs/product/persona.md` if it exists. Read the product description (README,
-  PRD, `docs/`, CLAUDE.md) and survey the codebase (entry points, routes/screens,
+  `docs/features/`, `docs/`, CLAUDE.md) and survey the codebase (entry points, routes/screens,
   auth, settings) for who the product is built for.
 - Produce the persona(s) using the template in `references/checklist.md`: who they
   are, why they're here, environment, what they value, frustrations, what success
@@ -118,17 +120,22 @@ Create a TodoWrite item per step.
 - Give the user an inline summary: the headline finding, the top 3 prioritized
   recommendations, and the path to the written review.
 
-### Step 7 — Check the PRD against the product (if `docs/prd/` exists)
-The `doc` skill owns `docs/prd/` and keeps it in sync with the *implementation*; this
-step checks the *other* side — that the PRD reflects the product understanding in
-`docs/product/`. Report-only; do not edit `docs/prd/` (that's `doc`'s job).
-- **Use cases with no PRD coverage**: a job in `use-cases.md` that no `docs/prd/` doc
-  describes → the product intends something the spec doesn't capture.
-- **PRD features serving no use case**: a `docs/prd/` feature that ties to no documented
+### Step 7 — Check the feature docs against the product (if `docs/features/` exists)
+The `doc` skill owns `docs/features/` (the "what it does" layer, formerly `docs/prd/`)
+and keeps it in sync with the *implementation*; this step checks the *other* side — that
+the feature docs reflect the product understanding in `docs/product/`. Report-only; do
+not edit `docs/features/` (that's `doc`'s job).
+- **Use cases with no feature-doc coverage**: a job in `use-cases.md` that no
+  `docs/features/` doc describes → the product intends something the docs don't capture.
+- **Feature docs serving no use case**: a `docs/features/` doc that ties to no documented
   use case or persona need → scope the product can't justify, or a missing use case.
 - List both kinds of divergence so the user can reconcile (update a use case, write a
-  PRD via `doc`, or drop scope). Pair with `doc --review` (PRD ↔ implementation) for
-  the full three-layer check: product ↔ PRD ↔ code.
+  feature doc via `doc`, or drop scope). Pair with `doc --review` (features ↔ implementation)
+  for the full three-layer check: product ↔ features ↔ code.
+- **Lean repos (no `docs/features/`):** a small project won't have a dedicated behavior
+  layer. Skip the doc-to-doc check and instead spot-check the top use cases straight
+  against the code (and any `docs/<flow>.md` explanation docs), noting jobs the code
+  doesn't appear to support. Say you did this because there's no feature-doc layer.
 
 ### Step 8 — Update the docs/product index
 - Write/refresh `docs/product/overview.md` as the section index: a one-line intro,
@@ -167,8 +174,8 @@ persona on their primary job, and the single most important thing to change.
 1. **<change>** — adds/changes/removes ___, unblocks UC<n>. Severity / effort.
 2. ...
 
-## PRD consistency   (if docs/prd/ exists)
-- Use cases with no PRD coverage / PRD features with no use case (from Step 7).
+## Feature-doc consistency   (if docs/features/ exists)
+- Use cases with no feature-doc coverage / feature docs with no use case (from Step 7).
 
 ## Second opinion   (only with --multi)
 - Agreements / dissent / additions from each advisor that responded, attributed by name. Note where multiple advisors converge — consensus raises confidence.
@@ -236,10 +243,12 @@ refine them in place. Dated review files are snapshots and are never rewritten.
   ├── use-cases.md        # Reusable, refined in place (current state)
   └── <date>-review.md    # Dated review snapshots; never rewritten
   ```
-- Three-layer model: **`docs/product/`** (this skill — user/why, high level) →
-  **`docs/prd/`** (the `doc` skill — concrete product behavior, tracks the code) →
-  **implementation**. This skill checks `docs/product/` ↔ `docs/prd/` (Step 7);
-  `doc --review` checks `docs/prd/` ↔ code. `doc` never syncs `docs/product/` to code.
+- Three-layer model (altitude stack): **`docs/product/`** (this skill — who & why,
+  high level) → **`docs/features/`** (the `doc` skill — what it does, tracks the code;
+  formerly `docs/prd/`) → **`docs/tech/` + implementation** (how it's built). This skill
+  checks `docs/product/` ↔ `docs/features/` (Step 7); `doc --review` checks
+  `docs/features/` ↔ code. `doc` never syncs `docs/product/` to code. On a Lean repo
+  with no `docs/features/`, Step 7 checks use cases straight against the code.
 - This skill judges the product, not the code. Pair it with `code-review` /
   `review-cleancode` for implementation quality and `frontend-design` for visual craft.
 - See `references/checklist.md` for the persona/use-case templates, the friction

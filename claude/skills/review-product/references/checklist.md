@@ -5,7 +5,7 @@ when building the persona, mapping use cases, or auditing friction and gaps.
 
 ---
 
-## Persona template (`docs/prd/persona.md`)
+## Persona template (`docs/product/persona.md`)
 
 Keep it evidence-based: derive every claim from the codebase, the product
 description, or explicit user input — never invent demographics. If the product
@@ -35,7 +35,7 @@ Don't silently discard prior content; note what changed and why.
 
 ---
 
-## Use-cases / jobs-to-be-done template (`docs/prd/use-cases.md`)
+## Use-cases / jobs-to-be-done template (`docs/product/use-cases.md`)
 
 A use case is a *job the persona is trying to get done*, phrased from their point
 of view — not a feature list. Order by how central each is to the persona's goal.
