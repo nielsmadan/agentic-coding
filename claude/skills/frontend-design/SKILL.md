@@ -20,7 +20,10 @@ Extract from the user's request:
 - **What to build**: Component, page, full application, or beautification of existing UI
 - **Framework**: HTML/CSS/JS, React, Vue, etc. — infer from the project if not stated
 - **Purpose**: What problem does this interface solve? Who uses it?
-- **Constraints**: Accessibility, performance, branding, or technical requirements
+- **Audience & vibe**: Who is this for (B2B buyer, design-conscious consumer, recruiter scanning a portfolio), and what tone did they signal ("minimalist", "Linear-style", "playful", "editorial", "premium")? The audience picks the aesthetic, not your taste.
+- **Constraints**: Accessibility, performance, branding, or technical requirements. Trust-first, public-sector, regulated, or kids' contexts OVERRIDE aesthetic preference.
+
+**Declare a one-line "Design Read" before writing code**, e.g. *"Reading this as: a B2B SaaS landing for technical buyers, Linear-clean vibe, leaning restrained motion + a distinctive grotesk."* If the brief is genuinely ambiguous, ask **exactly one** clarifying question — never a multi-question dump. If you can infer confidently, don't ask; just state the read and proceed.
 
 If beautifying existing code, read it first to understand the current structure and framework.
 
@@ -46,6 +49,17 @@ Apply these guidelines to build a cohesive design system:
 - **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
 - **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Use gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays as appropriate.
 
+### Step 3.5: Layout Hard Rules
+
+Composition constraints that hold regardless of aesthetic. Failing any of these ships broken work:
+
+- **Hero fits the initial viewport.** Headline ≤ 2 lines on desktop, short subtext, primary CTA visible without scroll. A 4-line hero headline is a font-size error, not a copy-length problem. Keep the hero to one moment: eyebrow (or brand strip) + headline + subtext + CTAs — no trust micro-strips, feature bullets, or taglines crammed in.
+- **Navigation on one line** at desktop; condense labels or collapse to a menu rather than wrapping to two rows.
+- **No layout-family repeats.** Once a section uses a layout family (3-col cards, split text/image, full-width quote), it appears at most once. A long page uses at least 4 different families. Max 2 consecutive "image/text split" (zigzag) sections in a row.
+- **Bento grids** have exactly as many cells as you have content for — no empty tile in the middle or at the end — and vary tile size and background so it isn't uniform white-on-white cards.
+- **One accent color, one corner-radius system, one theme** (light/dark/auto) locked across the whole page. No section flips to an inverted theme or a new accent mid-scroll.
+- **Full interactive-state cycles.** Design loading (skeletons matching final shape), empty, and error states — not just the static success state.
+
 ### Step 4: Implement
 
 Write production-grade, functional code following the visual system:
@@ -54,15 +68,18 @@ Write production-grade, functional code following the visual system:
 - Prioritize CSS-only animations for HTML; use Motion library for React when available
 - Ensure the interface is responsive and functional, not just decorative
 
-### Step 5: Refine
+### Step 5: Refine — Anti-Slop Pre-Flight
 
-Review against the anti-patterns list. The design MUST NOT have:
-- Overused font families (Inter, Roboto, Arial, system fonts)
-- Clichéd color schemes (particularly purple gradients on white backgrounds)
-- Predictable layouts and component patterns
-- Cookie-cutter design that lacks context-specific character
+Before declaring the design done, run the pre-flight gate. Read `references/ai-tells.md` and check the output against it — that file is the exhaustive catalog of the concrete signatures that make an interface read as AI-generated (fake `<div>` screenshots, eyebrow-above-every-section, em-dash-as-flourish, decorative status dots, scroll cues, generic "Jane Doe"/"Acme" content, the beige+brass premium palette, and more), plus a mechanical checklist.
 
-Verify every design choice is intentional for this specific context. No two designs should look the same — vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+At minimum, the design MUST NOT have:
+- Overused font families (Inter, Roboto, Arial, system fonts) or clichéd color schemes (purple gradients on white)
+- Predictable layouts, three-equal-feature-card rows, or a section-family repeated across the page
+- `<div>`-based fake screenshots, hand-rolled decorative SVGs, or pure-text "minimalism" standing in for real images
+- Em-dashes anywhere in visible page copy (see the reference's em-dash ban)
+- Cookie-cutter content: placeholder names, slop brand names, filler verbs, fake-precise numbers
+
+Verify every design choice is intentional for this specific context. No two designs should look the same — vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations. If a checklist box can't be honestly ticked, the design is not done.
 
 ## Examples
 
