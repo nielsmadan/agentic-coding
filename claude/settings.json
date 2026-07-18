@@ -119,7 +119,6 @@
       "Bash(ruby --version:*)",
       "Bash(codex exec -s read-only:*)",
       "Bash(opencode run:*)",
-      "Bash(~/.local/bin/agy --prompt:*)",
       "Bash(docker exec cc-workbench:*)",
       "Bash(docker exec cc-workbench-*)",
       "Bash(docker stop cc-workbench:*)",

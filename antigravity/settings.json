@@ -109,7 +109,6 @@
       "command(ruby --version)",
       "command(codex exec -s read-only)",
       "command(opencode run)",
-      "command(~/.local/bin/agy --prompt)",
       "command(docker exec cc-workbench)",
       "command(docker stop cc-workbench)",
       "command(docker rm cc-workbench)",

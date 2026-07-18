@@ -227,8 +227,6 @@
       "codex exec -s read-only *": "allow",
       "opencode run": "allow",
       "opencode run *": "allow",
-      "~/.local/bin/agy --prompt": "allow",
-      "~/.local/bin/agy --prompt *": "allow",
       "docker exec cc-workbench": "allow",
       "docker exec cc-workbench *": "allow",
       "docker exec cc-workbench-*": "allow",

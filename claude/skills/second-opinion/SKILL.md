@@ -1,12 +1,12 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Antigravity, and OpenCode+GLM.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex and OpenCode+GLM.
 argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
 ---
 
 # Second Opinion Command
 
-Get input from three independent advisors — Codex (GPT), Antigravity (Gemini), and OpenCode+GLM — on the current problem or question. By default, iterates if responses lack confidence.
+Get input from two independent advisors — Codex (GPT) and OpenCode+GLM — on the current problem or question. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -28,10 +28,10 @@ Get input from three independent advisors — Codex (GPT), Antigravity (Gemini),
 
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
-- The three CLIs (`codex`, `agy`, `opencode`) must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. All three run in *read-only* mode (`codex -s read-only`, `opencode --agent plan`, `agy` plain) so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on `codex`/`opencode`.
+- Both CLIs (`codex`, `opencode`) must be installed. If one is missing or fails, the command continues with the other and that advisor's input is simply absent from the synthesis.
+- **The advisors are meant to read the code** — that's the point. Both run in *read-only* mode (`codex -s read-only`, `opencode --agent plan`) so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on `codex`/`opencode`.
 - **Codex** blocks on "Reading additional input from stdin..." unless stdin is closed (`</dev/null`), and prompts for confirmation outside a git repo unless given `--skip-git-repo-check`.
-- **Antigravity** (`agy`) is not on the default `PATH` — invoke it by full path `~/.local/bin/agy`. Pass the *prompt itself* inline via `$(cat …)` (it reads code files fine through its allow-listed `cat`/`grep`/`rg`, but feeding the prompt as a file is needless). Do **not** add `--sandbox` (it hijacks into a scratch-dir assistant and ignores the prompt) or `--dangerously-skip-permissions` (auto-mode blocks it, and read-only doesn't need it). Effort is set via `--model` (e.g. `Gemini 3.5 Flash (Low)` fastest → `Gemini 3.1 Pro (High)` strongest); see `~/.local/bin/agy models` for the list.
+- **Antigravity (`agy`) was dropped from this skill** (2026-07). In headless/print mode the current `agy` soft-denies *every* file read and command — the `permissions.allow` list, workspace registration, and trusted-folder status are only honored interactively, not headlessly (verified: even a `read_file` on a file inside a trusted+registered workspace is soft-denied). The only way to make it produce output is `--dangerously-skip-permissions` (or `toolPermission: always-proceed`), which auto-approves **all** tools including writes — there is no read-only-with-exploration path. Rather than grant blanket write access for a read-only consult, `agy` is left out. Do **not** re-add it without re-verifying headless behavior against a newer build.
 - **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan`, **not** the default `build` agent: `plan` can read/explore the repo but has no write tools, so it gives a code-aware opinion without editing anything.
 
 ## How It Works
@@ -39,7 +39,7 @@ Get input from three independent advisors — Codex (GPT), Antigravity (Gemini),
 ### Default Flow (Iterative)
 
 1. Summarize the current problem/question from the conversation (or use what the user provides)
-2. Query Codex, Antigravity, and OpenCode+GLM in parallel for their perspectives
+2. Query Codex and OpenCode+GLM in parallel for their perspectives
 3. Evaluate confidence in all responses
 4. If confidence is LOW for any advisor, re-query with additional context (up to 2 iterations)
 5. Present final results with your synthesis
@@ -78,28 +78,20 @@ If you need more context to give a confident answer, say so clearly.
 
 ### Step 2: Query Advisors (in parallel)
 
-Run all three commands in parallel, using `{timeout}` as the Bash timeout. Each
+Run both commands in parallel, using `{timeout}` as the Bash timeout. Each
 inlines the prompt via `$(cat .second-opinion.md)` and closes stdin with `</dev/null`
-(without it, `codex exec` blocks on "Reading additional input from stdin..."). All
-three run read-only and read the files the prompt points them at, typically answering
+(without it, `codex exec` blocks on "Reading additional input from stdin..."). Both
+run read-only and read the files the prompt points them at, typically answering
 in ~15–25s; allow longer for a question that spans many files.
 
 Prefix `codex` and `opencode` with the `command` builtin: in some shells they are
 `sops exec-env` wrapper functions that depend on an interactive-shell variable not
 present in the agent's environment; `command` bypasses the wrapper and runs the real
-binary, which authenticates via its own on-disk credentials. `agy` is invoked by full
-path (not on `PATH`) and authenticates via its on-disk Google OAuth.
+binary, which authenticates via its own on-disk credentials.
 
 **Codex (GPT):** `--skip-git-repo-check` so it works outside a git repo:
 ```bash
 command codex exec -s read-only --skip-git-repo-check "$(cat .second-opinion.md)" </dev/null
-```
-
-**Antigravity (Gemini):** prompt is passed inline; it reads code files itself via its
-allow-listed `cat`/`grep`/`rg`. The model name carries the effort tier — `(Low)` keeps
-it fast; bump to `Gemini 3.1 Pro (High)` for harder questions, or `Gemini 3.5 Flash (Low)` for the quickest take:
-```bash
-~/.local/bin/agy --model "Gemini 3.1 Pro (Low)" --prompt "$(cat .second-opinion.md)"
 ```
 
 **OpenCode+GLM:** `--agent plan` is read-only (reads/explores the repo, cannot edit
@@ -146,9 +138,6 @@ Format the responses for the user:
 
 ### Codex (GPT)
 {codex_response}
-
-### Antigravity (Gemini)
-{antigravity_response}
 
 ### OpenCode (GLM)
 {glm_response}

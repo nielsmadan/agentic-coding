@@ -138,7 +138,9 @@ allow = [
   # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",
   "opencode run",
-  "~/.local/bin/agy --prompt",
+  # NOTE: agy (Antigravity) was removed from /second-opinion — its headless mode
+  # can't read files without --dangerously-skip-permissions, so it was dropped
+  # rather than granted blanket write access. No agy allow-rule is needed here.
 
   # docker — workbench container management
   "docker exec cc-workbench",
