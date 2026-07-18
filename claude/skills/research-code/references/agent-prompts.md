@@ -63,6 +63,11 @@ For each result, note:
 - Whether maintainer responded
 - Source type: GitHub issue (maintainer) / GitHub issue (community) / GitHub discussion
 
+If the repo's star count comes up as a credibility/popularity signal, do NOT take it at face value —
+star counts are trivially inflated. Sanity-check it: fork-to-star ratio (healthy ~10-25%; <5% on a
+>10k-star repo is suspicious) and whether stars track real activity (commits, contributors,
+dependents). See `references/fake-stars.md` for the full checklist. Report the ratio, not just the raw count.
+
 Return a summary of relevant findings with metadata.
 ```
 
@@ -232,6 +237,11 @@ For each source, note:
 - Publication date (crucial for comparisons - libraries change fast)
 - Source type: comparison article / benchmark / discussion
 - Whether it covers recent versions
+
+If a comparison ranks options by GitHub stars / "popularity", treat that as weak evidence — star
+counts are trivially bought and often decoupled from real adoption. Prefer harder-to-fake signals
+(fork-to-star ratio, external contributor count, production dependents). Flag any "X has more stars
+so it's better" claim; see `references/fake-stars.md`.
 
 Return a balanced summary of each option's strengths and weaknesses with source metadata.
 ```

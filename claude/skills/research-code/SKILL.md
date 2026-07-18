@@ -21,6 +21,7 @@ research-code Redux vs Zustand for large app
 - Context7 docs may lag behind a recent major release. Check which version is documented before citing it as authoritative.
 - "Prefer recent, then higher authority" can be wrong: an authoritative maintainer comment from 18 months ago may be more correct than a popular blog post from last month. Weigh authority first for stable libraries.
 - Quick mode may miss nuance. If a "simple" question turns out complex (e.g., "default port" depends on framework integration), note it and suggest re-running in Standard mode.
+- GitHub star counts are trivially inflated (~6M suspected fake stars as of 2024) — never cite a star count as evidence of quality, adoption, or trust without vetting it. See `references/fake-stars.md`.
 
 ## Workflow
 
@@ -85,6 +86,8 @@ Wait for agents, deduplicate by URL/issue (keep richest metadata). Note when ind
 | Reddit threads (>50 upvotes or multiple experienced replies) | Medium |
 | SO answers (not accepted, <10 votes), old blogs, old comparisons | Low |
 | Reddit threads (<10 upvotes), random forums | Very Low |
+
+**Popularity signals (don't trust raw star counts):** if a recommendation leans on a library being "popular"/"the standard"/"most-starred" — especially in comparisons or "is this repo trustworthy" questions — a GitHub star count is a vanity metric that is trivially bought and is not evidence of quality or adoption. Cross-check with harder-to-fake signals (fork-to-star ratio, external contributors, production dependents) before weighting it. Quick tell: **>10k stars with a fork-to-star ratio under ~5% is suspicious.** Full checklist and tools in `references/fake-stars.md`.
 
 **Conflicts:** Prefer more recent, then higher authority. If official docs conflict with recent issues, the issue may reveal a bug or undocumented behavior.
 
