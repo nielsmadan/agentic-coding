@@ -57,6 +57,8 @@ Leave git to the user. Do not run git commands that modify state (`add`, `commit
 
 Read-only inspection (`status`, `log`, `diff`, `show`, `branch` listing, etc.) is always fine.
 
+**Do not auto-create a branch when asked to commit.** Some harnesses default to "if on the default branch, branch first" — that default does not apply here. When I ask you to commit, commit onto the current branch (including `main`) as-is. Only create or switch branches if I explicitly ask for it.
+
 ### Commit Granularity
 
 When the user asks you to commit, aim for a clean final history rather than maximum granularity:
