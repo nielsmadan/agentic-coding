@@ -128,6 +128,44 @@ allow = [
   "jq",
   "cp",
 
+  # text output & processing — stdout-only tools (no built-in file-write flag;
+  # sed/awk/sort/uniq are deliberately excluded because -i/-o/redirect-to-file
+  # can write. read-only is enforced by plan mode dropping write tools, not by
+  # this list, but there's no reason to widen the write surface here.)
+  "echo",
+  "printf",
+  "cut",
+  "tr",
+  "comm",
+  "diff",
+  "cmp",
+  "column",
+  "nl",
+  "rev",
+  "fold",
+  "paste",
+
+  # binary / hash inspection
+  "xxd",
+  "hexdump",
+  "od",
+  "strings",
+  "shasum",
+  "sha256sum",
+  "md5",
+  "cksum",
+
+  # system / process info
+  "ps",
+  "id",
+  "groups",
+  "hostname",
+  "arch",
+  "sw_vers",
+  "readlink",
+  "seq",
+  "test",
+
   # version checks
   "yarn --version",
   "npm --version",
