@@ -64,6 +64,8 @@ Write the prompt to `.second-opinion.md` in the current working directory (dotfi
 ```markdown
 Read-only consultation. Do not modify any files — but DO read the relevant code in this project before answering.
 
+Shell use: prefer your built-in file-reading tool. If you do run shell commands, run ONE simple command at a time — do NOT chain with `;`, `&&`, or `|` and do NOT add `echo` separators. This is a headless session, so any command that would need confirmation is auto-declined, and a single declined command ends the run before you can answer. A chain is only as permitted as its least-permitted part.
+
 I need a second opinion: {problem_summary}
 
 Relevant files/areas to look at: {file_paths}
@@ -99,6 +101,15 @@ files) — unlike the default `build` agent, which has write tools:
 ```bash
 command opencode run --agent plan -m openrouter/z-ai/glm-5.2 "$(cat .second-opinion.md)" </dev/null
 ```
+
+**Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`)
+bash command separately and takes the least-permitted verdict; with stdin closed
+there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and
+the run terminates before producing any prose. The classic trigger is a benign
+`echo ---` separator inside an otherwise-allowed read chain. The prompt template
+already tells the advisor to avoid chaining; if a run still dies with no output,
+suspect a chained command hitting an un-allowlisted token (allowlist source:
+`~/ac/permissions/permissions.toml`).
 
 ### Step 3: Evaluate Confidence
 
