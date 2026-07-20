@@ -59,9 +59,10 @@ SYMLINKS=(
 # in codex/skills/ uses that override; otherwise it links from claude/skills/.
 CODEX_SKILLS=(
   check-claude-projects check-notes commit
-  code-review debug-log deslop doc explain frontend-design guide ideation optimize-seo pdf
+  code-review debug-log deslop doc explain frontend-design guide ideation
+  library-docs optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
-  review-history review-interfaces review-perf review-plan review-product
+  review-history review-interfaces review-library-use review-perf review-plan review-product
   review-security review-typescript skill-creator squash-commits temp test theme-factory
 )
 
