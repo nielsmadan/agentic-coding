@@ -1,28 +1,36 @@
 ---
 name: doc
-description: "Assess documentation state and run the right action (default, no args): survey what exists, find gaps / staleness / quality issues, then route into generate, update, or review. Explicit modes: review (--review), update (--update), generate (--generate <target>), harvest a session log (--session). Scope --staged, --all, or context. Use when unsure what the docs need, or for doc creation, freshness, and quality."
-argument-hint: "[ (no args = assess) | --review | --update | --generate <target> | --session --md <file>] [--staged | --all]"
+description: "Assess documentation and run the right action (default, no args): a context-aware assess that, with uncommitted changes, checks those changes are documented, and on a clean tree does a whole-repo review — finding gaps / staleness / quality issues and routing into generate, update, or review. Explicit overrides: review (--review), update (--update), generate (--generate <target>), harvest a session log (--session); scope with --all, --staged, --unpushed, or a target. Use when unsure what the docs need, or for doc creation, freshness, and quality."
+argument-hint: "[ (no args = context-aware assess) | --review | --update | --generate <target> | --session --md <file>] [--all | --staged | --unpushed]"
 ---
 
 # Doc
 
 Assess, review, update, and generate documentation following consistent principles.
 
-## Which mode runs — read first
+## Which mode runs (read first)
 
-**Bare `/doc` with no mode flag → Assess, over the whole repo. Always.**
+**Bare `/doc` = context-aware assess.** It adapts its *scope* to git state but always runs
+all three lanes (Generate / Update / Review) and never writes without a plan, it proposes,
+then runs your picks.
 
-- Do **not** infer `--update` or `--review` from conversation context. "We just
-  finished a feature", "just committed", or "recent changes" do **not** narrow a
-  bare `/doc` — assess surveys the *entire* docs state. Bare `/doc` is **not**
-  the end-of-feature sync.
-- Run an explicit mode **only when the user types the flag** (`--update`,
-  `--review`, `--generate`, `--session`). Don't pick one for them.
-- Don't substitute "I know what's needed, so I'll just update/review." That
-  shortcut is exactly the bug assess exists to prevent — run the full assess and
-  let its plan (which includes Generate/structure) surface what you'd skip.
-- If you catch yourself about to run update or review from a bare `/doc`, stop
-  and run assess instead.
+- **Dirty tree (staged or unstaged changes) → "is what I just did documented?"** Center the
+  assess on the changed files: are the docs covering them still accurate (**Update** lane),
+  and does new behavior need a doc (**Generate** lane)? Add a quick whole-repo glance for
+  structural gaps and obvious staleness so it doesn't tunnel-vision. Lead with the
+  changed-files verdict. Staged wins; fall back to unstaged.
+- **Clean tree → general review.** Whole-repo assess across all three lanes.
+
+**The guard that still holds** (this is why the skill used to force whole-repo): auto-scoping
+to the diff is fine, but **never collapse into a single silent action and never skip the
+Generate/structure question.** Dropping a lane, or writing without showing a plan, is the bug,
+not the narrowing. If the changed files reveal a missing docs tree or a bloated instruction
+file, that surfaces even on a one-file diff.
+
+**Explicit flags override** the auto-scope and auto-mode:
+- Scope: `--all` (force whole repo), `--staged` / `--unpushed`, or `<target>`.
+- Mode: `--update` / `--review` / `--generate <target>` / `--session` force that action
+  regardless of git state.
 
 ## Modes
 
@@ -31,10 +39,11 @@ reality* — and differ only in what they do with the result:
 
 | Mode | Intent | Writes? | Default scope |
 |------|--------|---------|---------------|
-| **(no args) — assess** | Survey docs state, propose & run an action plan | No → plan, then runs your picks | whole docs tree + key source |
+| **(no args) — assess** | Survey docs state, propose & run an action plan | No → plan, then runs your picks | **auto: changed files if the tree is dirty, else whole repo** |
 | `--review [target]` | Assess accuracy / completeness / quality | No → findings, then interactive apply | context (or `<target>`) |
 | `--update [target]` | Sync existing docs to current code | Yes — in place, replace stale parts | staged code, falling back to unstaged |
 | `--generate <target>` | Create docs that don't exist yet | Yes — new files | the target |
+| `--session --md <file>` | Harvest durable knowledge from a session log into the docs | Yes — after preview | the conversation md (see Session Mode) |
 
 **Assess is the default** — it's what a bare `/doc` runs (see "Which mode runs"
 above). It surveys, classifies, and routes into the three modes below. The
@@ -45,8 +54,9 @@ directly from a diff); `--generate` is for greenfield.
 ## Usage
 
 ```
-/doc                              # Assess docs state, propose an action plan, run your picks (default)
-/doc --staged                     # Assess, but scoped to what staged changes touch
+/doc                              # Context-aware assess: dirty tree -> check the changes are documented; clean tree -> whole-repo review
+/doc --all                        # Force a whole-repo assess even when there are uncommitted changes
+/doc --staged                     # Assess, scoped to what staged changes touch (explicit)
 /doc --review payments            # Review docs for a feature, then pick fixes to apply
 /doc --review --all               # Review all docs (parallel agents)
 /doc --update                     # Sync docs for staged code changes (end of a feature)
@@ -115,26 +125,78 @@ from the on-demand `docs/` tree; treat it as its own concern, not an afterthough
   (directory layouts, framework names, signatures) and anything enforceable (make it a
   linter/hook, not prose).
 - **Target roughly <200 lines.** Prefer positive phrasing over "don't" lists.
-- Prefer `AGENTS.md` as the canonical file with `CLAUDE.md` as a one-line `@AGENTS.md`
-  import plus any Claude-only overrides (see the bridge note under Doc Profiles).
+- Prefer `AGENTS.md` as canonical with `CLAUDE.md` a `@AGENTS.md` bridge (see the Bridge
+  note under Doc Profiles).
 
 ---
 
 ## Doc Profiles (size the docs to the repo)
 
-Pick the **smallest profile that holds the repo's non-derivable knowledge.** Most repos
-are small (a single app well under ~100k loc); **default to Lean, not Structured.** Assess
-proposes a profile and the user confirms. When torn between two, propose the smaller and
+Pick the **smallest profile that holds the repo's non-derivable knowledge.** Assess
+proposes a profile and the user confirms; when torn between two, propose the smaller and
 say why.
 
-### Minimal — tiny or single-purpose repo
+### Choosing a profile: complexity, not line count
+The trigger is **how many distinct, non-derivable knowledge areas** the repo has, not its
+size. Count the subsystems with a protocol / mechanism / quirk you can't read off a single
+file, plus the features with non-obvious behavior. Then:
+- **~1-4 areas total** (or everything fits in `AGENTS.md` commands/conventions/gotchas):
+  **Lean** (or **Minimal**). Flat `docs/<name>.md` + `decisions/` + `log/`; folders would be
+  ceremony at this scale.
+- **~5+ areas in *each* of "what it does" and "how it's built," evolving on different
+  cadences**: **Structured**. Justify the two folders *independently* - keep `features/` only
+  when there's real user-facing behavior worth specifying apart from code; keep `tech/` only
+  when several subsystems carry non-derivable mechanisms. A library may warrant `tech/` and no
+  `features/`; a behavior-rich but simple app the reverse.
+- **loc is a weak tiebreaker, not the test.** A 20k-loc app bridging 3 terminals x 3 agents
+  with protocol quirks earns Structured; a 200k-loc CRUD app with one model may only need
+  Lean. Judge the knowledge, not the line count. When genuinely ambiguous, default to Lean.
+
+### Two audiences (and where user docs go)
+**Most repos do NOT need `docs/user/`** — it is not a default. It is warranted only when the
+project has a distinct **end-user audience** (people who *use* it, not just build it) AND using
+it is non-trivial enough that the README alone isn't enough.
+- **Typical yes:** an open-source or distributed CLI / tool / app / framework that other people
+  install and learn to use.
+- **Typical no:** an internal service (its consumers are other systems, not readers), a library
+  whose "usage" is just API reference (that belongs in `features/` / `tech/`), or a personal /
+  solo project. Default to **no `user/` tree**; the README covers usage.
+- Open-source is the common trigger, but the test is the **audience**, not the license: an
+  internal tool handed to other teams can qualify; a solo open-source lib may not.
+- **Orthogonal to the profile:** a Lean repo with users can have `docs/user/`; a Structured
+  internal service may have none. Decide it separately from Minimal/Lean/Structured.
+
+When such an end-user audience *does* exist, they're distinct from **builders** (contributors +
+coding agents who *work on* it), and the two need different docs in different *formats* — one
+doc can't serve both:
+- **User docs** (`docs/user/`, plus the README): how to *use* it. Verbose, task-oriented,
+  example-driven. Human-format. README links here; agents don't auto-load it.
+- **Builder docs** (`docs/features/` + `docs/tech/`, entered via `AGENTS.md`): `features/` =
+  *what* it does (terse behavior reference), `tech/` = *how* it's built. Concise, pointer-first.
+
+The trees are not mirror images: `tech/` has many internals with no user counterpart; `user/`
+has verbose walkthroughs with no terse counterpart. They may share a *subject* (e.g. "monorepos")
+at different altitudes — that's fine (same topic, different depth), just never verbatim-duplicate.
+Keep `user/` and `features/` from becoming duplicates by making them different *kinds* of doc:
+**`features/` is terse and complete** (every feature, compact, `file:line`); **`user/` is verbose
+and selective** (only tasks that need a walkthrough). Rule: README → `user/`, `AGENTS.md` →
+`features/` + `tech/`; the two never cross-link.
+
+The redundancy trap: for a tool whose users are developers and whose behavior is fully in the
+README, a separate `features/` can just restate the README or the code. Keep `features/` only if
+that terse index tells an agent something faster than reading the code or the user docs would.
+
+`docs/user/` is a real, maintained tree (kept accurate as behavior changes, in human format),
+**not** frozen scratch. Only a *published* docs site (outside `docs/`, e.g. `site/`) is out of scope.
+
+### Minimal: tiny or single-purpose repo
 ```
 AGENTS.md        # lean (Principle 8): commands, conventions, gotchas, one-line entry-point map
 CLAUDE.md        # one line: @AGENTS.md   (+ Claude-only overrides if any)
 ```
 No `docs/` tree. The README serves humans; `AGENTS.md` serves agents.
 
-### Lean — DEFAULT for a small-to-mid app (~<100k loc)
+### Lean: DEFAULT for most repos (a handful of non-derivable areas)
 ```
 AGENTS.md              # canonical, lean (Principle 8)
 CLAUDE.md              # @AGENTS.md bridge
@@ -151,7 +213,7 @@ docs/
 No `docs/features`+`docs/tech` split. No per-directory `overview.md`. Each doc is
 orientation plus non-derivable content, pointer-first (`file:line`, never pasted code).
 
-### Structured — large / multi-module codebase
+### Structured: many distinct subsystems and features
 Adds two doc-owned buckets on top of Lean, split by **altitude** (what vs how):
 ```
 docs/
@@ -159,10 +221,12 @@ docs/
   features/    # WHAT each feature does — current behavior   (doc)
   tech/        # HOW it's built: architecture, mechanisms, API internals   (doc)
   decisions/   # ADRs                             (doc)
+  user/        # how to USE it — verbose human how-tos, README-linked (only if there are end users)
   overview.md  # index
 ```
-- `features/` replaces the old `docs/prd/` and folds in the former `docs/features/` and
-  `docs/api/` behavior — one bucket for "what it does," not three near-synonyms.
+- `features/` is the renamed `docs/prd/`, and it absorbs the behavior that older trees split
+  across separate `docs/features/` and `docs/api/` dirs — one bucket for "what it does," not
+  three near-synonyms.
 - `tech/` carries only **non-derivable** how (architecture, cross-cutting flow, why-this-
   structure); it never restates code (Principle 3).
 - The what/how split is a lifecycle separation (behavior changes on features, tech changes
@@ -214,22 +278,16 @@ exists, rather than editing `CLAUDE.md` directly.
   review. If the code is revised but the docs are committed alongside, they drift.
 - `--all` scope includes CLAUDE.md — the skill may propose edits to the project
   instructions file that governs its own behavior.
-- `docs/explain/` (the `explain` skill), `docs/product/` (the `review-product`
-  skill), `docs/user/` (**human end-user docs** — a different audience/lifecycle, not
-  code-derived), and frozen planning artifacts like `docs/superpowers/` (plans/specs)
-  are owned elsewhere / not code-derived. `doc` never syncs them to code and excludes
-  them from `--all`. Crucially, their presence does **not** count as a docs tree — a repo
-  whose only `docs/` content is `docs/superpowers/` is greenfield for assess's purposes.
-  `docs/features/` *is* `doc`'s — the product-behavior layer it keeps in sync with the
-  implementation. (If end-user docs are published to a docs *site*, they usually live
-  outside `docs/` entirely, e.g. `site/` or `apps/docs/`, and are likewise out of scope.)
-  `docs/superpowers/` is gitignored local scratch: rather than just leaving it, offer to
-  **harvest embedded decisions into `docs/decisions/` ADRs, then delete the completed/stale
-  plans on confirmation** (never one still driving in-progress work) — see Doc lifecycles.
-- `docs/decisions/` (ADRs) and `docs/log/` (incident post-mortems) are **doc-owned but
-  append-only**: part of the tree, but `--update` never rewrites their bodies to match code
-  (they describe past decisions/code on purpose). Sync only adds entries / fixes links, and
-  lifts any still-relevant lesson into a live doc.
+- **Not code-derived, not synced, and they don't count as a docs tree:** `docs/explain/`
+  (the `explain` skill), `docs/product/` (`review-product`), and frozen `docs/superpowers/`
+  (plans/specs). A repo whose only `docs/` content is `docs/superpowers/` is greenfield for
+  assess. `docs/superpowers/` is gitignored scratch, harvest its decisions into ADRs then
+  delete completed plans (see Doc lifecycles). By contrast `docs/features/` *is* `doc`'s.
+- `docs/user/` is **NOT** frozen: it's the user-facing tree (see "Two audiences"). `doc`
+  keeps it accurate in human how-to format; agents don't auto-load it. Only a *published*
+  docs site (outside `docs/`) is out of scope.
+- `docs/decisions/` and `docs/log/` are **append-only** (see Doc lifecycles): `--update`
+  never rewrites their bodies, only adds entries / fixes links.
 
 ## Assess Mode (default)
 
@@ -250,11 +308,15 @@ It never writes without your go-ahead — the plan comes first.
      (how it's built), `docs/decisions/` (ADRs), with `overview.md` indexes. This
      is the layer `--update`/`--generate` maintain. (`docs/features/` was formerly
      `docs/prd/`; it absorbs any legacy `docs/prd`, `docs/api` behavior.)
+   - **User-facing tree — `docs/user/`:** verbose human how-tos, README-linked, its
+     own audience/format (see "Two audiences" under Doc Profiles). Part of the project's
+     docs, kept accurate when behavior changes, but not the terse agent-facing structured
+     layer and not agent-loaded by default.
    - **Owned elsewhere / frozen — do NOT count as the structured layer:**
      `docs/explain/` (the `explain` skill), `docs/product/` (`review-product`),
-     `docs/user/` (human end-user docs), and frozen planning artifacts like
-     `docs/superpowers/` (plans/specs). Their presence does **not** make a project
-     "documented" — exclude them from the glob and never sync them to code.
+     and frozen planning artifacts like `docs/superpowers/` (plans/specs). Their presence
+     does **not** make a project "documented" — exclude them from the glob and never sync
+     them to code.
    - Glob `docs/**/*.md` (minus the excluded dirs); note count and tree. Sketch
      the code surface worth documenting: top-level modules, features, services,
      APIs.
@@ -267,17 +329,14 @@ It never writes without your go-ahead — the plan comes first.
    - **Gaps → Generate.** *The lane most often missed.* First answer the
      structure question, then pick the **doc profile** that fits the repo
      (default to the smallest that covers it; see "Doc Profiles" above):
-       - **Minimal** — tiny/single-purpose repo → a lean `AGENTS.md` (+ `CLAUDE.md`
-         bridge), no `docs/` tree. Record it as **considered and skipped, with the
-         reason** — do not just omit it.
-       - **Lean** — the **default** for a small-to-mid app (roughly <~100k loc, which
-         is most repos): lean `AGENTS.md` + `CLAUDE.md` bridge, `docs/decisions/` for
-         ADRs, and a *handful* of `docs/<flow>.md` docs for genuinely cross-cutting
-         flows. No `docs/features`+`docs/tech` split, no per-directory `overview.md`.
-       - **Structured** — adds `docs/features/` (what) + `docs/tech/` (how) on top of
-         Lean. Reserve for large or multi-module codebases where the split genuinely
-         earns its keep. Do **not** reach for it just because the app "has multiple
-         modules" — nearly every app does.
+     Full profile definitions are under "Doc Profiles"; here just pick and act:
+       - **Minimal** → lean `AGENTS.md` only; record it as **considered and skipped, with
+         the reason**, don't just omit it.
+       - **Lean** (the default) → `AGENTS.md` + bridge, `docs/decisions/`, a *handful* of
+         `docs/<flow>.md`.
+       - **Structured** → adds `docs/features/` + `docs/tech/`, only when the complexity test
+         is met (per "Choosing a profile", not loc). Don't reach for it just because the app
+         "has multiple modules" — nearly every app does.
      If the repo **already has a tree heavier than its profile warrants** (Structured on a
      small/simple repo, especially if it's drifting), that is itself a Generate/structure
      finding: **propose consolidating down** (migrate the non-derivable content into a few
@@ -328,9 +387,10 @@ It never writes without your go-ahead — the plan comes first.
 
 ### Scope
 
-Defaults to the whole docs tree + key source. To bias toward recent work, add
-`--staged` / `--unpushed` (assess only what those changes touch) or a `<target>`
-(assess one feature/area).
+**Auto-scopes to git state** (see "Which mode runs"): a dirty tree centers the assess on the
+changed files (plus a whole-repo glance); a clean tree assesses the whole docs tree + key
+source. Override with `--all` (force whole repo), `--staged` / `--unpushed`, or a `<target>`
+(one feature/area).
 
 ---
 
@@ -370,7 +430,8 @@ Extract and place three kinds of knowledge, using the SAME layout and convention
 
 ## Review Mode (`--review`)
 
-Default mode. Assesses docs against the principles, then offers to apply fixes.
+The `--review` action (assess is the default; this is the explicit override). Assesses docs
+against the principles, then offers to apply fixes.
 
 ### Scope
 
@@ -380,7 +441,7 @@ Default mode. Assesses docs against the principles, then offers to apply fixes.
 | `<target>` | A feature/area as a whole | Find all docs covering that feature |
 | `--staged` | Staged .md files | `git diff --cached --name-only -- '*.md'` |
 | `--unpushed` | .md files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD -- '*.md'` |
-| `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`, `docs/user/`, `docs/superpowers/`) + `README.md` + `CLAUDE.md`. Include `docs/decisions/` + `docs/log/` for link/quality checks but never sync their bodies to code (append-only). |
+| `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`, `docs/superpowers/`) + `README.md` + `CLAUDE.md`. Include `docs/user/` (check for accuracy vs behavior, but it's human-format — don't flag verbosity). Include `docs/decisions/` + `docs/log/` for link/quality checks but never sync their bodies to code (append-only). |
 
 `--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
@@ -497,24 +558,18 @@ and `references/generate-templates.md`.
 2. **Check for existing docs** - if they exist, prefer `--update` instead.
 3. **Generate** following the templates (current-state + why; `file:line` refs, not
    restated signatures).
-4. **Place appropriately**, per the repo's **Doc Profile** (see "Doc Profiles"; default
-   to Lean for a small-to-mid app):
-   - **Lean profile** (the common case): `docs/decisions/` for ADRs, `docs/<flow>.md`
-     for cross-cutting flows, root `docs/overview.md` only once ~3+ docs exist. No
-     `docs/features`+`docs/tech` split, no per-directory `overview.md`.
-   - **Structured profile** (large/multi-module only):
-     - `docs/features/` for product behavior — **what** each feature does for the user
-       (current state). This is the layer that mirrors `docs/product/` use cases (owned by
-       `review-product`) and tracks the implementation. (Formerly `docs/prd/`.)
-     - `docs/tech/` for **how** it's built (architecture, mechanisms, API internals);
-       non-derivable only, never restate code.
-     - `docs/decisions/` for ADRs (why-this-way).
-     - Ensure a root `docs/overview.md` index; add a subdirectory `overview.md` only where
-       a subdir has enough docs to warrant one (Principle 5), not by default.
-5. **Install the per-repo update trigger.** After writing docs, ensure the canonical
-   instruction file carries the trigger — **idempotent**, skip if already present. Prefer
-   `AGENTS.md` as canonical and ensure `CLAUDE.md` = `@AGENTS.md` (create the bridge if
-   missing) rather than editing `CLAUDE.md` directly:
+4. **Place appropriately**, per the repo's **Doc Profile** (see "Doc Profiles" for the
+   selection test; default to Lean when ambiguous). Where each kind of doc goes:
+   - `docs/<flow>.md` — cross-cutting flows (Lean, the common case).
+   - `docs/features/` — **what** each feature does (Structured; mirrors `docs/product/`
+     use cases, tracks the implementation).
+   - `docs/tech/` — **how** it's built (Structured; non-derivable only, never restate code).
+   - `docs/decisions/` — ADRs (why-this-way).
+   - Root `docs/overview.md` index once ~3+ docs exist; a subdirectory `overview.md` only
+     where a subdir warrants one (Principle 5), not by default.
+5. **Install the per-repo update trigger.** After writing docs, add the trigger to the
+   canonical instruction file (`AGENTS.md`, via the Bridge note pattern) — **idempotent**,
+   skip if already present:
    > ## Documentation
    > Project docs live in `docs/` (start at `docs/overview.md`, or the file map in this
    > file for a Lean repo). After completing a feature, run `doc --update` to keep them
@@ -599,16 +654,11 @@ docs for key modules surface as completeness gaps.
 
 ## Notes
 
-- Default (no args) is assess mode: survey the docs state, propose an action
-  plan, and run the user's picks. It's the entry point when you don't yet know
-  what the docs need.
 - All modes share the same principles and the compare-to-code engine.
-- Reach for an explicit mode when you already know the action: `--update` at the
-  end of feature work; `--review` for a periodic human-facing audit;
-  `--generate` for greenfield docs; assess when unsure.
+- Bare `/doc` (context-aware assess) is the entry point when you don't know what the docs
+  need. Reach for an explicit override when you already know the action: `--update` to force a
+  sync, `--review` for a periodic human-facing audit, `--generate <target>` for one specific
+  doc. Greenfield needs no flag, assess proposes the starter set on its own.
 - Sub-agents parallelize large reviews/updates/generations (>5 files).
-- Three-layer model (altitude stack): `docs/product/` (who & why — owned by
-  `review-product`) → `docs/features/` (what it does — owned by `doc`) →
-  `docs/tech/` + code (how it's built). `doc` keeps `docs/features/` ↔ code in sync;
-  `review-product` checks `docs/product/` ↔ `docs/features/`. `doc` never touches
-  `docs/product/`. (`docs/features/` was `docs/prd/` before the 2026-07 rename.)
+- Doctrine and structure live in one canonical place each: routing in "Which mode runs",
+  profiles/audiences in "Doc Profiles", frozen-vs-append-only in "Doc lifecycles".
