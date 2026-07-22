@@ -72,6 +72,7 @@ Wait for all external results before proceeding to step 6.
 
 - **DRY**: Is the same logic repeated in multiple places? Would a change require edits in multiple files?
 - **YAGNI**: Is there code, parameters, or abstraction for hypothetical future needs that nothing currently uses?
+- **Reuse-first (anti-reinvention)**: Before accepting hand-written code, walk the ladder — could it be replaced by (1) a helper/util/pattern already in this codebase, (2) the standard library, (3) a native platform feature (`<input type="date">` over a date-picker lib, CSS over JS, a DB constraint over app code), or (4) an already-installed dependency? Hand-rolling what one of these already ships is the most common avoidable bloat; a new dependency added for what a few lines or a present dep covers is its inverse. When flagging, name the specific replacement, not just "this is complex."
 - **KISS**: Could a simpler approach achieve the same result? Are there clever tricks that obscure intent?
 - **Fail Fast**: Are inputs validated early, before expensive work?
 
@@ -131,6 +132,8 @@ For annotated BAD/GOOD code examples for each category, see `references/cleancod
 
 ### Suggestions
 - {improvement opportunity}
+
+**Net:** ~{N} lines removable across the findings above (omit if nothing is cuttable).
 ```
 
 If `--multi` was used, append:
