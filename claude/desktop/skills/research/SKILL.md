@@ -1,6 +1,6 @@
 ---
 name: research
-description: Research non-programming topics online from multiple sources. Use when asking about life decisions, consumer purchases, freelancing, finance, career strategy, travel, regulations, marketing, health, or any general knowledge question. Also handles programming-adjacent topics like marketing a dev blog or freelancer career strategy. Triggers on "research", "find out about", "what are my options for", "how to handle", "best way to", comparisons like "X vs Y" for non-technical topics, or questions about real-world products, services, and strategies. Do NOT use for programming, library docs, or code debugging — use research-code instead.
+description: Research non-programming topics online from multiple sources. Use when asking about life decisions, consumer purchases, freelancing, finance, career strategy, travel, regulations, marketing, health, or any general knowledge question. Also handles programming-adjacent topics like marketing a dev blog or freelancer career strategy. Triggers on "research", "find out about", "what are my options for", "how to handle", "best way to", comparisons like "X vs Y" for non-technical topics, or questions about real-world products, services, and strategies. Do NOT use for programming, library docs, or code debugging — use research-tech instead.
 argument-hint: <topic or question>
 ---
 

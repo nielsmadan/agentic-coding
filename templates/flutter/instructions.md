@@ -15,7 +15,7 @@ MCP servers and a project-scoped skill. Use them where they help.
   Android target.
 
 If a question is about Dart syntax or framework APIs rather than this project's code, use
-`/research-code` instead — `dart-mcp` is for analyzing *this* codebase.
+`/research-tech` instead — `dart-mcp` is for analyzing *this* codebase.
 
 ### When to reach for the deployed skill
 

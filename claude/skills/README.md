@@ -63,7 +63,7 @@ Explain unfamiliar code grouped by logical concepts. For language learners, incl
 
 ### /hard-fix
 
-Escalation workflow for stubborn bugs. Combines parallel investigation using research-code, debug-log, review-history, and second-opinion.
+Escalation workflow for stubborn bugs. Combines parallel investigation using research-tech, debug-log, review-history, and second-opinion.
 
 **Arguments:**
 - `<description of the persistent problem>`
@@ -116,14 +116,14 @@ Search and read internal project documentation (docs/, README.md, CLAUDE.md).
 
 ---
 
-### /research-code
+### /research-tech
 
 Research a programming topic online using parallel agents. Searches documentation, GitHub issues, and general solutions.
 
 **Arguments:**
 - `<topic or error message>`
 
-**Example:** `/research-code React 19 use() hook`
+**Example:** `/research-tech React 19 use() hook`
 
 ---
 

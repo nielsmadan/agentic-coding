@@ -67,8 +67,8 @@ Available in `claude/skills/`:
 | `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/cld-md-improver` | Audit and improve CLAUDE.md files (project-memory optimization) |
-| `/research-code` | Research a programming topic online using parallel agents |
-| `/research-general` | Research a non-programming topic online (academic, news, primary sources, fact-checks) using parallel agents |
+| `/research-tech` | Research any technical/developer topic online using parallel agents — libraries, errors, best practices, tool/library/model comparisons, product capabilities, ecosystem signal |
+| `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. Optional message arg; generates a short feat/fix/chore message when blank |
 | `/squash-commits` | Squash unpushed commits into clean higher-level feat/fix/chore commits per the commit policy (`--conservative`, optional base ref) |
@@ -283,7 +283,7 @@ Do not keep trying the same approach. Each escalation tier forces a fresh perspe
 
 When the user's prompt contains "second opinion", automatically invoke the `/second-opinion` skill to get external advisor input.
 
-When the user's prompt contains "research online", automatically invoke whichever skill fits the topic: `/research-code` for programming, library docs, code patterns, error debugging, or version-specific issues; `/research-general` for non-programming topics — academic, historical, current events, regional/regulatory, consumer, fact-checking. If the topic is genuinely ambiguous, default to `/research-general`.
+When the user's prompt contains "research online", automatically invoke whichever skill fits the topic. Route by *what you'll do with the answer*, not just subject: `/research-tech` when you'll act on it as a developer — libraries, errors, code patterns, best practices, version issues, **and choosing/evaluating dev tools, models, services, or product capabilities** (even when a product is named); `/research-general` for non-technical topics — academic, historical, current events, regional/regulatory, consumer purchases, personal decisions, fact-checking. Rule of thumb: implement/debug/build-with → `/research-tech`; learn-about/decide/verify a non-code topic → `/research-general`. In a non-code repo (e.g. a notes vault), default research to `/research-general`. If genuinely ambiguous, default to `/research-general`.
 
 When the user's prompt contains "review plan", "review the plan", or "review my plan", automatically invoke the `/review-plan` skill to get multi-agent feedback before implementation.
 
@@ -313,4 +313,4 @@ When a `docs/` folder exists, proactively check internal documentation using `/r
 - When debugging issues (check for documented gotchas)
 - When the user asks about conventions, patterns, or architecture
 
-This supplements CLAUDE.md with detailed project-specific knowledge. For external library docs, use `/research-code` instead.
+This supplements CLAUDE.md with detailed project-specific knowledge. For external library docs, use `/research-tech` instead.

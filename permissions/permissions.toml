@@ -258,7 +258,7 @@ allow = [
   "Skill(perf-test)",
   "Skill(review-plan)",
   "Skill(read-docs)",
-  "Skill(research-code)",
+  "Skill(research-tech)",
   "Skill(resolve-conflicts)",
   "Skill(review-comments)",
   "Skill(review-history)",

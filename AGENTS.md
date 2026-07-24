@@ -182,7 +182,7 @@ Do NOT use `gh api` when a dedicated subcommand exists.
 
 These phrases automatically invoke skills:
 - "second opinion" → `/second-opinion`
-- "research online" → `/research-code` (programming/library/code) or `/research-general` (academic/historical/consumer/fact-check). Pick by topic; default to `/research-general` if ambiguous.
+- "research online" → `/research-tech` (any developer topic: libraries, errors, best practices, tool/model comparisons, product capabilities) or `/research-general` (non-technical: academic/historical/consumer/personal/fact-check). Route by intent — implement/debug/choose-a-tool → tech; learn/decide/verify a non-code topic → general. Non-code repo → default general. Default `/research-general` if ambiguous.
 - "review plan" → `/review-plan`
 - "add debug logs" / "debug logging" → `/debug-log`
 - "review history" / "git history" → `/review-history`
@@ -209,8 +209,8 @@ Invoke with `/<skill-name>`:
 | `/debug-log` | Add debug logging to trace execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/read-docs` | Search internal project documentation |
-| `/research-code` | Research a programming topic online with parallel agents |
-| `/research-general` | Research a non-programming topic online with parallel agents |
+| `/research-tech` | Research any technical/developer topic online with parallel agents |
+| `/research-general` | Research a non-technical topic online with parallel agents |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-security` | Security audit for vulnerabilities |
 | `/review-perf` | Performance analysis |

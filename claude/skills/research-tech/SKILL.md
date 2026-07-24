@@ -1,20 +1,24 @@
 ---
-name: research-code
-description: Research a programming topic online — libraries, best practices, errors, post-cutoff docs. For non-programming topics use `research-general`.
-argument-hint: <topic or error message>
+name: research-tech
+description: Research any technical / developer topic online — libraries, errors, best-practice/how-to, tool·library·model comparisons, product capabilities, and ecosystem/community signal. Use when you'll act on the answer as a developer (write code, debug, choose a tool). For non-technical topics (science, history, consumer, personal, fact-check) use `research-general`.
+argument-hint: <topic, error message, or "X vs Y">
 ---
 
-# Research Code
+# Research Tech
 
-Research a programming topic from multiple angles using parallel sub-agents, with critical evaluation of source credibility.
+Research any technical topic from multiple angles using parallel sub-agents, with critical evaluation of source credibility. Covers the full developer surface: implementation and debugging, best practices, **comparing/choosing tools, libraries, models, or services**, checking what a product or platform can do, and reading ecosystem sentiment — not just code and errors.
+
+For a genuinely non-technical question (science, history, news, policy, consumer purchases, personal decisions, fact-checking a claim), use `research-general` instead — it leads with encyclopedic/academic/news/primary sources rather than docs and StackOverflow.
 
 ## Usage
 
 ```
-research-code <library> <what you want to do>
-research-code "<error message>" <library>
-research-code how to implement auth in react-navigation v7
-research-code Redux vs Zustand for large app
+research-tech <library> <what you want to do>
+research-tech "<error message>" <library>
+research-tech how to implement auth in react-navigation v7
+research-tech Redux vs Zustand for large app
+research-tech does Airship support transactional emails
+research-tech best open-weight coding models on OpenRouter by cost/quality
 ```
 
 ## Gotchas
@@ -35,8 +39,9 @@ Extract: **library/framework**, **error message** (if any, usually quoted), **ve
 |------|------|----------|
 | **Quick** | Simple factual lookup, single API question, "what version supports X", "how to do X" with well-known library | Skip internal docs check. Spawn only Docs + General. Skip follow-up loop and critique. |
 | **Standard** | Comparisons, best practices, errors, complex implementation, "real world experience", debugging | Full workflow including follow-up loop and adversarial critique |
+| **Product/Market** | Choosing/evaluating a tool, service, platform, or model; "does X support Y" capability lookups; pricing/ROI; benchmarks; ecosystem sentiment | Full workflow, but lead with **Product/Market**, **Comparison**, **Reddit**, and **News** — skip Docs/StackOverflow-first instinct; official docs here are for capability confirmation, not implementation. |
 
-When in doubt, use Standard.
+When in doubt, use Standard. When the question is "which should I use / can it do X / is it any good" rather than "how do I build/fix it", use Product/Market.
 
 ### Step 3: Check Internal Documentation First (Standard only)
 
@@ -55,8 +60,10 @@ Pick the relevant agents and spawn them in a **single Task message** (parallel e
 | **StackOverflow** | Common problem/implementation pattern | `site:stackoverflow.com {lib} {keywords}`, then `mcp__jina__read_url` top answers (SO is JS-heavy). |
 | **Changelog** | Version mentioned OR "stopped working" / "after upgrade" | `{lib} {version} changelog breaking changes migration`. |
 | **Best Practices** | Feature implementation (no error) | `{lib} best practices {goal}` + `{lib} recommended architecture {goal}`. |
-| **Reddit** | Comparison, best practices, "real world experience" | `site:reddit.com {lib} {keywords}`, then `mcp__jina__read_url` top 2-3 (Reddit is JS-heavy). |
+| **Reddit** | Comparison, best practices, "real world experience", ecosystem sentiment | `site:reddit.com {lib} {keywords}`, then `mcp__jina__read_url` top 2-3 (Reddit is JS-heavy). |
 | **Comparison** | "vs", "or", "compare", "which", "best library" | `{A} vs {B} {context}`. |
+| **Product/Market** | Evaluating/choosing a product, platform, tool, or model; capability lookup ("does X support Y"); pricing/ROI; benchmarks | `{product} {capability} documentation`, `{product} pricing`, `{A} vs {B} {year}`, independent benchmark sites, plus News for launches/deprecations. Confirm capabilities against official product pages/changelogs; weight independent benchmarks and community threads over vendor claims. |
+| **News** | Launches, deprecations, funding/acquisition, "is X still maintained" | WebSearch recent + `{product} news {year}`, then `mcp__jina__read_url` top 2-3. |
 
 **Fetching**: prefer `mcp__jina__read_url` for JS-heavy pages (modern docs, SPAs); `WebFetch` for plain HTML and github.com. See "Web Fetching" in CLAUDE.md.
 
@@ -122,12 +129,14 @@ For the full output template, see `references/output-format.md`.
 
 | # | Query | Spawns |
 |---|-------|--------|
-| 1 | `research-code how to implement authentication in Next.js 14` | Docs, GitHub, General, Best Practices, StackOverflow |
-| 2 | `research-code Redux vs Zustand for large React app` | Docs (both), General, Comparison, Reddit, StackOverflow |
-| 3 | `research-code "Cannot read property 'navigate' of undefined" react-navigation` | Docs, GitHub, General, Specific, StackOverflow |
-| 4 | `research-code auth navigation not working in react-navigation v7` | Docs, GitHub, General, Changelog, StackOverflow |
-| 5 | `research-code best practices for folder structure in Express API` | Docs, General, Best Practices, Reddit, StackOverflow |
-| 6 | `research-code what's the default port for Vite dev server` | Quick mode: Docs + General only |
+| 1 | `research-tech how to implement authentication in Next.js 14` | Docs, GitHub, General, Best Practices, StackOverflow |
+| 2 | `research-tech Redux vs Zustand for large React app` | Docs (both), General, Comparison, Reddit, StackOverflow |
+| 3 | `research-tech "Cannot read property 'navigate' of undefined" react-navigation` | Docs, GitHub, General, Specific, StackOverflow |
+| 4 | `research-tech auth navigation not working in react-navigation v7` | Docs, GitHub, General, Changelog, StackOverflow |
+| 5 | `research-tech best practices for folder structure in Express API` | Docs, General, Best Practices, Reddit, StackOverflow |
+| 6 | `research-tech what's the default port for Vite dev server` | Quick mode: Docs + General only |
+| 7 | `research-tech does Airship support transactional emails` | Product/Market mode: Product/Market, News, General (capability lookup — not implementation) |
+| 8 | `research-tech best open-weight coding models on OpenRouter by cost/quality` | Product/Market mode: Product/Market, Comparison, Reddit, News (benchmark/ROI) |
 
 ## Troubleshooting
 

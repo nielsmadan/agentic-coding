@@ -36,7 +36,7 @@ interact with the actual app; for JS-side runtime logs use `rn-logs` (below).
 
 There is no JavaScript/TypeScript MCP server bundled. For static analysis and tests use the
 project's own scripts directly (`yarn type-check`, `yarn lint`, `yarn test`); for library
-docs use `/research-code`.
+docs use `/research-tech`.
 
 ### Streaming Metro logs (`rn-logs`)
 

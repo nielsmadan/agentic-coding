@@ -129,7 +129,7 @@ Do not soften criticism. If something is bad, say it's bad.
 
 ## Research Agent
 
-Use the **Skill tool** to invoke `research-code` with relevant topic:
+Use the **Skill tool** to invoke `research-tech` with relevant topic:
 
 ```
 {library/technology mentioned} {core problem} best practices
@@ -148,7 +148,7 @@ In a **SINGLE message**, spawn all 5 agents:
 2. **Task tool** -> general-purpose agent for alternatives
 3. **Task tool** -> general-purpose agent for robustness
 4. **Task tool** -> general-purpose agent for adversarial
-5. **Skill tool** -> `research-code` with relevant topic
+5. **Skill tool** -> `research-tech` with relevant topic
 
 Wait for ALL to complete before proceeding.
 
@@ -157,4 +157,4 @@ Wait for ALL to complete before proceeding.
 - [ ] Alternatives agent spawned
 - [ ] Robustness agent spawned
 - [ ] Adversarial agent spawned
-- [ ] Research agent spawned (research-code)
+- [ ] Research agent spawned (research-tech)

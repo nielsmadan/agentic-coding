@@ -61,7 +61,7 @@ Create a TodoWrite item per step. With `--quick`, collapse to steps 3 + 5 only.
 - Survey what already exists: for a codebase, the relevant code/docs (`read-docs` if a
   `docs/` tree exists); for any topic, what the user has already told you or tried.
 - **Research when external context would sharpen the ideas** — and only then. Time-box it.
-  - `research-code` — technical/library/pattern questions, prior art in code.
+  - `research-tech` — technical/library/pattern questions, prior art in code.
   - `research-general` — markets, competitors, domains, non-technical topics.
   - `read-docs` — internal project conventions and constraints.
   - Skip research entirely on `--quick`, or when you already have enough to diverge.
@@ -174,5 +174,5 @@ well-understood topics, skip it. Momentum matters — a stumped person wants ide
   organized by stuck-state. Load only the entries the router selects.
 - Adjacent skills: `review-product` (audit a product against its users — narrower, evaluative),
   `superpowers:brainstorming` (design-gate an approved approach — downstream of this),
-  `review-plan` (review a plan once an idea is chosen), `research-code` / `research-general`
+  `review-plan` (review a plan once an idea is chosen), `research-tech` / `research-general`
   (the context sources this skill calls).
