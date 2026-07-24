@@ -1,7 +1,7 @@
 # Docs Overview
 
 Index for the `docs/` tree. **`docs/` is supplementary** — the canonical
-current-state documentation for this repo lives in [`CLAUDE.md`](../CLAUDE.md)
+current-state documentation for this repo lives in [`AGENTS.md`](../AGENTS.md)
 (structure, permissions, project templates, the skills table, shell config) and
 [`README.md`](../README.md) (the top-level entry point).
 
@@ -14,9 +14,9 @@ current-state documentation for this repo lives in [`CLAUDE.md`](../CLAUDE.md)
 ## Where to look for what
 
 - **How the repo is laid out, how to add a skill / permission / template** →
-  [`CLAUDE.md`](../CLAUDE.md).
+  [`AGENTS.md`](../AGENTS.md).
 - **Per-agent skill catalog** → the skills table in
-  [`CLAUDE.md`](../CLAUDE.md) and [`claude/skills/README.md`](../claude/skills/README.md).
+  [`AGENTS.md`](../AGENTS.md) and [`claude/skills/README.md`](../claude/skills/README.md).
 - **How to build a good skill** → [`skill-best-practices.md`](skill-best-practices.md).
 
 > Note: `docs/tmp/` is gitignored scratch space and is not part of the repo.

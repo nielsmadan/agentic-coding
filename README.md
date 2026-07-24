@@ -67,7 +67,7 @@ documentation, security audits, and more. There are ~38 of them under
 
 - **Full catalog:** [`claude/skills/README.md`](claude/skills/README.md) — every
   skill with arguments and examples. There's also a summary table in
-  [`CLAUDE.md`](CLAUDE.md#skills).
+  [`AGENTS.md`](AGENTS.md#skills).
 - **Codex** gets a curated subset (see `CODEX_SKILLS` in `sync.sh`), shared
   via symlink.
 - **Claude Desktop** skills live in `claude/desktop/` and are packaged into zips
@@ -85,7 +85,7 @@ hook rejects drift. To change permissions, edit `permissions.toml` and run:
 python3 permissions/sync.py
 ```
 
-See the [Permissions section in `CLAUDE.md`](CLAUDE.md#permissions) for the full
+See the [Permissions section in `AGENTS.md`](AGENTS.md#permissions) for the full
 model (shared vs. agent-native entries, the autonomous profile).
 
 ## Project templates
@@ -101,7 +101,7 @@ aiconf sync [dir]     # bidirectionally sync project edits with its template
 Install copies committable files into the target; sync (interactive, via the
 `/sync-project-config` skill) decides per file whether to pull project changes
 back into the template or push template updates out. See the
-[Project Templates section in `CLAUDE.md`](CLAUDE.md#project-templates).
+[Project Templates section in `AGENTS.md`](AGENTS.md#project-templates).
 
 ## Shell config
 
@@ -118,7 +118,7 @@ entries).
 
 ## Further reading
 
-- [`CLAUDE.md`](CLAUDE.md) — project instructions, policies, and detailed
+- [`AGENTS.md`](AGENTS.md) — project instructions, policies, and detailed
   subsystem docs
 - [`claude/skills/README.md`](claude/skills/README.md) — full skill catalog
 - [`templates/`](templates/) — per-project-type config and skills
