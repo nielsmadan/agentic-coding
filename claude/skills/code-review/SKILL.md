@@ -51,7 +51,7 @@ Two further aspects are **conditional add-ons** — in the default (no-aspect-fl
 
 | Flag | Maps to |
 |------|---------|
-| `--typescript` | Agent 9: Language Review — delegates to the matching `review-<language>` skill (e.g. `review-typescript`). Auto-included when the scoped files are TypeScript. |
+| `--typescript` / `--swift` | Agent 9: Language Review — delegates to the matching `review-<language>` skill (e.g. `review-typescript`, `review-swift`). Auto-included when the scoped files are of that language. |
 | `--project` | Agent 10: Project-Specific Review — delegates to the project's own `review-project` skill. Auto-included when that skill exists in the repo. |
 | `--library-use` | Agent 11: Library-Use Review — delegates to `review-library-use` (checks code against the repo's `library-use` conventions). Auto-included when the repo has a `library-use` reference. |
 
@@ -156,6 +156,7 @@ Determine which conditional add-on agents apply. Skip this entirely if explicit 
 | Language | File extensions | Repo marker | Skill |
 |---|---|---|---|
 | TypeScript | `.ts` `.tsx` `.mts` `.cts` | `tsconfig.json` | `review-typescript` |
+| Swift | `.swift` | `Package.swift`, `*.xcodeproj`, `*.xcworkspace` | `review-swift` |
 
 *(To add a language: create a `review-<language>` skill and add a row here.)*
 
@@ -250,6 +251,7 @@ Invoke `review-cleancode` with the scope-translated arguments per the table abov
 ### Agent 9: Language Review (`--typescript` / other `--<language>`) — conditional
 Only if Step 3b.5 detected a language (or the flag was passed explicitly). For each applicable language, invoke its `review-<language>` skill with the scope-translated arguments per the table above.
 - TypeScript → `review-typescript`: judgment-level type design a linter can't decide — type modeling (make invalid states unrepresentable, unions of interfaces, outputs no wider than needed), inference-vs-annotation calls, and casts/`any` that compile but hide a wrong upstream type or unvalidated boundary data. Deliberately non-overlapping with typescript-eslint.
+- Swift → `review-swift`: judgment-level design a linter and the compiler can't decide — state modeling with enums and value types (make invalid states unrepresentable), optional/error/Codable modeling, concurrency isolation intent (actors, `Sendable`, state assumptions across `await`, `Task` lifetime), SwiftUI identity/lifetime/dependencies, ARC ownership, and escape hatches (`!`, `as!`, `try!`, `@unchecked Sendable`) that hide a modeling problem. Deliberately non-overlapping with SwiftLint, swift-format, and Swift 6 strict-concurrency diagnostics. Note it establishes a build-settings baseline first (language mode, default actor isolation, enabled SwiftLint rules) — isolation findings are unreviewable without it.
 
 ### Agent 10: Project-Specific Review (`--project`) — conditional
 Only if Step 3b.5 found a `review-project` skill in the repo (or the flag was passed explicitly). Invoke the project's `review-project` skill with the scope-translated arguments per the table above. This agent checks issues unique to this codebase that the language-agnostic and language-specific agents don't know about.

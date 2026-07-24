@@ -86,7 +86,7 @@ CODEX_SKILLS=(
   library-docs optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
-  review-security review-typescript skill-creator squash-commits temp test theme-factory
+  review-security review-swift review-typescript skill-creator squash-commits temp test theme-factory
 )
 
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
