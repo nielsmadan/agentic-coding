@@ -132,5 +132,6 @@ Scanned 47 sessions across 3 projects (2026-02-05 to 2026-02-19). Found 31 error
 
 - The extraction script uses only Python stdlib — no dependencies to install
 - Sessions are at `~/.claude/projects/*/UUID.jsonl`
+- Sessions are also archived to `~/wrksp/incubation/session-tracker/archive` (same encoded-folder-per-project layout). The extraction script scans only the live `~/.claude/projects` dir, so sessions that have rotated out won't appear — point the script's `CLAUDE_DIR` at the archive to include them
 - Script filters by file mtime before opening files, so large directories are fast
 - Output is capped at ~200-400 lines via top-N limits and truncation

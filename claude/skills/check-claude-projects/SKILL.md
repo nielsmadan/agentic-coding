@@ -15,6 +15,12 @@ folder holds `.jsonl` transcripts. The user often checks one repo out into
 sibling dirs (`wrksp/app/dev1`, `wrksp/app/dev2`, …) and won't know which
 folder a past session lived in — so the search spans siblings by default.
 
+Sessions are also archived to `~/wrksp/incubation/session-tracker/archive`,
+which mirrors the same encoded-folder-per-project layout. Older sessions that
+have rotated out of `~/.claude/projects` may survive only there — if a search of
+the live dir comes up empty, re-run it against the archive with
+`--projects-dir ~/wrksp/incubation/session-tracker/archive`.
+
 ## When to use
 
 Trigger this whenever earlier conversational context would help and you don't
@@ -78,7 +84,8 @@ user can trace it.
 
 Widen progressively: retry with a looser/alternate query → `--app NAME` →
 `--scope all` → drop `--days`. Confirm the scope with `--list-folders` if results
-seem too narrow.
+seem too narrow. If the session is old, it may have rotated out of the live dir —
+retry against `--projects-dir ~/wrksp/incubation/session-tracker/archive`.
 
 ## Examples
 
