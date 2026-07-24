@@ -1,0 +1,23 @@
+{
+  "lastChangelogVersion": "0.80.10",
+  "theme": "dark",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
+  "defaultThinkingLevel": "medium",
+  "enabledModels": [
+    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-5.6-terra",
+    "openai-codex/gpt-5.6-sol",
+    "openrouter/z-ai/glm-5.2",
+    "openrouter/minimax/minimax-m2.5",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/qwen/qwen3-coder-next",
+    "openrouter/qwen/qwen3-coder:free"
+  ],
+  "packages": [
+    "npm:pi-mcp-adapter",
+    "npm:pi-subagents",
+    "npm:@narumitw/pi-plan-mode",
+    "git:github.com/obra/superpowers"
+  ]
+}

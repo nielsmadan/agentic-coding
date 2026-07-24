@@ -18,6 +18,7 @@ Generated files:
     claude/CLAUDE.md              -> ~/.claude/CLAUDE.md (default profile)
     claude/CLAUDE.autonomous.md   -> ~/.claude/CLAUDE.md (--autonomous profile)
     global/AGENTS.md              -> ~/.codex/AGENTS.md AND ~/.gemini/GEMINI.md
+                                     AND ~/.pi/agent/AGENTS.md
                                      (one shared file for every non-Claude agent)
 """
 
@@ -47,16 +48,18 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 # so it can't name a single self_path the way the per-agent template does).
 SHARED_INTRO = """# Global agent instructions
 
-User-scoped guidance that applies to every agent session on this machine. Installed to `~/.codex/AGENTS.md` (Codex) and `~/.gemini/GEMINI.md` (Antigravity `agy`).
+User-scoped guidance that applies to every agent session on this machine. Installed to `~/.codex/AGENTS.md` (Codex), `~/.gemini/GEMINI.md` (Antigravity `agy`), and `~/.pi/agent/AGENTS.md` (Pi).
 
 Keep this file **project-agnostic** — anything specific to a particular repo belongs in that repo's own `AGENTS.md`."""
 
-# Each target assembles: intro + ordered fragments. `web-fetching` is Claude-only
-# (it documents the Jina MCP, which only Claude has configured); everything else is
-# agent-agnostic. Claude gets its own CLAUDE.md (it needs the CLAUDE.md filename, the
-# Jina section, and the autonomous git-policy swap). Every other agent shares ONE
-# file — they'd get byte-identical content, so we don't branch per-agent until one
-# actually needs something different. It's symlinked to each agent's global path.
+# Each target assembles: intro + ordered fragments. Web-fetching (the Jina MCP) now
+# has two variants: `web-fetching` names Claude's exact tool names (mcp__jina__*,
+# WebFetch); `web-fetching.shared` is tool-agnostic for the other agents, which reach
+# Jina via their own MCP integrations (Codex config.toml, Antigravity mcp_config.json,
+# Pi's mcp-adapter). Everything else is agent-agnostic. Claude gets its own CLAUDE.md
+# (it needs the CLAUDE.md filename and the autonomous git-policy swap). Every other
+# agent shares ONE file — byte-identical content — symlinked to each agent's global
+# path; we don't branch per-agent until one actually needs something different.
 TARGETS = [
     {
         "path": "claude/CLAUDE.md",
@@ -66,7 +69,7 @@ TARGETS = [
         "repo_file": "CLAUDE.md",
         "fragments": [
             "web-fetching", "browser-automation", "secrets",
-            "git-policy", "git-commit-policy",
+            "git-policy", "git-commit-policy", "working-style",
         ],
     },
     {
@@ -77,15 +80,15 @@ TARGETS = [
         "repo_file": "CLAUDE.md",
         "fragments": [
             "web-fetching", "browser-automation", "secrets",
-            "git-policy.autonomous", "git-commit-policy",
+            "git-policy.autonomous", "git-commit-policy", "working-style",
         ],
     },
     {
         "path": "global/AGENTS.md",
         "intro": SHARED_INTRO,
         "fragments": [
-            "browser-automation", "secrets",
-            "git-policy", "git-commit-policy",
+            "web-fetching.shared", "browser-automation", "secrets",
+            "git-policy", "git-commit-policy", "working-style",
         ],
     },
 ]

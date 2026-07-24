@@ -18,6 +18,12 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
 - `antigravity/` - Antigravity (`agy`) configuration
   - `settings.json` - permissions.* arrays are **generated** (rest editable)
+- `pi/` - Pi (`pi-coding-agent`) configuration
+  - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
+    allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
+    `~/.pi/agent/AGENTS.md` (the shared `global/AGENTS.md`) and auto-discovers skills from
+    `~/.agents/skills/`, so those need no pi-specific files. Pi has no shell-permission system,
+    so it is **not** part of `permissions/sync.py`.
 - `permissions/` - Single source of truth for agent shell-command permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
@@ -150,6 +156,33 @@ To change global guidance: edit a fragment in `global/fragments/`, then run `pyt
 **Why a generator, not native `@imports`:** only Claude Code and Gemini CLI expand in-file `@path` imports; Codex and OpenCode have no import mechanism, and Antigravity's `agy` (a closed-source rewrite) is unverified. A generator is the only DRY approach that works uniformly across every agent.
 
 **OpenCode** gets no file of its own: it reads `~/.claude/CLAUDE.md` as a global-rules fallback. Per OpenCode's docs it treats that file as plain rules and does not expand `@imports` — moot here, since the generated file is already fully expanded. Disable via `OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1` if ever unwanted.
+
+## Pi
+
+Pi (`@earendil-works/pi-coding-agent`, installed via mise) is wired up like the other non-Claude
+harnesses, but through Pi's own mechanisms rather than the generated permission/global pipelines:
+
+- **Global instructions** — Pi loads `~/.pi/agent/AGENTS.md`, symlinked to the shared
+  `global/AGENTS.md` (same file as Codex/Antigravity).
+- **Skills** — Pi auto-discovers `~/.agents/skills/` (and `~/.pi/agent/skills/`) by default. That
+  first directory is already populated by `install_codex_skills`, so Pi gets the same curated skill
+  subset as Codex/Antigravity with no pi-specific config. Skills surface as `/skill:<name>` and via
+  progressive disclosure in the system prompt.
+- **Permissions** — Pi has **no** shell-command allowlist or sandbox (only a project-*trust* guard
+  for loading project-local resources). There is nothing for `permissions/sync.py` to generate, so
+  Pi is intentionally absent from `permissions/permissions.toml`.
+- **Model picker** — `pi/settings.json` (symlinked to `~/.pi/agent/settings.json`) sets
+  `enabledModels`, a glob allowlist (`provider/id`, minimatch, same format as Pi's `--models` flag)
+  that scopes the `/model` default view and Ctrl+P cycling. It does **not** delete models from the
+  "show all" tab. To change which models are offered, edit the `enabledModels` array. **Do not** edit
+  `~/.pi/agent/models-store.json` — that is a fetched catalog cache Pi overwrites on `pi update`.
+  Current scope: the GPT-5.6 Codex ladder (`gpt-5.6-luna`/`-terra`/`-sol`, default `-terra`) plus a
+  curated openrouter spread (`z-ai/glm-5.2`, `minimax/minimax-m2.5`, `deepseek/deepseek-v4-flash`,
+  `qwen/qwen3-coder-next`, `qwen/qwen3-coder:free`).
+
+Unlike the other harnesses' settings files, `pi/settings.json` is runtime-mutable: Pi writes
+`lastChangelogVersion` (on upgrades) and any `/settings` / `/model` changes back through the symlink
+into the repo file, so expect the occasional small diff to commit or discard.
 
 ## Project Templates
 
