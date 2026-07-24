@@ -86,11 +86,21 @@ Launch ALL of these simultaneously using the Task tool:
 
 For detailed agent prompt templates, see `references/templates.md`.
 
-### Phase 3: Synthesize Findings
+### Phase 3: Synthesize Findings (Fable)
 
-Wait for all agents. Combine into a root cause theory with evidence.
+Wait for all Phase 2 agents. This synthesis is the reasoning crux of the whole workflow, so it runs on the most capable model rather than inline: dispatch **one** read-only subagent to produce the root-cause theory.
 
-The synthesis must trace to mechanism, not stop at symptoms — good synthesis names the root cause with corroborating evidence from multiple agents (debug timing, git history, library source, research). See `references/templates.md` for BAD/GOOD synthesis examples.
+- `subagent_type: Plan` — read-only by construction (no Edit/Write/NotebookEdit), retains Read/Grep/Glob for confirming evidence against real files.
+- `model: fable`.
+- **Fallback:** if the dispatch fails because `fable` is unavailable, re-dispatch the same `Plan` agent with **no** `model` override (inherits the session model). Say once that you fell back off Fable.
+
+The `Plan` agent starts **fresh** (not a fork — forks can't be pinned to Fable), so its prompt MUST contain:
+- The problem statement and everything Phase 1 established.
+- The **full findings from all five Phase 2 agents** (research, debug-log traces, git history, library source, second-opinion) — paste them in; the subagent cannot see your context.
+- Pointers to the specific files / line ranges the theory will hinge on.
+- These directives: trace to **mechanism, not symptom**; ground every claim in specific evidence from the findings or the files it reads; name the single most-likely root cause and rank the alternatives; state what evidence would confirm or falsify each; reason exhaustively before committing.
+
+It returns a root-cause theory with corroborating evidence from multiple sources (debug timing, git history, library source, research). See `references/templates.md` for BAD/GOOD synthesis examples — hold its output to the GOOD bar.
 
 ### Phase 4: Validate Theory
 
