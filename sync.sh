@@ -86,7 +86,8 @@ CODEX_SKILLS=(
   library-docs optimize-seo pdf
   perf-test read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
-  review-security review-swift review-typescript skill-creator squash-commits temp test theme-factory
+  review-security review-swift review-typescript research-general research-tech skill-creator
+  squash-commits temp test theme-factory
 )
 
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
@@ -213,6 +214,22 @@ generate_global() {
   fi
 }
 
+sync_codex_config() {
+  local script="$SCRIPT_DIR/codex/sync_config.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  Codex config sync not found: $script (skipping)"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping Codex config sync"
+    return
+  fi
+
+  echo "Merging repo-managed Codex config..."
+  python3 "$script"
+}
+
 install_codex_skills() {
   local dest_dir="$HOME/.agents/skills"
   local claude_src="$SCRIPT_DIR/claude/skills"
@@ -286,6 +303,9 @@ echo ""
 generate_permissions
 echo ""
 generate_global
+echo ""
+
+sync_codex_config
 echo ""
 
 for entry in "${SYMLINKS[@]}"; do

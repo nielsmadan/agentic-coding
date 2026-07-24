@@ -38,7 +38,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | Path | What it holds |
 |------|---------------|
 | `claude/` | Claude Code config: `skills/`, `hooks/`, `settings.json` (+ `settings.autonomous.json`), `CLAUDE.md` (+ autonomous variant), and `desktop/` (Claude Desktop skills, packaged separately) |
-| `codex/` | OpenAI Codex config: permission `rules/` and a curated skill subset synced to `~/.agents/skills` |
+| `codex/` | OpenAI Codex config: managed `config.toml` overlay, permission `rules/`, and curated skills synced to `~/.agents/skills` |
 | `antigravity/` | Google Antigravity (`agy`) settings |
 | `opencode/` | OpenCode config (`opencode.json`) |
 | `permissions/` | Single source of truth for shell-command permissions — `permissions.toml` plus `sync.py`, which generates every agent's permission config |
@@ -55,6 +55,10 @@ agent-native settings (tool toggles, MCP entries, skill subsets) live in the
 per-agent directories above. Codex, Antigravity, and Gemini CLI pick up Claude's
 skills through symlinks rather than separate copies.
 
+Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
+symlinked. `sync.sh` merges the table subtrees declared in `codex/config.toml`
+into it and preserves all other user and Codex-managed settings.
+
 ## Skills
 
 Skills are reusable `/<name>` workflows — code review, research, debugging,
@@ -64,7 +68,7 @@ documentation, security audits, and more. There are ~38 of them under
 - **Full catalog:** [`claude/skills/README.md`](claude/skills/README.md) — every
   skill with arguments and examples. There's also a summary table in
   [`CLAUDE.md`](CLAUDE.md#skills).
-- **Codex** gets a curated subset (see `CODEX_SKILLS` in `install.sh`), shared
+- **Codex** gets a curated subset (see `CODEX_SKILLS` in `sync.sh`), shared
   via symlink.
 - **Claude Desktop** skills live in `claude/desktop/` and are packaged into zips
   with `claude/desktop/package-skills.sh`, then uploaded through Claude Desktop's

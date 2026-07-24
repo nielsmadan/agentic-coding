@@ -17,6 +17,8 @@ Shared configuration for agentic coding tools (Claude Code, Codex, Antigravity, 
 │   ├── desktop/      # Claude Desktop skills (zip-and-upload)
 │   └── hooks/        # Shell scripts for event triggers
 ├── codex/            # OpenAI Codex CLI configuration
+│   ├── config.toml   # Managed table overlay merged into ~/.codex/config.toml
+│   ├── sync_config.py # Preserves unmanaged Codex settings while applying the overlay
 │   ├── rules/        # Permission rules (permissions.rules is GENERATED)
 │   └── skills/       # Codex-specific overrides; install.sh syncs the curated subset of claude/skills/ to ~/.agents/skills/
 ├── antigravity/      # Antigravity CLI (`agy`) configuration
