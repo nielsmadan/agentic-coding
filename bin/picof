@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Print the latest Pi session path for the current directory.
+
+Usage:
+    picof
+
+The `picof` zsh function passes the emitted path to `pi --fork`.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+
+def latest_session(cwd: Path) -> Path | None:
+    agent_dir = Path(
+        os.environ.get("PI_CODING_AGENT_DIR", Path.home() / ".pi" / "agent")
+    )
+    sessions_dir = agent_dir / "sessions"
+    latest: Path | None = None
+    latest_mtime = -1.0
+
+    for path in sessions_dir.glob("*/*.jsonl"):
+        try:
+            with path.open(encoding="utf-8") as session:
+                header = json.loads(session.readline())
+            mtime = path.stat().st_mtime
+        except (OSError, json.JSONDecodeError):
+            continue
+        if header.get("type") != "session" or header.get("cwd") != str(cwd):
+            continue
+        if mtime > latest_mtime:
+            latest = path
+            latest_mtime = mtime
+
+    return latest
+
+
+def main() -> int:
+    cwd = Path.cwd().resolve()
+    session = latest_session(cwd)
+    if session is None:
+        print(f"picof: no Pi session found for {cwd}", file=sys.stderr)
+        return 1
+    print(session)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,1 @@
+alias agyco="agy --continue"
