@@ -1,7 +1,7 @@
 ---
 name: ideation
 description: Generate ideas with structure when you're stumped — on what to build next, what the real problem is, or how to solve it. Pulls in research for context, diverges wide using matched frameworks, then converges on a prioritized few. Use when the user says "I'm stuck", "I'm stumped", "ideate", "brainstorm ideas", "help me think of", "what could I add", "what should I build", "I don't know what the problem is", "how could I solve", or wants idea generation on any topic (product, technical, business, writing, personal). For auditing an existing product against its users, use review-product instead.
-argument-hint: [topic] [--problem | --feature | --solution] [--quick]
+argument-hint: [topic] [--quick]
 ---
 
 # Ideation
@@ -20,14 +20,18 @@ It is the broad counterpart to `review-product` (which audits a product against 
 in a specific direction). Where `superpowers:brainstorming` gates implementation behind an
 approved design, this skill is upstream of that — it generates the ideas you'd then design.
 
+`review-product` delegates here when its audit surfaces a **wide-open gap** — a user job the
+product doesn't serve at all, whose fix isn't obvious — and needs a divergent spread of
+approaches rather than a single evidence-anchored fix. It passes the specific job as the topic
+and signals that the job is an already-validated unmet need, so the router lands in solution
+mode and skips re-litigating whether the job is worth solving. That hand-off is the main
+programmatic caller; a single named job must work as the whole scope.
+
 ## Usage
 
 ```
 ideation                       # infer the topic from context, classify the stuck-state, ask if unclear
 ideation pricing model         # ideate on a named topic
-ideation --feature             # force the "what to add" mode
-ideation --problem             # force the "what's the real problem" mode
-ideation --solution            # force the "how to solve it" mode
 ideation --quick               # one fast diverge→converge pass, minimal questions, no research
 ```
 
@@ -90,12 +94,16 @@ Create a TodoWrite item per step. With `--quick`, collapse to steps 3 + 5 only.
   high-impact / low-effort.
 - Optionally pressure-test the shortlist with **Six Thinking Hats**.
 
-### Step 6 — Present, and offer to capture
+### Step 6 — Present (save only if asked)
 - Show the result inline using the Output Format below: the full diverge list (brief) and the
   prioritized shortlist (the table).
-- **Offer to save** the session — don't write a file unprompted. If the user wants it kept and
-  a `docs/` tree exists, write to `docs/ideation/<date>-<topic>.md` (run `date +%F`). Otherwise
-  ask for a path, or leave it in the conversation. On `--quick`, just present inline.
+- **Default to presenting inline only.** Don't write a file unprompted, and never create a
+  dedicated `docs/ideation/` directory.
+- **If the user asks to save it:** when a `docs/` tree exists, write into the best-fitting
+  **existing** subfolder — match the topic (e.g. `docs/product/`, `docs/planning/`, a relevant
+  area folder), appending to an existing file if one obviously belongs; use `date +%F` in the
+  filename. If there's no `docs/` tree, or nothing in it fits, just present inline and let the
+  user name a path — don't invent a folder or a new docs section.
 - End by pointing at the natural next move: validate the riskiest assumption, or feed a chosen
   idea into `superpowers:brainstorming` / `review-plan` to design it.
 
@@ -131,8 +139,8 @@ User says: "ideation — I don't know what feature to add to my note app next."
 Actions: Classify as **feature** mode. Skim the app's existing features (Step 2). Run
 SCAMPER on the core capability + generate ideas from PM/Designer/Power-user lenses (Step 3).
 Push past the obvious with analogical transfer ("how do *email clients* handle this?") (Step
-4). Converge to 4 ideas with impact/effort and a riskiest assumption each (Step 5). Offer to
-save to `docs/ideation/`.
+4). Converge to 4 ideas with impact/effort and a riskiest assumption each (Step 5). Present
+inline; save only if asked, into a fitting existing docs folder.
 
 ### Example 2: Stumped on the problem itself
 User says: "I want to build something for freelancers but I don't know the problem."

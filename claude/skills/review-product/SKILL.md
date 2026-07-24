@@ -109,6 +109,14 @@ Create a TodoWrite item per step.
   in the user's terms. Each gets a severity, a rough effort (S/M/L), and ties back
   to the use case it unblocks. Lead with the changes that most help the primary
   persona on their primary job.
+- **Wide-open gap → diverge before converging.** When a finding is a job the product
+  doesn't serve *at all* (a Step 4(A) coverage gap or a Step 7 uncovered use case) and
+  the fix isn't obvious, optionally invoke `ideation` (Skill tool) on that specific job —
+  tell it the job is an already-validated unmet user need so it focuses on *how* to serve it
+  rather than whether to — to generate a wider spread of approaches, then bring the best one
+  back as the recommendation. The *gap* stays evidence-anchored (an observed unmet job); only
+  the *solution search* is divergent, so this doesn't breach "evidence, not invention." Skip
+  it when the fix is already clear — most findings won't need it.
 
 ### Step 6 — Write the review
 - Run `date +%F` to get today's date. Write the review to
