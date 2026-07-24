@@ -60,6 +60,7 @@ Available in `claude/skills/`:
 | `/debug-log` | Add debug logging to trace code execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
+| `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
 | `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
