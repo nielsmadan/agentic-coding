@@ -273,7 +273,6 @@ allow = [
   "Skill(sync-project-config)",
   "Skill(test)",
   "Skill(theme-factory)",
-  "Skill(todo)",
   "Skill(workbench)",
   "Skill(optimize-seo)",
   "Skill(pre-existing)",

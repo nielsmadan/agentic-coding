@@ -94,14 +94,12 @@ Available in `claude/skills/`:
 | `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/test` | Tests: assess state and run the right action (default, no args — runs the suite, then routes failures to fix, gaps to generate, smells to review), or explicit review/generate (--review, --generate) |
 | `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
-| `/todo` | Capture a todo in Todoist (--prio 1-4, --list) |
 | `/time-reconstruct` | Reconstruct what you worked on from git history for time tracking — real complexity assessment from the diff, not its size |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
 | `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
-| `/use-railway` | Operate Railway infrastructure — accounts, projects, services, deployments, buckets, domains, metrics, docs |
 | `/skill-creator` | Guide for creating skills |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 
