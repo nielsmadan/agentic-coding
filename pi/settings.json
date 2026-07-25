@@ -18,6 +18,7 @@
     "npm:pi-mcp-adapter",
     "npm:pi-subagents",
     "npm:@narumitw/pi-plan-mode",
-    "git:github.com/obra/superpowers"
+    "git:github.com/obra/superpowers",
+    "npm:@narumitw/pi-lsp"
   ]
 }
