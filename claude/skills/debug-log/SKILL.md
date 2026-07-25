@@ -2,6 +2,7 @@
 name: debug-log
 description: Add debug logging to trace code execution. Use when debugging, tracing control flow, or investigating unexpected behavior. Any language (JS/TS, Python, Go).
 argument-hint: <topic or area to debug>
+effort: medium
 ---
 
 # Debug Log

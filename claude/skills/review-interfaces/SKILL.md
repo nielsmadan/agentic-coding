@@ -1,7 +1,8 @@
 ---
 name: review-interfaces
 description: Review interface design for functions, classes, modules, components — naming, params, encapsulation, YAGNI, usability. Triggers "review interfaces".
-argument-hint: [--staged | --unpushed | --changed | --all]
+argument-hint: '[--staged | --unpushed | --changed | --all]'
+effort: high
 ---
 
 # Review Interfaces

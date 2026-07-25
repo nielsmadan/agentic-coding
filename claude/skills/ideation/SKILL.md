@@ -1,7 +1,8 @@
 ---
 name: ideation
 description: Generate ideas with structure when you're stumped — on what to build next, what the real problem is, or how to solve it. Pulls in research for context, diverges wide using matched frameworks, then converges on a prioritized few. Use when the user says "I'm stuck", "I'm stumped", "ideate", "brainstorm ideas", "help me think of", "what could I add", "what should I build", "I don't know what the problem is", "how could I solve", or wants idea generation on any topic (product, technical, business, writing, personal). For auditing an existing product against its users, use review-product instead.
-argument-hint: [topic] [--quick]
+argument-hint: '[topic] [--quick]'
+effort: high
 ---
 
 # Ideation

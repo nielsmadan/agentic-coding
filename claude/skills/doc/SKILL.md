@@ -2,6 +2,7 @@
 name: doc
 description: "Assess documentation and run the right action (default, no args): a context-aware assess that, with uncommitted changes, checks those changes are documented, and on a clean tree does a whole-repo review — finding gaps / staleness / quality issues and routing into generate, update, or review. Explicit overrides: review (--review), update (--update), generate (--generate <target>), harvest a session log (--session); scope with --all, --staged, --unpushed, or a target. Use when unsure what the docs need, or for doc creation, freshness, and quality."
 argument-hint: "[ (no args = context-aware assess) | --review | --update | --generate <target> | --session --md <file>] [--all | --staged | --unpushed]"
+effort: high
 ---
 
 # Doc

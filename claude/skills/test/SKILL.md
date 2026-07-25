@@ -2,6 +2,7 @@
 name: test
 description: "Assess test state and run the right action (default, no args): run the suite, then find failures, coverage gaps, and quality issues and route into fix, generate, or review. Explicit modes: review (--review, check test quality), generate (--generate <target>, create tests). Scope: --staged, --changed, --all, or context-based. Use when unsure what the tests need, or for test quality and creation."
 argument-hint: "[ (no args = assess) | --review | --generate <target>] [--staged | --unpushed | --changed | --all]"
+effort: high
 ---
 
 # Test

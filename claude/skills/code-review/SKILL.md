@@ -2,6 +2,7 @@
 name: code-review
 description: Code review workflow. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
 argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--typescript] [--project] [--library-use] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]
+effort: xhigh
 ---
 
 # Code Review: $ARGUMENTS

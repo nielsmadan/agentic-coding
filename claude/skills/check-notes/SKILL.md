@@ -1,6 +1,7 @@
 ---
 name: check-notes
 description: Find information in the user's personal notes vault at ~/wrksp/notes (an Obsidian vault with a hand-maintained index.md map). Use when the user says "check notes", "check my notes", "look in my notes", "find in my notes", "what do my notes say about", "from my notes", or otherwise references information stored in their notes.
+effort: low
 ---
 
 # Check Notes

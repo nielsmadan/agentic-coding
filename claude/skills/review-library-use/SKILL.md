@@ -1,7 +1,8 @@
 ---
 name: review-library-use
 description: Review code for correct use of the repo's third-party libraries — checks the scoped files against the version-specific conventions recorded in the repo's `library-use` reference (docs-derived correct-usage rules, API contracts, footguns). Catches stale-API usage, deprecated patterns, and doc-violating misuse a general reviewer misses. Auto-invoked by `code-review` when a `library-use` reference exists. Triggers "review library use", "check library usage", "are we using this library correctly", "library convention review".
-argument-hint: [--staged | --unpushed | --changed | --all | --multi]
+argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
+effort: high
 ---
 
 # Review Library Use

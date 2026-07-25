@@ -1,7 +1,8 @@
 ---
 name: squash-commits
 description: Squash unpushed commits into clean, higher-level feat/fix/chore commits that follow the project commit policy. Use when local history has too many small/WIP/fixup commits (common after superhuman or gsd runs), or the user says "squash commits", "squash my commits", "tidy history", "clean up commits", "combine commits before pushing".
-argument-hint: [--conservative] [base-ref]
+argument-hint: '[--conservative] [base-ref]'
+effort: medium
 ---
 
 # Squash Commits

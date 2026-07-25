@@ -2,6 +2,7 @@
 name: perf-test
 description: "Set up and run performance tests (profiling, load testing, or E2E scenarios). Use when measuring code or endpoint performance, or before/after optimization work."
 argument-hint: "<target: file, function, endpoint, or service>"
+effort: high
 ---
 
 # Performance Test

@@ -2,6 +2,7 @@
 name: deslop
 description: Copy-edit text to strip AI/LLM writing tells ("slop") and make it read as human-written — overused words (delve, showcase, robust), significance-inflation phrases ("stands as a testament to", "plays a pivotal role"), scene-setting openers ("in today's fast-paced world"), hedging, em-dash overuse, rule-of-three, and "it's not X, it's Y" parallelism. Use when asked to "deslop", "de-slop", "remove AI tells", "make this sound less like AI/ChatGPT", "make this sound human", or copy-edit a draft (.md, .txt, prose, emails, docs) that reads as machine-generated.
 argument-hint: "[file path or pasted text] [--report]"
+effort: medium
 ---
 
 # Deslop

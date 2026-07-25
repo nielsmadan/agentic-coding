@@ -1,7 +1,8 @@
 ---
 name: library-docs
 description: Generate and refresh a per-repo `library-use` reference — official docs, changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving / niche libraries. Use when the user says "library-docs", "doc links", "document the libraries we use", "generate/refresh library docs", "library conventions", or wants a per-repo doc-links reference the agent (and `review-library-use`) can consult. On re-run it version-checks every entry and updates it.
-argument-hint: [target dir] [--refresh] [--force-all]
+argument-hint: '[target dir] [--refresh] [--force-all]'
+effort: medium
 ---
 
 # Library Docs

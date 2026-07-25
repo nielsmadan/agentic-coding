@@ -2,6 +2,8 @@
 name: pdf
 description: Read, extract, merge, split, rotate, watermark, create, fill forms, encrypt/decrypt, or OCR PDF files. Use whenever a `.pdf` is mentioned or a PDF is requested.
 argument-hint: <pdf file or operation>
+model: sonnet
+effort: low
 ---
 
 # PDF Processing

@@ -1,7 +1,8 @@
 ---
 name: review-cleancode
 description: Review code for clean-code principles — SOLID, DRY, YAGNI, KISS, code smells. Triggers "review clean code", "check DRY/SOLID", "code smells".
-argument-hint: [--staged | --unpushed | --changed | --all | --multi]
+argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
+effort: high
 ---
 
 # Review Clean Code

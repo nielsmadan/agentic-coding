@@ -2,6 +2,7 @@
 name: research-tech
 description: Research any technical / developer topic online — libraries, errors, best-practice/how-to, tool·library·model comparisons, product capabilities, and ecosystem/community signal. Use when you'll act on the answer as a developer (write code, debug, choose a tool). For non-technical topics (science, history, consumer, personal, fact-check) use `research-general`.
 argument-hint: <topic, error message, or "X vs Y">
+effort: medium
 ---
 
 # Research Tech

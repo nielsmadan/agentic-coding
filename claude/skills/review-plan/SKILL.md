@@ -1,7 +1,8 @@
 ---
 name: review-plan
 description: Multi-agent review of implementation plans. Use after creating a plan but before implementing, especially for complex or risky changes.
-argument-hint: [path to plan file or use current plan context]
+argument-hint: '[path to plan file or use current plan context]'
+effort: xhigh
 ---
 
 # Plan Review

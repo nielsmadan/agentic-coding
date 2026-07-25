@@ -1,7 +1,8 @@
 ---
 name: review-architecture
 description: Review system architecture — layering, module boundaries, coupling/cohesion, pattern fit, quality attributes (scalability, resilience, evolvability), and architectural smells. Triggers "review architecture", "architecture review", "system design review", "check architecture".
-argument-hint: [--staged | --unpushed | --changed | --all | --multi]
+argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
+effort: xhigh
 ---
 
 # Review Architecture

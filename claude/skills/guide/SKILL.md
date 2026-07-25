@@ -1,6 +1,7 @@
 ---
 name: guide
 description: Walk the user through a multi-step task (e.g. cloud console / permission / dashboard setup) with a live step tracker that is re-printed at the bottom of every reply so they never scroll up. Use when the user asks to "guide me through", "walk me through", "give me step by step" instructions, "how do I set up ..." for a UI/console task, or invokes guide. Also use when, mid-guide, they say a step "isn't working", "the menu isn't there", or ask a clarifying question about a step.
+effort: medium
 ---
 
 # Guide

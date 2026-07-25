@@ -2,6 +2,7 @@
 name: skill-creator
 description: Guide for creating or improving Claude skills. Triggers "create a skill", "build a skill", "new skill", "improve this skill", "skill for [use case]".
 argument-hint: <skill name or description>
+effort: high
 ---
 
 # Skill Creator

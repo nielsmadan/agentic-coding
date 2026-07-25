@@ -1,7 +1,8 @@
 ---
 name: review-typescript
 description: TypeScript-specific code review focused on JUDGMENT-level type design a linter can't decide — type modeling (make invalid states unrepresentable), inference-vs-annotation calls, and casts/`any` that hide a real modeling problem. Deliberately does NOT duplicate typescript-eslint. Auto-invoked by `code-review` on TypeScript projects. Triggers "review typescript", "typescript review", "type design review".
-argument-hint: [--staged | --unpushed | --changed | --all | --multi]
+argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
+effort: high
 ---
 
 # Review TypeScript

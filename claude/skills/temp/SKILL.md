@@ -4,6 +4,7 @@ description: Make temporary code changes for testing that can be easily undone.
   Use when user says "temp", "temporary change", "temporarily enable/disable/show/hide",
   or needs to force a UI state, bypass a guard, or flip a feature flag for local testing.
   Also handles "temp undo" to revert all temporary changes, and "temp list" to show them.
+effort: low
 ---
 
 # Temp

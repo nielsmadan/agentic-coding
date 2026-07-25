@@ -1,7 +1,8 @@
 ---
 name: review-security
 description: Security audit for vulnerabilities, secrets, and unsafe patterns. Use before releases, after adding auth code, or when reviewing third-party integrations.
-argument-hint: [--staged | --unpushed | --changed | --all]
+argument-hint: '[--staged | --unpushed | --changed | --all]'
+effort: xhigh
 ---
 
 # Review Security

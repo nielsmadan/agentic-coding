@@ -1,7 +1,8 @@
 ---
 name: review-perf
 description: Performance analysis for algorithmic complexity, memory leaks, N+1 queries, and render issues. Use when code feels slow, after adding loops/queries, or before scaling up.
-argument-hint: [--staged | --unpushed | --changed | --all]
+argument-hint: '[--staged | --unpushed | --changed | --all]'
+effort: high
 ---
 
 # Review Performance

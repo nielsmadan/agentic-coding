@@ -1,7 +1,8 @@
 ---
 name: second-opinion
 description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex and OpenCode+GLM.
-argument-hint: [--quick] [--timeout=300] [--words=500] <question or context>
+argument-hint: '[--quick] [--timeout=300] [--words=500] <question or context>'
+effort: high
 ---
 
 # Second Opinion Command

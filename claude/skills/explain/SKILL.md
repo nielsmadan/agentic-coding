@@ -2,6 +2,7 @@
 name: explain
 description: "Generate project explanation docs in docs/explain/ covering architecture, flows, syntax, system APIs, infra, testing. Per-aspect flags + optional topic filter."
 argument-hint: "[--all | --architecture | --flows | --syntax | --system | --infra | --test] [--staged | --unpushed] [topic]"
+effort: medium
 ---
 
 # Explain

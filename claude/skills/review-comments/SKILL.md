@@ -1,7 +1,8 @@
 ---
 name: review-comments
 description: Review and clean up low-quality code comments. Use when you notice "what" comments that should be "why" comments, or want to clean up comment noise before a PR.
-argument-hint: [--all | --staged | --unpushed | --changed | --fix]
+argument-hint: '[--all | --staged | --unpushed | --changed | --fix]'
+effort: medium
 ---
 
 # Review Comments

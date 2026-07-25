@@ -1,6 +1,7 @@
 ---
 name: commit
 description: Commit ONLY the changes this session made, never another agent's work in the same checkout. Takes an optional commit message argument; generates a short feat/fix/chore message when blank. Use when the user says "commit", "commit this", "commit my changes", "commit just my/this session's changes", or invokes commit — especially when multiple agents share one working tree.
+effort: low
 ---
 
 # Commit (session-scoped)

@@ -1,6 +1,7 @@
 ---
 name: check-claude-projects
 description: Search past Claude Code session transcripts under ~/.claude/projects to recover context from earlier work — across the current project AND its sibling checkouts (e.g. wrksp/app/dev1, wrksp/app/dev2). Use when a bug/topic/decision was handled in a previous session but you don't know which session or which checkout folder it lived in, or when the user says "we fixed/discussed this before", "find the session where", "recover prior context", "check claude projects", "search past sessions/transcripts", or "which checkout was that in".
+effort: low
 ---
 
 # Check Claude Projects

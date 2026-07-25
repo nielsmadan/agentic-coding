@@ -2,6 +2,7 @@
 name: hard-fix
 description: Escalation workflow for stubborn bugs. Use when a bug persists after multiple fix attempts, you've tried several approaches, or you're stuck.
 argument-hint: <description of the persistent problem>
+effort: max
 ---
 
 # Hard Fix

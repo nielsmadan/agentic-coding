@@ -2,6 +2,7 @@
 name: read-docs
 description: Search internal project docs (docs/, README.md, CLAUDE.md, *.md) for patterns, conventions, architecture. Use proactively before features, in new code areas, or when debugging.
 argument-hint: <keywords or topic>
+effort: medium
 ---
 
 # Read Docs

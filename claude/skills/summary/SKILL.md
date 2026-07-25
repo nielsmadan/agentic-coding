@@ -1,7 +1,8 @@
 ---
 name: summary
 description: Summarize git changes (staged, falling back to unstaged) and propose conventional-commit messages. `--quick` recaps current task. Triggers "summary", "summarize changes", "commit message", "where are we". Read-only.
-argument-hint: [--quick]
+argument-hint: '[--quick]'
+effort: low
 ---
 
 # Summary

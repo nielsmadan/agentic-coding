@@ -1,7 +1,8 @@
 ---
 name: sync-project-config
 description: Bidirectional sync between a project's deployed agent config (.mcp.json, .claude/skills/<name>/, CLAUDE.md/AGENTS.md snippets) and its canonical template in ~/ac/templates/<type>/. Decides per-file whether to pull project→template, push template→project, or — when both sides diverged — semantically merge them, from diff + git history. Use when the user runs `aiconf sync` or asks to mirror project changes back to the template, or push template updates into a project with diff review.
-argument-hint: [project-dir]
+argument-hint: '[project-dir]'
+effort: high
 ---
 
 # Sync Project Config

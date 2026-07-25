@@ -1,7 +1,8 @@
 ---
 name: review-swift
 description: Swift-specific code review focused on JUDGMENT-level design a linter and the compiler can't decide — state modeling with enums and value types (make invalid states unrepresentable), optional and error modeling, concurrency isolation intent, ARC ownership, SwiftUI identity/lifetime/dependencies, and escape hatches (`!`, `as!`, `try!`, `@unchecked Sendable`) that compile but hide a modeling problem. Deliberately does NOT duplicate SwiftLint, swift-format, or Swift 6 strict-concurrency diagnostics. Auto-invoked by `code-review` on Swift projects. Triggers "review swift", "swift review", "swiftui review", "swift concurrency review".
-argument-hint: [--staged | --unpushed | --changed | --all | --multi]
+argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
+effort: high
 ---
 
 # Review Swift

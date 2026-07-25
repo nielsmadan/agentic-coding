@@ -2,6 +2,7 @@
 name: review-history
 description: Analyze how code changed over time. Use when investigating regressions, understanding why code was written a certain way, or finding when a behavior changed.
 argument-hint: <file, function, or feature area>
+effort: medium
 ---
 
 # Review History

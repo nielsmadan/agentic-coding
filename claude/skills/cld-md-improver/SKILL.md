@@ -1,6 +1,7 @@
 ---
 name: cld-md-improver
 description: Audit and improve CLAUDE.md files. Triggers "check/audit/update/improve/fix/revise CLAUDE.md", "project memory optimization". Not for general docs.
+effort: high
 ---
 
 # CLAUDE.md Improver

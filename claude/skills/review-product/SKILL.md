@@ -1,7 +1,8 @@
 ---
 name: review-product
 description: Review a product from the user's perspective — build/refine a user persona, map their use cases (jobs-to-be-done), then audit the product for friction, gaps, and things to add or change. Triggers "review product", "product review", "review from the user's perspective", "product/UX critique", "what's missing for users". Use --live to also exercise the running app.
-argument-hint: [--live | --multi]
+argument-hint: '[--live | --multi]'
+effort: high
 ---
 
 # Review Product

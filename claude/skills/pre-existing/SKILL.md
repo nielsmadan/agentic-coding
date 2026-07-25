@@ -2,6 +2,7 @@
 name: pre-existing
 description: Fix any test/lint/type/build/CI failure instead of dismissing it as pre-existing, flaky, or unrelated. Triggers on red checks or `/pre-existing`.
 argument-hint: "[optional: name of the failing check, file, or error]"
+effort: high
 ---
 
 # Pre-Existing

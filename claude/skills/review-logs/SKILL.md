@@ -1,7 +1,8 @@
 ---
 name: review-logs
 description: Analyze Claude Code session transcripts for failure patterns and suggest fixes. Triggers "review logs", "session analysis", "failure patterns".
-argument-hint: [--days N] [--project <name>] [--verbose]
+argument-hint: '[--days N] [--project <name>] [--verbose]'
+effort: medium
 ---
 
 # Review Logs
