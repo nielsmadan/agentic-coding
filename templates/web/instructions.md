@@ -69,6 +69,22 @@ while building, to make sure the patterns you pick are current.
 
 Sourced from GoogleChrome/modern-web-guidance under Apache 2.0.
 
+### Frontend design & polish
+
+This template also bundles three web-specific design skills (they're scoped to
+web projects rather than global, since their idioms — CSS, Google Fonts,
+`motion/react`, bento grids, hero-viewport rules — don't apply to native
+mobile/desktop UI):
+
+- `/frontend-design` — build distinctive, production-grade web UIs (components,
+  pages, landing pages, dashboards) that avoid generic AI aesthetics. When the
+  user asks to build or design a web page, landing page, dashboard, or
+  component, or to beautify/style a web UI, invoke it automatically.
+- `/theme-factory` — apply a cohesive visual theme (10 presets + custom) to an
+  HTML/artifact deliverable.
+- `/optimize-seo` — audit and add SEO meta tags, Open Graph, and JSON-LD
+  structured data to web pages.
+
 ### Notes
 
 - `agent-browser` arrives globally via `npm i -g agent-browser && agent-browser

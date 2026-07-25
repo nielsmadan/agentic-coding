@@ -296,9 +296,7 @@ allow = [
   "Skill(summary)",
   "Skill(sync-project-config)",
   "Skill(test)",
-  "Skill(theme-factory)",
   "Skill(workbench)",
-  "Skill(optimize-seo)",
   "Skill(pre-existing)",
 ]
 

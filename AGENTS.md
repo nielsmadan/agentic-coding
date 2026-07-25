@@ -62,7 +62,6 @@ Available in `claude/skills/`:
 | `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling (make invalid states unrepresentable), inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
 | `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
 | `/review-library-use` | Reviews code against the repo's `library-use` conventions — stale/renamed APIs, deprecated patterns, missing required setup a general reviewer misses. Auto-invoked by `code-review` when a `library-use` reference exists |
-| `/frontend-design` | Build distinctive frontend interfaces with high design quality |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
@@ -93,13 +92,11 @@ Available in `claude/skills/`:
 | `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
 | `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/test` | Tests: assess state and run the right action (default, no args — runs the suite, then routes failures to fix, gaps to generate, smells to review), or explicit review/generate (--review, --generate) |
-| `/theme-factory` | Apply professional visual themes to artifacts (presentations, docs, HTML) |
 | `/time-reconstruct` | Reconstruct what you worked on from git history for time tracking — real complexity assessment from the diff, not its size |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/second-opinion` | Get a second opinion |
 | `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
-| `/optimize-seo` | Audit and optimize web pages for SEO (meta tags, structured data, OG tags) |
 | `/skill-creator` | Guide for creating skills |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 
@@ -356,8 +353,6 @@ When the user's prompt contains "add debug logs" or "debug logging", automatical
 When the user's prompt contains "review history" or "git history" or "how did this change", automatically invoke the `/review-history` skill to analyze code evolution.
 
 When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, split, extract text, create, fill forms, OCR, watermark), automatically invoke the `/pdf` skill.
-
-When the user's prompt asks to build or design a web page, landing page, dashboard, or component, or to beautify/style a web UI, automatically invoke the `/frontend-design` skill.
 
 When the user's prompt contains "review logs", "session analysis", or "failure patterns", automatically invoke the `/review-logs` skill to analyze session transcripts.
 
