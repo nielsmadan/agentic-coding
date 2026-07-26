@@ -92,7 +92,7 @@ CODEX_SKILLS=(
   check-claude-projects check-notes commit
   code-review debug-log deslop doc explain guide ideation
   library-docs pdf
-  perf-test permission read-docs review-architecture review-cleancode review-comments
+  perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
   review-security review-swift review-typescript research-general research-tech skill-creator
   squash-commits temp test
