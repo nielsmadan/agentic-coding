@@ -1,7 +1,8 @@
 # Agentic Coding Config
 
 Version-controlled configuration shared across the AI coding tools I run:
-**Claude Code**, **OpenAI Codex**, **Google Antigravity** (`agy`), and **OpenCode**.
+**Claude Code**, **OpenAI Codex**, **Google Antigravity** (`agy`), **OpenCode**,
+and **Pi**.
 One repo holds the skills, hooks, permissions, project templates, and shell glue
 for all of them.
 
@@ -41,15 +42,16 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `codex/` | OpenAI Codex config: managed `config.toml` overlay, permission `rules/`, and curated skills synced to `~/.agents/skills` |
 | `antigravity/` | Google Antigravity (`agy`) settings |
 | `opencode/` | OpenCode config (`opencode.json`) |
-| `permissions/` | Single source of truth for shell-command permissions — `permissions.toml` plus `sync.py`, which generates every agent's permission config |
+| `pi/` | Pi settings plus the generated `@gotgenes/pi-permission-system` policy |
+| `permissions/` | Single source of truth for shell-command and MCP permissions — `permissions.toml` plus `sync.py`, which generates every agent's permission config |
 | `templates/` | Per-project-type config + project-only skills (`flutter/`, `react-native/`, `web/`), deployed into projects with `aiconf` |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |
 | `docs/` | Repo notes |
 
-## The four agents
+## The five agents
 
-A single config feeds all four tools. Shared shell-command permissions are
+A single config feeds all five tools. Shared shell-command and MCP permissions are
 defined once in `permissions/permissions.toml` and generated out to each agent;
 agent-native settings (tool toggles, MCP entries, skill subsets) live in the
 per-agent directories above. Codex, Antigravity, and Gemini CLI pick up Claude's
@@ -76,10 +78,11 @@ documentation, security audits, and more. There are ~38 of them under
 
 ## Permissions
 
-All four agents' shell-command permissions are **generated** from
+All five agents' shell-command and MCP permissions are **generated** from
 `permissions/permissions.toml`. Never hand-edit the generated files
-(`claude/settings.json`, `codex/rules/permissions.rules`, etc.) — a pre-commit
-hook rejects drift. To change permissions, edit `permissions.toml` and run:
+(`claude/settings.json`, `codex/rules/permissions.rules`, `pi/permissions.json`,
+etc.) — a pre-commit hook rejects drift. To change permissions, edit
+`permissions.toml` and run:
 
 ```sh
 python3 permissions/sync.py

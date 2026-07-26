@@ -10,12 +10,14 @@
 #   codex/rules/permissions.rules
 #   codex/mcp-permissions.toml
 #   antigravity/settings.json             (permissions.allow / deny / ask)
-#   opencode/opencode.json                (permission.bash)
+#   opencode/opencode.json                (permission.bash / MCP tools)
+#   pi/permissions.json                   (@gotgenes/pi-permission-system)
 #
-# Entries in [shell] are command prefixes — emitted to ALL FOUR agents.
+# Entries in [shell] are command prefixes — emitted to ALL FIVE agents.
 # An entry ending in `*` is a glob: kept literally for Claude and OpenCode,
-# and skipped for Codex and Antigravity (neither matcher can express a
-# mid-argument glob, so those commands fall through to runtime prompts).
+# kept literally for Pi, and skipped for Codex and Antigravity (neither matcher
+# can express a mid-argument glob, so those commands fall through to runtime
+# prompts).
 
 [shell]
 

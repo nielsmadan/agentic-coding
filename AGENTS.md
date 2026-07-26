@@ -22,9 +22,10 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
     `~/.pi/agent/AGENTS.md` (the shared `global/AGENTS.md`) and auto-discovers skills from
-    `~/.agents/skills/`, so those need no pi-specific files. Pi has no shell-permission system,
-    so it is **not** part of `permissions/sync.py`.
-- `permissions/` - Single source of truth for agent shell-command permissions
+    `~/.agents/skills/`, so those need no pi-specific files.
+  - `permissions.json` - generated policy for `@gotgenes/pi-permission-system`, symlinked to
+    `~/.pi/agent/extensions/pi-permission-system/config.json`.
+- `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
@@ -130,7 +131,7 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 ## Permissions
 
-Shell-command permissions for all four agents (Claude, Codex, Antigravity, OpenCode) are generated from a single source of truth: **`permissions/permissions.toml`**.
+Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravity, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**.
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`sync.py --check`) rejects any drift:
 - `claude/settings.json` (`permissions.allow` / `deny` / `ask`)
@@ -138,6 +139,7 @@ Shell-command permissions for all four agents (Claude, Codex, Antigravity, OpenC
 - `codex/rules/permissions.rules`
 - `antigravity/settings.json` (`permissions.allow` / `deny` / `ask`)
 - `opencode/opencode.json` (`permission.bash`)
+- `pi/permissions.json` (`@gotgenes/pi-permission-system`)
 
 Use `/permission` or `aiperm` to change permissions. Global changes update
 `permissions/permissions.toml`, then regenerate and install every harness config. Personal
@@ -189,9 +191,13 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   first directory is already populated by `install_codex_skills`, so Pi gets the same curated skill
   subset as Codex/Antigravity with no pi-specific config. Skills surface as `/skill:<name>` and via
   progressive disclosure in the system prompt.
-- **Permissions** — Pi has **no** shell-command allowlist or sandbox (only a project-*trust* guard
-  for loading project-local resources). There is nothing for `permissions/sync.py` to generate, so
-  Pi is intentionally absent from `permissions/permissions.toml`.
+- **Permissions** — `pi/settings.json` loads `@gotgenes/pi-permission-system`, and
+  `permissions/sync.py` generates `pi/permissions.json` from the shared `[shell]` and `[mcp]`
+  rules. `sync.sh`
+  links that file to `~/.pi/agent/extensions/pi-permission-system/config.json`. Pi uses
+  last-match-wins rules, so the generator emits allow rules first, ask rules next, and deny rules
+  last. The universal tool fallback remains `allow`; unmatched Bash commands prompt, preserving
+  this repository's shared permission scope. This is an approval layer, not an OS sandbox.
 - **Model picker** — `pi/settings.json` (symlinked to `~/.pi/agent/settings.json`) sets
   `enabledModels`, a glob allowlist (`provider/id`, minimatch, same format as Pi's `--models` flag)
   that scopes the `/model` default view and Ctrl+P cycling. It does **not** delete models from the

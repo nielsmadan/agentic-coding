@@ -10,7 +10,7 @@
 #   - regenerate permission + global-instruction files from their sources
 #   - apply all symlinks (skip-if-correct; back up a real file, never clobber)
 #   - merge repo-managed keys into ~/.claude/settings.json (see merge_settings)
-#   - relink the Codex/Pi skill subset
+#   - relink the Codex/Pi skill subset and Pi permission policy
 #
 # Usage: ./sync.sh [--autonomous | --normal]
 #   With no flag it uses the persisted profile (written by install.sh or a prior
@@ -75,12 +75,13 @@ SYMLINKS=(
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.gemini/GEMINI.md"
   # OpenCode (reads global config from XDG ~/.config/opencode, not legacy ~/.opencode)
   "$SCRIPT_DIR/opencode/opencode.json:$HOME/.config/opencode/opencode.json"
-  # Pi (pi-coding-agent) — settings.json holds the enabledModels allowlist;
+  # Pi (pi-coding-agent) — settings.json holds packages and enabledModels;
+  # permissions.json is generated for @gotgenes/pi-permission-system.
   # AGENTS.md is the same shared global-instructions file Codex/Antigravity use.
   # Skills need no wiring: pi auto-discovers ~/.agents/skills (populated by
-  # install_codex_skills below). Pi has no shell-permission system, so it is not
-  # part of permissions/sync.py.
+  # install_codex_skills below).
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
+  "$SCRIPT_DIR/pi/permissions.json:$HOME/.pi/agent/extensions/pi-permission-system/config.json"
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.pi/agent/AGENTS.md"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"

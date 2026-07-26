@@ -11,6 +11,9 @@ Generated files:
   codex/rules/permissions.rules
   antigravity/settings.json             (permissions.allow / deny / ask)
   opencode/opencode.json                (permission.bash)
+  pi/permissions.json                   (@gotgenes/pi-permission-system)
+  claude/mcp-permissions.json           (PermissionRequest hook policy)
+  codex/mcp-permissions.toml            (merged into user config)
 """
 
 from __future__ import annotations
@@ -243,6 +246,40 @@ def render_opencode(rules):
     return {path: json.dumps(config, indent=2, ensure_ascii=False) + "\n"}
 
 
+def pi_pattern(entry):
+    return entry if is_glob(entry) else f"{entry} *"
+
+
+def render_pi(rules):
+    path = REPO_ROOT / "pi" / "permissions.json"
+    bash = {"*": "ask"}
+    # Pi is last-match-wins, so deny must be emitted last.
+    decisions = (("allow", "allow"), ("ask", "ask"), ("deny", "deny"))
+    for category, decision in decisions:
+        for entry in rules[category]:
+            pattern = pi_pattern(entry)
+            if pattern in bash:
+                del bash[pattern]
+            bash[pattern] = decision
+    mcp = {"*": "ask"}
+    for category, decision in decisions:
+        for entry in rules[f"mcp_{category}"]:
+            if entry in mcp:
+                del mcp[entry]
+            mcp[entry] = decision
+    config = {
+        "$schema": (
+            "https://cdn.jsdelivr.net/npm/@gotgenes/"
+            "pi-permission-system@23.0.0/schemas/permissions.schema.json"
+        ),
+        "permission": {
+            "*": "allow",
+            "bash": bash,
+            "mcp": mcp,
+        },
+    }
+    return {path: json.dumps(config, indent=2, ensure_ascii=False) + "\n"}
+
 
 def render_codex_mcp(rules):
     path = REPO_ROOT / "codex" / "mcp-permissions.toml"
@@ -300,6 +337,7 @@ def render_all():
     files.update(render_codex(rules))
     files.update(render_antigravity(rules))
     files.update(render_opencode(rules))
+    files.update(render_pi(rules))
     files.update(render_codex_mcp(rules))
     return files
 
