@@ -79,7 +79,7 @@ Available in `claude/skills/`:
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. Optional message arg; generates a short feat/fix/chore message when blank |
 | `/squash-commits` | Squash unpushed commits into clean higher-level feat/fix/chore commits per the commit policy (`--conservative`, optional base ref) |
-| `/sync-project-config` | Bidirectional sync of project config (`.mcp.json`, bundled skills) with its template (invoked by `aiconf sync`) |
+| `/aiconf` | Single entry point for project-template config (invoked by every `aiconf` verb) — assesses whether the project is configured, installs the detected template if not, otherwise compares each deployed artifact against the template and reconciles drift (pull, push, or semantic merge) |
 | `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
@@ -209,12 +209,14 @@ without making it global: a project-root `.mcp.json` is project-scoped (only loa
 project), and a skill bundled with a template only shows up after deployment — it never
 pollutes Claude sessions in unrelated projects.
 
-Two CLI verbs (defined in `.airc`):
+Every `aiconf` verb (defined in `.airc`) routes to the `/aiconf` skill, which assesses the
+project and picks the path; `deploy.py` is invoked by the skill, not called directly:
 
 ```
-aiconf <type> [dir]   # mechanical install: deploy template into dir (default cwd)
-aiconf sync           # from a project dir: bidirectional sync against its template
-aiconf sync <dir>     # from ~/ac: bidirectional sync against <dir>
+aiconf                # assess cwd: install the detected template, or reconcile drift
+aiconf <dir>          # same, for <dir>
+aiconf sync [dir]     # skip detection, go straight to the sync path
+aiconf <type> [dir]   # skip detection, install <type> (still confirms before writing)
 ```
 
 **Install** (`aiconf <type> [dir]`) runs `templates/deploy.py`. It **copies** (not symlinks)
@@ -240,7 +242,7 @@ something only ever ADDS the new bits — it cannot remove an MCP server, `mcp__
 instruction snippet the template no longer ships (`.mcp.json` / `settings.local.json`
 union-merge, and instruction snippets are marked installed in `.aiconf/state.json` and then
 skipped). Migrating a project set up on an *older* template (e.g. swapping one MCP server for
-another) therefore means manual cleanup or `aiconf sync` (`/sync-project-config`), never a plain
+another) therefore means manual cleanup or `aiconf sync` (`/aiconf`), never a plain
 re-deploy. (Deleting a template file like `.mcp.json` may be blocked by the auto-mode
 classifier; emptying it to `{ "mcpServers": {} }` is equivalent, since `deploy.py` merges nothing
 from an empty map.)
@@ -250,7 +252,7 @@ artifacts) or use `aiconf sync` (for the instructions snippet, since install doe
 the CLAUDE.md / AGENTS.md passages after first run).
 
 **Sync** (`aiconf sync [dir]`) opens an interactive Claude session that invokes the
-`/sync-project-config` skill. The skill picks per-file direction (pull project→template or
+`/aiconf` skill on its sync path. The skill picks per-file direction (pull project→template or
 push template→project) from `diff` + `git log` / `git status`, scoped to artifacts already
 defined in the template. CLAUDE.md and AGENTS.md are synced as independent targets — a pull
 from one does not auto-overwrite the other. `settings.local.json` is intentionally out of

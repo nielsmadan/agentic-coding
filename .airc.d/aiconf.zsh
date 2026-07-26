@@ -1,25 +1,21 @@
-# Project template tooling: mechanical install + interactive bidirectional sync
-# (repo path resolves via the ~/.airc symlink)
+# Project template tooling: single entry point via the /aiconf skill, which
+# assesses the project and either installs a template or reconciles drift.
 _aiconf() {
-  local repo="${${:-$HOME/.airc}:A:h}"
   case "$1" in
-    sync)
-      shift
-      claude "/sync-project-config $*"
-      ;;
     help|--help|-h)
       cat <<EOF
-aiconf <type> [dir]   install template into dir (default cwd); appends instructions
-                      snippet to CLAUDE.md and AGENTS.md on first install for that
-                      type (state-tracked in <dir>/.aiconf/state.json)
-aiconf sync           run from a project dir: compare project against its template;
-                      per-file direction (push vs pull) decided by diff + git history
-aiconf sync <dir>     run from ~/ac: same comparison for <dir>
+aiconf                assess the current project — install its template if not
+                      configured, otherwise compare against the template and
+                      reconcile drift per artifact
+aiconf <dir>          same, for <dir>
+aiconf sync [dir]     skip detection, go straight to the sync path
+aiconf <type> [dir]   skip detection, install <type> (flutter, react-native,
+                      web, railway); still confirms before writing
 aiconf help           show this message
 EOF
       ;;
     *)
-      python3 "$repo/templates/deploy.py" "$@"
+      claude "/aiconf${*:+ $*}"
       ;;
   esac
 }

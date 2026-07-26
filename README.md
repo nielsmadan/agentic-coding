@@ -91,16 +91,19 @@ model (shared vs. agent-native entries, the autonomous profile).
 ## Project templates
 
 `templates/<type>/` carries config and skills that belong to a *kind* of project
-rather than every session. Two CLI verbs (defined in `.airc`):
+rather than every session. The CLI verbs (defined in `.airc`):
 
 ```sh
-aiconf <type> [dir]   # install a template into a project (copies real files)
+aiconf [dir]          # assess a project: install its template, or reconcile drift
 aiconf sync [dir]     # bidirectionally sync project edits with its template
+aiconf <type> [dir]   # install a specific template (copies real files)
 ```
 
-Install copies committable files into the target; sync (interactive, via the
-`/sync-project-config` skill) decides per file whether to pull project changes
-back into the template or push template updates out. See the
+Every verb routes to the `/aiconf` skill. It checks whether the project is
+configured and installs the detected template if not; otherwise it compares each
+deployed artifact against the template and decides per file whether to pull
+project changes back into the template, push template updates out, or
+semantically merge when both sides moved. See the
 [Project Templates section in `AGENTS.md`](AGENTS.md#project-templates).
 
 ## Shell config

@@ -294,7 +294,7 @@ allow = [
   "Skill(second-opinion)",
   "Skill(skill-creator)",
   "Skill(summary)",
-  "Skill(sync-project-config)",
+  "Skill(aiconf)",
   "Skill(test)",
   "Skill(workbench)",
   "Skill(pre-existing)",

@@ -238,15 +238,20 @@ Guide for creating effective skills. Use when creating or updating skills.
 
 ---
 
-### /sync-project-config
+### /aiconf
 
-Bidirectional sync between a project's deployed Claude config (`.mcp.json`, bundled skills,
-CLAUDE.md snippet) and its canonical template in `~/ac/templates/<type>/`. Direction per
-artifact is decided from diff + git history. Invoked by `aiconf sync`.
+Single entry point for project-template config, invoked by every `aiconf` shell verb. Assesses
+whether a project is configured; if not, detects its type (`flutter`, `react-native`, `web`,
+`railway`), confirms, and installs it. If it is, compares each deployed artifact (`.mcp.json`,
+bundled skills, CLAUDE.md / AGENTS.md snippets) against the template and reconciles drift —
+direction per artifact decided from diff + git history, with a semantic merge when both sides
+moved. Multiple types can be installed in one project (`railway` composes with `web`).
 
 **Examples:**
-- `/sync-project-config` (from inside a project dir)
-- `/sync-project-config /path/to/project` (from `~/ac`)
+- `/aiconf` (from inside a project dir)
+- `/aiconf /path/to/project` (from `~/ac`)
+- `/aiconf sync` (skip detection, go straight to sync)
+- `/aiconf flutter` (skip detection, install a known type)
 
 ---
 
