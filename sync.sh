@@ -64,6 +64,7 @@ SYMLINKS=(
   # Claude
   "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
+  "$SCRIPT_DIR/claude/mcp-permissions.json:$HOME/.claude/mcp-permissions.json"
   "$CLAUDEMD_SRC:$HOME/.claude/CLAUDE.md"
   # Codex
   "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
@@ -91,7 +92,7 @@ CODEX_SKILLS=(
   check-claude-projects check-notes commit
   code-review debug-log deslop doc explain guide ideation
   library-docs pdf
-  perf-test read-docs review-architecture review-cleancode review-comments
+  perf-test permission read-docs review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
   review-security review-swift review-typescript research-general research-tech skill-creator
   squash-commits temp test

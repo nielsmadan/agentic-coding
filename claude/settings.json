@@ -158,6 +158,7 @@
       "Bash(ruby --version:*)",
       "Bash(codex exec -s read-only:*)",
       "Bash(opencode run:*)",
+      "Bash(aiperm:*)",
       "Bash(docker exec cc-workbench:*)",
       "Bash(docker exec cc-workbench-*)",
       "Bash(docker stop cc-workbench:*)",
@@ -183,6 +184,7 @@
       "Bash(xcrun dwarfdump:*)",
       "Bash(xcrun otool:*)",
       "Bash(xcrun nm:*)",
+      "mcp__jina__*",
       "Read(~/.claude/skills/*)",
       "WebSearch",
       "WebFetch",
@@ -196,7 +198,6 @@
       "mcp__todoist__add_comments",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "mcp__jina",
       "Skill(code-review)",
       "Skill(debug-log)",
       "Skill(doc)",
@@ -216,6 +217,7 @@
       "Skill(review-project)",
       "Skill(second-opinion)",
       "Skill(skill-creator)",
+      "Skill(permission)",
       "Skill(summary)",
       "Skill(aiconf)",
       "Skill(test)",
@@ -356,11 +358,11 @@
     ],
     "PermissionRequest": [
       {
-        "matcher": "mcp__jina__*",
+        "matcher": "mcp__*",
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/auto-approve-jina.sh",
+            "command": "~/.claude/hooks/auto-approve-mcp.sh",
             "timeout": 5
           }
         ]

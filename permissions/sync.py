@@ -50,16 +50,32 @@ def parse_source():
     with SOURCE.open("rb") as f:
         data = tomllib.load(f)
     shell = data.get("shell", {})
+    mcp = data.get("mcp", {})
     claude_extra = data.get("claude", {}).get("extra", {})
     opencode_extra = data.get("opencode", {}).get("extra", {})
     return {
         "allow": dedupe(shell.get("allow", [])),
         "deny": dedupe(shell.get("deny", [])),
         "ask": dedupe(shell.get("ask", [])),
+        "mcp_allow": dedupe(mcp.get("allow", [])),
+        "mcp_deny": dedupe(mcp.get("deny", [])),
+        "mcp_ask": dedupe(mcp.get("ask", [])),
         "claude_extra_allow": dedupe(claude_extra.get("allow", [])),
         "claude_extra_deny": dedupe(claude_extra.get("deny", [])),
         "opencode_extra": opencode_extra,
     }
+
+
+def mcp_parts(entry):
+    server, separator, tool = entry.partition("/")
+    if not separator or not server or not tool:
+        raise ValueError(f"invalid MCP target: {entry!r}")
+    return server, tool
+
+
+def mcp_native(entry):
+    server, tool = mcp_parts(entry)
+    return f"mcp__{server}__{tool}"
 
 
 # --------------------------------------------------------------------------
@@ -77,14 +93,31 @@ def render_claude(rules):
     path = REPO_ROOT / "claude" / "settings.json"
     settings = json.loads(path.read_text())
     perms = settings["permissions"]
-    perms["allow"] = [claude_pattern(e) for e in rules["allow"]] + list(
-        rules["claude_extra_allow"]
+    perms["allow"] = (
+        [claude_pattern(e) for e in rules["allow"]]
+        + [mcp_native(e) for e in rules["mcp_allow"]]
+        + list(rules["claude_extra_allow"])
     )
-    perms["deny"] = [claude_pattern(e) for e in rules["deny"]] + list(
-        rules["claude_extra_deny"]
+    perms["deny"] = (
+        [claude_pattern(e) for e in rules["deny"]]
+        + [mcp_native(e) for e in rules["mcp_deny"]]
+        + list(rules["claude_extra_deny"])
     )
-    perms["ask"] = [claude_pattern(e) for e in rules["ask"]]
+    perms["ask"] = (
+        [claude_pattern(e) for e in rules["ask"]]
+        + [mcp_native(e) for e in rules["mcp_ask"]]
+    )
     return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
+
+
+def render_claude_mcp_policy(rules):
+    path = REPO_ROOT / "claude" / "mcp-permissions.json"
+    config = {
+        "allow": rules["mcp_allow"],
+        "ask": rules["mcp_ask"],
+        "deny": rules["mcp_deny"],
+    }
+    return {path: json.dumps(config, indent=2) + "\n"}
 
 
 # --------------------------------------------------------------------------
@@ -173,6 +206,10 @@ def render_antigravity(rules):
     perms["allow"] = [antigravity_pattern(e) for e in rules["allow"] if not is_glob(e)]
     perms["deny"]  = [antigravity_pattern(e) for e in rules["deny"]  if not is_glob(e)]
     perms["ask"]   = [antigravity_pattern(e) for e in rules["ask"]   if not is_glob(e)]
+    for category in ("allow", "deny", "ask"):
+        perms[category] += [
+            f"mcp({entry})" for entry in rules[f"mcp_{category}"]
+        ]
     return {path: json.dumps(settings, indent=2, ensure_ascii=False) + "\n"}
 
 
@@ -195,10 +232,59 @@ def render_opencode(rules):
         for entry in rules[category]:
             for pattern in opencode_patterns(entry):
                 bash[pattern] = decision
-    config["permission"]["bash"] = bash
+    permission = {"bash": bash}
+    for category, decision in (("allow", "allow"), ("deny", "deny"), ("ask", "ask")):
+        for entry in rules[f"mcp_{category}"]:
+            server, tool = mcp_parts(entry)
+            permission[f"{server}_{tool}"] = decision
     for key, value in rules["opencode_extra"].items():
-        config["permission"][key] = value
+        permission[key] = value
+    config["permission"] = permission
     return {path: json.dumps(config, indent=2, ensure_ascii=False) + "\n"}
+
+
+
+def render_codex_mcp(rules):
+    path = REPO_ROOT / "codex" / "mcp-permissions.toml"
+    decisions = {}
+    for category, mode in (
+        ("allow", "approve"),
+        ("ask", "prompt"),
+        ("deny", "deny"),
+    ):
+        for entry in rules[f"mcp_{category}"]:
+            decisions[entry] = mode
+
+    servers = {}
+    for entry, mode in decisions.items():
+        server, tool = mcp_parts(entry)
+        servers.setdefault(server, {})[tool] = mode
+
+    lines = [f"# {line}" for line in HEADER_LINES]
+    for server in sorted(servers):
+        tools = servers[server]
+        wildcard = tools.get("*")
+        lines.append("")
+        lines.append(f"[mcp_servers.{json.dumps(server)}]")
+        if wildcard == "deny":
+            lines.append("enabled = false")
+        elif wildcard:
+            lines.append(f"default_tools_approval_mode = {json.dumps(wildcard)}")
+        denied = sorted(
+            tool for tool, mode in tools.items() if tool != "*" and mode == "deny"
+        )
+        if denied:
+            values = ", ".join(json.dumps(tool) for tool in denied)
+            lines.append(f"disabled_tools = [{values}]")
+        for tool in sorted(
+            tool for tool, mode in tools.items() if tool != "*" and mode != "deny"
+        ):
+            lines.append("")
+            lines.append(
+                f"[mcp_servers.{json.dumps(server)}.tools.{json.dumps(tool)}]"
+            )
+            lines.append(f"approval_mode = {json.dumps(tools[tool])}")
+    return {path: "\n".join(lines) + "\n"}
 
 
 # --------------------------------------------------------------------------
@@ -209,10 +295,12 @@ def render_all():
     rules = parse_source()
     files = {}
     files.update(render_claude(rules))
+    files.update(render_claude_mcp_policy(rules))
     files.update(render_claude_autonomous(rules))
     files.update(render_codex(rules))
     files.update(render_antigravity(rules))
     files.update(render_opencode(rules))
+    files.update(render_codex_mcp(rules))
     return files
 
 
@@ -229,9 +317,23 @@ def atomic_write(path, content):
 
 
 def write_all():
-    for path, content in render_all().items():
-        atomic_write(path, content)
-        print(f"wrote {path.relative_to(REPO_ROOT)}")
+    files = render_all()
+    originals = {
+        path: path.read_text() if path.exists() else None
+        for path in files
+    }
+    try:
+        for path, content in files.items():
+            atomic_write(path, content)
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
+    except BaseException:
+        for path, content in originals.items():
+            if content is None:
+                if path.exists():
+                    path.unlink()
+            else:
+                atomic_write(path, content)
+        raise
 
 
 def check_all():

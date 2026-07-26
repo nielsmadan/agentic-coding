@@ -147,6 +147,7 @@
       "command(ruby --version)",
       "command(codex exec -s read-only)",
       "command(opencode run)",
+      "command(aiperm)",
       "command(docker exec cc-workbench)",
       "command(docker stop cc-workbench)",
       "command(docker rm cc-workbench)",
@@ -167,7 +168,8 @@
       "command(xcrun swift-demangle)",
       "command(xcrun dwarfdump)",
       "command(xcrun otool)",
-      "command(xcrun nm)"
+      "command(xcrun nm)",
+      "mcp(jina/*)"
     ],
     "deny": [
       "command(git push)",

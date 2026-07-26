@@ -10,6 +10,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -20,9 +21,68 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE = REPO_ROOT / "codex" / "config.toml"
+PERMISSIONS_SOURCE = REPO_ROOT / "codex" / "mcp-permissions.toml"
 DEFAULT_TARGET = Path.home() / ".codex" / "config.toml"
 MANAGED_COMMENT = "# Managed by codex/config.toml via sync.sh."
 TABLE_HEADER = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
+
+
+def merge_dict(base: dict, overlay: dict) -> dict:
+    result = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = merge_dict(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def toml_key(value: str) -> str:
+    return value if re.fullmatch(r"[A-Za-z0-9_-]+", value) else json.dumps(value)
+
+
+def toml_value(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(toml_value(item) for item in value) + "]"
+    if isinstance(value, (int, float)):
+        return str(value)
+    raise ValueError(f"unsupported managed TOML value: {value!r}")
+
+
+def render_toml(data: dict) -> str:
+    lines: list[str] = []
+
+    def emit(table: dict, path: tuple[str, ...]) -> None:
+        scalars = {key: value for key, value in table.items() if not isinstance(value, dict)}
+        children = {key: value for key, value in table.items() if isinstance(value, dict)}
+        if path and scalars:
+            if lines:
+                lines.append("")
+            lines.append("[" + ".".join(toml_key(part) for part in path) + "]")
+            for key, value in scalars.items():
+                lines.append(f"{toml_key(key)} = {toml_value(value)}")
+        elif not path and scalars:
+            for key, value in scalars.items():
+                lines.append(f"{toml_key(key)} = {toml_value(value)}")
+        for key, value in children.items():
+            emit(value, path + (key,))
+
+    emit(data, ())
+    return "\n".join(lines) + "\n"
+
+
+def load_managed_source() -> str:
+    base = tomllib.loads(SOURCE.read_text())
+    overlay = (
+        tomllib.loads(PERMISSIONS_SOURCE.read_text())
+        if PERMISSIONS_SOURCE.exists()
+        else {}
+    )
+    return render_toml(merge_dict(base, overlay))
 
 
 def parse_args() -> argparse.Namespace:
@@ -102,7 +162,7 @@ def atomic_write(path: Path, content: str) -> None:
 def main() -> int:
     args = parse_args()
     try:
-        source = SOURCE.read_text()
+        source = load_managed_source()
         current = args.target.read_text() if args.target.exists() else ""
         expected = render(current, source)
     except (OSError, tomllib.TOMLDecodeError, ValueError) as error:

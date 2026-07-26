@@ -1,4 +1,3 @@
 [mcp_servers.jina]
 url = "https://mcp.jina.ai/v1"
 bearer_token_env_var = "JINA_API_KEY"
-default_tools_approval_mode = "approve"

@@ -238,6 +238,15 @@ Guide for creating effective skills. Use when creating or updating skills.
 
 ---
 
+### /permission
+
+Manage shell-command and MCP allow, ask, and deny rules across every configured
+agent harness. Supports personal project-local rules and shared global rules.
+
+**Example:** `/permission allow pytest locally`
+
+---
+
 ### /aiconf
 
 Single entry point for project-template config, invoked by every `aiconf` shell verb. Assesses

@@ -1,4 +1,4 @@
-# Single source of truth for agent shell-command permissions.
+# Single source of truth for agent shell-command and MCP permissions.
 #
 # Edit this file, then run `permissions/sync.py` (or `./install.sh`) to
 # regenerate every agent's permission config. NEVER hand-edit the generated
@@ -6,7 +6,9 @@
 #
 # Generated files:
 #   claude/settings.json                  (permissions.allow / deny / ask)
+#   claude/mcp-permissions.json           (PermissionRequest hook policy)
 #   codex/rules/permissions.rules
+#   codex/mcp-permissions.toml
 #   antigravity/settings.json             (permissions.allow / deny / ask)
 #   opencode/opencode.json                (permission.bash)
 #
@@ -187,6 +189,7 @@ allow = [
   # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",
   "opencode run",
+  "aiperm",
   # NOTE: agy (Antigravity) was removed from /second-opinion — its headless mode
   # can't read files without --dangerously-skip-permissions, so it was dropped
   # rather than granted blanket write access. No agy allow-rule is needed here.
@@ -254,6 +257,18 @@ ask = [
   "railway",
 ]
 
+# MCP approvals shared by every harness. Targets use `server/tool`; `server/*`
+# applies to every tool on that server. Server provisioning remains separate.
+[mcp]
+
+allow = [
+  "jina/*",
+]
+
+deny = []
+
+ask = []
+
 # Tool-native permission entries with no cross-agent shell-command
 # equivalent. Emitted verbatim, only to the named tool.
 
@@ -273,7 +288,6 @@ allow = [
   "mcp__todoist__add_comments",
   "mcp__context7__resolve-library-id",
   "mcp__context7__query-docs",
-  "mcp__jina",
   "Skill(code-review)",
   "Skill(debug-log)",
   "Skill(doc)",
@@ -293,6 +307,7 @@ allow = [
   "Skill(review-project)",
   "Skill(second-opinion)",
   "Skill(skill-creator)",
+  "Skill(permission)",
   "Skill(summary)",
   "Skill(aiconf)",
   "Skill(test)",

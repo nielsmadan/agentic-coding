@@ -66,6 +66,7 @@ Available in `claude/skills/`:
 | `/debug-log` | Add debug logging to trace code execution |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
+| `/permission` | Manage personal project or shared global shell/MCP permissions across every harness |
 | `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
@@ -138,7 +139,12 @@ Shell-command permissions for all four agents (Claude, Codex, Antigravity, OpenC
 - `antigravity/settings.json` (`permissions.allow` / `deny` / `ask`)
 - `opencode/opencode.json` (`permission.bash`)
 
-To change permissions: edit `permissions/permissions.toml`, then run `python3 permissions/sync.py` (also run automatically by `install.sh`). `[shell]` entries (allow/deny/ask) go to all four agents; `[claude.extra]` / `[opencode.extra]` hold tool-native entries (`Skill()`, `mcp__*`, OpenCode toggles) with no cross-agent equivalent. Codex's token matcher can't express glob entries (those ending in `*`), so they fall through to its normal approval prompt.
+Use `/permission` or `aiperm` to change permissions. Global changes update
+`permissions/permissions.toml`, then regenerate and install every harness config. Personal
+project rules live in `.aiconf/permissions.toml` and generate native local adapters. `[shell]`
+and `[mcp]` entries go to all five agents; `[claude.extra]` / `[opencode.extra]` hold remaining
+tool-native entries with no cross-agent equivalent. Codex's token matcher can't express legacy
+shell glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
 **Auto-mode gotcha:** Claude Code's auto-mode classifier blocks writes to `settings.json` files (so it blocks `permissions/sync.py`, which regenerates them) and hard-blocks any command containing the string `--dangerously-skip-permissions`. In default mode these only prompt. An explicit `Bash` allow-rule is honored *before* the classifier in every mode — the sanctioned way to let a specific such command through (vs. obfuscating the flag, which is evasion).
 
@@ -154,7 +160,7 @@ Event-triggered shell scripts live in `claude/hooks/` and are wired into `claude
 
 - **Make it executable (`chmod 755`).** A non-executable hook is silently skipped — the event fires as if no hook existed. Git preserves mode `100755` once set.
 - **Propagate to the autonomous profile.** `settings.autonomous.json` is regenerated using `settings.json` as its template, so a hook added to `settings.json` must be carried over by running `python3 permissions/sync.py` (the drift check compares the two). `sync.py` only rewrites the `permissions.*` arrays, so a hand-added `hooks` block in `settings.json` survives regeneration.
-- **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule; a scoped `PermissionRequest` hook (e.g. `auto-approve-jina.sh`, matched to `mcp__jina__*`) is the fix. Scope it to specific servers, not `*`.
+- **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
 ## Global Instructions
 

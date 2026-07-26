@@ -85,6 +85,17 @@ hook rejects drift. To change permissions, edit `permissions.toml` and run:
 python3 permissions/sync.py
 ```
 
+The shared `permission` skill and `aiperm` CLI provide the normal interface:
+
+```sh
+aiperm allow --scope local --shell pytest
+aiperm allow --scope global --mcp jina/*
+aiperm list --scope all
+```
+
+Global rules are tracked and regenerated for all harnesses. Local rules are
+personal, project-scoped, and stored under `.aiconf/`.
+
 See the [Permissions section in `AGENTS.md`](AGENTS.md#permissions) for the full
 model (shared vs. agent-native entries, the autonomous profile).
 
