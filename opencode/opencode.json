@@ -351,6 +351,8 @@
       "xcrun otool *": "allow",
       "xcrun nm": "allow",
       "xcrun nm *": "allow",
+      "yt-dlp": "allow",
+      "yt-dlp *": "allow",
       "git push": "deny",
       "git push *": "deny",
       "git branch -d": "deny",

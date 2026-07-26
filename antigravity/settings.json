@@ -169,6 +169,7 @@
       "command(xcrun dwarfdump)",
       "command(xcrun otool)",
       "command(xcrun nm)",
+      "command(yt-dlp)",
       "mcp(jina/*)"
     ],
     "deny": [

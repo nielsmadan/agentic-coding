@@ -222,6 +222,7 @@ allow = [
   "xcrun dwarfdump",
   "xcrun otool",
   "xcrun nm",
+  "yt-dlp",
 ]
 
 # deny — hard-blocked on every agent. Remote-publishing and destructive ops.

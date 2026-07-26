@@ -184,6 +184,7 @@
       "Bash(xcrun dwarfdump:*)",
       "Bash(xcrun otool:*)",
       "Bash(xcrun nm:*)",
+      "Bash(yt-dlp:*)",
       "mcp__jina__*",
       "Read(~/.claude/skills/*)",
       "WebSearch",

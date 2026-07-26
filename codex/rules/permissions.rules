@@ -173,6 +173,7 @@ prefix_rule(pattern = ["xcrun", "swift-demangle"], decision = "allow")
 prefix_rule(pattern = ["xcrun", "dwarfdump"], decision = "allow")
 prefix_rule(pattern = ["xcrun", "otool"], decision = "allow")
 prefix_rule(pattern = ["xcrun", "nm"], decision = "allow")
+prefix_rule(pattern = ["yt-dlp"], decision = "allow")
 
 prefix_rule(pattern = ["git", "push"], decision = "forbidden")
 prefix_rule(pattern = ["git", "branch", "-d"], decision = "forbidden")
