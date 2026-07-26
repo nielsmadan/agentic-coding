@@ -19,6 +19,7 @@
     "npm:pi-subagents",
     "npm:@narumitw/pi-plan-mode",
     "git:github.com/obra/superpowers",
-    "npm:@narumitw/pi-lsp"
+    "npm:@narumitw/pi-lsp",
+    "npm:@narumitw/pi-statusline"
   ]
 }
