@@ -153,9 +153,11 @@ Determine which conditional add-on agents apply. Skip this entirely if explicit 
 
 *(To add a language: create a `review-<language>` skill and add a row here.)*
 
-**Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md`, include the project review agent. If it doesn't exist, skip silently.
+**Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md` **or** `.agents/skills/review-project/SKILL.md`, include the project review agent. If neither exists, skip silently.
 
-**Library-use review detection.** If the repo has a `library-use` reference at `.claude/skills/library-use/SKILL.md`, include the library-use review agent (`review-library-use`). If it doesn't exist, skip silently (suggesting `library-docs` once is fine, but don't block the review).
+**Library-use review detection.** If the repo has a `library-use` reference at `.claude/skills/library-use/SKILL.md` **or** `.agents/skills/library-use/SKILL.md`, include the library-use review agent (`review-library-use`). If neither exists, skip silently (suggesting `library-docs` once is fine, but don't block the review).
+
+Check both paths — `.claude/skills/` is where Claude Code and `aiconf` put project skills; `.agents/skills/` is where the other harnesses discover them. In an `aiconf`-deployed project the latter is a symlink to the former, so either check finds it; a project set up outside `aiconf` may only have `.agents/skills/`.
 
 Announce what got auto-included, e.g. `Detected TypeScript — adding review-typescript`, `Found project review skill — adding review-project`, or `Found library-use reference — adding review-library-use`.
 

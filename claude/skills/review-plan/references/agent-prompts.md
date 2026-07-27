@@ -1,10 +1,10 @@
 # Agent Prompt Templates
 
-Full prompt templates for each review agent spawned in Step 3. All Task agents use `subagent_type: general-purpose`.
+Full prompt templates for each review agent spawned in Step 3. Every dispatched agent is a general-purpose sub-agent.
 
 ## External Opinions Agent
 
-Use the **Skill tool** to invoke `second-opinion` with this prompt:
+Invoke the `second-opinion` skill with this prompt:
 
 ```
 Review this implementation plan:
@@ -19,7 +19,6 @@ Key questions:
 
 ## Alternatives Agent
 ```
-Subagent type: general-purpose
 Prompt:
 ---
 Given this problem and proposed solution:
@@ -49,7 +48,6 @@ Focus on meaningfully different approaches, not minor variations.
 
 ## Robustness Agent
 ```
-Subagent type: general-purpose
 Prompt:
 ---
 Review this plan for robustness issues:
@@ -97,7 +95,6 @@ For each issue found:
 
 ## Adversarial Agent
 ```
-Subagent type: general-purpose
 Prompt:
 ---
 Be maximally critical of this plan. Your job is to find flaws.
@@ -129,7 +126,7 @@ Do not soften criticism. If something is bad, say it's bad.
 
 ## Research Agent
 
-Use the **Skill tool** to invoke `research-tech` with relevant topic:
+Invoke the `research-tech` skill with relevant topic:
 
 ```
 {library/technology mentioned} {core problem} best practices
@@ -144,11 +141,11 @@ Focus on:
 
 In a **SINGLE message**, spawn all 5 agents:
 
-1. **Skill tool** -> `second-opinion` with plan summary
-2. **Task tool** -> general-purpose agent for alternatives
-3. **Task tool** -> general-purpose agent for robustness
-4. **Task tool** -> general-purpose agent for adversarial
-5. **Skill tool** -> `research-tech` with relevant topic
+1. `second-opinion` skill with plan summary
+2. general-purpose sub-agent for alternatives
+3. general-purpose sub-agent for robustness
+4. general-purpose sub-agent for adversarial
+5. `research-tech` skill with relevant topic
 
 Wait for ALL to complete before proceeding.
 

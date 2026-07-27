@@ -50,7 +50,7 @@ Before external research, Grep relevant keywords in `docs/` and `*.md`. Internal
 
 ### Step 4: Spawn Agents in Parallel
 
-Pick the relevant agents and spawn them in a **single Task message** (parallel execution, `subagent_type: general-purpose`). Each captures source metadata: URL, date, source type, and (for community sources) engagement signals.
+Pick the relevant agents and dispatch them as general-purpose sub-agents in a **single message** so they run in parallel. Each captures source metadata: URL, date, source type, and (for community sources) engagement signals.
 
 | Agent | Spawn when | Search strategy |
 |-------|------------|-----------------|
@@ -66,7 +66,7 @@ Pick the relevant agents and spawn them in a **single Task message** (parallel e
 | **Product/Market** | Evaluating/choosing a product, platform, tool, or model; capability lookup ("does X support Y"); pricing/ROI; benchmarks | `{product} {capability} documentation`, `{product} pricing`, `{A} vs {B} {year}`, independent benchmark sites, plus News for launches/deprecations. Confirm capabilities against official product pages/changelogs; weight independent benchmarks and community threads over vendor claims. |
 | **News** | Launches, deprecations, funding/acquisition, "is X still maintained" | WebSearch recent + `{product} news {year}`, then `mcp__jina__read_url` top 2-3. |
 
-**Fetching**: prefer `mcp__jina__read_url` for JS-heavy pages (modern docs, SPAs); `WebFetch` for plain HTML and github.com. See "Web Fetching" in CLAUDE.md.
+**Fetching**: prefer `mcp__jina__read_url` for JS-heavy pages (modern docs, SPAs); `WebFetch` for plain HTML and github.com. See "Web Fetching" in CLAUDE.md. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
 
 For full agent prompts, see `references/agent-prompts.md`.
 

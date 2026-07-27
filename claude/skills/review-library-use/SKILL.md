@@ -49,7 +49,7 @@ JS-SDK method that doesn't exist in the Java SDK, etc.
 ## Workflow
 
 ### Step 1: Load the convention source
-- Read `.claude/skills/library-use/SKILL.md` — the per-repo reference. Parse each `## <library> \`<version>\`` block: its version, docs/changelog links, and Conventions bullets. **These are the rules to check.**
+- Read `.claude/skills/library-use/SKILL.md` (or `.agents/skills/library-use/SKILL.md` if only that exists) — the per-repo reference. Parse each `## <library> \`<version>\`` block: its version, docs/changelog links, and Conventions bullets. **These are the rules to check.**
 - **If it's missing:** say so once and offer to generate it — `No library-use reference found. Run \`library-docs\` to create one.` Then either (a) proceed in *degraded mode* against the top few libraries' official docs read on the fly, or (b) stop, per the user. Note in the output that coverage was degraded.
 - **Staleness check:** if any documented version no longer matches the current lockfile, warn once (`library-use is stale for <lib> (<recorded>→<lockfile>) — run library-docs`) and review against the newer version's docs where it matters.
 

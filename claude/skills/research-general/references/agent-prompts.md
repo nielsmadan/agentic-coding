@@ -1,6 +1,6 @@
 # Agent Prompt Templates
 
-Full prompt templates for each research agent. All agents use `subagent_type: general-purpose`. Every agent must capture metadata for each source: URL, date, source type, author/publisher, and (where it applies) sample size / methodology / primary-vs-secondary status.
+Full prompt templates for each research agent. Every agent is a general-purpose sub-agent, and must capture metadata for each source: URL, date, source type, author/publisher, and (where it applies) sample size / methodology / primary-vs-secondary status.
 
 ## Fetching web content
 

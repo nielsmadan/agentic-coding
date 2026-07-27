@@ -48,13 +48,13 @@ Based on plan complexity, decide:
 **CRITICAL:** Launch agents in a SINGLE message with multiple tool calls.
 Do NOT invoke one at a time. Do NOT stop after the first agent.
 
-| Agent | Purpose | Tool |
+| Agent | Purpose | How |
 |-------|---------|------|
-| **External Opinion** | Get Codex input | Skill: `second-opinion` |
-| **Alternatives** | Propose 2-4 other solutions | Task: general-purpose |
-| **Robustness** | Check for fragile patterns | Task: general-purpose |
-| **Adversarial** | Maximally critical review | Task: general-purpose |
-| **Research** | Relevant practices online | Skill: `research-tech` |
+| **External Opinion** | Get Codex input | `second-opinion` skill |
+| **Alternatives** | Propose 2-4 other solutions | general-purpose sub-agent |
+| **Robustness** | Check for fragile patterns | general-purpose sub-agent |
+| **Adversarial** | Maximally critical review | general-purpose sub-agent |
+| **Research** | Relevant practices online | `research-tech` skill |
 
 See [references/agent-prompts.md](references/agent-prompts.md) for full prompt templates for each agent.
 

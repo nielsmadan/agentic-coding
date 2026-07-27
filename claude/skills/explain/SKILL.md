@@ -66,9 +66,9 @@ Before dispatching aspect sub-agents, write `docs/explain/preliminary.md`. Keep 
 Every aspect sub-agent should be told to assume readers have read `preliminary.md` and link to it rather than restate its content.
 
 ### 4. Run aspect sub-agents in parallel
-For each requested aspect, dispatch an `Agent` sub-agent in a single message so they execute concurrently.
+For each requested aspect, dispatch one sub-agent — all in a single message so they execute concurrently.
 
-**Always use `subagent_type: "general-purpose"`.** The sub-agent's deliverable is a written markdown file, so it needs the `Write` tool. `Explore` does NOT have `Write`/`Edit` access — dispatching a write-the-file task to Explore makes the agent either fail outright ("I'm in read-only mode") or flail trying to improvise via `Bash` heredocs, which can stall the agent. Use Explore only for tasks where the deliverable is a returned message, not a file.
+**The sub-agent must be able to write files.** Its deliverable is a markdown file it creates itself, so dispatch a general-purpose agent, never a read-only one (Claude Code's `Explore`, or any harness's read-only agent profile). A read-only agent either fails outright ("I'm in read-only mode") or flails improvising via `Bash` heredocs, which can stall it. Read-only agents suit tasks whose deliverable is a returned message, not a file.
 
 Each sub-agent prompt must include:
 - The aspect name (e.g. "architecture")

@@ -82,10 +82,9 @@ Split files into batches and spawn parallel sub-agents:
 
 1. Get all source files
 2. Split into batches of ~20 files each
-3. Spawn sub-agents in parallel using Task tool:
+3. Dispatch one general-purpose sub-agent per batch, all in a single message so they run in parallel:
 
 ```
-Subagent type: general-purpose
 Prompt per batch:
 ---
 Review comments in these files for quality issues:

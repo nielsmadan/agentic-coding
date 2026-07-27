@@ -4,7 +4,7 @@ Load after the review agents have returned (Steps 4, 4.5 and 5).
 
 ## Step 4: Independent Confidence Scoring
 
-Collect all issues from the review agents. Then launch **parallel scorer agents** — one per issue (or batch small groups if there are many). Each scorer receives:
+Collect all issues from the review agents. Then launch **parallel scorer agents** — one per issue (or batch small groups if there are many). On a harness where each sub-agent is a full child session rather than a cheap in-process one, batch by default: ~5 issues per scorer, and never more than ~10 scorers total. Each scorer receives:
 - The issue description and location
 - The relevant code context (read the file around the reported lines)
 - The CLAUDE.md guidelines

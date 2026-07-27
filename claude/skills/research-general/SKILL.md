@@ -53,7 +53,7 @@ When in doubt, use Standard. **Stop at diminishing returns** — if three agents
 
 ### Step 4: Spawn Agents in Parallel
 
-Pick the relevant agents from the table below and spawn them in a **single Task message** (parallel execution, `subagent_type: general-purpose`). Each agent captures source metadata: URL, date, source type, author/publisher, and (where it applies) sample/methodology, primary-vs-secondary, and **affiliate or sponsorship disclosure**.
+Pick the relevant agents from the table below and dispatch them as general-purpose sub-agents in a **single message** so they run in parallel. Each agent captures source metadata: URL, date, source type, author/publisher, and (where it applies) sample/methodology, primary-vs-secondary, and **affiliate or sponsorship disclosure**.
 
 | Agent | Spawn when | Search strategy |
 |-------|------------|-----------------|
@@ -68,7 +68,7 @@ Pick the relevant agents from the table below and spawn them in a **single Task 
 | **Historical** | Topic is historical | `{topic} primary sources` / `archive` / `declassified`. Try news archives. |
 | **Regional** | Country/city/locale-specific (regulations, prices, services) | `{topic} site:{country_TLD}` plus locale-specific authority sites. **Search in the local language** for non-English locales. |
 
-**Fetching**: prefer `mcp__jina__read_url` for JS-heavy pages; `WebFetch` for plain HTML, government PDFs, `.gov`/`.int`. See "Web Fetching" in CLAUDE.md.
+**Fetching**: prefer `mcp__jina__read_url` for JS-heavy pages; `WebFetch` for plain HTML, government PDFs, `.gov`/`.int`. See "Web Fetching" in CLAUDE.md. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
 
 For full agent prompts including the Regional locale playbook (DE/FR/UK/US/AU), see `references/agent-prompts.md`.
 
