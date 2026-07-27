@@ -53,6 +53,14 @@ allow = [
   "git cherry",
   "git whatchanged",
   "git count-objects",
+  "git worktree list",
+  "git merge-base",
+  "git check-ignore",
+  "git diff-tree",
+  "git diff-index",
+  "git ls-remote",
+  "git symbolic-ref",
+  "git version",
 
   # git — user-authorized local workflow
   "git add",
@@ -142,11 +150,22 @@ allow = [
   "dig",
   "jq",
   "cp",
+  "fd",
+  "bat",
+  "eza",
+  "mdfind",
+  "pbpaste",
+  "plutil -p",
+  # archive listing only — `tar -t` alone would also prefix-match `tar -tx…`
+  "tar -tf",
+  "tar -tzf",
+  "tar --list",
+  "unzip -l",
 
-  # text output & processing — stdout-only tools (no built-in file-write flag;
-  # sed/awk/sort/uniq are deliberately excluded because -i/-o/redirect-to-file
-  # can write. read-only is enforced by plan mode dropping write tools, not by
-  # this list, but there's no reason to widen the write surface here.)
+  # text output & processing. sort/uniq are included even though `sort -o` and
+  # `uniq in out` can write — `cp` above plus shell redirects already open that
+  # surface, so excluding them only bought prompts. sed/awk stay out: `sed -i`
+  # and awk's `print > file` mutate files with no redirect a reviewer can see.
   "echo",
   "printf",
   "cut",
@@ -159,6 +178,8 @@ allow = [
   "rev",
   "fold",
   "paste",
+  "sort",
+  "uniq",
 
   # binary / hash inspection
   "xxd",
@@ -180,6 +201,8 @@ allow = [
   "readlink",
   "seq",
   "test",
+  "pgrep",
+  "lsof",
 
   # version checks
   "yarn --version",
@@ -187,6 +210,10 @@ allow = [
   "node --version",
   "python --version",
   "ruby --version",
+
+  # browser automation — mandated by the global browser-automation fragment
+  "agent-browser",
+  "npx agent-browser",
 
   # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",

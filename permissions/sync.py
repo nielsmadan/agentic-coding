@@ -246,8 +246,9 @@ def render_opencode(rules):
     return {path: json.dumps(config, indent=2, ensure_ascii=False) + "\n"}
 
 
-def pi_pattern(entry):
-    return entry if is_glob(entry) else f"{entry} *"
+def pi_patterns(entry):
+    # Pi matches with minimatch, where `foo *` never matches a bare `foo`.
+    return [entry] if is_glob(entry) else [entry, f"{entry} *"]
 
 
 def render_pi(rules):
@@ -257,10 +258,10 @@ def render_pi(rules):
     decisions = (("allow", "allow"), ("ask", "ask"), ("deny", "deny"))
     for category, decision in decisions:
         for entry in rules[category]:
-            pattern = pi_pattern(entry)
-            if pattern in bash:
-                del bash[pattern]
-            bash[pattern] = decision
+            for pattern in pi_patterns(entry):
+                if pattern in bash:
+                    del bash[pattern]
+                bash[pattern] = decision
     mcp = {"*": "ask"}
     for category, decision in decisions:
         for entry in rules[f"mcp_{category}"]:
