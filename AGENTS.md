@@ -52,55 +52,12 @@ Add a new CLI command with flags, validation, or non-trivial logic: write it as 
 
 ## Skills
 
-Available in `claude/skills/`:
+Global skills live in `claude/skills/<name>/SKILL.md`; every harness surfaces the
+available ones with their descriptions, so this file does not restate them. The
+human-facing catalog (arguments, examples) is
+[`claude/skills/README.md`](claude/skills/README.md).
 
-| Skill | Purpose |
-|-------|---------|
-| `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
-| `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Code review workflow. Runs 9 language-agnostic aspects, plus auto-detected language reviews (`review-<lang>`) and a per-project `review-project` skill when present |
-| `/review-swift` | Swift judgment-level review a linter and the compiler can't do — state modeling with enums/value types (make invalid states unrepresentable), optional/error/Codable modeling, concurrency isolation intent (actors, `Sendable`, reentrancy across `await`, `Task` lifetime), SwiftUI identity/lifetime/dependencies, ARC ownership, escape hatches hiding a modeling problem. Carries a "do NOT flag" list of common-but-wrong reviewer instincts. Non-overlapping with SwiftLint / Swift 6 strict concurrency. `references/` holds the concurrency, SwiftUI, and memory detail. Auto-invoked by `code-review` on Swift projects |
-| `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling (make invalid states unrepresentable), inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects; extensible pattern for other languages (`review-<lang>`) |
-| `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
-| `/review-library-use` | Reviews code against the repo's `library-use` conventions — stale/renamed APIs, deprecated patterns, missing required setup a general reviewer misses. Auto-invoked by `code-review` when a `library-use` reference exists |
-| `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
-| `/debug-log` | Add debug logging to trace code execution |
-| `/hard-fix` | Escalation workflow for stubborn bugs |
-| `/perf-test` | Set up and run performance tests with improvement cycle |
-| `/permission` | Manage personal project or shared global shell/MCP permissions across every harness |
-| `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
-| `/review-plan` | Multi-agent review of implementation plans |
-| `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
-| `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
-| `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
-| `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
-| `/read-docs` | Search internal project documentation (proactive) |
-| `/cld-md-improver` | Audit and improve CLAUDE.md files (project-memory optimization) |
-| `/research-tech` | Research any technical/developer topic online using parallel agents — libraries, errors, best practices, tool/library/model comparisons, product capabilities, ecosystem signal |
-| `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents |
-| `/resolve-conflicts` | Git merge conflict resolution |
-| `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. Optional message arg; generates a short feat/fix/chore message when blank |
-| `/squash-commits` | Squash unpushed commits into clean higher-level feat/fix/chore commits per the commit policy (`--conservative`, optional base ref) |
-| `/aiconf` | Single entry point for project-template config (invoked by every `aiconf` verb) — assesses whether the project is configured, installs the detected template if not, otherwise compares each deployed artifact against the template and reconciles drift (pull, push, or semantic merge) |
-| `/summary` | Explain staged git changes in detail and propose conventional-commit messages. `--quick` for a recap of the current task and next steps |
-| `/review-history` | Analyze git history and past issue logs |
-| `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
-| `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
-| `/review-perf` | Performance analysis (--staged, --all) |
-| `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
-| `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
-| `/review-cleancode` | Clean code principles review - SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
-| `/review-security` | Security audit for vulnerabilities (--staged, --all) |
-| `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
-| `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
-| `/test` | Tests: assess state and run the right action (default, no args — runs the suite, then routes failures to fix, gaps to generate, smells to review), or explicit review/generate (--review, --generate) |
-| `/time-reconstruct` | Reconstruct what you worked on from git history for time tracking — real complexity assessment from the diff, not its size |
-| `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
-| `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
-| `/second-opinion` | Get a second opinion |
-| `/review-logs` | Analyze session transcripts for failure patterns and suggest fixes |
-| `/skill-creator` | Guide for creating skills |
-| `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
+What follows is the part that is *not* discoverable from the skill list itself.
 
 ### Extending code-review per language / per project
 
@@ -116,7 +73,7 @@ Available in `claude/skills/`:
 Drop the skill at `claude/skills/<name>/SKILL.md` — the `claude/skills` → `~/.claude/skills` directory symlink exposes it to Claude Code automatically. Two manual hookups make it available everywhere else:
 
 1. Add `<name>` to the `CODEX_SKILLS` array in `sync.sh` (this is what creates the `~/.agents/skills/<name>` symlink Codex / Gemini CLI / Antigravity read). Skip this for project-only skills under `templates/<type>/skills/`, and for Claude-only skills that rely on Claude-Code-specific mechanics (e.g. `plan`, which pins a subagent to Fable).
-2. Add a row to the skills table above.
+2. Add an entry to [`claude/skills/README.md`](claude/skills/README.md) (the human-facing catalog — agents read the skill's own `description:` field, so that frontmatter is what actually needs to be good).
 
 Then run `./sync.sh` to create the Codex symlink (non-interactive; also run by `install.sh`).
 
@@ -335,14 +292,6 @@ Never dismiss test failures, linting errors, or type errors as "pre-existing iss
 - Use `git diff` to prove something isn't your fault as justification for leaving it broken
 
 "Fix it" means the check passes. The only acceptable outcome is ALL checks green. If a failure is genuinely unrelated to your changes, fix it anyway (and note it was pre-existing).
-
-## Fix Escalation
-
-When fixing a bug or error, track how many fix attempts have failed (a failed attempt = you made a change, re-ran the check, and it still fails):
-- **After 2 failed fixes:** Automatically invoke `/second-opinion` to get external perspective before trying again.
-- **After 4 failed fixes:** Automatically invoke `/hard-fix` to switch to the structured escalation workflow.
-
-Do not keep trying the same approach. Each escalation tier forces a fresh perspective.
 
 ## Build & Check Workflow
 

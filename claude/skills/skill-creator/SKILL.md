@@ -255,7 +255,7 @@ Before finalizing, verify:
 - [ ] References clearly linked from SKILL.md (if using references/)
 - [ ] File types mentioned in description (if applicable)
 - [ ] Added to `CODEX_SKILLS` in `install.sh` (unless project-only template skill)
-- [ ] Row added to the skills table in `CLAUDE.md`
+- [ ] Entry added to `claude/skills/README.md` (the human catalog — agents read the `description:` frontmatter instead)
 
 ## Examples
 
