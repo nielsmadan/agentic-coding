@@ -98,3 +98,7 @@ For each issue, explain:
 1. What the problem is
 2. Why it matters
 3. How to fix it (with code example if helpful)
+
+## Next: back to SKILL.md Step 6
+
+**Printing this output does not end the run.** Return to `SKILL.md` and do **Step 6: Offer to Fix** — the mandatory AskUserQuestion prompt letting the user pick a fix scope. Do not end the turn on the formatted output alone.

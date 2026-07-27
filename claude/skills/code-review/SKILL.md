@@ -201,22 +201,29 @@ Then append: "Provide a focused code review in 300 words or less covering: poten
 
 **Load `references/scoring-and-output.md`** and follow it. In short: score every issue with independent parallel scorers (>= 80 passes), have those same scorers return likelihood + blast radius so improbable findings route to an appendix instead of the work list, then render the severity sections.
 
+When that reference is done, **come back here and do Step 6** — the rendered output is not the end of the run.
+
 ## Step 6: Offer to Fix
 
-After presenting the review output, if there are any **Critical** or **Should Fix** findings, use the **AskUserQuestion tool** to let the user pick a fix scope instead of typing one out. This saves the user from describing which issues to address.
+**This step is mandatory and is the last thing the run does.** Rendering the review output in Step 5 is *not* the end of the workflow — do not end the turn after printing the findings. If there is at least one **Critical** or **Should Fix** finding, you MUST call the **AskUserQuestion tool** so the user picks a fix scope by selection instead of typing one out.
 
-Build the options list from what findings actually exist:
+Build the options list from the severity tiers that actually have findings, most-inclusive first:
 
-- If there are Critical findings → include **"Fix Critical only"** (fixes the `Critical Issues (Must Fix)` section).
-- If there are both Critical and Should Fix findings → also include **"Fix Critical + Should Fix"** (fixes Critical and `Improvements (Should Fix)`).
-- If there are Should Fix findings but no Critical findings → include **"Fix Should Fix"** instead.
-- Always include **"Don't fix anything"** as the last option.
+| Option | Fixes | Include when |
+|---|---|---|
+| **"Fix everything"** | Critical + Improvements + Suggestions | there are `Suggestions (Nice to Have)` findings alongside at least one Critical or Should Fix finding |
+| **"Fix Critical + Should Fix"** | Critical + Improvements | there are both Critical and Should Fix findings |
+| **"Fix Critical only"** | Critical | there are Critical findings |
+| **"Fix Should Fix"** | Improvements | there are Should Fix findings but no Critical findings |
+| **"Don't fix anything"** | nothing | always — last option |
 
-List the strongest/most-inclusive fix option first. Skip this step entirely (no prompt) when there are no Critical and no Should Fix findings — there is nothing actionable to offer.
+AskUserQuestion takes at most 4 options, so when all tiers are populated drop the narrowest fix option (`Fix Critical only`) rather than `Don't fix anything` — the user can still ask for a narrower scope in free text.
 
-Build the options only from the `Critical Issues` and `Improvements` sections. **Never include `Improbable / Not Worth Handling` items** — Step 4.5 already judged them not worth doing, and offering to fix them reintroduces exactly the noise the appendix exists to remove.
+Skip this step entirely (no prompt) only when there are no Critical and no Should Fix findings — a run that surfaced nothing but suggestions has nothing worth gating on.
 
-When the user selects a fix option, apply the fixes for exactly the chosen severity tier(s). `Suggestions (Nice to Have)` are never auto-fixed — mention the user can request those separately if they want them.
+Build the options only from the `Critical Issues`, `Improvements`, and `Suggestions` sections. **Never include `Improbable / Not Worth Handling` items** — not even under "Fix everything". Step 4.5 already judged them not worth doing, and offering to fix them reintroduces exactly the noise the appendix exists to remove.
+
+When the user selects a fix option, apply the fixes for exactly the chosen severity tier(s) — no more, no less.
 
 ## Step 7: Re-Review After Fixes (`--rereview` only)
 

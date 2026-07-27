@@ -68,6 +68,8 @@ Code review workflow with optional multi-model feedback.
 
 **Example:** `/code-review src/api/ --multi`
 
+Ends with a selectable fix-scope prompt (Critical only / Critical + Should Fix / everything incl. Nice to Have / don't fix) whenever the review found anything actionable.
+
 ---
 
 ### /debug-log
