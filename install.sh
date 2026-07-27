@@ -55,7 +55,6 @@ echo ""
 # The matching secret must be in the SOPS store so the claude wrapper injects
 # it; see ~/rc/CLAUDE.md.
 CLAUDE_MCP_SERVERS=(
-  "todoist|https://ai.todoist.net/mcp|TODOIST_API_TOKEN"
   "jina|https://mcp.jina.ai/v1|JINA_API_KEY"
 )
 

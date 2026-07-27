@@ -24,8 +24,8 @@ cd ~/ac
 - symlinks config into `~/.claude`, `~/.codex`, `~/.gemini/antigravity-cli`,
   `~/.opencode`, and `~/.airc`
 - installs the curated Codex skill subset into `~/.agents/skills`
-- optionally adds `source ~/.airc` to your `~/.zshrc`, wires up the Todoist MCP
-  server, and checks that `agy` is on PATH
+- optionally adds `source ~/.airc` to your `~/.zshrc`, wires up the configured
+  MCP servers, and checks that `agy` is on PATH
 
 Use `./install.sh --autonomous` to install the broader **autonomous-dev profile**
 (permits `git push` and other unattended ops — for machines running headless
