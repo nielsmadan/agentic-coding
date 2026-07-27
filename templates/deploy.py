@@ -11,8 +11,12 @@ Copies/merges the fragments in templates/<type>/ into the target project:
   - <type>/skills/<name>/      -> <target>/.claude/skills/<name>/     (recursive copy)
                                   plus <target>/.agents/skills/<name> symlink
                                   pointing back at the .claude copy
-  - <type>/instructions.md     -> appended once each to <target>/CLAUDE.md
-                                  and <target>/AGENTS.md (state-gated per target)
+  - <type>/instructions.md     -> appended once to <target>/AGENTS.md (state-gated)
+                                  <target>/CLAUDE.md is created as an `@AGENTS.md`
+                                  bridge if missing, never rewritten if present
+
+AGENTS.md is canonical; CLAUDE.md only imports it. Appending the snippet to both would
+load it twice per session, since the import already pulls it in.
 
 All mechanical operations are idempotent. The instructions snippet is append-once per
 (type, target-file) pair; subsequent updates flow through `aiconf sync`. State is tracked
@@ -26,7 +30,9 @@ from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).resolve().parent
 
-INSTRUCTION_TARGETS = ("CLAUDE.md", "AGENTS.md")
+INSTRUCTION_TARGETS = ("AGENTS.md",)
+
+CLAUDE_BRIDGE = "@AGENTS.md\n"
 
 
 def fail(msg):
@@ -164,8 +170,24 @@ def deploy_skills(type_dir, target):
         print(f"  .claude/skills/{name}: {copy_state}; .agents/skills/{name}: {link_state}")
 
 
+def ensure_claude_bridge(target):
+    """Create CLAUDE.md as an @AGENTS.md bridge; never rewrite one that already exists."""
+    path = target / "CLAUDE.md"
+    if not path.exists():
+        path.write_text(CLAUDE_BRIDGE)
+        print("  CLAUDE.md: created as @AGENTS.md bridge")
+        return
+    if "@AGENTS.md" in path.read_text():
+        print("  CLAUDE.md: bridge present")
+        return
+    print(
+        "  CLAUDE.md: WARNING no '@AGENTS.md' import found — left unchanged. "
+        "Move shared guidance into AGENTS.md and reduce this file to the bridge."
+    )
+
+
 def deploy_instructions_snippet(type_name, type_dir, target):
-    """Append <type>/instructions.md once each to CLAUDE.md and AGENTS.md.
+    """Append <type>/instructions.md once to AGENTS.md.
 
     State at <target>/.aiconf/state.json tracks per (type, target-file) pair, so
     re-running can fill in a missing target without duplicating an existing one.
@@ -184,6 +206,8 @@ def deploy_instructions_snippet(type_name, type_dir, target):
     if not snippet.endswith("\n"):
         snippet += "\n"
 
+    marker = next((ln for ln in snippet.splitlines() if ln.strip()), "")
+
     appended_any = False
     for target_name in INSTRUCTION_TARGETS:
         if target_name in done:
@@ -192,6 +216,11 @@ def deploy_instructions_snippet(type_name, type_dir, target):
         target_file = target / target_name
         if target_file.exists():
             existing = target_file.read_text()
+            if marker and marker in existing.splitlines():
+                done.append(target_name)
+                appended_any = True
+                print(f"  {target_name}: section already present (use 'aiconf sync' to update)")
+                continue
             if not existing.endswith("\n"):
                 existing += "\n"
             target_file.write_text(existing + "\n" + snippet)
@@ -242,6 +271,7 @@ def main():
     deploy_skills(type_dir, target)
 
     deploy_instructions_snippet(type_name, type_dir, target)
+    ensure_claude_bridge(target)
 
     print("done")
 
