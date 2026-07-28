@@ -113,6 +113,16 @@ def normalize_mcp(target: str) -> str:
     return target
 
 
+# Mirrors pi_mcp_patterns() in sync.py: Pi derives its own targets from the MCP
+# call input and never sees `server/tool`.
+def pi_mcp_patterns(target: str) -> list[str]:
+    server, tool = target.split("/", 1)
+    patterns = [f"{server}_{tool}", f"{server}:{tool}"]
+    if tool == "*":
+        patterns += [f"mcp_server_{server}", f"mcp_connect_{server}"]
+    return patterns
+
+
 def normalize_shell(target: str, scope: str, root: Path) -> tuple[str, str | None]:
     target = " ".join(target.split())
     if not target:
@@ -503,9 +513,10 @@ def render_local(root: Path, home: Path, rules: dict, dry_run: bool) -> list[str
     pi_state = owned.setdefault("pi", {})
     merge_owned_map(pi, pi_state, ("permission", "bash"), pi_bash)
     pi_mcp = {
-        target: decision
+        pattern: decision
         for decision in DECISIONS
         for target in rules["mcp"][decision]
+        for pattern in pi_mcp_patterns(target)
     }
     merge_owned_map(pi, pi_state, ("permission", "mcp"), pi_mcp)
     outputs.append((pi_path, json.dumps(pi, indent=2) + "\n"))

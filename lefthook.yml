@@ -7,3 +7,5 @@ pre-commit:
       run: python3 permissions/sync.py --check
     sync-global:
       run: python3 global/sync.py --check
+    sync-skills:
+      run: python3 skills/sync.py --check

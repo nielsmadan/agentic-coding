@@ -277,10 +277,15 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ### /second-opinion
 
-Get input from Codex on the current problem or question.
+Get input from two independent advisors on the current problem or question — Codex (GPT) and
+OpenCode+GLM when invoked from Claude, Claude and OpenCode+GLM when invoked from Codex / Gemini
+CLI / Antigravity / Pi. Both variants are generated from `skills/second-opinion.template.md`; edit
+that (or `skills/sync.py`), never the `SKILL.md` files.
 
 **Arguments:**
 - `--quick` - Single pass, no iteration
+- `--timeout=<seconds>` - Timeout per advisor (default `300`)
+- `--words=<n>` - Max words per advisor response (default `500`)
 
 **Example:** `/second-opinion --quick`
 

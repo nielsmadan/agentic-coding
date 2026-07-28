@@ -139,7 +139,14 @@ class PermissionManagerTests(unittest.TestCase):
                     / "config.json"
                 ).read_text()
             )
-            self.assertEqual(pi["permission"]["mcp"]["jina/*"], "allow")
+            self.assertEqual(pi["permission"]["mcp"]["jina_*"], "allow")
+            self.assertEqual(
+                pi["permission"]["mcp"]["mcp_server_jina"], "allow"
+            )
+            self.assertEqual(
+                pi["permission"]["mcp"]["mcp_connect_jina"], "allow"
+            )
+            self.assertNotIn("jina/*", pi["permission"]["mcp"])
             agy_config = json.loads(agy.read_text())
             self.assertIn("mcp(jina/*)", agy_config["permissions"]["allow"])
 

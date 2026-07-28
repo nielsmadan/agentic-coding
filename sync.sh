@@ -95,7 +95,7 @@ CODEX_SKILLS=(
   library-docs pdf
   perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
-  review-security review-swift review-typescript research-general research-tech skill-creator
+  review-security review-swift review-typescript research-general research-tech second-opinion skill-creator
   squash-commits temp test
 )
 
@@ -223,6 +223,27 @@ generate_global() {
   fi
 }
 
+generate_skills() {
+  local script="$SCRIPT_DIR/skills/sync.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  Skills generator not found: $script (skipping)"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping skills generation"
+    echo "    (the committed skill files will be used as-is)"
+    return
+  fi
+
+  echo "Generating multi-harness skill files from skills/..."
+  if python3 "$script"; then
+    echo "✓  Skill files up to date"
+  else
+    echo "⚠️  Skills generation failed — using committed files"
+  fi
+}
+
 sync_codex_config() {
   local script="$SCRIPT_DIR/codex/sync_config.py"
 
@@ -312,6 +333,8 @@ echo ""
 generate_permissions
 echo ""
 generate_global
+echo ""
+generate_skills
 echo ""
 
 sync_codex_config

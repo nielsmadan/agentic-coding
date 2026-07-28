@@ -182,6 +182,7 @@
       "Bash(npx agent-browser:*)",
       "Bash(codex exec -s read-only:*)",
       "Bash(opencode run:*)",
+      "Bash(claude --tools:*)",
       "Bash(aiperm:*)",
       "Bash(docker exec cc-workbench:*)",
       "Bash(docker exec cc-workbench-*)",

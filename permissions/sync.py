@@ -251,6 +251,19 @@ def pi_patterns(entry):
     return [entry] if is_glob(entry) else [entry, f"{entry} *"]
 
 
+def pi_mcp_patterns(entry):
+    # Pi never sees `server/tool`: it derives targets from the call's input —
+    # `server_tool` / `server:tool` for a tool call, `mcp_server_<server>` for a
+    # list/search, `mcp_connect_<server>` for a connect. Server-wide targets are
+    # only emitted for a server-wide entry, so a rule on one tool can't decide
+    # whether the whole server may be listed.
+    server, tool = mcp_parts(entry)
+    patterns = [f"{server}_{tool}", f"{server}:{tool}"]
+    if tool == "*":
+        patterns += [f"mcp_server_{server}", f"mcp_connect_{server}"]
+    return patterns
+
+
 def render_pi(rules):
     path = REPO_ROOT / "pi" / "permissions.json"
     bash = {"*": "ask"}
@@ -265,9 +278,10 @@ def render_pi(rules):
     mcp = {"*": "ask"}
     for category, decision in decisions:
         for entry in rules[f"mcp_{category}"]:
-            if entry in mcp:
-                del mcp[entry]
-            mcp[entry] = decision
+            for pattern in pi_mcp_patterns(entry):
+                if pattern in mcp:
+                    del mcp[pattern]
+                mcp[pattern] = decision
     config = {
         "$schema": (
             "https://cdn.jsdelivr.net/npm/@gotgenes/"

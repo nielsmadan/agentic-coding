@@ -344,6 +344,8 @@
       "codex exec -s read-only *": "allow",
       "opencode run": "allow",
       "opencode run *": "allow",
+      "claude --tools": "allow",
+      "claude --tools *": "allow",
       "aiperm": "allow",
       "aiperm *": "allow",
       "docker exec cc-workbench": "allow",
@@ -447,7 +449,10 @@
     },
     "mcp": {
       "*": "ask",
-      "jina/*": "allow"
+      "jina_*": "allow",
+      "jina:*": "allow",
+      "mcp_server_jina": "allow",
+      "mcp_connect_jina": "allow"
     }
   }
 }

@@ -171,6 +171,7 @@
       "command(npx agent-browser)",
       "command(codex exec -s read-only)",
       "command(opencode run)",
+      "command(claude --tools)",
       "command(aiperm)",
       "command(docker exec cc-workbench)",
       "command(docker stop cc-workbench)",

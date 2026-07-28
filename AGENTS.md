@@ -11,7 +11,7 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `claude/` - Claude Code specific configuration
   - `settings.json` - Permissions, hooks, and status line config (the `permissions.*` arrays are **generated** — see Permissions below)
   - `CLAUDE.md`, `CLAUDE.autonomous.md` - global Claude guidance (**generated** — see Global Instructions below)
-  - `skills/` - Custom skills in `<skill-name>/SKILL.md` format
+  - `skills/` - Custom skills in `<skill-name>/SKILL.md` format (a few are **generated** — see Multi-Harness Skills below)
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
@@ -28,6 +28,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
+- `skills/` - Single source of truth for skills whose text differs per harness
+  - `<name>.template.md` - the shared skill body with `{{PLACEHOLDER}}` slots; edit this
+  - `sync.py` - renders each harness's `SKILL.md` from the template (see Multi-Harness Skills below)
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
   - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
   - `sync.py` - assembles the fragments into each agent's global instruction file
@@ -76,6 +79,31 @@ Drop the skill at `claude/skills/<name>/SKILL.md` — the `claude/skills` → `~
 2. Add an entry to [`claude/skills/README.md`](claude/skills/README.md) (the human-facing catalog — agents read the skill's own `description:` field, so that frontmatter is what actually needs to be good).
 
 Then run `./sync.sh` to create the Codex symlink (non-interactive; also run by `install.sh`).
+
+### Multi-harness skills
+
+A skill whose text must differ per harness is generated from a template in `skills/`, the same
+generate-and-check pattern used for permissions and global instructions. `second-opinion` is the
+case that motivated it: each harness consults the *other* agents, so the advisor list, CLI
+invocations, and per-CLI gotchas differ, while the surrounding workflow is identical.
+
+Source: `skills/<name>.template.md` (shared body with `{{PLACEHOLDER}}` slots) plus the per-target
+replacement tables in `skills/sync.py`. Targets:
+
+- `claude/skills/second-opinion/SKILL.md` — advisors are Codex + OpenCode/GLM
+- `codex/skills/second-opinion/SKILL.md` — advisors are Claude + OpenCode/GLM; this is the real
+  directory that `install_codex_skills` prefers over `claude/skills/<name>` when linking
+  `~/.agents/skills/<name>`, so Codex / Gemini CLI / Antigravity / Pi all get the Claude-consulting
+  variant
+
+**Never hand-edit the generated `SKILL.md` files** — a lefthook pre-commit hook
+(`skills/sync.py --check`) rejects any drift. Edit the template or `sync.py`, then run
+`python3 skills/sync.py` (also run by `./sync.sh` and `install.sh`).
+
+Two constraints on the generator: the `<!-- GENERATED ... -->` banner is inserted *below* the YAML
+frontmatter (anything above the opening `---` leaves the frontmatter unparsed, and the skill then
+advertises the banner as its description), and each advisor CLI needs a matching allow rule in
+`permissions/permissions.toml` — `codex exec -s read-only`, `opencode run`, `claude --tools`.
 
 ## Claude Desktop Skills
 
