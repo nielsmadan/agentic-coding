@@ -4,6 +4,7 @@
   "provider": {
     "openrouter": {
       "models": {
+        "moonshotai/kimi-k3": {},
         "z-ai/glm-5.2": {}
       }
     }
@@ -347,6 +348,8 @@
       "agent-browser *": "allow",
       "npx agent-browser": "allow",
       "npx agent-browser *": "allow",
+      "jina-fetch": "allow",
+      "jina-fetch *": "allow",
       "codex exec -s read-only": "allow",
       "codex exec -s read-only *": "allow",
       "opencode run": "allow",
