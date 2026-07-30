@@ -48,53 +48,8 @@ echo ""
 "$SCRIPT_DIR/sync.sh" "--$PROFILE"
 
 # --- One-time interactive bootstrap ---
-
-# HTTP MCP servers to register at user scope. Each entry is
-# "name|url|ENV_VAR" — the token is read from ENV_VAR at runtime via Claude
-# Code's ${...} header interpolation (the value is never stored in config).
-# The matching secret must be in the SOPS store so the claude wrapper injects
-# it; see ~/rc/CLAUDE.md.
-CLAUDE_MCP_SERVERS=(
-  "jina|https://mcp.jina.ai/v1|JINA_API_KEY"
-)
-
-install_claude_mcp_servers() {
-  echo ""
-  echo "Installing Claude MCP servers..."
-
-  if ! command -v claude &>/dev/null; then
-    echo "⚠️  Claude CLI not found, skipping MCP server setup"
-    return
-  fi
-
-  local existing
-  existing="$(claude mcp list 2>/dev/null)"
-
-  local entry name url var
-  for entry in "${CLAUDE_MCP_SERVERS[@]}"; do
-    name="${entry%%|*}"
-    var="${entry##*|}"
-    url="${entry#*|}"; url="${url%|*}"
-
-    if echo "$existing" | grep -q "^$name:"; then
-      echo "✓  $name MCP server already configured"
-      continue
-    fi
-
-    echo ""
-    read -p "Add $name MCP server? (requires \$$var env var) [y/n] " choice
-    case "$choice" in
-      y|Y)
-        claude mcp add --transport http --scope user "$name" "$url" \
-          --header "Authorization: Bearer \${$var}"
-        echo "✓  Added $name MCP server"
-        ;;
-      *)
-        echo "⏭️  Skipped $name MCP server"
-        ;;
-    esac
-  done
-}
+# MCP servers are registered by sync.sh (sync_claude_mcp) from
+# mcp/servers.toml, so they need no bootstrap step here.
 
 check_agy_installed() {
   echo ""
@@ -137,7 +92,6 @@ add_airc_to_zshrc() {
   esac
 }
 
-install_claude_mcp_servers
 check_agy_installed
 echo ""
 add_airc_to_zshrc

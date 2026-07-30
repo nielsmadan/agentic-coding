@@ -71,6 +71,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.codex/AGENTS.md"
   # Antigravity (agy) — replaced Gemini CLI in May 2026
   "$SCRIPT_DIR/antigravity/settings.json:$HOME/.gemini/antigravity-cli/settings.json"
+  "$SCRIPT_DIR/antigravity/mcp_config.json:$HOME/.gemini/config/mcp_config.json"
   # agy reads global instructions from ~/.gemini/GEMINI.md — same shared file as Codex
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.gemini/GEMINI.md"
   # OpenCode (reads global config from XDG ~/.config/opencode, not legacy ~/.opencode)
@@ -82,6 +83,7 @@ SYMLINKS=(
   # install_codex_skills below).
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
   "$SCRIPT_DIR/pi/permissions.json:$HOME/.pi/agent/extensions/pi-permission-system/config.json"
+  "$SCRIPT_DIR/pi/mcp.json:$HOME/.pi/agent/mcp.json"
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.pi/agent/AGENTS.md"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
@@ -244,6 +246,72 @@ generate_skills() {
   fi
 }
 
+generate_mcp() {
+  local script="$SCRIPT_DIR/mcp/sync.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  MCP generator not found: $script (skipping)"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping MCP server generation"
+    echo "    (the committed MCP files will be used as-is)"
+    return
+  fi
+
+  echo "Generating agent MCP server config from mcp/servers.toml..."
+  if python3 "$script"; then
+    echo "✓  MCP server config up to date"
+  else
+    echo "⚠️  MCP server generation failed — using committed files"
+  fi
+}
+
+# Claude Code has no user-scope MCP file we can symlink: ~/.claude.json is
+# runtime state and ~/.claude/settings.json has no mcpServers key. So register
+# missing servers through the CLI instead. Add-only — `claude mcp add-json`
+# has no overwrite flag, so a changed url/args needs a manual remove + re-add.
+sync_claude_mcp() {
+  local source="$SCRIPT_DIR/claude/mcp-servers.generated.json"
+
+  echo ""
+  echo "Registering Claude MCP servers..."
+
+  if [[ ! -f "$source" ]]; then
+    echo "⚠️  MCP server list not found: $source (skipping)"
+    return
+  fi
+  if ! command -v claude &>/dev/null; then
+    echo "⚠️  Claude CLI not found — skipping MCP server registration"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping MCP server registration"
+    return
+  fi
+
+  local existing
+  existing="$(claude mcp list 2>/dev/null)"
+
+  local name json
+  while IFS=$'\t' read -r name json; do
+    if echo "$existing" | grep -q "^$name:"; then
+      echo "✓  $name MCP server already configured"
+      continue
+    fi
+    if claude mcp add-json "$name" "$json" --scope user; then
+      echo "✓  Added $name MCP server"
+    else
+      echo "⚠️  Failed to add $name MCP server"
+    fi
+  done < <(python3 -c '
+import json, sys
+with open(sys.argv[1]) as f:
+    for name, entry in json.load(f).items():
+        print(name, json.dumps(entry), sep="\t")
+' "$source")
+}
+
 sync_codex_config() {
   local script="$SCRIPT_DIR/codex/sync_config.py"
 
@@ -336,6 +404,8 @@ generate_global
 echo ""
 generate_skills
 echo ""
+generate_mcp
+echo ""
 
 sync_codex_config
 echo ""
@@ -348,6 +418,8 @@ done
 echo ""
 
 merge_settings
+
+sync_claude_mcp
 
 install_codex_skills
 

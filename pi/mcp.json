@@ -1,3 +1,5 @@
 {
-  "imports": ["claude-code"]
+  "imports": [
+    "claude-code"
+  ]
 }

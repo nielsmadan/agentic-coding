@@ -9,3 +9,5 @@ pre-commit:
       run: python3 global/sync.py --check
     sync-skills:
       run: python3 skills/sync.py --check
+    sync-mcp:
+      run: python3 mcp/sync.py --check

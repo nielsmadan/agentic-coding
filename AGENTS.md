@@ -28,6 +28,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - regenerates every agent's permission config from the source
+- `mcp/` - Single source of truth for **global** MCP server definitions (see MCP Servers below)
+  - `servers.toml` - the source; edit this
+  - `sync.py` - regenerates every agent's MCP config from the source
 - `skills/` - Single source of truth for skills whose text differs per harness
   - `<name>.template.md` - the shared skill body with `{{PLACEHOLDER}}` slots; edit this
   - `sync.py` - renders each harness's `SKILL.md` from the template (see Multi-Harness Skills below)
@@ -133,6 +136,9 @@ and `[mcp]` entries go to all five agents; `[claude.extra]` / `[opencode.extra]`
 tool-native entries with no cross-agent equivalent. Codex's token matcher can't express legacy
 shell glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
+`[mcp]` here is *policy* — which tools of a server may be called. Which servers exist at all is
+`mcp/servers.toml` (see MCP Servers below); the two sources are edited independently.
+
 **Auto-mode gotcha:** Claude Code's auto-mode classifier blocks writes to `settings.json` files (so it blocks `permissions/sync.py`, which regenerates them) and hard-blocks any command containing the string `--dangerously-skip-permissions`. In default mode these only prompt. An explicit `Bash` allow-rule is honored *before* the classifier in every mode — the sanctioned way to let a specific such command through (vs. obfuscating the flag, which is evasion).
 
 ### Autonomous-dev profile
@@ -140,6 +146,27 @@ shell glob entries (those ending in `*`), so they fall through to its normal app
 For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `sync.py` always generates both `claude/settings.json` and `claude/settings.autonomous.json`; the autonomous variant keeps `defaultMode: "auto"` but **empties `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops. Both `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
 
 Install the autonomous profile with `./install.sh --autonomous`, which symlinks the `*.autonomous` variants to `~/.claude/settings.json` and `~/.claude/CLAUDE.md` instead of the defaults. Plain `./install.sh` installs the normal profile. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
+
+## MCP Servers
+
+Which MCP servers **exist** machine-wide is generated from a single source of truth: **`mcp/servers.toml`**. Which of their *tools* may be called is the separate `[mcp]` section of `permissions/permissions.toml` — definitions here, policy there. The two sources name servers independently, so adding one here does not grant it any permissions.
+
+**Never hand-edit these generated files** — a lefthook pre-commit hook (`mcp/sync.py --check`) rejects any drift:
+- `claude/mcp-servers.generated.json` (input to `claude mcp add-json`; **not** symlinked — see below)
+- `codex/config.toml` (`[mcp_servers.*]` tables, merged into `~/.codex/config.toml` by `codex/sync_config.py`)
+- `antigravity/mcp_config.json` (symlinked to `~/.gemini/config/mcp_config.json`)
+- `opencode/opencode.json` (the `mcp` key only)
+- `pi/mcp.json` (static `{"imports": ["claude-code"]}` — Pi's `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi needs no server list of its own)
+
+A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude and Antigravity, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
+
+**Claude Code is the exception to the symlink pattern.** `~/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
+
+**Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields). Antigravity's remote servers use `httpUrl` plus a `headers` map — its own bundled `agy-customizations` doc says `serverUrl` with no headers, but the live file disagrees and wins.
+
+**`opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `permissions/sync.py` writes `permission`. Both read the current file and mutate only their own key, so they compose — but neither may ever rebuild the file from scratch.
+
+Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
 
 ## Hooks
 
@@ -183,6 +210,10 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   last-match-wins rules, so the generator emits allow rules first, ask rules next, and deny rules
   last. The universal tool fallback remains `allow`; unmatched Bash commands prompt, preserving
   this repository's shared permission scope. This is an approval layer, not an OS sandbox.
+- **MCP servers** — `pi/mcp.json` is a static `{"imports": ["claude-code"]}`; Pi's
+  `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi inherits
+  whatever `sync.sh` registered with Claude and needs no server list of its own. The file is
+  still generated (by `mcp/sync.py`) so it can't drift into a hand-maintained second copy.
 - **Model picker** — `pi/settings.json` (symlinked to `~/.pi/agent/settings.json`) sets
   `enabledModels`, a glob allowlist (`provider/id`, minimatch, same format as Pi's `--models` flag)
   that scopes the `/model` default view and Ctrl+P cycling. It does **not** delete models from the
