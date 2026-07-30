@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""Fetch URLs through Jina Reader and extract just what you asked for.
+
+WebFetch's architecture (fetch -> small model -> return the answer) with Jina's
+access. Full pages are written to cache files and only the extract goes to
+stdout, so a 200k-char page never enters the agent's context.
+"""
+
+from __future__ import annotations
+
+import argparse
+import concurrent.futures
+import hashlib
+import json
+import os
+import shutil
+import sys
+import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
+
+DEFAULT_MODEL = "inclusionai/ling-2.6-flash"
+# DEFAULT_MODEL is served by a single provider, so a 429 is a live failure mode.
+# The fallback is the widest-spread model (21 providers) and the only one that
+# scored 6/6 on complex extraction; the higher price only applies when it is used.
+FALLBACK_MODEL = "deepseek/deepseek-v4-flash"
+DEFAULT_PROMPT = "Summarize this page."
+SYSTEM_PROMPT = (
+    "You extract information from documents. Answer only from the documents. "
+    "If they do not contain the answer, say so. Be concise and follow the "
+    "requested format exactly."
+)
+THIN_CONTENT = 500
+MAX_PARALLEL = 5
+
+
+def cache_dir() -> str:
+    path = os.path.join(tempfile.gettempdir(), "jina-fetch")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def cache_path(url: str) -> str:
+    digest = hashlib.sha256(url.encode()).hexdigest()[:16]
+    return os.path.join(cache_dir(), f"{digest}.md")
+
+
+def die(msg: str) -> None:
+    print(f"jina-fetch: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def warn(msg: str) -> None:
+    print(f"jina-fetch: {msg}", file=sys.stderr)
+
+
+def require_key(name: str) -> str:
+    key = os.environ.get(name)
+    if not key:
+        die(
+            f"{name} is not set. Run this from a sops-wrapped tool "
+            f"(claude/codex/pi/nvim) or ask the user to inject it."
+        )
+    return key
+
+
+def fetch(url: str, timeout: int) -> str:
+    headers = {
+        "Authorization": "Bearer " + require_key("JINA_API_KEY"),
+        "X-Return-Format": "markdown",
+        # Jina 403s the default Python-urllib User-Agent.
+        "User-Agent": "jina-fetch/1.0",
+    }
+    # The browser engine gets past hosts that block the default one.
+    for engine in (None, "browser"):
+        attempt = dict(headers)
+        if engine:
+            attempt["X-Engine"] = engine
+        req = urllib.request.Request("https://r.jina.ai/" + url, headers=attempt)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:
+            last = f"HTTP {e.code}"
+        except urllib.error.URLError as e:
+            last = str(e.reason)
+    die(f"Jina could not fetch {url} ({last})")
+
+
+def load(url: str, timeout: int, no_cache: bool) -> str:
+    path = cache_path(url)
+    if os.path.exists(path) and not no_cache:
+        return open(path, encoding="utf-8").read()
+    doc = fetch(url, timeout)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(doc)
+    return doc
+
+
+def in_parallel(fn, items: list) -> list:
+    if len(items) == 1:
+        return [fn(items[0])]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
+        return list(pool.map(fn, items))
+
+
+def post_extract(doc: str, prompt: str, model: str, timeout: int) -> tuple[str | None, str, int]:
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"{doc}\n\n---\n{prompt}"},
+        ],
+    }
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions",
+        data=json.dumps(body).encode(),
+        headers={
+            "Authorization": "Bearer " + require_key("OPENROUTER_API_KEY"),
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            payload = json.load(resp)
+    except urllib.error.HTTPError as e:
+        return None, f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:200]}", e.code
+    except urllib.error.URLError as e:
+        return None, f"could not reach OpenRouter: {e.reason}", 0
+    try:
+        return payload["choices"][0]["message"]["content"].strip(), "", 200
+    except (KeyError, IndexError):
+        return None, f"unexpected response: {json.dumps(payload)[:200]}", 200
+
+
+def extract(doc: str, prompt: str, model: str, timeout: int) -> str:
+    text, err, code = post_extract(doc, prompt, model, timeout)
+    if text is not None:
+        return text
+    if (code == 429 or code >= 500) and model != FALLBACK_MODEL:
+        warn(f"{model} unavailable ({err.splitlines()[0][:80]}); retrying with {FALLBACK_MODEL}")
+        text, err2, _ = post_extract(doc, prompt, FALLBACK_MODEL, timeout)
+        if text is not None:
+            return text
+        die(f"{model} failed ({err}); {FALLBACK_MODEL} also failed ({err2})")
+    die(f"OpenRouter {err}")
+
+
+def split_args(args: list[str]) -> tuple[list[str], str]:
+    urls = []
+    for i, a in enumerate(args):
+        if urllib.parse.urlparse(a).scheme in ("http", "https"):
+            urls.append(a)
+        else:
+            return urls, " ".join(args[i:])
+    return urls, DEFAULT_PROMPT
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(
+        prog="jina-fetch",
+        description="Fetch URLs via Jina Reader, return only the extract.",
+        epilog=(
+            "Pass several URLs to read them in parallel: "
+            'jina-fetch URL URL URL "what to extract". Each page is extracted '
+            "separately unless --combined. Pages are cached under TMPDIR and "
+            "reused; --clean drops them."
+        ),
+    )
+    p.add_argument("args", nargs="*", metavar="URL... [PROMPT]",
+                   help=f"one or more URLs, then what to extract "
+                        f"(default: {DEFAULT_PROMPT!r})")
+    p.add_argument("--combined", action="store_true",
+                   help="one extraction across all pages (for comparisons) "
+                        "instead of one per page")
+    p.add_argument("--raw", action="store_true",
+                   help="print the full markdown, skip the model")
+    p.add_argument("--model", default=os.environ.get("JINA_FETCH_MODEL", DEFAULT_MODEL),
+                   help=f"OpenRouter model (default: {DEFAULT_MODEL})")
+    p.add_argument("--out", metavar="PATH", help="also write the full markdown here")
+    p.add_argument("--no-cache", action="store_true", help="re-fetch even if cached")
+    p.add_argument("--clean", nargs="?", const="__all__", metavar="URL",
+                   help="drop the cache for URL, or the whole cache if omitted")
+    p.add_argument("--timeout", type=int, default=120, help="per-request timeout (default: 120)")
+    opts = p.parse_args()
+
+    if opts.clean:
+        if opts.clean == "__all__":
+            shutil.rmtree(cache_dir(), ignore_errors=True)
+            warn("cache cleared")
+        else:
+            path = cache_path(opts.clean)
+            if os.path.exists(path):
+                os.remove(path)
+            warn(f"dropped cache for {opts.clean}")
+        if not opts.args:
+            return
+
+    urls, prompt = split_args(opts.args)
+    if not urls:
+        p.error("at least one URL is required (must start with http:// or https://)")
+
+    docs = in_parallel(lambda u: load(u, opts.timeout, opts.no_cache), urls)
+
+    for url, doc in zip(urls, docs):
+        if len(doc.strip()) < THIN_CONTENT:
+            warn(f"warning: {url} returned only {len(doc.strip())} chars — "
+                 f"the host likely blocked Jina too")
+
+    if opts.out:
+        with open(opts.out, "w", encoding="utf-8") as f:
+            f.write("\n\n".join(f"# {u}\n\n{d}" for u, d in zip(urls, docs)))
+
+    if opts.raw:
+        for url, doc in zip(urls, docs):
+            if len(urls) > 1:
+                print(f"\n===== {url} =====\n")
+            print(doc)
+        return
+
+    if opts.combined or len(urls) == 1:
+        labelled = "\n\n".join(
+            f"===== SOURCE {i}: {u} =====\n{d}" for i, (u, d) in enumerate(zip(urls, docs), 1)
+        ) if len(urls) > 1 else docs[0]
+        print(extract(labelled, prompt, opts.model, opts.timeout))
+    else:
+        answers = in_parallel(
+            lambda d: extract(d, prompt, opts.model, opts.timeout), docs
+        )
+        for url, answer in zip(urls, answers):
+            print(f"===== {url} =====")
+            print(answer)
+            print()
+
+    total = sum(len(d) for d in docs)
+    warn(f"{len(urls)} page(s), {total} chars cached under {cache_dir()}")
+
+
+if __name__ == "__main__":
+    main()

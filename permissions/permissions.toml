@@ -215,6 +215,9 @@ allow = [
   "agent-browser",
   "npx agent-browser",
 
+  # web fetching — mandated by the global web-fetching fragment
+  "jina-fetch",
+
   # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",
   "opencode run",

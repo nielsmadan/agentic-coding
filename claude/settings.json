@@ -180,6 +180,7 @@
       "Bash(ruby --version:*)",
       "Bash(agent-browser:*)",
       "Bash(npx agent-browser:*)",
+      "Bash(jina-fetch:*)",
       "Bash(codex exec -s read-only:*)",
       "Bash(opencode run:*)",
       "Bash(claude --tools:*)",
