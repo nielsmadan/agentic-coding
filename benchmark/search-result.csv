@@ -1,0 +1,21 @@
+run_date,round,query,websearch_results,websearch_community,jina_results,jina_community,jina_hackernews,timed,round_websearch_time_s,round_websearch_tokens_est,round_jina_time_s,round_jina_tokens_est
+2026-07-29,1,python asyncio TaskGroup vs gather differences,10,0,9,2,0,yes,9.6,3300,5.4,2400
+2026-07-29,1,node undici fetch failed ECONNRESET cause,9,0,11,2,0,yes,9.6,3300,5.4,2400
+2026-07-29,1,Rust async trait object safety workaround,10,0,9,2,0,yes,9.6,3300,5.4,2400
+2026-07-29,1,best espresso machine under 500 euro 2026,8,0,9,1,0,yes,9.6,3300,5.4,2400
+2026-07-29,1,Claude Opus 5 benchmarks coding,6,0,10,1,0,yes,9.6,3300,5.4,2400
+2026-07-29,1b,git rebase vs merge when to use,6,0,7,2,0,no,,,,
+2026-07-29,1b,postgres index not being used explain analyze,10,0,9,4,0,no,,,,
+2026-07-29,1b,typescript satisfies operator vs as const,8,0,9,1,0,no,,,,
+2026-07-29,1b,kubernetes pod stuck in pending state,8,0,9,3,0,no,,,,
+2026-07-29,1b,sourdough starter not rising troubleshooting,6,0,7,1,0,no,,,,
+2026-07-29,1b,docker compose healthcheck depends_on condition,9,0,10,2,0,no,,,,
+2026-07-29,1b,java virtual threads pinning synchronized,8,0,9,2,0,no,,,,
+2026-07-29,1b,css grid vs flexbox when to use which,7,0,7,1,1,no,,,,
+2026-07-29,1b,best noise cancelling headphones 2026,8,0,9,1,0,no,,,,
+2026-07-29,1b,how to fix a leaking kitchen faucet,7,0,4,0,0,no,,,,
+2026-07-30,2,python dataclass vs pydantic model performance,7,0,10,2,1,yes,11.5,3400,6.4,2700
+2026-07-30,2,nginx 502 bad gateway upstream timeout,8,0,9,2,0,yes,11.5,3400,6.4,2700
+2026-07-30,2,go context cancellation best practices,10,0,12,3,0,yes,11.5,3400,6.4,2700
+2026-07-30,2,sqlite wal mode concurrency limits,9,0,10,2,1,yes,11.5,3400,6.4,2700
+2026-07-30,2,react useMemo vs useCallback when to use,10,0,10,2,0,yes,11.5,3400,6.4,2700
