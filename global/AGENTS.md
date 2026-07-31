@@ -6,22 +6,48 @@ User-scoped guidance that applies to every agent session on this machine. Instal
 
 Keep this file **project-agnostic** — anything specific to a particular repo belongs in that repo's own `AGENTS.md`.
 
-## Web Fetching
+## Web Search & Fetching
 
-For fetching and searching external web content, prefer the **Jina MCP tools** (configured for this agent): they render JavaScript server-side and return clean markdown, avoiding the HTML-skeleton problem a plain fetch hits on SPAs.
+**For search, use the Jina MCP web-search tool** (and its parallel variant for several queries at once) rather than a built-in search tool — it returns better results. Fall back to the built-in only if the Jina MCP is unavailable.
 
-**Default**: use the Jina MCP `read_url` tool for external pages and its web-search tool for queries. The exact tool name depends on the agent's MCP integration — e.g. in Pi the Jina tools are reached through the MCP adapter's proxy; in Codex/Antigravity they surface as `jina` server tools.
+**For fetching a known URL, use your built-in fetch tool** (or `curl` for plain HTML/RSS/Atom/PDF, `github.com`, and local dev servers). That is the default for everything, docs sites included.
 
-**Skip Jina — use `curl` or your built-in fetch directly — for**:
-- `github.com` URLs (repo pages, issues, PRs, raw files) — already return sensible HTML/JSON
-- Local dev servers (`localhost`, `127.0.0.1`)
-- Plain HTML/RSS/Atom/PDF where the Jina detour adds latency without value
+**When the direct fetch fails, use `jina-fetch <url> "<what to extract>"`** (on `PATH`). It fetches through Jina, caches the full page under `TMPDIR`, and returns only the extract — a 200k-char page never reaches your context. Ask a specific question rather than "summarize"; re-running against the same URL is cheap because the page is cached.
 
-**Fall back to a plain fetch** if the Jina MCP is unavailable (not configured, rate-limited, server down) or returns thin content.
+**When exact text matters** — code, config, a quoted claim — don't trust the extract, which can paraphrase while looking like a quote. Ask instead for short verbatim anchor phrases, then `grep` or read the cached file (its path is printed to stderr) to pull just those lines into context. Repeat questions against the same URL are cache hits, so several targeted passes cost far less than one `--raw` dump.
 
-**Authenticated or anti-bot sites** are not supported via either path — use `gh`, `glab`, or project-specific CLIs instead.
+**Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
+
+**Go straight to `jina-fetch` for Stack Overflow and Reddit** — both block ordinary fetching and both work through Jina, so don't waste the failed call.
+
+**Reading several pages**: `jina-fetch <url> <url> <url> "<what to extract>"` fetches them in parallel and extracts each separately. Add `--combined` for one extraction across all of them when the question spans sources ("which of these disagree?"). Use this instead of the Jina MCP's parallel-read tool, which dumps every page into the conversation at once.
+
+Other flags: `--raw` prints whole pages, `--out PATH` saves them, `--model` picks a different OpenRouter model, `--help` covers the rest. Prefer `jina-fetch` over the MCP `read_url` tool generally; reach for the MCP tools only for Jina's other capabilities (screenshots, PDF figure/table extraction, text classification).
+
+A fetch has failed when any of these happen:
+
+- refused by a deny-list or robots rule, never sent
+- HTTP 402/403 from the origin
+- a cross-host redirect not followed
+- HTTP 200 with nav/chrome only and the article body missing
+
+The last two can read as success. If the result is boilerplate without the content you asked for, that is a failure — escalate, don't report it as the page.
+
+**Some hosts defeat both paths.** `jina-fetch` warns when a page comes back near-empty — treat that as unreachable rather than retrying: use `gh`, `glab`, or a project-specific CLI, or tell the user.
+
+Jina does not bypass paywalls — expect the same free prefix, with no marker where it stopped.
 
 **Auth** is injected automatically by the sops-wrapped launcher; you do not need to know or fetch the token (see Secrets).
+
+## Video Content
+
+Use the shared video helpers in `~/rc/bin` (installed on `PATH`) instead of assembling one-off `yt-dlp` or `ffmpeg` commands:
+
+- `yt-transcript <url> [--lang <code>] [--timestamps] [--bucket <seconds>]` gets metadata and cleaned captions from any URL supported by `yt-dlp`. Start here when captions are likely.
+- `transcribe <source> [--model <name>] [--lang <code>] [--timestamps] [--bucket <seconds>]` runs local Whisper on a URL or local audio/video file. Use it when `yt-transcript` reports `NO_CAPTIONS`, or for podcasts, recorded streams, meetings, screen recordings, and voice memos.
+- `video-frames --sheet <source> <sheet.jpg>` makes a one-frame-per-minute contact sheet. Follow with `video-frames --scan <source> <start_s> <end_s> [fps]` to locate a transition or motion onset, then `video-frames <source> <timestamp> <frame.jpg>` to extract a frame.
+
+Transcript and downloaded-media caches live under `TMPDIR` and are reused. Add `--clean <source>` to `transcribe` or `video-frames` when the cached files are no longer needed. Run any command with `--help` for its complete usage.
 
 ## Browser Automation
 

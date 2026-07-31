@@ -68,7 +68,7 @@ TARGETS = [
         "self_path": "~/.claude/CLAUDE.md",
         "repo_file": "CLAUDE.md",
         "fragments": [
-            "web-fetching", "browser-automation", "secrets",
+            "web-fetching", "video-content", "browser-automation", "secrets",
             "git-policy", "git-commit-policy", "working-style",
         ],
     },
@@ -79,7 +79,7 @@ TARGETS = [
         "self_path": "~/.claude/CLAUDE.md",
         "repo_file": "CLAUDE.md",
         "fragments": [
-            "web-fetching", "browser-automation", "secrets",
+            "web-fetching", "video-content", "browser-automation", "secrets",
             "git-policy.autonomous", "git-commit-policy", "working-style",
         ],
     },
@@ -87,7 +87,7 @@ TARGETS = [
         "path": "global/AGENTS.md",
         "intro": SHARED_INTRO,
         "fragments": [
-            "web-fetching.shared", "browser-automation", "secrets",
+            "web-fetching.shared", "video-content", "browser-automation", "secrets",
             "git-policy", "git-commit-policy", "working-style",
         ],
     },
