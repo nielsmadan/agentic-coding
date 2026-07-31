@@ -20,6 +20,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
 | `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
+| `/evaluate-tech` | Structured adoption decision for a library, tool, or hosted service — triages hard vs. soft constraints so current architecture never silently eliminates options, enumerates 5-8 candidates wide, then scores every one in parallel against one rubric with maintenance health as a mandatory gate |
 | `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
@@ -97,6 +98,27 @@ Documentation review and generation.
 **Examples:**
 - `/doc --review --staged`
 - `/doc --generate src/utils/parser.ts`
+
+---
+
+### /evaluate-tech
+
+Structured adoption decision for a library, tool, or hosted service. Enforces the two things ad-hoc evaluation skips: maintenance health checked for every candidate upfront (so a recommendation never flips once someone thinks to ask), and hard-vs-soft constraint triage — current architecture becomes an integration-cost line, never a silent filter on the candidate pool.
+
+Enumerates 5-8 candidates wide (including the platform primitive, build-it-yourself, and do-nothing), hard-filters, then evaluates each in a parallel sub-agent against one identical rubric. Picks a criteria profile: Library (bundle size, module format, types, peer deps), Tool (install footprint, platform coverage, CI, upgrade history), or Service (pricing at 10x, export completeness, SLA, vendor durability). Reports a comparison matrix in-conversation; writes no files.
+
+Maintenance health is judged on substance, not cadence: bot-vs-human commit split, whether maintainers still answer issues, whether community fixes land, and whether the current major is quietly in maintenance-only mode behind a v-next branch.
+
+For learning how to use something already chosen, or open-ended research, use `/research-tech`.
+
+**Arguments:**
+- `<what you need>` — optionally `| candidate, candidate, ...` to seed the list
+
+**Examples:**
+- `/evaluate-tech date formatting for our React web app`
+- `/evaluate-tech error tracking service | Sentry, Bugsnag, Rollbar`
+- `/evaluate-tech linter to replace ESLint`
+- `/evaluate-tech is react-native-keychain still worth adopting`
 
 ---
 

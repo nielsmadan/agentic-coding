@@ -93,7 +93,7 @@ SYMLINKS=(
 # in codex/skills/ uses that override; otherwise it links from claude/skills/.
 CODEX_SKILLS=(
   check-claude-projects check-notes commit
-  code-review debug-log deslop doc explain guide ideation
+  code-review debug-log deslop doc evaluate-tech explain guide ideation
   library-docs pdf
   perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
