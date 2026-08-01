@@ -108,7 +108,6 @@
       "command(date)",
       "command(uptime)",
       "command(uname)",
-      "command(env)",
       "command(printenv)",
       "command(file)",
       "command(stat)",

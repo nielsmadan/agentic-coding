@@ -119,7 +119,6 @@
       "Bash(date:*)",
       "Bash(uptime:*)",
       "Bash(uname:*)",
-      "Bash(env:*)",
       "Bash(printenv:*)",
       "Bash(file:*)",
       "Bash(stat:*)",

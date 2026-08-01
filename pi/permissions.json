@@ -218,8 +218,6 @@
       "uptime *": "allow",
       "uname": "allow",
       "uname *": "allow",
-      "env": "allow",
-      "env *": "allow",
       "printenv": "allow",
       "printenv *": "allow",
       "file": "allow",

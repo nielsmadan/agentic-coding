@@ -139,7 +139,6 @@ allow = [
   "date",
   "uptime",
   "uname",
-  "env",
   "printenv",
   "file",
   "stat",
