@@ -21,3 +21,8 @@ run_date,suite,model,providers,passed,of,time_s,cost_usd,failed
 2026-07-30,extract5,amazon/nova-micro-v1,,4,5,20.9,0.010180,needle-date
 2026-07-30,extract5,z-ai/glm-4.7-flash,4,3,5,222.5,0.014272,needle-date;types
 2026-07-30,extract5,mistralai/mistral-nemo,4,2,5,49.7,0.007946,needle-date;needle-views;trap
+2026-08-01,relevance,google/gemini-2.5-flash-lite,2,4,4,5.0,0.015294,
+2026-08-01,relevance,deepseek/deepseek-v4-flash,21,4,4,28.0,0.015234,
+2026-08-01,relevance,qwen/qwen3-30b-a3b-instruct-2507,5,4,4,16.7,0.013478,
+2026-08-01,relevance,ibm-granite/granite-4.0-h-micro,1,4,4,26.5,0.002140,
+2026-08-01,relevance,inclusionai/ling-2.6-flash,1,4,4,302.8,0.002457,

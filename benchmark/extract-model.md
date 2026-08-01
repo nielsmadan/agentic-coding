@@ -3,8 +3,10 @@
 Agent instructions for rerunning the extraction-model benchmark. Results go in
 `extract-model-result.csv` (append a new `run_date`, do not overwrite prior runs).
 
-First run: 2026-07-30. Picked `inclusionai/ling-2.6-flash` as the default in `bin/jina-fetch`,
-with `deepseek/deepseek-v4-flash` as the 429/5xx fallback.
+First run: 2026-07-30, picked `inclusionai/ling-2.6-flash`. **That pick was wrong and the
+benchmark is why** — see "How this benchmark certified a bad model" below. Second run
+2026-08-01 replaced it with `google/gemini-2.5-flash-lite`; `deepseek/deepseek-v4-flash`
+remains the 429/5xx fallback.
 
 ## Why this exists
 
@@ -99,9 +101,15 @@ same page `ling-2.6-flash` emitted 62 output tokens, `deepseek-v4-flash` 1,710,
 
 ## What the suites test
 
+`relevance` — three off-topic questions with **no escape hatch offered**, plus a control that
+must still be answered. This is the suite that matters most; run it on any candidate before
+looking at cost. `offtopic-compound` is the production failure shape: the page genuinely has
+"an accepted answer", just not on the subject asked about, and a weak model answers with the
+wrong one. The control exists because a model that refuses everything would ace the rest.
+
 `extract5` — types (list the Redis data types), why (one-sentence cause), needle-date and
 needle-views (facts buried in 209k chars), trap (asks for a Rust crate the page never
-mentions; must reply NOT IN DOCUMENT).
+mentions; must decline on its own, with no hint that declining is an option).
 
 `complex6` — anchors (3 verbatim phrases, graded by matching them back against the page),
 code-verbatim (reproduce 2 lines of C++), count-tables (how many tables hold a given row),
@@ -120,6 +128,38 @@ and only this task catches it.
 10, 3, 2, 2 against a truth of 4). Treat that as a property of the approach: counting or
 enumerating occurrences across a long page belongs in `grep -c`, not in a prompt. The global
 web-fetching guidance says so for this reason.
+
+## How this benchmark certified a bad model
+
+The first run's trap task read:
+
+> Which Rust crate does this page recommend for branchless programming?
+> **If the page does not mention one, reply exactly: NOT IN DOCUMENT**
+
+All 17 models passed. The bolded clause is why — it *told the model the escape hatch existed*.
+Real callers never write that. Asked the way a caller actually asks, the winning model answered
+off-topic questions with real, correctly-attributed quotes from the page: **7 failures in 23
+trials**, where every other model tested failed none. It shipped, and it was caught in
+production during a research pass, not here.
+
+The general lesson, worth applying to any new task added below: **a task where every model
+passes is not evidence that the models are good, it is evidence the task is too easy.** Treat a
+clean sweep as a bug in the task until proven otherwise.
+
+Two other things the failure exposed, both now fixed in `bin/jina-fetch` and mirrored here:
+
+- **No temperature was set**, so extraction inherited the provider default. The same model and
+  prompt gave 2/5 on one batch and 5/5 on the next. `TEMPERATURE = 0` in both files now.
+- **The system prompt had no sentinel for irrelevance.** It said "if they do not contain the
+  answer, say so", which a model can satisfy while still answering a differently-scoped
+  question. It now mandates `NO_RELEVANT_CONTENT`, and `jina-fetch` surfaces that on stderr.
+
+`SYSTEM` and `TEMPERATURE` at the top of `bench-models.py` must stay in sync with
+`bin/jina-fetch`. A benchmark that calls the model differently from the tool measures nothing.
+Under the fixed prompt and temp 0, every model tested scores 4/4 on `relevance` — including
+the one that failed in production, which is exactly why the model choice is no longer made on
+that suite alone. `ling-2.6-flash` is not reinstated: it took 302.8s for those four tasks under
+Novita rate-limiting, and one clean pass does not undo a 7-in-23 failure record.
 
 ## Columns in extract-model-result.csv
 

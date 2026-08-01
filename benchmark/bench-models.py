@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 # Which OpenRouter model should jina-fetch use to extract answers from a fetched page?
 # Grades each model on two suites of auto-checkable tasks over three real cached pages.
-# usage: bench-models.py <modelfile> <suite: extract5|complex6|all> [outdir]
+# usage: bench-models.py <modelfile> <suite: extract5|complex6|relevance|all> [outdir]
 #   bench-models.py models.txt all .
 # Writes/appends models.csv (per model+suite totals) and models-tasks.csv (per task).
 # Needs OPENROUTER_API_KEY and JINA_API_KEY in env (sops-injected) and jina-fetch on PATH.
 
 import json, os, re, subprocess, sys, time, urllib.error, urllib.request
 
-SYSTEM = ("You extract information from documents. Answer only from the documents. "
-          "If they do not contain the answer, say so. Be concise and follow the "
-          "requested format exactly.")
+# Must stay in sync with SYSTEM_PROMPT in bin/jina-fetch -- the benchmark is only
+# meaningful if it grades the model the way the tool actually calls it.
+SYSTEM = ("You extract information from documents. Answer ONLY from the documents.\n"
+          "Before answering, check that the document actually addresses the SPECIFIC "
+          "subject named in the question. If it does not, reply with exactly "
+          "NO_RELEVANT_CONTENT on the first line, then one short line saying what the "
+          "document is actually about. This applies even when the document contains "
+          "the general kind of thing asked for (a top comment, an accepted answer, a "
+          "section) but not on the subject asked about — never substitute material on "
+          "a different subject.\n"
+          "Otherwise answer concisely and follow the requested format exactly.")
+TEMPERATURE = 0
 
 DOCS = {
     "redis": "https://redis.io/docs/latest/develop/data-types/",
@@ -65,6 +74,44 @@ def last_int_is(n):
     return check
 
 
+DECLINED = re.compile(
+    r"NO_RELEVANT_CONTENT"
+    r"|(does|do|did)\s*not\s*(discuss|mention|contain|address|cover|include|appear|reference)"
+    r"|(is|are|was)\s*not\s*(mentioned|discussed|present|found|referenced)"
+    r"|no\s*(mention|reference|information|relevant|discussion|content|match)"
+    r"|cannot\s*(find|answer|locate)|can'?t\s*(find|answer)"
+    r"|nothing\s*(about|regarding|on)|not\s*present|never\s*mentions"
+    r"|unable to (find|locate)|does not appear", re.I)
+
+
+def suite_relevance(d):
+    """Off-topic questions with NO escape hatch offered -- the production shape.
+
+    A model that answers these has substituted real, correctly-attributed material
+    from the page for an answer the page cannot give. That is the worst failure
+    mode of this tool: it converts "no evidence" into "evidence" silently.
+    Grade every task by whether the model DECLINED.
+    """
+    return [
+        ("offtopic-plain", d["redis"],
+         "What does this page say about Kubernetes horizontal pod autoscaling? "
+         "Quote the relevant passage verbatim.",
+         lambda t, doc: bool(DECLINED.search(nz(t)))),
+        # The exact shape reported in production: compound question where the
+        # page really does have "an accepted answer", just not on this subject.
+        ("offtopic-compound", d["so"],
+         "What does the accepted answer say about Augeas? Quote it verbatim.",
+         lambda t, doc: bool(DECLINED.search(nz(t)))),
+        ("offtopic-author", d["so"],
+         "What does the top comment say about Rust's borrow checker? Quote it verbatim.",
+         lambda t, doc: bool(DECLINED.search(nz(t)))),
+        # Control: a model that refuses everything would ace the three above.
+        ("control-answerable", d["redis"],
+         "Which data types are probabilistic? List them.",
+         lambda t, doc: "bloom" in t.lower()),
+    ]
+
+
 def suite_extract5(d):
     return [
         ("types", d["redis"],
@@ -80,10 +127,14 @@ def suite_extract5(d):
         ("needle-views", d["so"],
          "How many times has this question been viewed, exactly as shown on the page?",
          lambda t, doc: bool(re.search(r"2\.0\s*m|2,0\d\d,\d\d\d|2 million", t, re.I))),
+        # No escape hatch offered on purpose. The original version of this task
+        # said "if the page does not mention one, reply exactly NOT IN DOCUMENT",
+        # which telegraphed the answer -- all 17 models passed and the suite
+        # certified a model that then failed this exact shape in production.
         ("trap", d["so"],
          "Which Rust crate does this page recommend for branchless programming? "
-         "If the page does not mention one, reply exactly: NOT IN DOCUMENT",
-         lambda t, doc: "not in document" in t.lower()),
+         "Quote the recommendation verbatim.",
+         lambda t, doc: bool(DECLINED.search(nz(t)))),
     ]
 
 
@@ -123,7 +174,7 @@ def suite_complex6(d):
 
 
 def call(model, doc, prompt, timeout=300):
-    body = {"model": model,
+    body = {"model": model, "temperature": TEMPERATURE,
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": f"{doc}\n\n---\n{prompt}"}],
             "usage": {"include": True}}
@@ -144,7 +195,7 @@ def call(model, doc, prompt, timeout=300):
 
 def main():
     if len(sys.argv) < 3:
-        sys.exit(__doc__ or "usage: bench-models.py <modelfile> <extract5|complex6|all> [outdir]")
+        sys.exit("usage: bench-models.py <modelfile> <extract5|complex6|relevance|all> [outdir]")
     modelfile, which = sys.argv[1], sys.argv[2]
     outdir = sys.argv[3] if len(sys.argv) > 3 else "."
     models = []
@@ -156,7 +207,8 @@ def main():
 
     os.makedirs(f"{outdir}/pages", exist_ok=True)
     docs = {k: fetch(u, f"{outdir}/pages/{k}.md") for k, u in DOCS.items()}
-    suites = {"extract5": suite_extract5(docs), "complex6": suite_complex6(docs)}
+    suites = {"extract5": suite_extract5(docs), "complex6": suite_complex6(docs),
+              "relevance": suite_relevance(docs)}
     if which != "all":
         suites = {which: suites[which]}
 

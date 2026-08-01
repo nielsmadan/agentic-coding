@@ -13,6 +13,7 @@ import concurrent.futures
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -20,19 +21,36 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-DEFAULT_MODEL = "inclusionai/ling-2.6-flash"
-# DEFAULT_MODEL is served by a single provider, so a 429 is a live failure mode.
-# The fallback is the widest-spread model (21 providers) and the only one that
-# scored 6/6 on complex extraction; the higher price only applies when it is used.
+# ling-2.6-flash was the default until it was caught answering off-topic questions
+# with real quotes from the page: 7 failures in 23 trials, where every other model
+# tested failed none. A silent wrong answer beats a slow one only in benchmarks.
+# The fallback has the widest provider spread (21) and scores 6/6 on complex
+# extraction; its price only applies when it is used.
+DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
 FALLBACK_MODEL = "deepseek/deepseek-v4-flash"
 DEFAULT_PROMPT = "Summarize this page."
+NO_RELEVANT = "NO_RELEVANT_CONTENT"
 SYSTEM_PROMPT = (
-    "You extract information from documents. Answer only from the documents. "
-    "If they do not contain the answer, say so. Be concise and follow the "
-    "requested format exactly."
+    "You extract information from documents. Answer ONLY from the documents.\n"
+    "Before answering, check that the document actually addresses the SPECIFIC "
+    "subject named in the question. If it does not, reply with exactly "
+    f"{NO_RELEVANT} on the first line, then one short line saying what the "
+    "document is actually about. This applies even when the document contains "
+    "the general kind of thing asked for (a top comment, an accepted answer, a "
+    "section) but not on the subject asked about — never substitute material on "
+    "a different subject.\n"
+    "Otherwise answer concisely and follow the requested format exactly."
 )
+# Extraction should be reproducible; the provider default is not 0.
+TEMPERATURE = 0
 THIN_CONTENT = 500
 MAX_PARALLEL = 5
+STOPWORDS = {
+    "what", "which", "does", "this", "that", "page", "say", "says", "about",
+    "from", "with", "verbatim", "quote", "exactly", "give", "list", "answer",
+    "line", "lines", "only", "each", "them", "into", "output", "short", "there",
+    "their", "have", "has", "was", "were", "are", "the", "and", "for", "one",
+}
 
 
 def cache_dir() -> str:
@@ -98,6 +116,28 @@ def load(url: str, timeout: int, no_cache: bool) -> str:
     return doc
 
 
+def page_title(doc: str) -> str:
+    for line in doc.splitlines()[:5]:
+        if line.startswith("Title: "):
+            return line[len("Title: "):].strip()
+    return ""
+
+
+def salient_terms(prompt: str) -> set[str]:
+    words = (w.strip(".-_") for w in re.findall(r"[A-Za-z][A-Za-z0-9_.-]{3,}", prompt))
+    return {w for w in words if len(w) > 3 and w.lower() not in STOPWORDS}
+
+
+def unmatched_terms(prompt: str, doc: str) -> list[str]:
+    """Salient words from the question that appear nowhere in the page.
+
+    Local, free, and catches the case a char-count check cannot: a full page on
+    the wrong topic. Only meaningful when *every* salient term is missing.
+    """
+    low = doc.lower()
+    return sorted(t for t in salient_terms(prompt) if t.lower() not in low)
+
+
 def in_parallel(fn, items: list) -> list:
     if len(items) == 1:
         return [fn(items[0])]
@@ -108,6 +148,7 @@ def in_parallel(fn, items: list) -> list:
 def post_extract(doc: str, prompt: str, model: str, timeout: int) -> tuple[str | None, str, int]:
     body = {
         "model": model,
+        "temperature": TEMPERATURE,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"{doc}\n\n---\n{prompt}"},
@@ -204,9 +245,20 @@ def main() -> None:
     docs = in_parallel(lambda u: load(u, opts.timeout, opts.no_cache), urls)
 
     for url, doc in zip(urls, docs):
+        title = page_title(doc)
+        # The exact path, not the directory: "newest file in the cache dir" is
+        # wrong whenever another fetch is in flight, which is the normal case.
+        warn(f"{url}\n  cached: {cache_path(url)} ({len(doc)} chars)"
+             + (f"\n  title:  {title}" if title else ""))
         if len(doc.strip()) < THIN_CONTENT:
             warn(f"warning: {url} returned only {len(doc.strip())} chars — "
                  f"the host likely blocked Jina too")
+        elif prompt != DEFAULT_PROMPT:
+            asked = salient_terms(prompt)
+            missing = unmatched_terms(prompt, doc)
+            if asked and len(missing) == len(asked):
+                warn(f"warning: none of the question's key terms appear on this "
+                     f"page ({', '.join(missing[:6])}) — it may be off-topic")
 
     if opts.out:
         with open(opts.out, "w", encoding="utf-8") as f:
@@ -219,22 +271,24 @@ def main() -> None:
             print(doc)
         return
 
+    def announce(url: str, answer: str) -> str:
+        if answer.startswith(NO_RELEVANT):
+            warn(f"warning: the page does not address the question — {url}")
+        return answer
+
     if opts.combined or len(urls) == 1:
         labelled = "\n\n".join(
             f"===== SOURCE {i}: {u} =====\n{d}" for i, (u, d) in enumerate(zip(urls, docs), 1)
         ) if len(urls) > 1 else docs[0]
-        print(extract(labelled, prompt, opts.model, opts.timeout))
+        print(announce(", ".join(urls), extract(labelled, prompt, opts.model, opts.timeout)))
     else:
         answers = in_parallel(
             lambda d: extract(d, prompt, opts.model, opts.timeout), docs
         )
         for url, answer in zip(urls, answers):
             print(f"===== {url} =====")
-            print(answer)
+            print(announce(url, answer))
             print()
-
-    total = sum(len(d) for d in docs)
-    warn(f"{len(urls)} page(s), {total} chars cached under {cache_dir()}")
 
 
 if __name__ == "__main__":

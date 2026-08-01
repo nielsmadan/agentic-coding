@@ -14,7 +14,9 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **When the direct fetch fails, use `jina-fetch <url> "<what to extract>"`** (on `PATH`). It fetches through Jina, caches the full page under `TMPDIR`, and returns only the extract — a 200k-char page never reaches your context. Ask a specific question rather than "summarize"; re-running against the same URL is cheap because the page is cached.
 
-**When exact text matters** — code, config, a quoted claim — don't trust the extract, which can paraphrase while looking like a quote. Ask instead for short verbatim anchor phrases, then `grep` or read the cached file (its path is printed to stderr) to pull just those lines into context. Repeat questions against the same URL are cache hits, so several targeted passes cost far less than one `--raw` dump.
+**When exact text matters** — code, config, a quoted claim — don't trust the extract, which can paraphrase while looking like a quote. Ask instead for short verbatim anchor phrases, then `grep` or read the cached file to pull just those lines into context. `jina-fetch` prints each page's exact cache path and title on stderr; use that path — never "the newest file in the cache directory", which is wrong whenever another fetch is in flight. Repeat questions against the same URL are cache hits, so several targeted passes cost far less than one `--raw` dump.
+
+**`NO_RELEVANT_CONTENT` means the page does not address your question.** Treat it as a real answer — a negative result — not as a failed call. Do not re-ask the same page in different words hoping for a hit, and never record an unrelated quote from it as evidence. `jina-fetch` also warns when none of the question's key terms appear on the page.
 
 **Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
 
