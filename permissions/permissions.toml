@@ -222,7 +222,8 @@ allow = [
   "opencode run",
   # Claude as an advisor for the non-Claude harnesses: read-only built-ins only.
   "claude --tools",
-  "aiperm",
+  "aiperm list",
+  "aiperm sync",
   # NOTE: agy (Antigravity) was removed from /second-opinion — its headless mode
   # can't read files without --dangerously-skip-permissions, so it was dropped
   # rather than granted blanket write access. No agy allow-rule is needed here.
