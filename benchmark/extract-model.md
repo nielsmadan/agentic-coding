@@ -48,6 +48,12 @@ same page `ling-2.6-flash` emitted 62 output tokens, `deepseek-v4-flash` 1,710,
    Keep text models with `context_length >= 128000` (a 200k-char page is ~50k tokens) and
    input price under ~$0.11/Mtok. Add the incumbent default and fallback as controls.
 
+   Keep `anthropic/claude-haiku-4.5` in the run too, as a **premium reference point** rather
+   than a candidate. It costs 10× the current default and is not up for selection; its value
+   is answering "are the cheap models actually leaving quality on the table?" On 2026-08-01
+   the answer was no — it scored 13/15 against the default's 14/15 at 10× the price and 2×
+   the wall time. A cheap model that matches it is a cheap model you can trust.
+
 2. **Get the provider count for each candidate** — the catalog does not include it:
 
    ```
@@ -125,9 +131,16 @@ nowhere on the page, in any casing. A confident fake quote is the worst failure 
 and only this task catches it.
 
 **Nobody can count.** Every model except `deepseek-v4-flash` failed count-tables (answers of
-10, 3, 2, 2 against a truth of 4). Treat that as a property of the approach: counting or
-enumerating occurrences across a long page belongs in `grep -c`, not in a prompt. The global
-web-fetching guidance says so for this reason.
+10, 3, 2, 2 against a truth of 4; `claude-haiku-4.5` also said 2). Treat that as a property of
+the approach: counting or enumerating occurrences across a long page belongs in `grep -c`, not
+in a prompt. The global web-fetching guidance says so for this reason.
+
+**Distinguish fabrication from non-compliance when reading an anchors failure.** Both score 0,
+and they mean opposite things. `gpt-oss-120b` invented a quote that appears nowhere on the
+page — a trust failure, disqualifying. `claude-haiku-4.5` failed the same task by ignoring
+"no commentary", opening with "I've reviewed the document carefully…" and then returning only
+one usable phrase — an instruction-following failure, annoying but honest. Always print the
+answer and check each line against the page before deciding which one you are looking at.
 
 ## How this benchmark certified a bad model
 
