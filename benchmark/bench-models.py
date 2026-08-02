@@ -6,20 +6,22 @@
 # Writes/appends models.csv (per model+suite totals) and models-tasks.csv (per task).
 # Needs OPENROUTER_API_KEY and JINA_API_KEY in env (sops-injected) and jina-fetch on PATH.
 
-import json, os, re, subprocess, sys, time, urllib.error, urllib.request
+import importlib.machinery, importlib.util, json, os, pathlib, re, secrets
+import subprocess, sys, time, urllib.error, urllib.request
 
-# Must stay in sync with SYSTEM_PROMPT in bin/jina-fetch -- the benchmark is only
-# meaningful if it grades the model the way the tool actually calls it.
-SYSTEM = ("You extract information from documents. Answer ONLY from the documents.\n"
-          "Before answering, check that the document actually addresses the SPECIFIC "
-          "subject named in the question. If it does not, reply with exactly "
-          "NO_RELEVANT_CONTENT on the first line, then one short line saying what the "
-          "document is actually about. This applies even when the document contains "
-          "the general kind of thing asked for (a top comment, an accepted answer, a "
-          "section) but not on the subject asked about — never substitute material on "
-          "a different subject.\n"
-          "Otherwise answer concisely and follow the requested format exactly.")
-TEMPERATURE = 0
+# The prompt, temperature and message shape are imported from the tool rather
+# than copied: a benchmark that calls the model differently measures nothing,
+# and a copy is a copy that eventually drifts. bin/jina-fetch has no .py suffix,
+# so spec_from_file_location needs an explicit loader.
+_JF = pathlib.Path(__file__).resolve().parent.parent / "bin" / "jina-fetch"
+_loader = importlib.machinery.SourceFileLoader("jina_fetch", str(_JF))
+_spec = importlib.util.spec_from_file_location("jina_fetch", _JF, loader=_loader)
+jf = importlib.util.module_from_spec(_spec)
+# Must be registered before exec: @dataclass resolves its own module by name.
+sys.modules["jina_fetch"] = jf
+_loader.exec_module(jf)
+
+TEMPERATURE = jf.TEMPERATURE
 
 DOCS = {
     "redis": "https://redis.io/docs/latest/develop/data-types/",
@@ -174,9 +176,9 @@ def suite_complex6(d):
 
 
 def call(model, doc, prompt, timeout=300):
+    nonce = secrets.token_hex(8)
     body = {"model": model, "temperature": TEMPERATURE,
-            "messages": [{"role": "system", "content": SYSTEM},
-                         {"role": "user", "content": f"{doc}\n\n---\n{prompt}"}],
+            "messages": jf.build_messages(jf.fence_document(doc, nonce), prompt, nonce),
             "usage": {"include": True}}
     req = urllib.request.Request(
         "https://openrouter.ai/api/v1/chat/completions",
