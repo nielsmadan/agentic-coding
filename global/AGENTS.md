@@ -10,7 +10,9 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **For search, use the Jina MCP web-search tool** (and its parallel variant for several queries at once) rather than a built-in search tool — it returns better results. Fall back to the built-in only if the Jina MCP is unavailable.
 
-**For fetching a known URL, use your built-in fetch tool** (or `curl` for plain HTML/RSS/Atom/PDF, `github.com`, and local dev servers). That is the default for everything, docs sites included.
+**For anything on GitHub, use `gh` — not a fetcher.** `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` returns the exact file bytes in well under a second; `gh issue view`, `gh pr view`, `gh release list` and `gh repo view` cover the rest. Fetching a `github.com/blob/` page returns navigation chrome with the file body missing — that is true of Jina, and of any tool that renders the HTML page instead of asking the API. `gh` output is small (median ~260 tokens) and structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
+
+**For fetching a known URL, use your built-in fetch tool** (or `curl` for plain HTML/RSS/Atom/PDF and local dev servers). That is the default for everything, docs sites included.
 
 **When the direct fetch fails, use `jina-fetch <url> "<what to extract>"`** (on `PATH`). It fetches through Jina, caches the full page under `TMPDIR`, and returns only the extract — a 200k-char page never reaches your context. Ask a specific question rather than "summarize"; re-running against the same URL is cheap because the page is cached.
 
@@ -20,7 +22,9 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
 
-**Go straight to `jina-fetch` for Stack Overflow and Reddit** — both block ordinary fetching and both work through Jina, so don't waste the failed call.
+**Go straight to `jina-fetch` for Stack Overflow** — it blocks ordinary fetching and works through Jina, so don't waste the failed call. **Reddit is now blocked for both** — Jina gets a 403 interstitial ("blocked by network security" / CAPTCHA). Treat Reddit as unreachable and say so, rather than retrying.
+
+**On a long page, prefer `jina-fetch` even when the direct fetch works.** A summarising fetch tool will truncate a large page and answer from the prefix — sometimes flagged, sometimes just a confidently incomplete answer. If an answer mentions truncation, or reads like it stopped before the section you asked about, re-fetch with `jina-fetch`, which sends the whole page.
 
 **Reading several pages**: `jina-fetch <url> <url> <url> "<what to extract>"` fetches them in parallel and extracts each separately. Add `--combined` for one extraction across all of them when the question spans sources ("which of these disagree?"). Use this instead of the Jina MCP's parallel-read tool, which dumps every page into the conversation at once.
 
@@ -107,7 +111,9 @@ Use only these three types — no others, no scopes:
 
 Do **not** use parentheses/scopes: write `feat: add login button`, not `feat(ui): add login button`.
 
-**Body**: keep it short or omit it entirely. The body identifies *what* was done, not *why* or *how*. No essays, no implications, no test counts, no rationale. Max 4 sentences — and don't pad to reach 4. One sentence or no body at all is usually right.
+Keep the subject short — a single clause, no trailing "instead of X, Y, or Z" enumerations.
+
+**Body**: default to **no body at all**. The subject alone is the whole commit message unless the user explicitly asks for more. When they do, the body identifies *what* was done, not *why* or *how* — no essays, no implications, no test counts, no rationale, max 4 sentences.
 
 ## Code Comments
 

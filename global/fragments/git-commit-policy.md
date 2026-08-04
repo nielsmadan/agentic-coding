@@ -18,4 +18,6 @@ Use only these three types — no others, no scopes:
 
 Do **not** use parentheses/scopes: write `feat: add login button`, not `feat(ui): add login button`.
 
-**Body**: keep it short or omit it entirely. The body identifies *what* was done, not *why* or *how*. No essays, no implications, no test counts, no rationale. Max 4 sentences — and don't pad to reach 4. One sentence or no body at all is usually right.
+Keep the subject short — a single clause, no trailing "instead of X, Y, or Z" enumerations.
+
+**Body**: default to **no body at all**. The subject alone is the whole commit message unless the user explicitly asks for more. When they do, the body identifies *what* was done, not *why* or *how* — no essays, no implications, no test counts, no rationale, max 4 sentences.

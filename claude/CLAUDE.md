@@ -10,6 +10,8 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **For search, use `mcp__jina__search_web`** (or `mcp__jina__parallel_search_web` for several queries at once) rather than `WebSearch` — it returns better results. Fall back to `WebSearch` only if the Jina MCP is unavailable.
 
+**For anything on GitHub, use `gh` — not a fetcher.** `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` returns the exact file bytes in well under a second; `gh issue view`, `gh pr view`, `gh release list` and `gh repo view` cover the rest. On the same README, `gh` returned the real source, `WebFetch` a lossy summary, and Jina 7,529 tokens of navigation chrome with the file body **entirely absent** — Jina cannot read `github.com/blob/` pages at all, so it is not a fallback here. `gh` output is small (median ~260 tokens) and structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
+
 **For fetching a known URL, use `WebFetch`.** It is the default for everything, docs sites included.
 
 **When `WebFetch` fails, use `jina-fetch <url> "<what to extract>"`** (on `PATH`). It fetches through Jina, caches the full page under `TMPDIR`, and returns only the extract — a 200k-char page never reaches your context. Ask a specific question rather than "summarize"; re-running against the same URL is cheap because the page is cached.
@@ -20,18 +22,22 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
 
-**Go straight to `jina-fetch` for Stack Overflow and Reddit** — both block `WebFetch` and both work through Jina, so don't waste the failed call.
+**Go straight to `jina-fetch` for Stack Overflow** — it blocks `WebFetch` at the client (`"Claude Code is unable to fetch"`, request never sent), and works through Jina, so don't waste the failed call. **Reddit is now blocked for both** — Jina gets a 403 interstitial ("blocked by network security" / CAPTCHA). Treat Reddit as unreachable and say so, rather than retrying.
+
+**On a long page, prefer `jina-fetch` even when `WebFetch` works.** `WebFetch` truncates: on the Kubernetes Deployment page it refused the question outright, reporting `[Content truncated due to length...]`, while `jina-fetch` answered it correctly from the full page. If a `WebFetch` answer mentions truncation, or reads like it stopped before the section you asked about, re-fetch with `jina-fetch` rather than accepting it.
 
 **Reading several pages**: `jina-fetch <url> <url> <url> "<what to extract>"` fetches them in parallel and extracts each separately. Add `--combined` for one extraction across all of them when the question spans sources ("which of these disagree?"). Use this instead of `mcp__jina__parallel_read_url`, which dumps every page into the conversation at once.
 
 Other flags: `--raw` prints whole pages, `--out PATH` saves them, `--model` picks a different OpenRouter model, `--help` covers the rest. Prefer `jina-fetch` over `mcp__jina__read_url` generally; reach for the MCP tools only for Jina's other capabilities (screenshots, PDF figure/table extraction, text classification).
 
-`WebFetch` fails in four ways, and only the first two announce themselves:
+`WebFetch` fails in five ways, and only the first two announce themselves:
 
 1. `"Claude Code is unable to fetch from X"` — refused, never sent
 2. HTTP 402/403 from the origin
 3. Returns instructions to re-call instead of following a cross-host redirect
 4. HTTP 200 with nav/chrome only and the article body missing
+5. Truncates a long page and answers from the prefix — sometimes flagged as
+   `[Content truncated due to length...]`, sometimes just a confidently incomplete answer
 
 If the result is boilerplate without the content you asked for, that is a failure — escalate, don't report it as the page.
 
@@ -107,7 +113,9 @@ Use only these three types — no others, no scopes:
 
 Do **not** use parentheses/scopes: write `feat: add login button`, not `feat(ui): add login button`.
 
-**Body**: keep it short or omit it entirely. The body identifies *what* was done, not *why* or *how*. No essays, no implications, no test counts, no rationale. Max 4 sentences — and don't pad to reach 4. One sentence or no body at all is usually right.
+Keep the subject short — a single clause, no trailing "instead of X, Y, or Z" enumerations.
+
+**Body**: default to **no body at all**. The subject alone is the whole commit message unless the user explicitly asks for more. When they do, the body identifies *what* was done, not *why* or *how* — no essays, no implications, no test counts, no rationale, max 4 sentences.
 
 ## Code Comments
 
