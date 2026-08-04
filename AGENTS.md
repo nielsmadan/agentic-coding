@@ -9,7 +9,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
 ## Structure
 
 - `claude/` - Claude Code specific configuration
-  - `settings.json` - Permissions, hooks, and status line config (the `permissions.*` arrays are **generated** — see Permissions below)
+  - `settings.json`, `settings.autonomous.json` - **generated in full** (see Permissions below)
+  - `settings.base.json`, `settings.autonomous.base.json` - the hand-maintained half of the two files above (hooks, statusLine, model, env, `permissions.defaultMode`, ...); **edit these, not the generated `settings.json`**
+  - `mcp-permissions.json` - **generated** `PermissionRequest` hook policy
   - `CLAUDE.md`, `CLAUDE.autonomous.md` - global Claude guidance (**generated** — see Global Instructions below)
   - `skills/` - Custom skills in `<skill-name>/SKILL.md` format (a few are **generated** — see Multi-Harness Skills below)
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
@@ -17,7 +19,7 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `rules/` - Permission rules (**generated** — see Permissions below)
   - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
 - `antigravity/` - Antigravity (`agy`) configuration
-  - `settings.json` - permissions.* arrays are **generated** (rest editable)
+  - `settings.json` - **generated in full** (the file holds only `permissions`, so it needs no base)
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
@@ -27,16 +29,17 @@ This repository contains shared configuration for agentic coding tools. It inclu
     `~/.pi/agent/extensions/pi-permission-system/config.json`.
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
-  - `sync.py` - regenerates every agent's permission config from the source
+  - `manage.py` - project-local permission management behind `aiperm` / `/permission`
+  - `sync.py` - retained entry point only; the global renderers moved to `loadout` (see Permissions below)
 - `mcp/` - Single source of truth for **global** MCP server definitions (see MCP Servers below)
   - `servers.toml` - the source; edit this
   - `sync.py` - regenerates every agent's MCP config from the source
 - `skills/` - Single source of truth for skills whose text differs per harness
   - `<name>.template.md` - the shared skill body with `{{PLACEHOLDER}}` slots; edit this
   - `sync.py` - renders each harness's `SKILL.md` from the template (see Multi-Harness Skills below)
+- `loadout.toml` - the manifest: declares every generated file, its renderer, and its base. **The authority on what is generated** — if a path appears as an `output` here, never hand-edit it.
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
   - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
-  - `sync.py` - assembles the fragments into each agent's global instruction file
   - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.gemini/GEMINI.md`); see Global Instructions below
 - `templates/` - Project-type config + skills deployed per-project (see Project Templates below)
   - `<type>/` - config fragments and project-only skills for a project type (e.g. `flutter/`)
@@ -119,15 +122,22 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 ## Permissions
 
-Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravity, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**.
+Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravity, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit these generated files** — a lefthook pre-commit hook (`sync.py --check`) rejects any drift:
-- `claude/settings.json` (`permissions.allow` / `deny` / `ask`)
-- `claude/settings.autonomous.json` (autonomous-dev profile — see below)
-- `codex/rules/permissions.rules`
-- `antigravity/settings.json` (`permissions.allow` / `deny` / `ask`)
-- `opencode/opencode.json` (`permission.bash`)
-- `pi/permissions.json` (`@gotgenes/pi-permission-system`)
+**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` is generated. Today that is eight permission files plus the three instruction files (see Global Instructions below).
+
+**Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
+
+| edit this | to change | which is generated into |
+|---|---|---|
+| `permissions/permissions.toml` | any shell or MCP rule, on every agent | all eight permission files |
+| `claude/settings.base.json` | hooks, statusLine, model, env, `permissions.defaultMode` | `claude/settings.json` |
+| `claude/settings.autonomous.base.json` | the same, for the autonomous profile | `claude/settings.autonomous.json` |
+| `opencode/opencode.base.json` | `model`, `provider`, `$schema` | `opencode/opencode.json` |
+
+`claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `settings.base.json` loses the edit at the next sync.
+
+To change permissions: edit the source, then run `loadout sync` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/harnesses/`, and is only needed when changing loadout itself.
 
 Use `/permission` or `aiperm` to change permissions. Global changes update
 `permissions/permissions.toml`, then regenerate and install every harness config. Personal
@@ -139,11 +149,11 @@ shell glob entries (those ending in `*`), so they fall through to its normal app
 `[mcp]` here is *policy* — which tools of a server may be called. Which servers exist at all is
 `mcp/servers.toml` (see MCP Servers below); the two sources are edited independently.
 
-**Auto-mode gotcha:** Claude Code's auto-mode classifier blocks writes to `settings.json` files (so it blocks `permissions/sync.py`, which regenerates them) and hard-blocks any command containing the string `--dangerously-skip-permissions`. In default mode these only prompt. An explicit `Bash` allow-rule is honored *before* the classifier in every mode — the sanctioned way to let a specific such command through (vs. obfuscating the flag, which is evasion).
+**Auto-mode gotcha:** Claude Code's auto-mode classifier blocks writes to `settings.json` files (so it blocks `loadout sync`, which regenerates them) and hard-blocks any command containing the string `--dangerously-skip-permissions`. In default mode these only prompt. An explicit `Bash` allow-rule is honored *before* the classifier in every mode — the sanctioned way to let a specific such command through (vs. obfuscating the flag, which is evasion).
 
 ### Autonomous-dev profile
 
-For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `sync.py` always generates both `claude/settings.json` and `claude/settings.autonomous.json`; the autonomous variant keeps `defaultMode: "auto"` but **empties `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops. Both `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
+For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `loadout sync` always generates both `claude/settings.json` and `claude/settings.autonomous.json` — the same renderer, from its own base document, with the manifest's `rules = []` selecting no rules at all. The autonomous variant keeps `defaultMode: "auto"` but has **empty `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops. Both `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
 
 Install the autonomous profile with `./install.sh --autonomous`, which symlinks the `*.autonomous` variants to `~/.claude/settings.json` and `~/.claude/CLAUDE.md` instead of the defaults. Plain `./install.sh` installs the normal profile. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
 
@@ -164,29 +174,29 @@ A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `trans
 
 **Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields). Antigravity's remote servers use `httpUrl` plus a `headers` map — its own bundled `agy-customizations` doc says `serverUrl` with no headers, but the live file disagrees and wins.
 
-**`opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `permissions/sync.py` writes `permission`. Both read the current file and mutate only their own key, so they compose — but neither may ever rebuild the file from scratch.
+**`opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. `mcp/sync.py` reads the current file and mutates only its own key. `loadout` builds the file from `opencode/opencode.base.json` and then passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml` — so the two compose in either order, but `mcp/sync.py` must still never rebuild the file from scratch.
 
 Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
 
 ## Hooks
 
-Event-triggered shell scripts live in `claude/hooks/` and are wired into `claude/settings.json` under the `hooks` key. When adding one:
+Event-triggered shell scripts live in `claude/hooks/` and are wired in under the `hooks` key of **`claude/settings.base.json`** — not `claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
 
 - **Make it executable (`chmod 755`).** A non-executable hook is silently skipped — the event fires as if no hook existed. Git preserves mode `100755` once set.
-- **Propagate to the autonomous profile.** `settings.autonomous.json` is regenerated using `settings.json` as its template, so a hook added to `settings.json` must be carried over by running `python3 permissions/sync.py` (the drift check compares the two). `sync.py` only rewrites the `permissions.*` arrays, so a hand-added `hooks` block in `settings.json` survives regeneration.
+- **Propagate to the autonomous profile.** The two profiles have separate base documents, so a hook added to `settings.base.json` must be added to `settings.autonomous.base.json` too. Nothing derives one from the other — that decoupling is deliberate (it is what lets the autonomous profile omit `env.CLAUDE_AFK_TIMEOUT_MS`), and the cost is that shared edits are made twice. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
 ## Global Instructions
 
-Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`global/fragments/`**. `global/sync.py` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
+Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`global/fragments/`**. `loadout` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
 
-**Never hand-edit these generated files** — a lefthook pre-commit hook (`global/sync.py --check`) rejects any drift:
+**Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check`) rejects any drift:
 - `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` → symlinked to `~/.claude/CLAUDE.md`
 - `global/AGENTS.md` → symlinked to `~/.codex/AGENTS.md` (Codex), `~/.gemini/GEMINI.md` (Antigravity's `agy`), and `~/.pi/agent/AGENTS.md` (Pi)
 
 **Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one `global/AGENTS.md` — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md`, `agy` from `~/.gemini/GEMINI.md`, Pi from `~/.pi/agent/AGENTS.md`; the destinations differ but point at the same source.)
 
-To change global guidance: edit a fragment in `global/fragments/`, then run `python3 global/sync.py` (also run automatically by `install.sh`). Each target's fragment list lives in `TARGETS` in `sync.py`, so the differences that exist are explicit — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment.
+To change global guidance: edit a fragment in `global/fragments/`, then run `loadout sync` (also run automatically by `./sync.sh` and `install.sh`). Each target names its fragments explicitly in `loadout.toml`'s `order` list, so the differences that exist are visible in one place — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment. Adding a fragment file does nothing until a target lists it by name; `loadout explain <fragment>` reports which targets use one.
 
 **Why a generator, not native `@imports`:** only Claude Code and Gemini CLI expand in-file `@path` imports; Codex and OpenCode have no import mechanism, and Antigravity's `agy` (a closed-source rewrite) is unverified. A generator is the only DRY approach that works uniformly across every agent.
 
@@ -204,7 +214,7 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   subset as Codex/Antigravity with no pi-specific config. Skills surface as `/skill:<name>` and via
   progressive disclosure in the system prompt.
 - **Permissions** — `pi/settings.json` loads `@gotgenes/pi-permission-system`, and
-  `permissions/sync.py` generates `pi/permissions.json` from the shared `[shell]` and `[mcp]`
+  `loadout` generates `pi/permissions.json` from the shared `[shell]` and `[mcp]`
   rules. `sync.sh`
   links that file to `~/.pi/agent/extensions/pi-permission-system/config.json`. Pi uses
   last-match-wins rules, so the generator emits allow rules first, ask rules next, and deny rules
