@@ -16,11 +16,27 @@ folder holds `.jsonl` transcripts. The user often checks one repo out into
 sibling dirs (`wrksp/app/dev1`, `wrksp/app/dev2`, …) and won't know which
 folder a past session lived in — so the search spans siblings by default.
 
-Sessions are also archived to `~/wrksp/incubation/session-tracker/archive`,
-which mirrors the same encoded-folder-per-project layout. Older sessions that
-have rotated out of `~/.claude/projects` may survive only there — if a search of
-the live dir comes up empty, re-run it against the archive with
-`--projects-dir ~/wrksp/incubation/session-tracker/archive`.
+Sessions are also archived by **ringleader** (`rl`, `~/wrksp/incubation/ringleader`)
+to `~/.local/share/ringleader/archive` — or `$XDG_DATA_HOME/ringleader/archive` if
+that is set. It mirrors the same encoded-folder-per-project layout.
+
+**Archiving moves transcripts out of `~/.claude/projects/`, it does not copy them.**
+So a live-dir search does not merely under-report older sessions, it cannot see
+archived ones at all — and the archive can be larger than the live dir. Always
+search both before concluding something never happened:
+
+```
+--projects-dir ~/.local/share/ringleader/archive
+```
+
+Any aggregate claim ("X was never fetched", "this first appeared in June") is
+invalid until both roots have been searched. If you write your own scan instead
+of using the script, make a missing root a hard error — the script already exits
+on one, but a hand-rolled `glob` over a path that no longer exists returns zero
+matches and looks exactly like a real negative result.
+
+(Renamed from `session-tracker` in Aug 2026; the old
+`~/wrksp/incubation/session-tracker/archive` path no longer exists.)
 
 ## When to use
 
@@ -86,7 +102,7 @@ user can trace it.
 Widen progressively: retry with a looser/alternate query → `--app NAME` →
 `--scope all` → drop `--days`. Confirm the scope with `--list-folders` if results
 seem too narrow. If the session is old, it may have rotated out of the live dir —
-retry against `--projects-dir ~/wrksp/incubation/session-tracker/archive`.
+retry against `--projects-dir ~/.local/share/ringleader/archive`.
 
 ## Examples
 
