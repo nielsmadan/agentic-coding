@@ -183,45 +183,19 @@ print(f"✓  Merged settings -> {dest_path} (repo keys applied, app keys preserv
 PY
 }
 
-generate_permissions() {
-  local script="$SCRIPT_DIR/permissions/sync.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  Permission generator not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping permission generation"
-    echo "    (the committed permission files will be used as-is)"
+generate_loadout() {
+  if ! command -v loadout &>/dev/null; then
+    echo "⚠️  loadout not found on PATH — skipping instruction and permission generation"
+    echo "    (the committed files will be used as-is; install it from the loadout repo"
+    echo "     with 'just install')"
     return
   fi
 
-  echo "Generating agent permission config from permissions/permissions.toml..."
-  if python3 "$script"; then
-    echo "✓  Permission config up to date"
+  echo "Generating global instructions and agent permission config with loadout..."
+  if loadout sync --root "$SCRIPT_DIR"; then
+    echo "✓  Instructions and permission config up to date"
   else
-    echo "⚠️  Permission generation failed — using committed permission files"
-  fi
-}
-
-generate_global() {
-  local script="$SCRIPT_DIR/global/sync.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  Global-instructions generator not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping global-instructions generation"
-    echo "    (the committed instruction files will be used as-is)"
-    return
-  fi
-
-  echo "Generating global agent instructions from global/fragments/..."
-  if python3 "$script"; then
-    echo "✓  Global instructions up to date"
-  else
-    echo "⚠️  Global-instructions generation failed — using committed files"
+    echo "⚠️  loadout sync failed — using committed files"
   fi
 }
 
@@ -398,9 +372,7 @@ install_codex_skills() {
 echo "Syncing agentic coding config... (${PROFILE} profile)"
 echo ""
 
-generate_permissions
-echo ""
-generate_global
+generate_loadout
 echo ""
 generate_skills
 echo ""
