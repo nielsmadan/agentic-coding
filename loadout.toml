@@ -1,10 +1,11 @@
 [[source]]
 name = "ac"
-path = "."
+path = "loadout"
 
 [instructions.claude]
 output       = "claude/CLAUDE.md"
 destinations = ["~/.claude/CLAUDE.md"]
+profile      = "default"
 order = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
     "secrets", "git-policy", "git-commit-policy", "working-style",
@@ -28,38 +29,47 @@ order = [
 ]
 
 [permissions.antigravity]
-output = "antigravity/settings.json"
-render = "antigravity"
+output       = "antigravity/settings.json"
+destinations = ["~/.gemini/antigravity-cli/settings.json"]
+render       = "antigravity"
 
 [permissions.claude]
-output = "claude/settings.json"
-render = "claude"
-base   = "claude/settings.base.json"
+output       = "claude/settings.json"
+destinations = ["~/.claude/settings.json"]
+profile      = "default"
+render       = "claude"
+base         = "loadout/bases/settings.base.json"
 
 [permissions.claude-autonomous]
-output = "claude/settings.autonomous.json"
-render = "claude"
-base   = "claude/settings.autonomous.base.json"
-rules  = []
+output       = "claude/settings.autonomous.json"
+destinations = ["~/.claude/settings.json"]
+profile      = "autonomous"
+render       = "claude"
+base         = "loadout/bases/settings.autonomous.base.json"
+rules        = []
 
 [permissions.claude-mcp]
-output = "claude/mcp-permissions.json"
-render = "claude-mcp"
+output       = "claude/mcp-permissions.json"
+destinations = ["~/.claude/mcp-permissions.json"]
+render       = "claude-mcp"
 
 [permissions.codex]
-output = "codex/rules/permissions.rules"
-render = "codex"
+output       = "codex/rules/permissions.rules"
+destinations = ["~/.codex/rules/permissions.rules"]
+render       = "codex"
 
 [permissions.codex-mcp]
 output = "codex/mcp-permissions.toml"
 render = "codex-mcp"
 
 [permissions.opencode]
-output   = "opencode/opencode.json"
-render   = "opencode"
-base     = "opencode/opencode.base.json"
-preserve = ["mcp"]
+output       = "opencode/opencode.json"
+destinations = ["~/.config/opencode/opencode.json"]
+render       = "opencode"
+base         = "loadout/bases/opencode.base.json"
+preserve     = ["mcp"]
 
 [permissions.pi]
-output = "pi/permissions.json"
-render = "pi"
+output       = "pi/permissions.json"
+destinations = ["~/.pi/agent/extensions/pi-permission-system/config.json"]
+render       = "pi"
