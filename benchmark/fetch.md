@@ -1,110 +1,162 @@
-# Benchmark: Jina Reader vs WebFetch
+# Benchmark: WebFetch vs Jina
 
 Agent instructions for rerunning the page-fetch benchmark. Results go in
 `fetch-result.csv` (append a new `run_date`, do not overwrite prior runs).
 
-First run: 2026-07-29. Written up in `~/wrksp/notes/work/blog/entries/i-tried-jina-so-you-dont-have-to.md`.
-
-## Why this exists
-
-Both tools change over time. WebFetch in particular improved a lot between Feb and Jul 2026
-(it did not strip `<style>`/`<script>` until 2.1.105 on 2026-04-13). Rerun this before
-trusting any older conclusion about which tool to reach for.
+Runs: 2026-07-29 (v1, 28 URLs), 2026-08-03 (v2, current). v1's URL set was replaced
+outright — see "Choosing URLs" for why. Written up in
+`~/wrksp/notes/work/blog/entries/i-tried-jina-so-you-dont-have-to.md`.
 
 ## The one thing to understand first
 
-**These tools are not the same shape, and the token numbers are not directly comparable.**
+**There are three arms, not two, and only two of them are comparable.**
 
-- WebFetch: fetch HTML, convert to markdown, run a small fast model over it, return **only
-  that model's answer**.
-- Jina `read_url`: fetch HTML, convert to markdown, return **the whole markdown**.
+| arm | what it does | returns |
+|---|---|---|
+| **A** `WebFetch` | fetch → summarise with a small model | an answer |
+| **B** `mcp__jina__read_url` | fetch → convert to markdown | the whole page |
+| **C** `jina-fetch` | fetch → summarise with a small model | an answer |
 
-Both do HTML to markdown. The difference is the summarising step. So WebFetch will always
-look cheaper on tokens, and that is architecture, not quality. Say so in any writeup.
+A vs B measures *summarising vs not summarising*. It is architecture, not quality,
+and B loses by ~40×. Say so in any writeup. **A vs C is the real comparison** — both
+summarise, and it is the choice you actually make.
 
-## Prerequisites
+v1 only ran A vs B and presented it as a verdict on Jina. That was the main flaw.
 
-- Jina MCP available (`mcp__jina__read_url`, `mcp__jina__parallel_read_url`), or `jina-fetch`
-  on PATH for the extract-only path.
-- `WebFetch` available (it is a deferred tool; load with `ToolSearch("select:WebFetch")`).
-- Do **not** try to verify `JINA_API_KEY` with `env | grep`. The sandbox classifier blocks it
-  and it looks like secret probing. Auth is injected automatically by the `claude` zsh wrapper.
+## Choosing URLs
+
+Derive them from actual usage, not from intuition. Parse `~/.claude/projects` **and**
+`~/.local/share/ringleader/archive` (see `check-claude-projects`; the archive holds
+more transcripts than the live dir and archiving *moves* files, so a live-only scan
+silently under-reports by ~40%).
+
+Two filters that matter:
+
+1. **Drop project-bound research sweeps.** One project doing a big one-off research
+   push will dominate the host ranking. Compute, per host, the share of fetches from
+   its top project — ≥80% means it is that project's research, not your workload.
+   v1's set was 22% representative; whole buckets (yelp, g2, quora, nytimes,
+   instagram, linkedin, allrecipes, bonappetit) had **zero** organic use.
+2. **Docs sites are project-bound by nature and still belong.** Every docs host in
+   the ranking is ≥97% one project, because projects need their own docs. The
+   category is 23% of traffic across ~92 hosts. Sample by **generator** (rustdoc,
+   Sphinx, MkDocs, Hugo, JS SPA), since that is what HTML-to-markdown must cope with.
+
+The v2 set: github.com, raw.githubusercontent.com, code.claude.com,
+news.ycombinator.com (cross-project, 7–30 projects each) plus developer.apple.com,
+docs.rs, docs.ansible.com, chezmoi.io, docs.railway.com, kubernetes.io (docs, by
+generator).
+
+## Choosing queries
+
+**Lift them verbatim from the transcripts.** Do not write your own — invented queries
+drift toward whatever you expect the tools to do. The measured distribution across
+2,349 real prompts: median 189 chars, **53% demand verbatim/quoted text**, 6% ask to
+summarise. `DEFAULT_PROMPT` ("Summarize this page.") is effectively dead code.
 
 ## Procedure
 
-1. **Take the URL list from `fetch-result.csv`** (the `url` column). Add new URLs if testing
-   something new, keep the existing ones so runs stay comparable.
+1. **Reference copies first.** `jina-fetch --no-cache --raw --out ref/<host>.md <url>`
+   for every URL. This is arm B's payload and the corpus for any grading.
+2. **Arm C** is scriptable — run the 10 in parallel, time each with bash wall clock.
+3. **Arm A** must be issued as real `WebFetch` tool calls. Save each answer to a file
+   to get exact character counts; do not eyeball them (v1 did, and compared an
+   eyeballed estimate against an exactly-measured one).
+4. **Tokens** = chars ÷ 4 for all three arms, same method throughout.
+5. **Timing** — see the trap below. Use URLs not fetched this session (WebFetch caches
+   15 min per URL).
 
-2. **Call both tools on each identical URL with an identical prompt.** The prompt must make
-   silent failure detectable, e.g.:
+## Traps
 
-   > Return the page title and the first 80 words of the main content verbatim.
-   > If the page content is not available, say exactly: BLOCKED_OR_EMPTY and describe what you got.
+- **`mcp__jina__read_url` ≠ `jina-fetch --raw`.** The MCP applies extra cleanup; on
+  one sample it returned 55% fewer chars than r.jina.ai's markdown for the same page.
+  Pick one and label the column for what it is. v2 uses the r.jina.ai markdown, which
+  is what v1 measured, so the trend line survives.
+- **Do not benchmark Jina via unauthenticated `curl https://r.jina.ai/<url>`.** Rate
+  limited, behaves differently from the authenticated path.
+- **Jina strips `www.`** — verify a suspected failure against both forms.
+- **Jina does not bypass paywalls**, despite the tool description.
+- **A page's reference copy can be invalid.** If Jina returned chrome only (see
+  github.com below), you cannot grade *anything* against that reference, including
+  WebFetch — its content is simply absent from the corpus.
 
-   Without that last clause you cannot tell "worked" from "returned the nav bar".
+### Timing is not cleanly measurable for arm A
 
-3. **Record an outcome per tool** using this vocabulary:
+`jina-fetch` can be timed with bash wall clock around the subprocess: **1.34s/page**
+for a cold parallel batch of 5.
 
-   | Value | Meaning |
-   | --- | --- |
-   | `ok` | content returned |
-   | `ok_paywalled` | free portion returned, paywall reached |
-   | `ok_basic` | worked but returned noticeably less than the other tool |
-   | `ok_overran` | worked but ignored the length limit and dumped the page |
-   | `partial_paywalled` | article body yes, the actual payload (recipe, etc.) paywalled |
-   | `thin` | HTTP 200, chrome only, article body missing |
-   | `blocked_robots` | WebFetch: "Claude Code is unable to fetch from X". Request never sent |
-   | `http_403` / `http_402` | origin refused at fetch time |
-   | `redirect_refused` | WebFetch returned instructions instead of following a cross-host redirect |
-   | `captcha` | anti-bot interstitial |
-   | `soft_404` | a "page not found" page for a URL that exists |
-   | `empty` | empty string returned |
-   | `wrong_content` | returned something unrelated (NYTimes gave a 1x1 tracking pixel) |
-   | `not_tested` | not run this round |
+`WebFetch` can only be timed by bracketing turns — timestamp, batch, timestamp, minus
+two harness hops. That gives **3.46s/page**, but the number includes agent-side
+generation time and the cost of streaming results into context, and **the hop is not
+constant**: it scales with response size, which v1's fixed-hop subtraction assumes it
+does not. Report both with their methods stated. Do not publish a ratio.
 
-4. **Measure Jina payload size exactly, not by eye.** Large `parallel_read_url` results blow
-   the tool-result token ceiling and get spilled to a file. Measure there:
+### Verbatim fidelity: attempted and abandoned
 
-   ```
-   jq -r 'to_entries[] | "\(.key)|chars=\(.value.text|length)"' <persisted-file>
-   ```
+The intent was right — 53% of real queries demand exact text, so "does the quoted
+span actually occur in the page" is the axis that matters. Three grader bugs killed
+it, in order of discovery:
 
-   Estimate tokens as `chars / 4`. Note in the writeup that this is an estimate.
+1. **Exact matching punished reformatting.** The page has `` `state=present` ``;
+   WebFetch quoted it without backticks. Scored 0/10 on ansible; really 7/10. Strip
+   markdown markers from both sides.
+2. **The quote regex mispaired quotes.** `"([^"]{25,})"` skips a short quoted span,
+   then re-anchors on its *closing* quote and captures the junk *between* two real
+   quotes as if it were one. This systematically punished answers containing more
+   quotes — precisely what was being measured. Split on `"` and take odd segments.
+3. **Structural asymmetry no fix removes.** WebFetch marks quotes with `"`;
+   `jina-fetch` usually returns extracted text unquoted or in backticks. The two are
+   not comparable on this axis at all.
 
-5. **Measure speed per batch, never per URL.** The harness adds roughly 4.8s of overhead per
-   hop between tool calls, which swamps a ~1s fetch. Baseline it first, then bracket a batch
-   of five:
+Do not publish a fidelity number without solving (3). Given this benchmark's history,
+a clean-looking result is more likely a fourth undetected grader bug than a finding.
 
-   ```
-   python3 -c "import time; print(f'{time.time():.3f}')"    # twice, back to back, nothing between
-   ```
+## Results — 2026-08-03
 
-   The delta between those two is one hop. Then `timestamp -> batch of 5 -> timestamp` and
-   subtract two hops. Report as "time for a batch of five pages".
+**Tokens.** Median: WebFetch 309, `jina-fetch` 297, Jina raw markdown 9,340.
+Across all 10 pages: 4,488 / 6,308 / 184,734 — raw markdown is **41×** WebFetch.
+A and C are comparable on median; C is more verbose on two pages (HN 7×, ansible
+1.8×) and cheaper on the two largest.
 
-6. **Use URLs you have not fetched yet this session for the timing run.** WebFetch caches per
-   URL for 15 minutes, so re-timing a URL you already hit measures the cache.
+**The two tools fail in opposite directions, and both failures are silent-ish:**
 
-## Traps that cost time on the first run
+- **Jina is blind on `github.com/blob/`** — 7,529 tokens of nav chrome, Copilot
+  marketing, file tree, "Uh oh! There was an error while loading", and **no README
+  body**. WebFetch returned the real content. This is the single most-fetched host
+  (522 fetches). Jina is not a fallback for GitHub blob pages.
+- **WebFetch truncates long pages.** On the Kubernetes Deployment page it refused:
+  *"I cannot find a verbatim quote … the content ends with [Content truncated due to
+  length…]"*. `jina-fetch` answered the same question correctly from the full page.
 
-- **Do not benchmark Jina via unauthenticated `curl https://r.jina.ai/<url>`.** It is rate
-  limited and behaves differently from the authenticated MCP path. On the first run it gave
-  403 for GitHub while the MCP returned 13,411 chars for the same URL. Those numbers are not
-  a proxy for anything and were discarded.
-- Raw HTML is a useful third column (`raw_html_chars`) for showing what the markdown
-  conversion saves, but use `curl -sSL --compressed -o body` and measure the **file size**.
-  `%{size_download}` reports compressed bytes, which is not comparable to a char count.
-- Jina strips `www.` from URLs. Verify a suspected Jina failure against both `www` and
-  bare host before blaming Jina. On the first run allrecipes/quora returned the same
-  402/403 either way, so the stripping was not the cause.
-- Jina does **not** bypass paywalls, despite the tool description. It returns the same free
-  prefix WebFetch gets, without flagging that it stopped early.
+**`jina-fetch` declined 3 of 10, and all three declines were right:** github.com
+(Jina handed it chrome), docs.railway.com (WebFetch independently agreed the page
+does not cover it), developer.apple.com (unanswered forum thread — and WebFetch
+manufactured an "## Actual Root Cause" section for it). Zero false negatives.
+
+## Use `gh` for GitHub, not either fetcher
+
+`gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"`
+returned the exact README that Jina could not see, in **0.6s**. On the same file:
+Jina 7,529 tokens of chrome, WebFetch a 317-token summary, `gh` the actual bytes.
+
+**480 of 522 (92%)** github.com fetches were `gh`-replaceable: repo roots 189
+(`gh repo view`), issues 126 (`gh issue view`), blobs 105 (`gh api`), releases 51
+(`gh release`), pulls 9 (`gh pr view`).
+
+**A `gh-fetch` wrapper with an extractor is not worth building.** Measured over 377
+real `gh` calls: median **258 tokens**, p90 1,169, and only **3%** exceed 2k. That is
+already smaller than WebFetch's summariser output (309 median), so an extractor would
+add a model call, latency and cost to the 97% of cases where the raw output is
+smaller than the extract would be. For the tail, `--json field,field --jq '...'`
+filters deterministically and for free — strictly better than an LLM over JSON.
+For scale: every `gh` call ever made totals 181,447 tokens, less than the 184,734
+that ten Jina raw page reads cost in this one run.
 
 ## Columns in fetch-result.csv
 
-`run_date, site, url, webfetch_outcome, webfetch_tokens_est, jina_outcome, jina_chars,
-jina_tokens_est, raw_html_chars`
+`run_date, host, url, webfetch_tokens, webfetch_outcome, jinafetch_tokens,
+jinafetch_outcome, jinafetch_time_s, jina_raw_tokens, raw_vs_webfetch`
 
-`webfetch_tokens_est` is rough: its output is prose whose length varies. `jina_chars` is
-exact where it was measured with `jq`, blank where the result came back inline and was not
-counted.
+Outcomes: `ok`, `ok_overclaimed` (answered beyond what the page supports),
+`declined_correct`, `declined_defensible`, `truncated`, `thin`, `blocked_robots`,
+`http_403`, `captcha`, `soft_404`, `empty`, `not_tested`.

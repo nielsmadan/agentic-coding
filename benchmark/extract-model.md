@@ -3,10 +3,16 @@
 Agent instructions for rerunning the extraction-model benchmark. Results go in
 `extract-model-result.csv` (append a new `run_date`, do not overwrite prior runs).
 
-First run: 2026-07-30, picked `inclusionai/ling-2.6-flash`. **That pick was wrong and the
-benchmark is why** — see "How this benchmark certified a bad model" below. Second run
-2026-08-01 replaced it with `google/gemini-2.5-flash-lite`; `deepseek/deepseek-v4-flash`
-remains the 429/5xx fallback.
+Current pick: `google/gemini-2.5-flash-lite`, with `deepseek/deepseek-v4-flash` as the
+429/5xx fallback. `deepseek` is the only model to score 15/15 across the three suites and is
+marginally cheaper, but it is ~8× slower, which is the deciding factor for a tool that runs
+mid-turn.
+
+**`extract-model-result.csv` holds only the final five-model cohort.** An earlier wide sweep
+of 18 candidates was dropped once it had served its purpose, so the anecdotes below that name
+models absent from the CSV (`gpt-oss-120b`, `ling-3.0-flash:free`, `qwen3.7-flash`) are
+recorded lessons, not reproducible rows. They are kept because each one cost real time to
+learn.
 
 ## Why this exists
 
@@ -73,8 +79,8 @@ same page `ling-2.6-flash` emitted 62 output tokens, `deepseek-v4-flash` 1,710,
    ```
 
    `extract5` asks whether the model can read the page at all. `complex6` asks whether it can
-   be trusted for real work. Run both — `extract5` alone does not discriminate (13 of 17
-   models scored 5/5 on the first run).
+   be trusted for real work. Run both — `extract5` alone does not discriminate (every model
+   in the final cohort scores 5/5 on it; the whole spread comes from `complex6`).
 
 4. **Establish ground truth with `grep`, never from memory.** Every predicate in
    `bench-models.py` checks against a string verified present (or absent) in the cached page.
@@ -149,7 +155,7 @@ The first run's trap task read:
 > Which Rust crate does this page recommend for branchless programming?
 > **If the page does not mention one, reply exactly: NOT IN DOCUMENT**
 
-All 17 models passed. The bolded clause is why — it *told the model the escape hatch existed*.
+Every model passed. The bolded clause is why — it *told the model the escape hatch existed*.
 Real callers never write that. Asked the way a caller actually asks, the winning model answered
 off-topic questions with real, correctly-attributed quotes from the page: **7 failures in 23
 trials**, where every other model tested failed none. It shipped, and it was caught in
