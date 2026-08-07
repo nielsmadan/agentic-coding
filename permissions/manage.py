@@ -555,7 +555,7 @@ def render_local(root: Path, home: Path, rules: dict, dry_run: bool) -> list[str
 
 
 def run_global_sync(root: Path) -> None:
-    subprocess.run([sys.executable, str(root / "permissions" / "sync.py")], check=True)
+    subprocess.run(["loadout", "sync", "--root", str(root)], check=True)
     if os.environ.get("AIPERM_NO_INSTALL") != "1":
         subprocess.run([str(root / "sync.sh")], check=True)
 
@@ -637,7 +637,7 @@ def main() -> int:
             except BaseException:
                 atomic_write(global_path, original)
                 subprocess.run(
-                    [sys.executable, str(root / "permissions" / "sync.py")],
+                    ["loadout", "sync", "--root", str(root)],
                     check=False,
                 )
                 raise

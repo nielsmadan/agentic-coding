@@ -13,9 +13,11 @@ Generated files:
   pi/mcp.json                         (static import — see render_pi)
 
 This owns server DEFINITIONS (url / command / auth env var). Which of their
-tools may be called is permissions/sync.py's `[mcp]` section. The two write
-disjoint keys of opencode/opencode.json — `mcp` here, `permission` there — so
-both must keep reading the current file and mutating only their own key.
+tools may be called is permissions/permissions.toml's `[mcp]` section, rendered
+by loadout. The two write disjoint keys of opencode/opencode.json — `mcp` here,
+`permission` there. loadout declares `preserve = ["mcp"]` and passes this key
+through untouched, so this generator must keep reading the current file and
+mutating only its own key.
 
 Claude Code is the odd one out: ~/.claude.json is runtime state (session
 history, project entries, caches) and cannot be symlinked, and
@@ -171,7 +173,7 @@ def render_antigravity(servers):
 
 # --------------------------------------------------------------------------
 # opencode — opencode.json: replace the `mcp` key, preserve everything else
-# (notably `permission`, which permissions/sync.py owns). A local server takes
+# (notably `permission`, which loadout owns). A local server takes
 # one `command` array combining command and args, not separate fields, and
 # interpolation is {env:VAR} rather than ${VAR}.
 # --------------------------------------------------------------------------

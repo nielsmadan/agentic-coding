@@ -85,7 +85,7 @@ etc.) — a pre-commit hook rejects drift. To change permissions, edit
 `permissions.toml` and run:
 
 ```sh
-python3 permissions/sync.py
+loadout sync
 ```
 
 The shared `permission` skill and `aiperm` CLI provide the normal interface:

@@ -3,8 +3,6 @@ pre-commit:
     package-desktop-skills:
       glob: "claude/desktop/skills/**/*"
       run: ./claude/desktop/package-skills.sh
-    sync-permissions:
-      run: python3 permissions/sync.py --check
     sync-global:
       run: loadout check
     sync-skills:
