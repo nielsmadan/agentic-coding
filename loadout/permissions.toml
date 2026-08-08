@@ -143,7 +143,6 @@ allow = [
   "tail",
   "less",
   "more",
-  "find",
   "grep",
   "rg",
   "cd",
@@ -153,7 +152,6 @@ allow = [
   "date",
   "uptime",
   "uname",
-  "printenv",
   "file",
   "stat",
   "tree",
@@ -162,7 +160,6 @@ allow = [
   "basename",
   "dig",
   "jq",
-  "cp",
   "fd",
   "bat",
   "eza",
@@ -226,7 +223,6 @@ allow = [
 
   # browser automation — mandated by the global browser-automation fragment
   "agent-browser",
-  "npx agent-browser",
 
   # web fetching — mandated by the global web-fetching fragment
   "jina-fetch",
@@ -308,6 +304,12 @@ deny = [
 
 # ask — always prompt for confirmation, even in auto/auto-accept modes.
 ask = [
+  # Demoted from allow: Codex treats an allow rule as full trust and runs the
+  # command outside the sandbox, so these read-only-looking tools are not.
+  "find",      # -exec / -delete
+  "cp",        # arbitrary overwrite
+  "printenv",  # dumps the sops-injected secrets
+
   "heroku",
   "vercel",
   "wrangler",
