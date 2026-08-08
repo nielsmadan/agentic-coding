@@ -2,7 +2,7 @@
 
 **For search, use the Jina MCP web-search tool** (and its parallel variant for several queries at once) rather than a built-in search tool — it returns better results. Fall back to the built-in only if the Jina MCP is unavailable.
 
-**For anything on GitHub, use `gh` — not a fetcher.** `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` returns the exact file bytes in well under a second; `gh issue view`, `gh pr view`, `gh release list` and `gh repo view` cover the rest. Fetching a `github.com/blob/` page returns navigation chrome with the file body missing — that is true of Jina, and of any tool that renders the HTML page instead of asking the API. `gh` output is small (median ~260 tokens) and structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
+**For anything on GitHub, use `gh` — not a fetcher.** Always prefer dedicated `gh` subcommands (`gh issue view --comments`, `gh pr view --comments`, `gh release list`, `gh run list`, `gh repo view`) over `gh api`. Use `gh api --method GET repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` only when fetching raw file bytes or trees not accessible via standard subcommands. HTML fetchers fail on `github.com/blob/` pages due to client-side rendering. `gh` output is structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
 
 **For fetching a known URL, use your built-in fetch tool** (or `curl` for plain HTML/RSS/Atom/PDF and local dev servers). That is the default for everything, docs sites included.
 

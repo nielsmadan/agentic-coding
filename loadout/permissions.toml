@@ -97,6 +97,19 @@ allow = [
   "gh project view",
   "gh project field-list",
   "gh project item-list",
+  "gh api --method GET",
+  "gh api -X GET",
+  "gh gist list",
+  "gh gist view",
+  "gh org list",
+  "gh org view",
+  "gh label list",
+  "gh variable list",
+  "gh secret list",
+  "gh cache list",
+  "gh extension list",
+  "gh status",
+  "gh auth status",
 
   # glab — read-only
   "glab mr list",
@@ -133,6 +146,7 @@ allow = [
   "find",
   "grep",
   "rg",
+  "cd",
   "wc",
   "du",
   "df",
@@ -282,6 +296,14 @@ deny = [
   "git clean -fd",
   "git clean -fdx",
   "git clean -fx",
+
+  # gh — destructive operations
+  "gh repo delete",
+  "gh issue delete",
+  "gh release delete",
+  "gh secret delete",
+  "gh variable delete",
+  "gh gist delete",
 ]
 
 # ask — always prompt for confirmation, even in auto/auto-accept modes.
@@ -290,6 +312,39 @@ ask = [
   "vercel",
   "wrangler",
   "railway",
+
+  # gh — mutating operations & API write flags
+  "gh pr merge",
+  "gh pr create",
+  "gh pr close",
+  "gh pr reopen",
+  "gh pr edit",
+  "gh pr review",
+  "gh issue create",
+  "gh issue close",
+  "gh issue edit",
+  "gh repo create",
+  "gh repo fork",
+  "gh release create",
+  "gh secret set",
+  "gh variable set",
+  "gh workflow run",
+  "gh run cancel",
+  # Enumerated per method: a bare "gh api --method" prefix would shadow the
+  # "gh api --method GET" allow on every harness.
+  "gh api -X POST",
+  "gh api -X PUT",
+  "gh api -X PATCH",
+  "gh api -X DELETE",
+  "gh api --method POST",
+  "gh api --method PUT",
+  "gh api --method PATCH",
+  "gh api --method DELETE",
+  "gh api -f",
+  "gh api -F",
+  "gh api --field",
+  "gh api --raw-field",
+  "gh api --input",
 ]
 
 # MCP approvals shared by every harness. Targets use `server/tool`; `server/*`

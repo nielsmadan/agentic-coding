@@ -10,7 +10,7 @@ Keep this file **project-agnostic** — anything specific to a particular repo b
 
 **For search, use `mcp__jina__search_web`** (or `mcp__jina__parallel_search_web` for several queries at once) rather than `WebSearch` — it returns better results. Fall back to `WebSearch` only if the Jina MCP is unavailable.
 
-**For anything on GitHub, use `gh` — not a fetcher.** `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` returns the exact file bytes in well under a second; `gh issue view`, `gh pr view`, `gh release list` and `gh repo view` cover the rest. On the same README, `gh` returned the real source, `WebFetch` a lossy summary, and Jina 7,529 tokens of navigation chrome with the file body **entirely absent** — Jina cannot read `github.com/blob/` pages at all, so it is not a fallback here. `gh` output is small (median ~260 tokens) and structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
+**For anything on GitHub, use `gh` — not a fetcher.** Always prefer dedicated `gh` subcommands (`gh issue view --comments`, `gh pr view --comments`, `gh release list`, `gh run list`, `gh repo view`) over `gh api`. Use `gh api --method GET repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"` only when fetching raw file bytes or trees not accessible via standard subcommands. HTML fetchers fail on `github.com/blob/` pages due to client-side rendering. `gh` output is structured; filter it with `--json field,field --jq '...'` rather than running a model over it.
 
 **For fetching a known URL, use `WebFetch`.** It is the default for everything, docs sites included.
 
