@@ -87,6 +87,10 @@ SYMLINKS=(
   "$SCRIPT_DIR/global/AGENTS.md:$HOME/.pi/agent/AGENTS.md"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
+  # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs
+  # source no shell config, so jina-fetch is also linked into ~/.local/bin,
+  # which their plists put on PATH.
+  "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
 )
 
 # Skills shared with Codex (subset of claude/skills/). A name with a real dir
