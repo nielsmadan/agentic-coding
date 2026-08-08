@@ -64,7 +64,9 @@ Eliminate **only** on hard constraints, recording the specific constraint for ea
 
 ### Step 5: Evaluate in parallel — identical rubric
 
-Dispatch one `general-purpose` sub-agent per surviving candidate, **all in a single message**. Use the template in `references/agent-prompt.md` verbatim, substituting only the job, profile, constraint lists, and candidate name.
+Dispatch one sub-agent per surviving candidate, **all in a single message**. Use the template in `references/agent-prompt.md` verbatim, substituting only the job, profile, constraint lists, and candidate name.
+
+**Dispatch read-only** — Claude Code's `Explore`, or any harness's read-only agent profile. Each agent returns a scored evaluation, never a file, so it needs no write access; and a read-only type has no agent-spawning tool, which stops one candidate's agent from fanning out into its own research swarm. That matters doubly here: the rubric is per-candidate, so recursion multiplies by the number of candidates.
 
 **Send every agent the same prompt.** Do not add candidate-specific hints ("check whether this one's commits are bot-authored", "this package had a maintainership change"). It feels helpful and it silently corrupts the comparison: the candidate you hinted at gets a check its rivals never got, so a difference in the results may just be a difference in the prompts. If a check is worth doing for one candidate, it is worth doing for all — put it in `references/criteria.md`, where every agent reads it.
 

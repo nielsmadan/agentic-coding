@@ -128,7 +128,10 @@ It never writes without your go-ahead — the plan comes first.
      the code surface worth documenting: top-level modules, features, services,
      APIs.
    - For a large tree (>~15 docs or a big codebase), fan out — one sub-agent per
-     check in step 2 — and merge.
+     check in step 2 — and merge. Dispatch these read-only (Claude Code's `Explore`,
+     or any harness's read-only profile): a check returns a verdict, not a file, and
+     a read-only agent type cannot fan out further. The write-capable agents belong
+     in the generate/update lanes, not here.
 
 2. **Run all three checks and reach a verdict for EACH lane.** Never silently
    skip a lane: if a lane has nothing, say so *and why* (this is what stops

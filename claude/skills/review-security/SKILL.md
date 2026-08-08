@@ -50,6 +50,8 @@ Security audit for common vulnerabilities and unsafe patterns.
    4. Security Misconfiguration (OWASP 2021 A05) — config issues are common in PRs
    5. Dependency Vulnerabilities — run audit commands last (they take time)
 3. **Parallelize** if scope has >5 files: spawn one sub-agent per checklist category, each scanning all files. Merge results and deduplicate.
+
+   Dispatch these read-only (Claude Code's `Explore`, or any harness's read-only agent profile): they return findings, not edits, and a read-only agent type has no agent-spawning tool, so a category cannot fan out into its own swarm.
 4. **Check dependencies** using the ecosystem-specific commands in the Dependency Vulnerabilities section
 5. **Classify severity** for each finding:
    - **Critical**: Exploitable vulnerability with direct user/data impact (e.g., SQL injection on a public endpoint, hardcoded production secret)

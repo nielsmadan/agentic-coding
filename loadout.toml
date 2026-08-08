@@ -8,7 +8,7 @@ destinations = ["~/.claude/CLAUDE.md"]
 profile      = "default"
 order = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
 [instructions.claude-autonomous]
@@ -17,7 +17,7 @@ destinations = ["~/.claude/CLAUDE.md"]
 profile      = "autonomous"
 order = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "git-policy.autonomous", "git-commit-policy", "working-style",
+    "secrets", "agent-dispatch.autonomous", "git-policy.autonomous", "git-commit-policy", "working-style",
 ]
 
 [instructions.shared]
@@ -25,7 +25,7 @@ output       = "global/AGENTS.md"
 destinations = ["~/.codex/AGENTS.md", "~/.gemini/GEMINI.md", "~/.pi/agent/AGENTS.md"]
 order = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
-    "secrets", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
 [permissions.antigravity]

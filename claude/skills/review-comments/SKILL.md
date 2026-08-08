@@ -82,7 +82,7 @@ Split files into batches and spawn parallel sub-agents:
 
 1. Get all source files
 2. Split into batches of ~20 files each
-3. Dispatch one general-purpose sub-agent per batch, all in a single message so they run in parallel:
+3. Dispatch one sub-agent per batch, all in a single message so they run in parallel. Dispatch read-only (Claude Code's `Explore`, or any harness's read-only agent profile) — each batch returns a findings list, not edits, and a read-only type cannot spawn further agents:
 
 ```
 Prompt per batch:

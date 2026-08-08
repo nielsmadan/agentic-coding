@@ -49,6 +49,8 @@ Macro-level review of system structure: how modules, layers, and components fit 
    - For `--all`: build a quick mental map of top-level modules, their dependencies, and the dominant pattern (layered, hexagonal, event-driven, modular monolith, microservices).
 4. **Review against the 6 categories** in the Architecture Checklist below.
 5. **Parallelize** if `--all` or the diff scope spans >5 modules: spawn one sub-agent per category, each scanning across the scope. Merge and deduplicate findings.
+
+   Dispatch these read-only (Claude Code's `Explore`, or any harness's read-only agent profile): they return findings, not edits, and a read-only agent type has no agent-spawning tool, so a category cannot fan out into its own swarm.
 6. **External opinions** (if `--multi`): invoke `second-opinion --quick`, which queries every advisor it has configured, in parallel (the roster lives in the `second-opinion` skill). Phrase the diff source according to the resolved scope (`git diff --cached` for `--staged`, `git diff` for `--changed`, the whole repository for `--all`):
 
 ```

@@ -51,10 +51,14 @@ Do NOT invoke one at a time. Do NOT stop after the first agent.
 | Agent | Purpose | How |
 |-------|---------|------|
 | **External Opinion** | Get Codex input | `second-opinion` skill |
-| **Alternatives** | Propose 2-4 other solutions | general-purpose sub-agent |
-| **Robustness** | Check for fragile patterns | general-purpose sub-agent |
-| **Adversarial** | Maximally critical review | general-purpose sub-agent |
+| **Alternatives** | Propose 2-4 other solutions | read-only sub-agent |
+| **Robustness** | Check for fragile patterns | read-only sub-agent |
+| **Adversarial** | Maximally critical review | read-only sub-agent |
 | **Research** | Relevant practices online | `research-tech` skill |
+
+**Read-only** means Claude Code's `Explore` or any harness's read-only agent profile — an agent type with no agent-spawning tool. The three review agents return findings, never files, so they need nothing more; and a general-purpose agent would decompose "check for fragile patterns" into its own fan-out.
+
+**This skill nests two skills that each fan out on their own** (`research-tech` spawns up to 8; `second-opinion` queries every configured advisor). Three agents here plus those two is already the budget. Do not also spawn ad-hoc extra reviewers, and do not let the Research row expand into a full multi-round research session — one `research-tech` invocation, scoped to the plan's riskiest assumption.
 
 See [references/agent-prompts.md](references/agent-prompts.md) for full prompt templates for each agent.
 

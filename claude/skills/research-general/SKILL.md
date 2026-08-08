@@ -53,7 +53,13 @@ When in doubt, use Standard. **Stop at diminishing returns** — if three agents
 
 ### Step 4: Spawn Agents in Parallel
 
-Pick the relevant agents from the table below and dispatch them as general-purpose sub-agents in a **single message** so they run in parallel. Each agent captures source metadata: URL, date, source type, author/publisher, and (where it applies) sample/methodology, primary-vs-secondary, and **affiliate or sponsorship disclosure**.
+Pick the relevant agents from the table below and dispatch them in a **single message** so they run in parallel. Each agent captures source metadata: URL, date, source type, author/publisher, and (where it applies) sample/methodology, primary-vs-secondary, and **affiliate or sponsorship disclosure**.
+
+**Dispatch them read-only, so they cannot fan out further.** Their deliverable is a returned message, never a file, so use an agent type that has no agent-spawning tool of its own — Claude Code's `Explore` (it keeps Bash, WebFetch/WebSearch and MCP tools, so every search strategy below still works), or any harness's read-only agent profile. A general-purpose agent inherits the full toolset *including the ability to spawn more agents*, and will recursively decompose a multi-part brief into its own fan-out. Two rounds of that turns 5 agents into 20 and burns the research budget before you see a single result.
+
+**One question per agent.** A brief with six numbered sub-questions invites decomposition even from a read-only agent (which will serialize it instead). Split it into separate agents, or accept a narrower answer.
+
+**Pick 3. The table is a menu, not a checklist.** Default to the 3 highest-value agents for this question and run only those. If the question genuinely needs more, ask the user first — name the count, what each agent covers, and why 3 will not do — then wait for an answer. Do not treat "every row whose *Spawn when* matches" as authorization; on a broad question that is 6+ agents and the user never agreed to it.
 
 | Agent | Spawn when | Search strategy |
 |-------|------------|-----------------|
@@ -103,9 +109,11 @@ Wait for agents, deduplicate by URL (keep richest metadata), and note when indep
 
 ### Step 7: Follow-Up Loop (Standard only)
 
-If a topic area has fewer than 2 sources or the core question is unanswered: identify the gap, generate 1-2 delta queries (alternative terminology, narrower/broader scope, primary-source angle, local-language variant), spawn 1-2 follow-up agents, merge.
+If a topic area has fewer than 2 sources or the core question is unanswered: identify the gap, generate 1-2 delta queries (alternative terminology, narrower/broader scope, primary-source angle, local-language variant), spawn 1-2 follow-up agents (read-only, same as Step 4), merge.
 
 **Max 1 cycle.** If the gap persists, mark as low confidence in the synthesis.
+
+**Budget check.** Follow-up agents come out of the same 3-agent budget as Step 4, they do not reset it. If Step 4 already used 3, a follow-up round needs the user's go-ahead — ask, or report what you have with the gap flagged. Cost the user cannot see coming is worse than an incomplete answer they can.
 
 ### Step 8: Adversarial Critique (Standard only)
 

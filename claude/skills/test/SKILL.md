@@ -192,7 +192,9 @@ lane; run it explicitly to review without running the suite first.)
 ### Workflow
 
 1. **Get file list** based on scope
-2. **Review** (directly if ≤5 files, parallel sub-agents if more)
+2. **Review** (directly if ≤5 files, parallel sub-agents if more — dispatch them
+   read-only, e.g. Claude Code's `Explore`; they return findings, not edits, and a
+   read-only agent type has no agent-spawning tool)
 3. **Report findings** by priority
 
 ### Checklist

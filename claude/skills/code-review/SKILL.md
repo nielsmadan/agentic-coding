@@ -167,6 +167,10 @@ Announce what got auto-included, e.g. `Detected TypeScript — adding review-typ
 
 Launch the selected review perspectives IN PARALLEL.
 
+**Default to the 3 highest-value perspectives for the scope, and ask before running more** — 11 agents is the menu, not the authorized spend. Name which 3 you picked in the report.
+
+**Launch them read-only** — Claude Code's `Explore`, or any harness's read-only agent profile. A review agent's deliverable is a returned list of issues, never an edit, so read-only costs nothing and buys two things: it cannot modify the code it is reviewing, and it has no agent-spawning tool, so it cannot turn one perspective into its own fan-out. With up to 11 perspectives running, recursion here is the most expensive failure mode in this skill. (Read-only profiles retain the Skill tool, so the sub-skill delegation below still works.)
+
 Each agent should output a list of issues. For each issue, include: what the problem is, where it is (file + line), and why it matters. Do NOT assign confidence scores — scoring happens in a separate pass.
 
 **Sub-agent invocation pattern.** When a sub-agent delegates to a sub-skill, pass the resolved scope through directly:
