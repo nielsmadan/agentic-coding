@@ -238,15 +238,6 @@ allow = [
   # can't read files without --dangerously-skip-permissions, so it was dropped
   # rather than granted blanket write access. No agy allow-rule is needed here.
 
-  # docker — workbench container management
-  "docker exec cc-workbench",
-  "docker exec cc-workbench-*",
-  "docker stop cc-workbench",
-  "docker stop cc-workbench-*",
-  "docker rm cc-workbench",
-  "docker rm cc-workbench-*",
-  "docker start cc-workbench",
-  "docker start cc-workbench-*",
   "docker info",
   "docker ps",
 
