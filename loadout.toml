@@ -3,7 +3,6 @@ name = "ac"
 path = "loadout"
 
 [instructions.claude]
-output       = "claude/CLAUDE.md"
 destinations = ["~/.claude/CLAUDE.md"]
 profile      = "default"
 order = [
@@ -12,7 +11,6 @@ order = [
 ]
 
 [instructions.claude-autonomous]
-output       = "claude/CLAUDE.autonomous.md"
 destinations = ["~/.claude/CLAUDE.md"]
 profile      = "autonomous"
 order = [
@@ -21,7 +19,6 @@ order = [
 ]
 
 [instructions.shared]
-output       = "global/AGENTS.md"
 destinations = ["~/.codex/AGENTS.md", "~/.gemini/GEMINI.md", "~/.pi/agent/AGENTS.md"]
 order = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
@@ -29,19 +26,16 @@ order = [
 ]
 
 [permissions.antigravity]
-output       = "antigravity/settings.json"
 destinations = ["~/.gemini/antigravity-cli/settings.json"]
 render       = "antigravity"
 
 [permissions.claude]
-output       = "claude/settings.json"
 destinations = ["~/.claude/settings.json"]
 profile      = "default"
 render       = "claude"
 base         = "loadout/bases/settings.base.json"
 
 [permissions.claude-autonomous]
-output       = "claude/settings.autonomous.json"
 destinations = ["~/.claude/settings.json"]
 profile      = "autonomous"
 render       = "claude"
@@ -49,27 +43,27 @@ base         = "loadout/bases/settings.autonomous.base.json"
 rules        = []
 
 [permissions.claude-mcp]
-output       = "claude/mcp-permissions.json"
 destinations = ["~/.claude/mcp-permissions.json"]
 render       = "claude-mcp"
 
 [permissions.codex]
-output       = "codex/rules/permissions.rules"
 destinations = ["~/.codex/rules/permissions.rules"]
 render       = "codex"
 
+# No destination: codex/sync_config.py reads this staged file and merges it into
+# ~/.codex/config.toml, which holds hand-maintained keys loadout does not own.
 [permissions.codex-mcp]
 output = "codex/mcp-permissions.toml"
 render = "codex-mcp"
 
+# mcp/sync.py co-owns this document's `mcp` key and writes the same destination;
+# `preserve` reads that key back out of the destination before overwriting.
 [permissions.opencode]
-output       = "opencode/opencode.json"
 destinations = ["~/.config/opencode/opencode.json"]
 render       = "opencode"
 base         = "loadout/bases/opencode.base.json"
 preserve     = ["mcp"]
 
 [permissions.pi]
-output       = "pi/permissions.json"
 destinations = ["~/.pi/agent/extensions/pi-permission-system/config.json"]
 render       = "pi"

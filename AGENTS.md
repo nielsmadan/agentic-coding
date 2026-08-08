@@ -124,20 +124,20 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravity, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` is generated. Today that is eight permission files plus the three instruction files (see Global Instructions below).
+**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules` and the rest. Only `codex/mcp-permissions.toml` still lands here, because `codex/sync_config.py` consumes it.
 
 **Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
 
 | edit this | to change | which is generated into |
 |---|---|---|
-| `permissions/permissions.toml` | any shell or MCP rule, on every agent | all eight permission files |
-| `claude/settings.base.json` | hooks, statusLine, model, env, `permissions.defaultMode` | `claude/settings.json` |
-| `claude/settings.autonomous.base.json` | the same, for the autonomous profile | `claude/settings.autonomous.json` |
-| `opencode/opencode.base.json` | `model`, `provider`, `$schema` | `opencode/opencode.json` |
+| `loadout/permissions.toml` | any shell or MCP rule, on every agent | all eight permission files |
+| `loadout/bases/settings.base.json` | hooks, statusLine, model, env, `permissions.defaultMode` | `~/.claude/settings.json` |
+| `loadout/bases/settings.autonomous.base.json` | the same, for the autonomous profile | `~/.claude/settings.json` under the autonomous profile |
+| `loadout/bases/opencode.base.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
 
-`claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `settings.base.json` loses the edit at the next sync.
+`~/.claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `loadout/bases/settings.base.json` loses the edit at the next sync. Claude Code writing to it itself no longer gets silently merged either: `loadout sync` stops and prints the added lines so you can move them into the base.
 
-To change permissions: edit the source, then run `loadout sync` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/harnesses/`, and is only needed when changing loadout itself.
+To change permissions: edit the source, then run `loadout sync --global` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/reference/`, and is only needed when changing loadout itself.
 
 Use `/permission` or `aiperm` to change permissions. Global changes update
 `permissions/permissions.toml`, then regenerate and install every harness config. Personal
@@ -153,9 +153,9 @@ shell glob entries (those ending in `*`), so they fall through to its normal app
 
 ### Autonomous-dev profile
 
-For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. `loadout sync` always generates both `claude/settings.json` and `claude/settings.autonomous.json` — the same renderer, from its own base document, with the manifest's `rules = []` selecting no rules at all. The autonomous variant keeps `defaultMode: "auto"` but has **empty `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `claude/CLAUDE.autonomous.md` is the matching global-guidance variant whose Git Policy permits autonomous git ops. Both `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
+For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. Only one of the two renders on any machine: `[permissions.claude]` and `[permissions.claude-autonomous]` declare `profile = "default"` and `profile = "autonomous"` and take turns writing `~/.claude/settings.json`. They share a renderer, differing by base document and by the autonomous one's `rules = []`, which selects no rules at all. The autonomous variant keeps `defaultMode: "auto"` but has **empty `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `instructions.claude-autonomous` is the matching global-guidance variant whose Git Policy permits autonomous git ops; it takes turns writing `~/.claude/CLAUDE.md` the same way. Both are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
 
-Install the autonomous profile with `./install.sh --autonomous`, which symlinks the `*.autonomous` variants to `~/.claude/settings.json` and `~/.claude/CLAUDE.md` instead of the defaults. Plain `./install.sh` installs the normal profile. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
+Select the profile with `./install.sh --autonomous` or `./sync.sh --autonomous`, which record it in `~/.config/loadout/config.toml`; `loadout sync --global` then renders whichever profile is named there. `--normal` switches back, and editing that file by hand does the same. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
 
 ## MCP Servers
 
@@ -165,7 +165,7 @@ Which MCP servers **exist** machine-wide is generated from a single source of tr
 - `claude/mcp-servers.generated.json` (input to `claude mcp add-json`; **not** symlinked — see below)
 - `codex/config.toml` (`[mcp_servers.*]` tables, merged into `~/.codex/config.toml` by `codex/sync_config.py`)
 - `antigravity/mcp_config.json` (symlinked to `~/.gemini/config/mcp_config.json`)
-- `opencode/opencode.json` (the `mcp` key only)
+- `~/.config/opencode/opencode.json` (the `mcp` key only — written straight to the destination, not staged here)
 - `pi/mcp.json` (static `{"imports": ["claude-code"]}` — Pi's `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi needs no server list of its own)
 
 A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude and Antigravity, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
@@ -174,7 +174,7 @@ A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `trans
 
 **Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields). Antigravity's remote servers use `httpUrl` plus a `headers` map — its own bundled `agy-customizations` doc says `serverUrl` with no headers, but the live file disagrees and wins.
 
-**`opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. `mcp/sync.py` reads the current file and mutates only its own key. `loadout` builds the file from `opencode/opencode.base.json` and then passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml` — so the two compose in either order, but `mcp/sync.py` must still never rebuild the file from scratch.
+**`~/.config/opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. Both write that path directly — it is the one `mcp/sync.py` output that is not staged in this repo, precisely so the two writers share one file with no symlink between them. `mcp/sync.py` reads the current file and mutates only its own key; `loadout` builds the file from `loadout/bases/opencode.base.json` and passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml`. **`sync.sh` runs `mcp/sync.py` before `loadout`** so the key loadout preserves is the current one; `mcp/sync.py` must still never rebuild the file from scratch.
 
 Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
 

@@ -8,7 +8,7 @@
 #   claude/mcp-servers.generated.json   (input to `claude mcp add-json`)
 #   codex/config.toml                   ([mcp_servers.*] tables)
 #   antigravity/mcp_config.json         (~/.gemini/config/mcp_config.json)
-#   opencode/opencode.json              (the `mcp` key only)
+#   ~/.config/opencode/opencode.json    (the `mcp` key only, written direct)
 #   pi/mcp.json                         (static import — see mcp/sync.py)
 #
 # One table per server. `transport = "http"` takes `url` plus an optional

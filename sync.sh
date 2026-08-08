@@ -7,30 +7,39 @@
 # one-time interactive bootstrap (MCP servers, .zshrc, agy check) on top.
 #
 # What it does:
-#   - regenerate permission + global-instruction files from their sources
-#   - apply all symlinks (skip-if-correct; back up a real file, never clobber)
-#   - merge repo-managed keys into ~/.claude/settings.json (see merge_settings)
+#   - regenerate permission + global-instruction files straight to the paths the
+#     agents read (loadout owns those; nothing is staged in this repo first)
+#   - apply the remaining symlinks (skip-if-correct; back up a real file, never
+#     clobber) for the files other generators still stage here
 #   - relink the Codex/Pi skill subset and Pi permission policy
 #
 # Usage: ./sync.sh [--autonomous | --normal]
-#   With no flag it uses the persisted profile (written by install.sh or a prior
-#   run), defaulting to "normal". An explicit flag overrides AND is persisted.
+#   With no flag it uses the profile recorded in loadout's machine config,
+#   defaulting to "default". An explicit flag overrides AND is persisted there.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROFILE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/aiconf/profile"
+MACHINE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/loadout/config.toml"
 
 # --- Profile resolution ---
+# loadout's machine config is the only store: it names this machine's source and
+# profile, and `loadout sync --global` reads both. Selecting a profile is now
+# entirely "write it here" — nothing downstream picks between staged files.
+write_machine_config() {
+  mkdir -p "$(dirname "$MACHINE_CONFIG")"
+  printf 'source = "%s"\nprofile = "%s"\n' "$SCRIPT_DIR" "$1" > "$MACHINE_CONFIG"
+}
+
 EXPLICIT_PROFILE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --autonomous) EXPLICIT_PROFILE="autonomous" ;;
-    --normal)     EXPLICIT_PROFILE="normal" ;;
+    --normal)     EXPLICIT_PROFILE="default" ;;
     -h|--help)
       echo "Usage: $0 [--autonomous | --normal]"
-      echo "  Reconciles machine config with the repo. Uses the persisted"
-      echo "  profile when no flag is given (default: normal)."
+      echo "  Reconciles machine config with the repo. Uses the profile in"
+      echo "  $MACHINE_CONFIG when no flag is given (default: default)."
       exit 0
       ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -39,58 +48,51 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -n "$EXPLICIT_PROFILE" ]]; then
-  PROFILE="$EXPLICIT_PROFILE"
-  mkdir -p "$(dirname "$PROFILE_FILE")"
-  echo "$PROFILE" > "$PROFILE_FILE"          # persist explicit choice for future runs
-elif [[ -f "$PROFILE_FILE" ]]; then
-  PROFILE="$(cat "$PROFILE_FILE")"
-else
-  PROFILE="normal"
+  write_machine_config "$EXPLICIT_PROFILE"
+elif [[ ! -f "$MACHINE_CONFIG" ]]; then
+  write_machine_config "default"
 fi
 
-if [[ "$PROFILE" == "autonomous" ]]; then
-  SETTINGS_SRC="$SCRIPT_DIR/claude/settings.autonomous.json"
-  CLAUDEMD_SRC="$SCRIPT_DIR/claude/CLAUDE.autonomous.md"
-else
-  SETTINGS_SRC="$SCRIPT_DIR/claude/settings.json"
-  CLAUDEMD_SRC="$SCRIPT_DIR/claude/CLAUDE.md"
-fi
+PROFILE="$(sed -n 's/^profile *= *"\(.*\)"/\1/p' "$MACHINE_CONFIG" | tail -1)"
+PROFILE="${PROFILE:-default}"
 
 # --- Symlinks: "source:destination" ---
-# NOTE: ~/.claude/settings.json is intentionally NOT symlinked — Claude Code
-# writes to it (survey state, etc.) and an atomic write would clobber the link.
-# It is reconciled by merge_settings instead.
+# Only files this repo still stages. Everything loadout generates is written
+# straight to its destination (see the [instructions.*] and [permissions.*]
+# blocks in loadout.toml), so it needs no link.
 SYMLINKS=(
   # Claude
   "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
-  "$SCRIPT_DIR/claude/mcp-permissions.json:$HOME/.claude/mcp-permissions.json"
-  "$CLAUDEMD_SRC:$HOME/.claude/CLAUDE.md"
-  # Codex
-  "$SCRIPT_DIR/codex/rules:$HOME/.codex/rules"
-  "$SCRIPT_DIR/global/AGENTS.md:$HOME/.codex/AGENTS.md"
   # Antigravity (agy) — replaced Gemini CLI in May 2026
-  "$SCRIPT_DIR/antigravity/settings.json:$HOME/.gemini/antigravity-cli/settings.json"
   "$SCRIPT_DIR/antigravity/mcp_config.json:$HOME/.gemini/config/mcp_config.json"
-  # agy reads global instructions from ~/.gemini/GEMINI.md — same shared file as Codex
-  "$SCRIPT_DIR/global/AGENTS.md:$HOME/.gemini/GEMINI.md"
-  # OpenCode (reads global config from XDG ~/.config/opencode, not legacy ~/.opencode)
-  "$SCRIPT_DIR/opencode/opencode.json:$HOME/.config/opencode/opencode.json"
-  # Pi (pi-coding-agent) — settings.json holds packages and enabledModels;
-  # permissions.json is generated for @gotgenes/pi-permission-system.
-  # AGENTS.md is the same shared global-instructions file Codex/Antigravity use.
+  # Pi (pi-coding-agent) — settings.json holds packages and enabledModels.
   # Skills need no wiring: pi auto-discovers ~/.agents/skills (populated by
   # install_codex_skills below).
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
-  "$SCRIPT_DIR/pi/permissions.json:$HOME/.pi/agent/extensions/pi-permission-system/config.json"
   "$SCRIPT_DIR/pi/mcp.json:$HOME/.pi/agent/mcp.json"
-  "$SCRIPT_DIR/global/AGENTS.md:$HOME/.pi/agent/AGENTS.md"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
   # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs
   # source no shell config, so jina-fetch is also linked into ~/.local/bin,
   # which their plists put on PATH.
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
+)
+
+# Destinations loadout now writes directly, which earlier versions of this
+# script symlinked back into the repo. Left in place, a link would make loadout
+# write through it and recreate the staged copy.
+RETIRED_LINKS=(
+  "$HOME/.claude/CLAUDE.md"
+  "$HOME/.claude/mcp-permissions.json"
+  "$HOME/.claude/settings.json"
+  "$HOME/.codex/rules"
+  "$HOME/.codex/AGENTS.md"
+  "$HOME/.gemini/antigravity-cli/settings.json"
+  "$HOME/.gemini/GEMINI.md"
+  "$HOME/.pi/agent/AGENTS.md"
+  "$HOME/.pi/agent/extensions/pi-permission-system/config.json"
+  "$HOME/.config/opencode/opencode.json"
 )
 
 # Skills shared with Codex (subset of claude/skills/). A name with a real dir
@@ -134,72 +136,49 @@ create_symlink() {
   echo "✓  Linked: $dest -> $source"
 }
 
-# Merge the repo's managed settings into the real ~/.claude/settings.json,
-# preserving keys Claude Code writes itself (survey state, etc.). Repo keys win
-# on conflict; keys only in the live file are kept. Writes a real file (breaking
-# any leftover symlink once), so future app writes never clobber a link.
-merge_settings() {
-  local overlay="$SETTINGS_SRC"
-  local dest="$HOME/.claude/settings.json"
+# Replace a repo-pointing symlink with a real file holding the same content, so
+# the destination is never empty for even an instant and a machine without
+# loadout keeps the config it already had. loadout overwrites it next.
+materialise_link() {
+  local dest="$1"
 
-  if [[ ! -f "$overlay" ]]; then
-    echo "⚠️  Settings source not found: $overlay (skipping merge)"
+  if [[ ! -L "$dest" ]]; then
     return
   fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — settings merge skipped"
+  if [[ "$(readlink "$dest")" != "$SCRIPT_DIR/"* ]]; then
+    return    # someone else's link — not ours to break
+  fi
+  if [[ ! -e "$dest" ]]; then
+    rm -f "$dest"                              # dangling; nothing to preserve
+    echo "✓  Removed dangling link: $dest"
     return
   fi
 
-  python3 - "$overlay" "$dest" <<'PY'
-import json, os, sys, tempfile
-overlay_path, dest_path = sys.argv[1], sys.argv[2]
+  cp -RL "$dest" "$dest.materialising"
+  rm -f "$dest"
+  mv "$dest.materialising" "$dest"
+  echo "✓  Unlinked from repo, now written directly: $dest"
+}
 
-with open(overlay_path) as f:
-    overlay = json.load(f)
-
-base = {}
-if os.path.exists(dest_path):
-    try:
-        with open(dest_path) as f:
-            base = json.load(f)
-    except Exception:
-        base = {}   # corrupt/empty live file → repo overlay becomes the file
-
-def deep_merge(b, o):
-    if isinstance(b, dict) and isinstance(o, dict):
-        out = dict(b)
-        for k, v in o.items():
-            out[k] = deep_merge(b[k], v) if k in b else v
-        return out
-    return o   # overlay wins for scalars and lists
-
-merged = deep_merge(base, overlay)
-
-d = os.path.dirname(dest_path)
-os.makedirs(d, exist_ok=True)
-fd, tmp = tempfile.mkstemp(dir=d)
-with os.fdopen(fd, "w") as f:
-    json.dump(merged, f, indent=2, ensure_ascii=False)
-    f.write("\n")
-os.replace(tmp, dest_path)     # replaces a symlink with a real file, atomically
-print(f"✓  Merged settings -> {dest_path} (repo keys applied, app keys preserved)")
-PY
+retire_links() {
+  for dest in "${RETIRED_LINKS[@]}"; do
+    materialise_link "$dest"
+  done
 }
 
 generate_loadout() {
   if ! command -v loadout &>/dev/null; then
-    echo "⚠️  loadout not found on PATH — skipping instruction and permission generation"
-    echo "    (the committed files will be used as-is; install it from the loadout repo"
-    echo "     with 'just install')"
+    echo "⚠️  loadout not found on PATH — instructions and permission config NOT regenerated"
+    echo "    (this repo no longer stages copies of them, so whatever is already on"
+    echo "     this machine stays as-is; install loadout from its repo with 'just install')"
     return
   fi
 
   echo "Generating global instructions and agent permission config with loadout..."
-  if loadout sync --root "$SCRIPT_DIR"; then
+  if loadout sync --global; then
     echo "✓  Instructions and permission config up to date"
   else
-    echo "⚠️  loadout sync failed — using committed files"
+    echo "⚠️  loadout sync failed — this machine's existing config is unchanged"
   fi
 }
 
@@ -376,11 +355,14 @@ install_codex_skills() {
 echo "Syncing agentic coding config... (${PROFILE} profile)"
 echo ""
 
-generate_loadout
-echo ""
+retire_links
 generate_skills
 echo ""
+# Before loadout: mcp/sync.py owns the `mcp` key of ~/.config/opencode/opencode.json
+# and loadout preserves it, so the key has to be current when loadout renders.
 generate_mcp
+echo ""
+generate_loadout
 echo ""
 
 sync_codex_config
@@ -392,8 +374,6 @@ for entry in "${SYMLINKS[@]}"; do
   create_symlink "$source" "$dest"
 done
 echo ""
-
-merge_settings
 
 sync_claude_mcp
 

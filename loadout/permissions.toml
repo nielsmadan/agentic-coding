@@ -1,17 +1,17 @@
 # Single source of truth for agent shell-command and MCP permissions.
 #
-# Edit this file, then run `permissions/sync.py` (or `./install.sh`) to
+# Edit this file, then run `loadout sync --global` (or `./sync.sh`) to
 # regenerate every agent's permission config. NEVER hand-edit the generated
 # files — the lefthook pre-commit hook rejects drift.
 #
-# Generated files:
-#   claude/settings.json                  (permissions.allow / deny / ask)
-#   claude/mcp-permissions.json           (PermissionRequest hook policy)
-#   codex/rules/permissions.rules
-#   codex/mcp-permissions.toml
-#   antigravity/settings.json             (permissions.allow / deny / ask)
-#   opencode/opencode.json                (permission.bash / MCP tools)
-#   pi/permissions.json                   (@gotgenes/pi-permission-system)
+# Generated files (all written straight to the machine, bar the staged one):
+#   ~/.claude/settings.json                   (permissions.allow / deny / ask)
+#   ~/.claude/mcp-permissions.json            (PermissionRequest hook policy)
+#   ~/.codex/rules/permissions.rules
+#   codex/mcp-permissions.toml                (staged — codex/sync_config.py merges it)
+#   ~/.gemini/antigravity-cli/settings.json   (permissions.allow / deny / ask)
+#   ~/.config/opencode/opencode.json          (permission.bash / MCP tools)
+#   ~/.pi/agent/extensions/pi-permission-system/config.json
 #
 # Entries in [shell] are command prefixes — emitted to ALL FIVE agents.
 # An entry ending in `*` is a glob: kept literally for Claude and OpenCode,

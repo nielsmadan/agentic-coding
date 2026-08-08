@@ -2,7 +2,7 @@
 # Bootstrap the agentic coding config on a new machine.
 #
 # This runs the reconcile step (sync.sh) — which regenerates config, applies
-# symlinks, merges settings, and links skills — and then the ONE-TIME
+# symlinks, and links skills — and then the ONE-TIME
 # interactive setup: registering MCP servers, sourcing .airc from .zshrc, and
 # checking for the Antigravity CLI.
 #
@@ -17,8 +17,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Profile selection. Default is the normal profile; --autonomous selects the
-# more-permissive autonomous-dev profile. The choice is passed to (and persisted
-# by) sync.sh so later bare `./sync.sh` runs reuse it.
+# more-permissive autonomous-dev profile. The choice is passed to sync.sh, which
+# records it in loadout's machine config so later bare `./sync.sh` runs reuse it.
 PROFILE="normal"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,7 +44,7 @@ done
 echo "Bootstrapping agentic coding config... (${PROFILE} profile)"
 echo ""
 
-# --- Reconcile (regenerate, symlink, merge settings, link skills) ---
+# --- Reconcile (regenerate, symlink, link skills) ---
 "$SCRIPT_DIR/sync.sh" "--$PROFILE"
 
 # --- One-time interactive bootstrap ---

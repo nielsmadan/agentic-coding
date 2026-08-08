@@ -9,15 +9,15 @@ Generated files:
   claude/mcp-servers.generated.json   (input to `claude mcp add-json`)
   codex/config.toml                   ([mcp_servers.*] tables)
   antigravity/mcp_config.json         (~/.gemini/config/mcp_config.json)
-  opencode/opencode.json              (the `mcp` key only)
+  ~/.config/opencode/opencode.json    (the `mcp` key only)
   pi/mcp.json                         (static import — see render_pi)
 
 This owns server DEFINITIONS (url / command / auth env var). Which of their
 tools may be called is permissions/permissions.toml's `[mcp]` section, rendered
-by loadout. The two write disjoint keys of opencode/opencode.json — `mcp` here,
-`permission` there. loadout declares `preserve = ["mcp"]` and passes this key
-through untouched, so this generator must keep reading the current file and
-mutating only its own key.
+by loadout. The two write disjoint keys of ~/.config/opencode/opencode.json —
+`mcp` here, `permission` there. loadout declares `preserve = ["mcp"]` and passes
+this key through untouched, so this generator must keep reading the current file
+and mutating only its own key.
 
 Claude Code is the odd one out: ~/.claude.json is runtime state (session
 history, project entries, caches) and cannot be symlinked, and
@@ -176,11 +176,20 @@ def render_antigravity(servers):
 # (notably `permission`, which loadout owns). A local server takes
 # one `command` array combining command and args, not separate fields, and
 # interpolation is {env:VAR} rather than ${VAR}.
+#
+# This one writes the real destination rather than a staged copy, because
+# loadout writes it there too and both generators have to see one file. Run
+# this before loadout so its `preserve = ["mcp"]` has the current key to keep.
 # --------------------------------------------------------------------------
 
+OPENCODE_CONFIG = Path(
+    os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")
+) / "opencode" / "opencode.json"
+
+
 def render_opencode(servers):
-    path = REPO_ROOT / "opencode" / "opencode.json"
-    config = json.loads(path.read_text())
+    path = OPENCODE_CONFIG
+    config = json.loads(path.read_text()) if path.exists() else {}
     mcp = {}
     for name, spec in servers.items():
         if is_http(spec):
@@ -226,7 +235,16 @@ def render_all():
     return files
 
 
+def display(path):
+    """Not every output lives in the repo any more."""
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return path
+
+
 def atomic_write(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".sync-")
     try:
         with os.fdopen(fd, "w") as f:
@@ -247,7 +265,7 @@ def write_all():
     try:
         for path, content in files.items():
             atomic_write(path, content)
-            print(f"wrote {path.relative_to(REPO_ROOT)}")
+            print(f"wrote {display(path)}")
     except BaseException:
         for path, content in originals.items():
             if content is None:
@@ -268,7 +286,7 @@ def check_all():
         print("MCP server files are up to date")
         return 0
     for path, actual, expected in drift:
-        rel = path.relative_to(REPO_ROOT)
+        rel = display(path)
         print(f"DRIFT: {rel}", file=sys.stderr)
         sys.stderr.writelines(
             difflib.unified_diff(

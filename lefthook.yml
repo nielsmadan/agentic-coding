@@ -4,7 +4,7 @@ pre-commit:
       glob: "claude/desktop/skills/**/*"
       run: ./claude/desktop/package-skills.sh
     sync-global:
-      run: loadout check
+      run: loadout check --global
     sync-skills:
       run: python3 skills/sync.py --check
     sync-mcp:
