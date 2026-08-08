@@ -28,9 +28,3 @@ auth_env_var = "JINA_API_KEY"
 transport = "stdio"
 command = "npx"
 args = ["-y", "@upstash/context7-mcp"]
-
-# Auth comes from the already-logged-in `railway` CLI, so no env var.
-[railway]
-transport = "stdio"
-command = "railway"
-args = ["mcp"]

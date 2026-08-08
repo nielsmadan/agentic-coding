@@ -14,13 +14,5 @@
     "headers": {
       "Authorization": "Bearer ${JINA_API_KEY}"
     }
-  },
-  "railway": {
-    "type": "stdio",
-    "command": "railway",
-    "args": [
-      "mcp"
-    ],
-    "env": {}
   }
 }

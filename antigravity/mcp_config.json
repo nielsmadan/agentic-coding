@@ -12,12 +12,6 @@
       "headers": {
         "Authorization": "Bearer ${JINA_API_KEY}"
       }
-    },
-    "railway": {
-      "command": "railway",
-      "args": [
-        "mcp"
-      ]
     }
   }
 }

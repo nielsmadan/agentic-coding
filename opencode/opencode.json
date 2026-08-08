@@ -575,13 +575,6 @@
       "headers": {
         "Authorization": "Bearer {env:JINA_API_KEY}"
       }
-    },
-    "railway": {
-      "type": "local",
-      "command": [
-        "railway",
-        "mcp"
-      ]
     }
   }
 }
