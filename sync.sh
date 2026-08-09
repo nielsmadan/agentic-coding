@@ -71,6 +71,9 @@ SYMLINKS=(
   # install_codex_skills below).
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
   "$SCRIPT_DIR/pi/mcp.json:$HOME/.pi/agent/mcp.json"
+  # nono sandbox. The profile extends the nolabs-ai/claude pack, which must be
+  # pulled first (`nono pull nolabs-ai/claude`) — without it the profile is inert.
+  "$SCRIPT_DIR/nono/claude-local.json:$HOME/.config/nono/profiles/claude-local.json"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
   # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs

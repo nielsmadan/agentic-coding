@@ -1,0 +1,31 @@
+{
+  "extends": "nolabs-ai/claude",
+  "filesystem": {
+    "allow": [
+      "$HOME/wrksp",
+      "$HOME/.agent-browser",
+      "$HOME/.agent-device"
+    ],
+    "read": [
+      "/AppleInternal",
+      "$HOME/.local/share/mise/installs",
+      "$HOME/.local/share/claude",
+      "$HOME/ac/claude/hooks",
+      "$HOME/ac/claude/skills"
+    ],
+    "read_file": [
+      "$HOME/.gitconfig-local",
+      "$HOME/.config/gh/config.yml",
+      "$HOME/.config/gh/hosts.yml",
+      "$HOME/.local/state/gh/device-id"
+    ],
+    "unix_socket": ["$HOME/.colima/default/docker.sock"],
+    "unix_socket_dir_bind": ["$HOME/.agent-browser"]
+  },
+  "network": { "open_port": [0] },
+  "unsafe_macos_seatbelt_rules": [
+    "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
+    "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
+    "(allow iokit-open)"
+  ]
+}
