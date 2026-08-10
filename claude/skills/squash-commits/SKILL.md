@@ -9,13 +9,14 @@ effort: medium
 
 Combine the unpushed commits on the current branch into the smallest set of clean,
 self-contained commits, each adhering to the commit policy (`feat`/`fix`/`chore`,
-**no scopes**, short or no body). Superhuman/gsd-style runs leave many superfluous
+**no scopes**, subject only). Superhuman/gsd-style runs leave many superfluous
 commits — initial work, follow-up fixes, tests, docs — that belong together as one
 higher-level feature commit.
 
 This skill rewrites history, so it **proposes a plan and only proceeds after the user
 confirms**. It never touches the branch ref until the very last step, and only ever
-operates on **unpushed** commits.
+operates on **unpushed** commits. It creates no backup tags or stashes; the original tip
+is recoverable from the branch reflog after the verified ref move.
 
 ## Usage
 
@@ -32,22 +33,27 @@ operates on **unpushed** commits.
   risks conflicts and changes intent.
 - **The final tree must be byte-identical** to the original tip before the branch is
   moved. Squashing changes *history*, never *content*. Verify this and abort if it differs.
-- **Require a clean working tree.** If there are uncommitted changes, stop and ask the
-  user to commit or stash first.
+- **Require a clean working tree.** If there are uncommitted changes, stop without
+  creating a stash. Let the user decide how to preserve their work before re-running.
 - **No interactive rebase.** `git rebase -i` is unsupported in this harness. Use the
   rebuild method below.
+- **Leave no persistent helper state.** Do not create backup tags, branches, or stashes.
+- **Leave no temporary files.** Use subject-only commit messages, so no message files are
+  needed. Git's normal reflog and unreachable-object retention are not helper state and
+  can be left to normal expiry/GC.
 
 ## Workflow
 
 ### Step 1: Preconditions
 
 ```bash
-git status --porcelain      # MUST be empty — else stop, ask user to commit/stash
+git status --porcelain      # MUST be empty — else stop without changing Git state
 git rev-parse --abbrev-ref HEAD   # current branch (save as BRANCH)
 ```
 
-If the working tree is dirty, stop: "Working tree has uncommitted changes — commit or
-stash them first, then re-run `/squash-commits`."
+If the working tree is dirty, stop: "Working tree has uncommitted changes. Preserve or
+commit them as you prefer, then re-run `/squash-commits`. This skill did not create a
+stash or change the working tree."
 
 ### Step 2: Determine the unpushed range
 
@@ -107,8 +113,8 @@ For each group, write a new message per the commit policy:
     `chore` — everything else (refactor, tests, docs, internal).
   - If a group mixes a feature and an unrelated fix, that's a sign they shouldn't be one
     group — split them.
-- Body: short or omitted. States *what*, not *why*/*how*. Max 4 sentences; usually one
-  line and no body is right.
+- Omit the body. Use a single subject line so this workflow needs no temporary message
+  files.
 
 Present the plan as a before→after table and stop for confirmation:
 
@@ -124,20 +130,18 @@ Present the plan as a before→after table and stop for confirmation:
 - `jkl012` start feat2
 - `mno345` fix feat2
 
-Proceed? This rewrites unpushed history (a backup tag will be created first).
+Proceed? This rewrites unpushed history. The original tip will remain recoverable from
+the branch reflog; no backup tag or stash will be left behind.
 ```
 
 **Wait for explicit user confirmation.** Do not proceed otherwise. If the user wants
 edits to the grouping or messages, revise and re-present.
 
-### Step 5: Create a safety backup
+### Step 5: Preserve the recovery point without helper refs
 
-Before rewriting anything, tag the current tip so the user can always get back:
-```bash
-git tag squash-backup-<BRANCH> <ORIG_TIP>
-```
-If that tag already exists from a prior run, add a numeric suffix. Tell the user the tag
-name. (The original branch ref is also untouched until Step 7, so history is doubly safe.)
+Do not create anything. Keep the recorded `ORIG_TIP`: the original branch still points
+there until Step 7, and the branch reflog records that tip when the ref moves. This gives
+the user an undo point without a backup tag, branch, stash, or temporary file.
 
 ### Step 6: Rebuild the history (detached HEAD + merge --squash)
 
@@ -146,10 +150,12 @@ Then rebuild on a detached HEAD starting from `BASE`:
 
 ```bash
 git checkout --detach <BASE>
-# For each group, in original order, with its tip SHA and message file:
-git merge --squash <group1_tip> && git commit -F <msg1-file>
-git merge --squash <group2_tip> && git commit -F <msg2-file>
-# ...one merge --squash + commit per group
+# For each group, in original order, with its tip SHA and subject:
+git merge --squash <group1_tip>
+git commit -m '<group1-subject>'
+git merge --squash <group2_tip>
+git commit -m '<group2-subject>'
+# ...one merge --squash + commit pair per group
 ```
 
 `git merge --squash <tip>` stages the cumulative diff from the current HEAD up to `<tip>`
@@ -157,11 +163,20 @@ git merge --squash <group2_tip> && git commit -F <msg2-file>
 message. Because the history is linear and groups are contiguous and in order, this never
 conflicts.
 
-Write each new message to a temp file and use `git commit -F <file>` (handles multi-line
-bodies and avoids shell-quoting issues). For a single-line message, `git commit -m '...'`
-is fine.
+Pass each approved subject as a single `git commit -m` argument. Do not create commit
+message files.
 
 Save `NEWTIP = git rev-parse HEAD`.
+
+If any merge or commit fails, abort the rebuild, return to `BRANCH`, and report the
+failure. Since the precondition required a clean tree, remove only the rebuild's pending
+index/worktree changes before returning:
+```bash
+git reset --merge HEAD
+git checkout <BRANCH>
+git status --short         # should be clean
+```
+The original branch is still untouched. Do not use a stash or leave the user detached.
 
 ### Step 7: Verify, then move the branch
 
@@ -174,7 +189,7 @@ moving the branch:
 ```bash
 git checkout <BRANCH>      # discards the detached rebuild; original branch untouched
 ```
-and report what diverged. Do **not** proceed.
+Report what diverged. Do **not** proceed.
 
 If the diff is empty, point the branch at the rebuilt history:
 ```bash
@@ -197,13 +212,15 @@ git log --oneline <BASE>..HEAD
 
 <new oneline log>
 
-Backup: `squash-backup-<BRANCH>` points at the old tip.
-- Undo: `git reset --hard squash-backup-<BRANCH>` (run it yourself — `reset --hard` is
-  blocked for the agent).
-- Once happy, drop the tag: `git tag -d squash-backup-<BRANCH>`, then `git push`.
+Original tip: `<ORIG_TIP>` (retained in `<BRANCH>`'s reflog).
+- Undo: `git reset --hard <ORIG_TIP>` (run it yourself — `reset --hard` is blocked for
+  the agent).
+- Cleanup: complete — no backup tag, branch, stash, or temporary message files remain.
 ```
 
-Leave the backup tag in place — let the user delete it when satisfied.
+Git will normally retain the replaced commits through the branch reflog until reflog
+expiry and garbage collection. That is standard Git recovery history, not a leaked ref;
+do not expire reflogs or run GC as part of this skill.
 
 ## Examples
 
@@ -214,10 +231,10 @@ Leave the backup tag in place — let the user delete it when satisfied.
 Auto-detects 6 unpushed commits via `git rev-list HEAD --not --remotes`. Reading them
 shows two features: an export button (impl + 2 fixups + a test) and an unrelated config
 tweak. Proposes Group 1 → `feat: add CSV export button` (5 commits) and Group 2 →
-`chore: bump lint config` (1 commit, kept as-is). After confirmation, tags
-`squash-backup-main`, rebuilds on a detached HEAD with two `merge --squash` + commit
-steps, verifies the tree is identical, and `reset --soft`s `main` onto the result —
-6 commits become 2.
+`chore: bump lint config` (1 commit, kept as-is). After confirmation, rebuilds on a
+detached HEAD with two `merge --squash` + commit steps, verifies the tree is identical,
+and `reset --soft`s `main` onto the result — 6 commits become 2 with the original tip
+retained only in the reflog.
 
 ### Example 2: conservative, only fold fixups
 
@@ -267,6 +284,15 @@ the merges manually or rebase to a linear history first.
 ### User wants to undo after the squash
 
 **Cause:** The new grouping/messages aren't what they wanted.
-**Solution:** The backup tag still points at the old tip:
-`git reset --hard squash-backup-<BRANCH>` (the user runs this — `reset --hard` is blocked
-for the agent). Then adjust the plan and re-run.
+**Solution:** Use the `ORIG_TIP` printed in the completion report:
+`git reset --hard <ORIG_TIP>` (the user runs this — `reset --hard` is blocked for the
+agent). If the report is unavailable, inspect `git reflog <BRANCH>` and identify the tip
+immediately before the squash. Then adjust the plan and re-run.
+
+### Legacy `squash-backup-*` tags exist
+
+**Cause:** Older versions of this skill intentionally left a backup tag after every run.
+They did not create stashes.
+**Solution:** Inspect them with `git tag --list 'squash-backup-*'`. Delete only tags whose
+target you no longer need with `git tag -d <exact-tag-name>`. Current runs do not create
+these tags.
