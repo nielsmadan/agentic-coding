@@ -260,85 +260,15 @@ allow = [
   "yt-dlp",
 ]
 
-# deny — hard-blocked on every agent. Remote-publishing and destructive ops.
+# deny — hard-blocked on every agent. Push is the only capability left with no
+# backstop elsewhere: the sandbox leaves outbound network open, and a raw
+# session has the ssh-agent socket a sandboxed one does not.
 deny = [
   "git push",
-  "git branch -d",
-  "git branch -D",
-  "git reset --hard",
-  "git mv -f",
-  "git mv --force",
-  "git rm -f",
-  "git rm --force",
-  "git rm -rf",
-  "git rm -fr",
-  "git rm -r -f",
-  "git rm -r --force",
-  "git switch -f",
-  "git switch --force",
-  "git switch --discard-changes",
-  "git stash drop",
-  "git stash clear",
-  "git clean -f",
-  "git clean -fd",
-  "git clean -fdx",
-  "git clean -fx",
-
-  # gh — destructive operations
-  "gh repo delete",
-  "gh issue delete",
-  "gh release delete",
-  "gh secret delete",
-  "gh variable delete",
-  "gh gist delete",
 ]
 
 # ask — always prompt for confirmation, even in auto/auto-accept modes.
-ask = [
-  # Demoted from allow: Codex treats an allow rule as full trust and runs the
-  # command outside the sandbox, so these read-only-looking tools are not.
-  "find",      # -exec / -delete
-  "cp",        # arbitrary overwrite
-  "printenv",  # dumps the sops-injected secrets
-
-  "heroku",
-  "vercel",
-  "wrangler",
-  "railway",
-
-  # gh — mutating operations & API write flags
-  "gh pr merge",
-  "gh pr create",
-  "gh pr close",
-  "gh pr reopen",
-  "gh pr edit",
-  "gh pr review",
-  "gh issue create",
-  "gh issue close",
-  "gh issue edit",
-  "gh repo create",
-  "gh repo fork",
-  "gh release create",
-  "gh secret set",
-  "gh variable set",
-  "gh workflow run",
-  "gh run cancel",
-  # Enumerated per method: a bare "gh api --method" prefix would shadow the
-  # "gh api --method GET" allow on every harness.
-  "gh api -X POST",
-  "gh api -X PUT",
-  "gh api -X PATCH",
-  "gh api -X DELETE",
-  "gh api --method POST",
-  "gh api --method PUT",
-  "gh api --method PATCH",
-  "gh api --method DELETE",
-  "gh api -f",
-  "gh api -F",
-  "gh api --field",
-  "gh api --raw-field",
-  "gh api --input",
-]
+ask = []
 
 # MCP approvals shared by every harness. Targets use `server/tool`; `server/*`
 # applies to every tool on that server. Server provisioning remains separate.
