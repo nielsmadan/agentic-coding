@@ -8,7 +8,6 @@ are up to date (exit 1 with a diff on drift).
 Generated files:
   claude/mcp-servers.generated.json   (input to `claude mcp add-json`)
   codex/config.toml                   ([mcp_servers.*] tables)
-  antigravity/mcp_config.json         (~/.gemini/config/mcp_config.json)
   ~/.config/opencode/opencode.json    (the `mcp` key only)
   pi/mcp.json                         (static import — see render_pi)
 
@@ -146,32 +145,6 @@ def render_codex(servers):
 
 
 # --------------------------------------------------------------------------
-# antigravity — antigravity/mcp_config.json: full regen, symlinked to
-# ~/.gemini/config/mcp_config.json. Remote servers use `httpUrl` plus a
-# headers map with ${VAR} interpolation; the bundled agy-customizations doc
-# says `serverUrl` with no headers, but the live file disagrees and wins.
-# --------------------------------------------------------------------------
-
-def render_antigravity(servers):
-    path = REPO_ROOT / "antigravity" / "mcp_config.json"
-    entries = {}
-    for name, spec in servers.items():
-        if is_http(spec):
-            entry = {"httpUrl": spec["url"]}
-            auth = spec.get("auth_env_var")
-            if auth:
-                entry["headers"] = {"Authorization": f"Bearer ${{{auth}}}"}
-        else:
-            entry = {"command": spec["command"], "args": argv(spec)}
-            variables = env(spec)
-            if variables:
-                entry["env"] = variables
-        entries[name] = entry
-    config = {"mcpServers": entries}
-    return {path: json.dumps(config, indent=2, ensure_ascii=False) + "\n"}
-
-
-# --------------------------------------------------------------------------
 # opencode — opencode.json: replace the `mcp` key, preserve everything else
 # (notably `permission`, which loadout owns). A local server takes
 # one `command` array combining command and args, not separate fields, and
@@ -229,7 +202,6 @@ def render_all():
     files = {}
     files.update(render_claude(servers))
     files.update(render_codex(servers))
-    files.update(render_antigravity(servers))
     files.update(render_opencode(servers))
     files.update(render_pi(servers))
     return files

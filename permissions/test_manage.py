@@ -95,13 +95,6 @@ class PermissionManagerTests(unittest.TestCase):
             codex_path.write_text(
                 '[mcp_servers.jina]\nurl = "https://mcp.jina.ai/v1"\n'
             )
-            project_id = "project-1"
-            mapping = home / ".gemini" / "antigravity-cli" / "cache" / "projects.json"
-            mapping.parent.mkdir(parents=True)
-            mapping.write_text(json.dumps({str(root): project_id}))
-            agy = home / ".gemini" / "config" / "projects" / f"{project_id}.json"
-            agy.parent.mkdir(parents=True)
-            agy.write_text(json.dumps({"id": project_id}))
 
             rules = {
                 "shell": {"allow": [".venv/bin/pytest"], "ask": [], "deny": []},
@@ -147,8 +140,6 @@ class PermissionManagerTests(unittest.TestCase):
                 pi["permission"]["mcp"]["mcp_connect_jina"], "allow"
             )
             self.assertNotIn("jina/*", pi["permission"]["mcp"])
-            agy_config = json.loads(agy.read_text())
-            self.assertIn("mcp(jina/*)", agy_config["permissions"]["allow"])
 
             empty = {
                 "shell": {"allow": [], "ask": [], "deny": []},

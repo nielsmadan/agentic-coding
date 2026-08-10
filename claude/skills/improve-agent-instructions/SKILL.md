@@ -19,7 +19,7 @@ costs tokens in every session and buys nothing.
 ## Gotchas
 - In this repo, `~/.claude/` is symlinked — changes to the global instruction file here affect all projects. Warn about cross-project impact before proposing changes to a committed, shared file.
 - The cross-referencing step is easy to do superficially, producing a high score that misses stale paths. Actually resolve the references.
-- **Multi-harness repos:** `AGENTS.md` is read by Codex, Gemini CLI, Antigravity, Pi and OpenCode; `CLAUDE.md` by Claude Code. Advice that leans on one tool's specific mechanisms doesn't belong in the shared file. Prefer `AGENTS.md` as canonical with `CLAUDE.md` a one-line `@AGENTS.md` bridge.
+- **Multi-harness repos:** `AGENTS.md` is read by Codex, Pi and OpenCode; `CLAUDE.md` by Claude Code. Advice that leans on one tool's specific mechanisms doesn't belong in the shared file. Prefer `AGENTS.md` as canonical with `CLAUDE.md` a one-line `@AGENTS.md` bridge.
 
 ## Instructions
 

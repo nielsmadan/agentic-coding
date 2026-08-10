@@ -1,6 +1,6 @@
 ## Secrets
 
-API keys live in a SOPS-encrypted file (encrypted at rest, outside this conversation's read scope). The zsh wrappers around `claude`/`codex`/`agy`/`opencode`/`nvim`/`mvim`/`neovide` run each tool through `sops exec-env`, injecting the decrypted values into **that tool's subprocess only** — never the parent shell or unrelated processes.
+API keys live in a SOPS-encrypted file (encrypted at rest, outside this conversation's read scope). The zsh wrappers around `claude`/`codex`/`opencode`/`pi`/`nvim`/`mvim`/`neovide` run each tool through `sops exec-env`, injecting the decrypted values into **that tool's subprocess only** — never the parent shell or unrelated processes.
 
 What this means for you (the agent):
 

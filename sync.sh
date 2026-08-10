@@ -4,7 +4,7 @@
 # Idempotent and non-interactive: safe to re-run any time config changes
 # (a new skill, permission, global fragment, or settings edit). This is the
 # "run more than once" half of setup. install.sh calls it, then layers the
-# one-time interactive bootstrap (MCP servers, .zshrc, agy check) on top.
+# one-time interactive bootstrap (MCP servers, .zshrc) on top.
 #
 # What it does:
 #   - regenerate permission + global-instruction files straight to the paths the
@@ -64,8 +64,6 @@ SYMLINKS=(
   # Claude
   "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
-  # Antigravity (agy) — replaced Gemini CLI in May 2026
-  "$SCRIPT_DIR/antigravity/mcp_config.json:$HOME/.gemini/config/mcp_config.json"
   # Pi (pi-coding-agent) — settings.json holds packages and enabledModels.
   # Skills need no wiring: pi auto-discovers ~/.agents/skills (populated by
   # install_codex_skills below).
@@ -96,8 +94,6 @@ RETIRED_LINKS=(
   "$HOME/.claude/settings.json"
   "$HOME/.codex/rules"
   "$HOME/.codex/AGENTS.md"
-  "$HOME/.gemini/antigravity-cli/settings.json"
-  "$HOME/.gemini/GEMINI.md"
   "$HOME/.pi/agent/AGENTS.md"
   "$HOME/.pi/agent/extensions/pi-permission-system/config.json"
   "$HOME/.config/opencode/opencode.json"

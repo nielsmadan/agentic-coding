@@ -9,15 +9,13 @@
 #   ~/.claude/mcp-permissions.json            (PermissionRequest hook policy)
 #   ~/.codex/rules/permissions.rules
 #   codex/mcp-permissions.toml                (staged — codex/sync_config.py merges it)
-#   ~/.gemini/antigravity-cli/settings.json   (permissions.allow / deny / ask)
 #   ~/.config/opencode/opencode.json          (permission.bash / MCP tools)
 #   ~/.pi/agent/extensions/pi-permission-system/config.json
 #
-# Entries in [shell] are command prefixes — emitted to ALL FIVE agents.
-# An entry ending in `*` is a glob: kept literally for Claude and OpenCode,
-# kept literally for Pi, and skipped for Codex and Antigravity (neither matcher
-# can express a mid-argument glob, so those commands fall through to runtime
-# prompts).
+# Entries in [shell] are command prefixes — emitted to ALL FOUR agents.
+# An entry ending in `*` is a glob: kept literally for Claude, OpenCode and Pi,
+# and skipped for Codex (its matcher cannot express a mid-argument glob, so
+# those commands fall through to runtime prompts).
 
 [shell]
 
@@ -234,9 +232,6 @@ allow = [
   "claude --tools",
   "aiperm list",
   "aiperm sync",
-  # NOTE: agy (Antigravity) was removed from /second-opinion — its headless mode
-  # can't read files without --dangerously-skip-permissions, so it was dropped
-  # rather than granted blanket write access. No agy allow-rule is needed here.
 
   "docker info",
   "docker ps",

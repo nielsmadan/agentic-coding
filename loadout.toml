@@ -19,15 +19,11 @@ order = [
 ]
 
 [instructions.shared]
-destinations = ["~/.codex/AGENTS.md", "~/.gemini/GEMINI.md", "~/.pi/agent/AGENTS.md"]
+destinations = ["~/.codex/AGENTS.md", "~/.pi/agent/AGENTS.md"]
 order = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
     "secrets", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
-
-[permissions.antigravity]
-destinations = ["~/.gemini/antigravity-cli/settings.json"]
-render       = "antigravity"
 
 [permissions.claude]
 destinations = ["~/.claude/settings.json"]

@@ -278,8 +278,6 @@ def local_native_rules(rules: dict) -> dict:
         result[decision] = {
             "claude": [f"Bash({entry}:*)" for entry in rules["shell"][decision]]
             + [native_mcp(entry) for entry in rules["mcp"][decision]],
-            "antigravity": [f"command({entry})" for entry in rules["shell"][decision]]
-            + [f"mcp({entry})" for entry in rules["mcp"][decision]],
         }
     return result
 
@@ -525,24 +523,6 @@ def render_local(root: Path, home: Path, rules: dict, dry_run: bool) -> list[str
     outputs.append((paths[2], json.dumps(policy, indent=2) + "\n"))
 
     pending = []
-    mapping_path = home / ".gemini" / "antigravity-cli" / "cache" / "projects.json"
-    mapping = read_json(mapping_path)
-    project_id = mapping.get(str(root))
-    agy_path = (
-        home / ".gemini" / "config" / "projects" / f"{project_id}.json"
-        if project_id
-        else None
-    )
-    if agy_path and agy_path.exists():
-        agy = merge_owned_lists(
-            read_json(agy_path),
-            owned.setdefault("antigravity", {}),
-            ("permissions",),
-            {decision: native[decision]["antigravity"] for decision in DECISIONS},
-        )
-        outputs.append((agy_path, json.dumps(agy, indent=2) + "\n"))
-    else:
-        pending.append("Antigravity (open this project once, then run permission sync locally)")
 
     if dry_run:
         return [str(path) for path, _ in outputs] + pending

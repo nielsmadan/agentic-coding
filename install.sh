@@ -3,8 +3,7 @@
 #
 # This runs the reconcile step (sync.sh) — which regenerates config, applies
 # symlinks, and links skills — and then the ONE-TIME
-# interactive setup: registering MCP servers, sourcing .airc from .zshrc, and
-# checking for the Antigravity CLI.
+# interactive setup: registering MCP servers and sourcing .airc from .zshrc.
 #
 # For routine changes (new skill/permission/fragment/setting), run ./sync.sh
 # instead — it's non-interactive and skips all the one-time bootstrap below.
@@ -51,17 +50,6 @@ echo ""
 # MCP servers are registered by sync.sh (sync_claude_mcp) from
 # mcp/servers.toml, so they need no bootstrap step here.
 
-check_agy_installed() {
-  echo ""
-  if command -v agy &>/dev/null; then
-    echo "✓  Antigravity CLI (agy) is installed"
-  else
-    echo "⚠️  Antigravity CLI (agy) is not on PATH."
-    echo "   Install with: curl -fsSL https://antigravity.google/cli/install.sh | bash"
-    echo "   (then run 'agy' once to complete OAuth)"
-  fi
-}
-
 add_airc_to_zshrc() {
   local zshrc="$HOME/.zshrc"
   local source_line='[ -f ~/.airc ] && source ~/.airc'
@@ -92,8 +80,6 @@ add_airc_to_zshrc() {
   esac
 }
 
-check_agy_installed
-echo ""
 add_airc_to_zshrc
 
 echo ""

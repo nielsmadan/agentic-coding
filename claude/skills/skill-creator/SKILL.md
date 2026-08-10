@@ -126,7 +126,7 @@ Result: ...
 ## Gotchas
 - "When to use" information in the skill body has ZERO effect on triggering. Only the frontmatter `description` field is scanned for trigger matching — put all trigger phrases there.
 - XML angle brackets (`<`, `>`) in frontmatter silently break skill loading with no error message. Use backticks or natural language instead of `<feature>` in descriptions.
-- **Format agnosticism:** Skills are shared across tools (Claude Code, Codex, Antigravity, etc.). Do not use tool-specific skill invocation prefixes like `/skill-name` or `$skill-name` inside skill bodies — just write `skill-name` or backtick it as `skill-name`. Each tool has its own prefix convention and the skill should not assume which one is used.
+- **Format agnosticism:** Skills are shared across tools (Claude Code, Codex, Pi, etc.). Do not use tool-specific skill invocation prefixes like `/skill-name` or `$skill-name` inside skill bodies — just write `skill-name` or backtick it as `skill-name`. Each tool has its own prefix convention and the skill should not assume which one is used.
 
 ## Creation Process
 

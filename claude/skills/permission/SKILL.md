@@ -1,6 +1,6 @@
 ---
 name: permission
-description: Manage shell-command and MCP allow, ask, and deny rules across Claude, Codex, Antigravity, OpenCode, and Pi. Use when the user invokes permission, says "allow this command locally/globally", "don't ask for this command", "deny this tool", "change permissions", "list permissions", or asks to regenerate agent permission rules.
+description: Manage shell-command and MCP allow, ask, and deny rules across Claude, Codex, OpenCode, and Pi. Use when the user invokes permission, says "allow this command locally/globally", "don't ask for this command", "deny this tool", "change permissions", "list permissions", or asks to regenerate agent permission rules.
 argument-hint: allow|ask|deny|remove|list target locally|globally
 ---
 
@@ -50,7 +50,7 @@ Actions:
 
 1. Run `aiperm allow --scope local --shell pytest`.
 2. Report `.venv/bin/pytest` when that is the detected executable.
-3. Report generated adapters and pending Antigravity registration.
+3. Report the generated adapters.
 
 Result: pytest is approved only in the current project.
 
@@ -78,12 +78,6 @@ Actions:
 Result: only the managed pytest rule is removed.
 
 ## Troubleshooting
-
-### Antigravity is pending
-
-**Cause:** The project has not been opened in Antigravity.
-
-**Solution:** Open it once, then run `aiperm sync --scope local`.
 
 ### A personal output is tracked
 

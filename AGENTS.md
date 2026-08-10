@@ -18,8 +18,6 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
   - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
-- `antigravity/` - Antigravity (`agy`) configuration
-  - `settings.json` - **generated in full** (the file holds only `permissions`, so it needs no base)
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
@@ -40,7 +38,7 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `loadout.toml` - the manifest: declares every generated file, its renderer, and its base. **The authority on what is generated** — if a path appears as an `output` here, never hand-edit it.
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
   - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
-  - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.gemini/GEMINI.md`); see Global Instructions below
+  - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.pi/agent/AGENTS.md`); see Global Instructions below
 - `templates/` - Project-type config + skills deployed per-project (see Project Templates below)
   - `<type>/` - config fragments and project-only skills for a project type (e.g. `flutter/`)
     - `.mcp.json`, `settings.local.json` - merged into the target project
@@ -81,7 +79,7 @@ What follows is the part that is *not* discoverable from the skill list itself.
 
 Drop the skill at `claude/skills/<name>/SKILL.md` — the `claude/skills` → `~/.claude/skills` directory symlink exposes it to Claude Code automatically. Two manual hookups make it available everywhere else:
 
-1. Add `<name>` to the `CODEX_SKILLS` array in `sync.sh` (this is what creates the `~/.agents/skills/<name>` symlink Codex / Gemini CLI / Antigravity read). Skip this for project-only skills under `templates/<type>/skills/`, and for Claude-only skills that rely on Claude-Code-specific mechanics (e.g. `plan`, which pins a subagent to Fable).
+1. Add `<name>` to the `CODEX_SKILLS` array in `sync.sh` (this is what creates the `~/.agents/skills/<name>` symlink Codex and Pi read). Skip this for project-only skills under `templates/<type>/skills/`, and for Claude-only skills that rely on Claude-Code-specific mechanics (e.g. `plan`, which pins a subagent to Fable).
 2. Add an entry to [`claude/skills/README.md`](claude/skills/README.md) (the human-facing catalog — agents read the skill's own `description:` field, so that frontmatter is what actually needs to be good).
 
 Then run `./sync.sh` to create the Codex symlink (non-interactive; also run by `install.sh`).
@@ -99,7 +97,7 @@ replacement tables in `skills/sync.py`. Targets:
 - `claude/skills/second-opinion/SKILL.md` — advisors are Codex + OpenCode/GLM
 - `codex/skills/second-opinion/SKILL.md` — advisors are Claude + OpenCode/GLM; this is the real
   directory that `install_codex_skills` prefers over `claude/skills/<name>` when linking
-  `~/.agents/skills/<name>`, so Codex / Gemini CLI / Antigravity / Pi all get the Claude-consulting
+  `~/.agents/skills/<name>`, so both Codex and Pi get the Claude-consulting
   variant
 
 **Never hand-edit the generated `SKILL.md` files** — a lefthook pre-commit hook
@@ -122,7 +120,7 @@ The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-se
 
 ## Permissions
 
-Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravity, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
+Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
 **Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules` and the rest. Only `codex/mcp-permissions.toml` still lands here, because `codex/sync_config.py` consumes it.
 
@@ -130,7 +128,7 @@ Shell-command and MCP permissions for all five agents (Claude, Codex, Antigravit
 
 | edit this | to change | which is generated into |
 |---|---|---|
-| `loadout/permissions.toml` | any shell or MCP rule, on every agent | all eight permission files |
+| `loadout/permissions.toml` | any shell or MCP rule, on every agent | all seven permission files |
 | `loadout/bases/settings.base.json` | hooks, statusLine, model, env, `permissions.defaultMode` | `~/.claude/settings.json` |
 | `loadout/bases/settings.autonomous.base.json` | the same, for the autonomous profile | `~/.claude/settings.json` under the autonomous profile |
 | `loadout/bases/opencode.base.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
@@ -142,7 +140,7 @@ To change permissions: edit the source, then run `loadout sync --global` (also r
 Use `/permission` or `aiperm` to change permissions. Global changes update
 `permissions/permissions.toml`, then regenerate and install every harness config. Personal
 project rules live in `.aiconf/permissions.toml` and generate native local adapters. `[shell]`
-and `[mcp]` entries go to all five agents; `[claude.extra]` / `[opencode.extra]` hold remaining
+and `[mcp]` entries go to all four agents; `[claude.extra]` / `[opencode.extra]` hold remaining
 tool-native entries with no cross-agent equivalent. Codex's token matcher can't express legacy
 shell glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
@@ -155,7 +153,7 @@ shell glob entries (those ending in `*`), so they fall through to its normal app
 
 For machines that run autonomous dev tasks (which must `git push` etc. without a human in the loop) there is a second **Claude-only** profile built around auto mode's classifier. Only one of the two renders on any machine: `[permissions.claude]` and `[permissions.claude-autonomous]` declare `profile = "default"` and `profile = "autonomous"` and take turns writing `~/.claude/settings.json`. They share a renderer, differing by base document and by the autonomous one's `rules = []`, which selects no rules at all. The autonomous variant keeps `defaultMode: "auto"` but has **empty `allow` / `deny` / `ask`** so the classifier judges every tool call. Clearing `deny` is what lets `git push` and the other destructive-git ops through (deny overrides every mode, including auto); the `allow` / `ask` lists are dropped so nothing pre-empts or blocks the classifier (an `ask` would also hang a headless run). `instructions.claude-autonomous` is the matching global-guidance variant whose Git Policy permits autonomous git ops; it takes turns writing `~/.claude/CLAUDE.md` the same way. Both are **generated** from shared fragments (see Global Instructions below), so they never drift — the autonomous variant differs only by pulling the `git-policy.autonomous` fragment instead of `git-policy`.
 
-Select the profile with `./install.sh --autonomous` or `./sync.sh --autonomous`, which record it in `~/.config/loadout/config.toml`; `loadout sync --global` then renders whichever profile is named there. `--normal` switches back, and editing that file by hand does the same. The other three agents (Codex, Antigravity, OpenCode) get the same config under either profile.
+Select the profile with `./install.sh --autonomous` or `./sync.sh --autonomous`, which record it in `~/.config/loadout/config.toml`; `loadout sync --global` then renders whichever profile is named there. `--normal` switches back, and editing that file by hand does the same. The other three agents (Codex, OpenCode, Pi) get the same config under either profile.
 
 ## MCP Servers
 
@@ -164,15 +162,14 @@ Which MCP servers **exist** machine-wide is generated from a single source of tr
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`mcp/sync.py --check`) rejects any drift:
 - `claude/mcp-servers.generated.json` (input to `claude mcp add-json`; **not** symlinked — see below)
 - `codex/config.toml` (`[mcp_servers.*]` tables, merged into `~/.codex/config.toml` by `codex/sync_config.py`)
-- `antigravity/mcp_config.json` (symlinked to `~/.gemini/config/mcp_config.json`)
 - `~/.config/opencode/opencode.json` (the `mcp` key only — written straight to the destination, not staged here)
 - `pi/mcp.json` (static `{"imports": ["claude-code"]}` — Pi's `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi needs no server list of its own)
 
-A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude and Antigravity, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
+A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
 
 **Claude Code is the exception to the symlink pattern.** `~/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
 
-**Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields). Antigravity's remote servers use `httpUrl` plus a `headers` map — its own bundled `agy-customizations` doc says `serverUrl` with no headers, but the live file disagrees and wins.
+**Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields).
 
 **`~/.config/opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. Both write that path directly — it is the one `mcp/sync.py` output that is not staged in this repo, precisely so the two writers share one file with no symlink between them. `mcp/sync.py` reads the current file and mutates only its own key; `loadout` builds the file from `loadout/bases/opencode.base.json` and passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml`. **`sync.sh` runs `mcp/sync.py` before `loadout`** so the key loadout preserves is the current one; `mcp/sync.py` must still never rebuild the file from scratch.
 
@@ -238,13 +235,13 @@ Each agent's **global** (machine-wide) natural-language guidance — browser aut
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check`) rejects any drift:
 - `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` → symlinked to `~/.claude/CLAUDE.md`
-- `global/AGENTS.md` → symlinked to `~/.codex/AGENTS.md` (Codex), `~/.gemini/GEMINI.md` (Antigravity's `agy`), and `~/.pi/agent/AGENTS.md` (Pi)
+- `global/AGENTS.md` → symlinked to `~/.codex/AGENTS.md` (Codex) and `~/.pi/agent/AGENTS.md` (Pi)
 
-**Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one `global/AGENTS.md` — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md`, `agy` from `~/.gemini/GEMINI.md`, Pi from `~/.pi/agent/AGENTS.md`; the destinations differ but point at the same source.)
+**Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one `global/AGENTS.md` — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md` and Pi from `~/.pi/agent/AGENTS.md`; the destinations differ but point at the same source.)
 
 To change global guidance: edit a fragment in `global/fragments/`, then run `loadout sync` (also run automatically by `./sync.sh` and `install.sh`). Each target names its fragments explicitly in `loadout.toml`'s `order` list, so the differences that exist are visible in one place — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment. Adding a fragment file does nothing until a target lists it by name; `loadout explain <fragment>` reports which targets use one.
 
-**Why a generator, not native `@imports`:** only Claude Code and Gemini CLI expand in-file `@path` imports; Codex and OpenCode have no import mechanism, and Antigravity's `agy` (a closed-source rewrite) is unverified. A generator is the only DRY approach that works uniformly across every agent.
+**Why a generator, not native `@imports`:** only Claude Code expands in-file `@path` imports; Codex, OpenCode and Pi have none. A generator is the only DRY approach that works uniformly across every agent.
 
 **OpenCode** gets no file of its own: it reads `~/.claude/CLAUDE.md` as a global-rules fallback. Per OpenCode's docs it treats that file as plain rules and does not expand `@imports` — moot here, since the generated file is already fully expanded. Disable via `OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1` if ever unwanted.
 
@@ -254,10 +251,10 @@ Pi (`@earendil-works/pi-coding-agent`, installed via mise) is wired up like the 
 harnesses, but through Pi's own mechanisms rather than the generated permission/global pipelines:
 
 - **Global instructions** — Pi loads `~/.pi/agent/AGENTS.md`, symlinked to the shared
-  `global/AGENTS.md` (same file as Codex/Antigravity).
+  `global/AGENTS.md` (same file as Codex).
 - **Skills** — Pi auto-discovers `~/.agents/skills/` (and `~/.pi/agent/skills/`) by default. That
   first directory is already populated by `install_codex_skills`, so Pi gets the same curated skill
-  subset as Codex/Antigravity with no pi-specific config. Skills surface as `/skill:<name>` and via
+  subset as Codex with no pi-specific config. Skills surface as `/skill:<name>` and via
   progressive disclosure in the system prompt.
 - **Permissions** — `pi/settings.json` loads `@gotgenes/pi-permission-system`, and
   `loadout` generates `pi/permissions.json` from the shared `[shell]` and `[mcp]`
@@ -310,7 +307,7 @@ so the target project owns real, committable files. Each step is idempotent in i
   Claude-scoped at `.claude/settings.local.json`
 - `skills/<name>/` recursively copy into `<target>/.claude/skills/<name>/`, only writing files
   whose bytes differ. A `.agents/skills/<name>` symlink is added pointing back at the
-  Claude copy, so Codex / Gemini CLI / Antigravity pick up the same project skills
+  Claude copy, so Codex and Pi pick up the same project skills
 - `instructions.md` (optional) is **appended once each** to `<target>/CLAUDE.md` and
   `<target>/AGENTS.md` on first install for a given type. State is tracked per (type,
   target-file) pair in `<target>/.aiconf/state.json` so subsequent installs skip files that

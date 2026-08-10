@@ -56,7 +56,6 @@ class McpSyncTests(unittest.TestCase):
             for path, content in {
                 **sync.render_claude(SERVERS),
                 **sync.render_codex(SERVERS),
-                **sync.render_antigravity(SERVERS),
                 **sync.render_opencode(SERVERS),
             }.items()
         }
@@ -70,14 +69,6 @@ class McpSyncTests(unittest.TestCase):
         )
         for name, content in rendered.items():
             self.assertNotIn("Bearer sk-", content, name)
-
-    def test_antigravity_uses_httpurl_not_serverurl(self):
-        rendered = next(iter(sync.render_antigravity(SERVERS).values()))
-        entries = json.loads(rendered)["mcpServers"]
-
-        self.assertEqual(entries["jina"]["httpUrl"], "https://mcp.jina.ai/v1")
-        self.assertNotIn("serverUrl", entries["jina"])
-        self.assertEqual(entries["context7"]["command"], "npx")
 
     def test_codex_output_is_valid_toml(self):
         rendered = next(iter(sync.render_codex(SERVERS).values()))

@@ -4,7 +4,7 @@
 Single source of truth for multi-harness skills (e.g. second-opinion).
 Templates live in skills/; this script generates:
     claude/skills/second-opinion/SKILL.md -> for Claude host
-    codex/skills/second-opinion/SKILL.md  -> for Codex/AGY/Pi host
+    codex/skills/second-opinion/SKILL.md  -> for Codex/Pi host
 
 Run with no arguments to (re)write all generated files; run with --check to
 verify none have drifted (used by lefthook pre-commit hook).
@@ -36,7 +36,6 @@ TARGETS = [
             "CLI_DEPS_GOTCHA": "Both CLIs (`codex`, `opencode`) must be installed. If one is missing or fails, the command continues with the other and that advisor's input is simply absent from the synthesis.",
             "ADVISOR_GOTCHAS": (
                 "- **Codex** blocks on \"Reading additional input from stdin...\" unless stdin is closed (`</dev/null`), and prompts for confirmation outside a git repo unless given `--skip-git-repo-check`.\n"
-                "- **Antigravity (`agy`) was dropped from this skill** (2026-07). In headless/print mode the current `agy` soft-denies *every* file read and command — the `permissions.allow` list, workspace registration, and trusted-folder status are only honored interactively, not headlessly (verified: even a `read_file` on a file inside a trusted+registered workspace is soft-denied). The only way to make it produce output is `--dangerously-skip-permissions` (or `toolPermission: always-proceed`), which auto-approves **all** tools including writes — there is no read-only-with-exploration path. Rather than grant blanket write access for a read-only consult, `agy` is left out. Do **not** re-add it without re-verifying headless behavior against a newer build.\n"
                 "- **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan`, **not** the default `build` agent: `plan` can read/explore the repo but has no write tools, so it gives a code-aware opinion without editing anything.\n"
                 "- **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token (allowlist source: `~/ac/permissions/permissions.toml`)."
             ),

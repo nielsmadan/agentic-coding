@@ -1,8 +1,7 @@
 # Agentic Coding Config
 
 Version-controlled configuration shared across the AI coding tools I run:
-**Claude Code**, **OpenAI Codex**, **Google Antigravity** (`agy`), **OpenCode**,
-and **Pi**.
+**Claude Code**, **OpenAI Codex**, **OpenCode**, and **Pi**.
 One repo holds the skills, hooks, permissions, project templates, and shell glue
 for all of them.
 
@@ -21,11 +20,10 @@ cd ~/ac
 `install.sh` is idempotent and prompts before replacing anything. It:
 
 - generates each agent's permission config from `permissions/permissions.toml`
-- symlinks config into `~/.claude`, `~/.codex`, `~/.gemini/antigravity-cli`,
-  `~/.opencode`, and `~/.airc`
+- symlinks config into `~/.claude`, `~/.codex`, `~/.opencode`, and `~/.airc`
 - installs the curated Codex skill subset into `~/.agents/skills`
-- optionally adds `source ~/.airc` to your `~/.zshrc`, wires up the configured
-  MCP servers, and checks that `agy` is on PATH
+- optionally adds `source ~/.airc` to your `~/.zshrc` and wires up the configured
+  MCP servers
 
 Use `./install.sh --autonomous` to install the broader **autonomous-dev profile**
 (permits `git push` and other unattended ops — for machines running headless
@@ -40,7 +38,6 @@ MCP servers) are **not** auto-installed — set those up separately.
 |------|---------------|
 | `claude/` | Claude Code config: `skills/`, `hooks/`, `settings.json` (+ `settings.autonomous.json`), `CLAUDE.md` (+ autonomous variant), and `desktop/` (Claude Desktop skills, packaged separately) |
 | `codex/` | OpenAI Codex config: managed `config.toml` overlay, permission `rules/`, and curated skills synced to `~/.agents/skills` |
-| `antigravity/` | Google Antigravity (`agy`) settings |
 | `opencode/` | OpenCode config (`opencode.json`) |
 | `pi/` | Pi settings plus the generated `@gotgenes/pi-permission-system` policy |
 | `permissions/` | Single source of truth for shell-command and MCP permissions — `permissions.toml` plus `sync.py`, which generates every agent's permission config |
@@ -49,13 +46,12 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |
 | `docs/` | Repo notes |
 
-## The five agents
+## The four agents
 
-A single config feeds all five tools. Shared shell-command and MCP permissions are
+A single config feeds all four tools. Shared shell-command and MCP permissions are
 defined once in `permissions/permissions.toml` and generated out to each agent;
 agent-native settings (tool toggles, MCP entries, skill subsets) live in the
-per-agent directories above. Codex, Antigravity, and Gemini CLI pick up Claude's
-skills through symlinks rather than separate copies.
+per-agent directories above. Codex and Pi pick up Claude's skills through symlinks rather than separate copies.
 
 Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
 symlinked. `sync.sh` merges the table subtrees declared in `codex/config.toml`
@@ -78,7 +74,7 @@ documentation, security audits, and more. There are ~38 of them under
 
 ## Permissions
 
-All five agents' shell-command and MCP permissions are **generated** from
+All four agents' shell-command and MCP permissions are **generated** from
 `permissions/permissions.toml`. Never hand-edit the generated files
 (`claude/settings.json`, `codex/rules/permissions.rules`, `pi/permissions.json`,
 etc.) — a pre-commit hook rejects drift. To change permissions, edit
