@@ -38,6 +38,13 @@ There is no JavaScript/TypeScript MCP server bundled. For static analysis and te
 project's own scripts directly (`yarn type-check`, `yarn lint`, `yarn test`); for library
 docs use `/research-tech`.
 
+### Metro ports (`splashdown`)
+
+Let Splashdown assign and manage Metro's port. Do not choose a port, hardcode `8081`, or
+start a separate packager with an agent-selected port. When a command needs this checkout's
+assigned port, read `RCT_METRO_PORT` from `splashdown.env` and use that value for Metro,
+device launches, reloads, and log tooling.
+
 ### Streaming Metro logs (`rn-logs`)
 
 Use [`rn-logs`](https://github.com/okwasniewski/react-native-logs-cli) (npm package
@@ -54,8 +61,8 @@ rn-logs logs --app <name> --verbose           # include full stack traces
 ```
 
 Notes:
-- Metro defaults to `localhost:8081`. If this project runs Metro on a different port (check
-  `package.json` `scripts.start`), pass `--port <n>` to both `apps` and `logs`.
+- Read the assigned Metro port from `splashdown.env`, then pass it to `rn-logs` with
+  `--port <n>`.
 - `rn-logs` attaches to Metro's CDP inspector channel. **It cannot run simultaneously with
   React Native DevTools** — they compete for the channel. Pick one per session.
 - Use this for JS-side issues. For native crashes / NSLog output / adb logcat, use
