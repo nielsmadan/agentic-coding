@@ -22,6 +22,9 @@
       "extensions": []
     },
     "npm:@narumitw/pi-lsp",
-    "npm:@narumitw/pi-statusline"
+    "npm:@narumitw/pi-statusline",
+    {
+      "source": "/Users/nielsmadan/.config/nono/packages/nolabs-ai/pi"
+    }
   ]
 }

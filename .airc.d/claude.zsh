@@ -1,21 +1,6 @@
 # Claude Code aliases
 
-# claude runs inside the nono sandbox (profile: nono/claude-local.json). Defined
-# here rather than in ~/rc/.zshrc alongside codex/pi/opencode because it is agent
-# tooling — but that means ~/rc/.zshrc must NOT also define claude(): it sources
-# ~/.airc first and would otherwise override this.
-#
-# DOCKER_HOST is explicit because ~/.docker/config.json sits in nono's permanent
-# deny group, so docker cannot read its context and falls back to a socket colima
-# does not create.
-claude() {
-  if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/claude-local.json" ]; then
-    DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
-      _sops_exec nono run -p claude-local -- claude "$@"
-  else
-    _sops_exec claude "$@"
-  fi
-}
+claude() { _agent_sandboxed claude-local claude "$@"; }
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.

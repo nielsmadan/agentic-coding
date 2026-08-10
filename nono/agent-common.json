@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "name": "agent-common",
+    "description": "Local grants shared by every sandboxed agent profile"
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/wrksp",
+      "$HOME/.agent-browser",
+      "$HOME/.agent-device",
+
+      "$HOME/.cargo/registry",
+      "$HOME/.cargo/git",
+      "$HOME/.npm",
+      "$HOME/go/pkg/mod",
+      "$HOME/.bun/install",
+      "$HOME/.pub-cache/hosted",
+      "$HOME/.pub-cache/hosted-hashes",
+      "$HOME/.pub-cache/git",
+      "$HOME/.pub-cache/_temp",
+      "$HOME/.gradle/caches",
+      "$HOME/.gradle/daemon",
+      "$HOME/.gradle/native",
+      "$HOME/.gradle/jdks",
+      "$HOME/.m2/repository"
+    ],
+    "read": [
+      "/AppleInternal",
+      "$HOME/.local/share/uv/python",
+      "$HOME/.local/share/mise/installs",
+      "$HOME/.agents/skills",
+      "$HOME/ac"
+    ],
+    "read_file": [
+      "$HOME/.gitconfig-local",
+      "$HOME/.config/gh/config.yml",
+      "$HOME/.config/gh/hosts.yml",
+      "$HOME/.local/state/gh/device-id",
+      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
+    ],
+    "bypass_protection": [
+      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
+    ],
+    "unix_socket": ["$HOME/.colima/default/docker.sock"],
+    "unix_socket_dir_bind": ["$HOME/.agent-browser"]
+  },
+  "network": { "open_port": [0] },
+  "unsafe_macos_seatbelt_rules": [
+    "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
+    "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
+    "(allow iokit-open)"
+  ]
+}

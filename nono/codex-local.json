@@ -1,0 +1,3 @@
+{
+  "extends": ["nolabs-ai/codex", "agent-common"]
+}

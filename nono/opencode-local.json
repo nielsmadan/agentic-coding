@@ -1,0 +1,7 @@
+{
+  "extends": ["nolabs-ai/opencode", "agent-common"],
+  "filesystem": {
+    "read": ["$HOME/.claude/skills"],
+    "read_file": ["$HOME/.claude/CLAUDE.md"]
+  }
+}

@@ -186,6 +186,52 @@ Event-triggered shell scripts live in `claude/hooks/` and are wired in under the
 - **Propagate to the autonomous profile.** The two profiles have separate base documents, so a hook added to `settings.base.json` must be added to `settings.autonomous.base.json` too. Nothing derives one from the other — that decoupling is deliberate (it is what lets the autonomous profile omit `env.CLAUDE_AFK_TIMEOUT_MS`), and the cost is that shared edits are made twice. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
+## Sandbox (nono)
+
+Every agent CLI runs inside [nono](https://github.com/nolabs-ai/nono), a Seatbelt-based
+capability sandbox. The shell wrappers in `.airc.d/` do this transparently — `claude`, `codex`,
+`opencode` and `pi` are zsh functions that call `_agent_sandboxed` (`.airc.d/05-sandbox.zsh`),
+which wraps the real binary in `nono run -p <agent>-local` *inside* `_sops_exec`. Each has a
+`<name>-raw` escape hatch that keeps the secret injection but drops the sandbox; use it for
+`loadout sync`, work in `~/ac` / `~/rc`, and anything that must write outside `~/wrksp`.
+
+**`~/rc/.zshrc` must not define these four functions.** It sources `~/.airc` first, so a wrapper
+there silently overrides the sandboxed one and the sandbox quietly stops applying. It still owns
+`_sops_exec` itself, plus `gemini`, `railway`, and the editor wrappers.
+
+### Profiles
+
+`nono/<agent>-local.json` is symlinked to `~/.config/nono/profiles/` by `sync.sh`. Each extends
+two parents — the vendor pack and our shared overlay:
+
+```json
+{ "extends": ["nolabs-ai/codex", "agent-common"] }
+```
+
+**Pull the packs first** (`nono pull nolabs-ai/{claude,codex,opencode,pi}`); without
+the pack the profile is inert. Multi-parent `extends` unions the grants of both.
+
+`nono/agent-common.json` holds everything the four share: `~/wrksp` read+write, read on `~/ac`
+(the agents' own config lives there behind symlinks), mise installs, the colima docker socket, the
+agent-browser socket directory, and the Chrome-for-testing Seatbelt rules. Change a shared grant
+there, not five times over. The per-agent files hold only what one agent needs:
+
+| profile | extra grant | why |
+|---|---|---|
+| `claude-local` | read `~/.local/share/claude` | |
+| `pi-local` | read-file `~/.claude.json` | `pi-mcp-adapter` resolves its `claude-code` MCP import by reading Claude's store directly |
+| `opencode-local` | read-file `~/.claude/CLAUDE.md`, read `~/.claude/skills` | opencode falls back to Claude's global rules and skills |
+
+### Gotchas
+
+- **`filesystem.deny` does not override an inherited group allow** ([nono#727](https://github.com/nolabs-ai/nono/issues/727)) — nothing can be *subtracted* from a base profile, only added.
+- **Seatbelt sandboxes cannot nest**, so anything that sandboxes itself must be told not to — Chrome needs `--no-sandbox` under `agent-browser`.
+- **`DOCKER_HOST` must be set explicitly** (the wrapper does it): `~/.docker/config.json` is in nono's permanent deny group, so docker cannot read its context and falls back to a socket colima never creates.
+- **`~/.claude.json.tmp.*` writes are denied** ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open).
+- **Keychain access is a single-file grant.** `~/Library/Keychains` stays denied; only `login.keychain-db` is opened, via `read_file` *plus* `bypass_protection` (the grant alone is not enough — the deny group wins without the bypass). Codex cannot reach its ChatGPT auth without it.
+- **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
+- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/bases/settings.base.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block has been relocated above the first table by hand — **check it is still there after any `nono update`**.
+
 ## Global Instructions
 
 Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`global/fragments/`**. `loadout` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
