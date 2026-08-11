@@ -34,7 +34,6 @@ $HOME/go/pkg/mod	profile
 /private/tmp/claude-501	profile
 /private/var/folders	group:system_write_macos
 /private/var/folders/v_/dg_p8zcs2nlcg2xq_v834dlh0000gn/T	group:system_write_macos
-/private/var/tmp	profile
 
 # codex-local
 $HOME/.agent-browser	profile
@@ -66,7 +65,6 @@ $HOME/go/pkg/mod	profile
 /private/tmp	group:system_write_macos
 /private/var/folders	group:system_write_macos
 /private/var/folders/v_/dg_p8zcs2nlcg2xq_v834dlh0000gn/T	group:system_write_macos
-/private/var/tmp	profile
 
 # opencode-local
 $HOME/.agent-browser	profile
@@ -101,7 +99,6 @@ $HOME/go/pkg/mod	profile
 /private/tmp	group:system_write_macos
 /private/var/folders	group:system_write_macos
 /private/var/folders/v_/dg_p8zcs2nlcg2xq_v834dlh0000gn/T	profile
-/private/var/tmp	profile
 
 # pi-local
 $HOME/.agent-browser	profile
@@ -131,4 +128,3 @@ $HOME/go/pkg/mod	profile
 /private/tmp	group:system_write_macos
 /private/var/folders	group:system_write_macos
 /private/var/folders/v_/dg_p8zcs2nlcg2xq_v834dlh0000gn/T	group:system_write_macos
-/private/var/tmp	profile

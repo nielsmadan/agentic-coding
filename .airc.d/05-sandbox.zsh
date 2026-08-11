@@ -20,6 +20,7 @@ _agent_sandboxed() {
   if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
     OTHER_SWIFT_FLAGS='$(inherited) -disable-sandbox' \
+    AGENT_BROWSER_ARGS=--no-sandbox \
       _sops_exec nono run -p "$profile" -- "$cmd" "$@"
   else
     _sops_exec "$cmd" "$@"

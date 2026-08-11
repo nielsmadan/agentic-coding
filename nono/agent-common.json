@@ -8,7 +8,6 @@
       "$HOME/wrksp",
       "$HOME/.agent-browser",
       "$HOME/.agent-device",
-
       "$HOME/.cargo/registry",
       "$HOME/.cargo/git",
       "$HOME/.npm",
@@ -23,8 +22,7 @@
       "$HOME/.gradle/native",
       "$HOME/.gradle/jdks",
       "$HOME/.m2/repository",
-      "$HOME/.local/state/splashdown",
-      "/private/var/tmp"
+      "$HOME/.local/state/splashdown"
     ],
     "read": [
       "/AppleInternal",
@@ -40,19 +38,32 @@
       "$HOME/.config/gh/config.yml",
       "$HOME/.config/gh/hosts.yml",
       "$HOME/.local/state/gh/device-id",
-      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
+      {
+        "path": "$HOME/Library/Keychains/login.keychain-db",
+        "when": "macos"
+      }
     ],
     "bypass_protection": [
-      { "path": "$HOME/Library/Keychains/login.keychain-db", "when": "macos" }
+      {
+        "path": "$HOME/Library/Keychains/login.keychain-db",
+        "when": "macos"
+      }
     ],
-    "unix_socket": ["$HOME/.colima/default/docker.sock"],
-    "unix_socket_dir_bind": ["$HOME/.agent-browser"]
+    "unix_socket": [
+      "$HOME/.colima/default/docker.sock"
+    ],
+    "unix_socket_dir_bind": [
+      "$HOME/.agent-browser"
+    ]
   },
-  "network": { "open_port": [0] },
+  "network": {
+    "open_port": [
+      0
+    ]
+  },
   "unsafe_macos_seatbelt_rules": [
     "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
-    "(allow iokit-open)",
-    "(allow lsopen)"
+    "(allow iokit-open)"
   ]
 }
