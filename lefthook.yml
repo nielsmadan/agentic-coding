@@ -9,3 +9,6 @@ pre-commit:
       run: python3 skills/sync.py --check
     sync-mcp:
       run: python3 mcp/sync.py --check
+    sandbox-writable:
+      glob: "nono/*.json"
+      run: ./bin/nono-audit --check

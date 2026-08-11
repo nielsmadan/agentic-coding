@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""Report what each nono profile can WRITE outside the workspace.
+
+The sandbox fails open: a path becomes writable the moment any profile or
+inherited group grants it, and nothing warns you. This enumerates the writable
+grants per profile, minus the workspace itself, and diffs them against a
+reviewed baseline.
+
+Usage:
+    bin/nono-audit                 # print the current writable set
+    bin/nono-audit --check         # exit 1 if it differs from the baseline
+    bin/nono-audit --update        # rewrite the baseline (review the diff!)
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BASELINE = REPO_ROOT / "nono" / "writable-baseline.txt"
+HOME = Path.home()
+WORKSPACE = HOME / "wrksp"
+
+# "   r+w  /Users/x/.cargo/registry (dir) [group:foo]"
+CAPABILITY = re.compile(r"^\s+(r\+w|w)\s+(\S.*?)\s+\((dir|file)\)(?:\s+\[(.+)\])?\s*$")
+
+
+def profiles() -> list[str]:
+    return sorted(p.stem for p in (REPO_ROOT / "nono").glob("*-local.json"))
+
+
+def writable(profile: str) -> set[str]:
+    result = subprocess.run(
+        ["nono", "run", "-p", profile, "--dry-run", "-v", "--", "true"],
+        capture_output=True,
+        text=True,
+        cwd=WORKSPACE if WORKSPACE.is_dir() else HOME,
+    )
+    found = set()
+    for line in (result.stdout + result.stderr).splitlines():
+        match = CAPABILITY.match(line)
+        if not match:
+            continue
+        path = match.group(2)
+        source = match.group(4) or "profile"
+        if path == str(WORKSPACE) or path.startswith(f"{WORKSPACE}/"):
+            continue
+        if path == str(HOME) or path.startswith(f"{HOME}/"):
+            path = "$HOME" + path[len(str(HOME)) :]
+        found.add(f"{path}\t{source}")
+    if not found and result.returncode != 0:
+        sys.exit(f"nono-audit: `nono run -p {profile}` failed:\n{result.stderr.strip()}")
+    return found
+
+
+def current() -> str:
+    lines = []
+    for profile in profiles():
+        lines.append(f"# {profile}")
+        lines.extend(sorted(writable(profile)))
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--check", action="store_true", help="exit 1 on drift")
+    group.add_argument("--update", action="store_true", help="rewrite the baseline")
+    args = parser.parse_args()
+
+    if not shutil.which("nono"):
+        print("nono-audit: nono not on PATH — skipping")
+        return 0
+
+    report = current()
+
+    if args.update:
+        BASELINE.write_text(report)
+        print(f"wrote {BASELINE.relative_to(REPO_ROOT)}")
+        return 0
+
+    if not args.check:
+        sys.stdout.write(report.replace("\t", "  ← "))
+        return 0
+
+    if not BASELINE.exists():
+        sys.exit(f"nono-audit: no baseline; run `{Path(__file__).name} --update`")
+    if BASELINE.read_text() == report:
+        print("sandbox writable set matches the baseline")
+        return 0
+
+    import difflib
+
+    diff = difflib.unified_diff(
+        BASELINE.read_text().splitlines(),
+        report.splitlines(),
+        fromfile="baseline",
+        tofile="current",
+        lineterm="",
+    )
+    print("sandbox writable set changed:", file=sys.stderr)
+    print("\n".join(diff), file=sys.stderr)
+    print(
+        f"\nReview the change. If intended: {Path(__file__).name} --update",
+        file=sys.stderr,
+    )
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
