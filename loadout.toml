@@ -7,7 +7,7 @@ destinations = ["~/.claude/CLAUDE.md"]
 profile      = "default"
 order = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
 [instructions.claude-autonomous]
@@ -15,14 +15,14 @@ destinations = ["~/.claude/CLAUDE.md"]
 profile      = "autonomous"
 order = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "agent-dispatch.autonomous", "git-policy.autonomous", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "agent-dispatch.autonomous", "git-policy.autonomous", "git-commit-policy", "working-style",
 ]
 
 [instructions.shared]
 destinations = ["~/.codex/AGENTS.md", "~/.pi/agent/AGENTS.md"]
 order = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
-    "secrets", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
 [permissions.claude]
