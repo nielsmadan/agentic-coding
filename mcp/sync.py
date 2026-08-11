@@ -181,16 +181,27 @@ def render_opencode(servers):
 
 
 # --------------------------------------------------------------------------
-# pi — pi/mcp.json: a static import, not a rendering of `servers`. Pi's
-# pi-mcp-adapter resolves the "claude-code" import kind by reading
-# ~/.claude.json directly, so Pi already sees whatever sync.sh registered with
-# Claude. Kept under this generator's --check gate so the file can't drift
-# into a hand-maintained second copy of the server list.
+# pi — pi/mcp.json: `mcpServers`, the shape pi-mcp-adapter's ServerEntry
+# takes. HTTP auth uses `bearerTokenEnv` (the variable NAME; the adapter reads
+# it at call time), so no token is ever written here.
 # --------------------------------------------------------------------------
 
 def render_pi(servers):
     path = REPO_ROOT / "pi" / "mcp.json"
-    return {path: json.dumps({"imports": ["claude-code"]}, indent=2) + "\n"}
+    entries = {}
+    for name, spec in servers.items():
+        if is_http(spec):
+            entry = {"url": spec["url"]}
+            auth = spec.get("auth_env_var")
+            if auth:
+                entry["bearerTokenEnv"] = auth
+        else:
+            entry = {"command": spec["command"], "args": argv(spec)}
+            variables = env(spec)
+            if variables:
+                entry["env"] = variables
+        entries[name] = entry
+    return {path: json.dumps({"mcpServers": entries}, indent=2) + "\n"}
 
 
 # --------------------------------------------------------------------------

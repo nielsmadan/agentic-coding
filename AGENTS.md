@@ -163,9 +163,9 @@ Which MCP servers **exist** machine-wide is generated from a single source of tr
 - `claude/mcp-servers.generated.json` (input to `claude mcp add-json`; **not** symlinked — see below)
 - `codex/config.toml` (`[mcp_servers.*]` tables, merged into `~/.codex/config.toml` by `codex/sync_config.py`)
 - `~/.config/opencode/opencode.json` (the `mcp` key only — written straight to the destination, not staged here)
-- `pi/mcp.json` (static `{"imports": ["claude-code"]}` — Pi's `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi needs no server list of its own)
+- `pi/mcp.json` (`mcpServers`, the shape `pi-mcp-adapter`'s `ServerEntry` takes; symlinked to `~/.pi/agent/mcp.json`)
 
-A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
+A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
 
 **Claude Code is the exception to the symlink pattern.** `~/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
 
@@ -263,10 +263,14 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   last-match-wins rules, so the generator emits allow rules first, ask rules next, and deny rules
   last. The universal tool fallback remains `allow`; unmatched Bash commands prompt, preserving
   this repository's shared permission scope. This is an approval layer, not an OS sandbox.
-- **MCP servers** — `pi/mcp.json` is a static `{"imports": ["claude-code"]}`; Pi's
-  `pi-mcp-adapter` resolves that import by reading `~/.claude.json` directly, so Pi inherits
-  whatever `sync.sh` registered with Claude and needs no server list of its own. The file is
-  still generated (by `mcp/sync.py`) so it can't drift into a hand-maintained second copy.
+- **MCP servers** — `pi/mcp.json` holds real `mcpServers` definitions rendered from
+  `mcp/servers.toml`, symlinked to `~/.pi/agent/mcp.json`. HTTP auth uses `bearerTokenEnv` (the
+  variable NAME), so no token is written. It previously imported Claude's registry
+  (`{"imports": ["claude-code"]}`), which made Pi's MCP depend on Claude being installed and
+  registered — and on `~/.claude.json`, the one file loadout cannot write.
+  **Pi caches its resolved server list in `~/.pi/agent/mcp-cache.json` and editing `mcp.json`
+  does not invalidate it** — a server added to `servers.toml` stays invisible to Pi until that
+  cache is deleted.
 - **Model picker** — `pi/settings.json` (symlinked to `~/.pi/agent/settings.json`) sets
   `enabledModels`, a glob allowlist (`provider/id`, minimatch, same format as Pi's `--models` flag)
   that scopes the `/model` default view and Ctrl+P cycling. It does **not** delete models from the

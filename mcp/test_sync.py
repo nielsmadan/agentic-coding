@@ -57,6 +57,7 @@ class McpSyncTests(unittest.TestCase):
                 **sync.render_claude(SERVERS),
                 **sync.render_codex(SERVERS),
                 **sync.render_opencode(SERVERS),
+                **sync.render_pi(SERVERS),
             }.items()
         }
 
@@ -69,6 +70,15 @@ class McpSyncTests(unittest.TestCase):
         )
         for name, content in rendered.items():
             self.assertNotIn("Bearer sk-", content, name)
+
+    def test_pi_renders_servers_with_an_env_var_name_for_auth(self):
+        rendered = next(iter(sync.render_pi(SERVERS).values()))
+        entries = json.loads(rendered)["mcpServers"]
+
+        self.assertEqual(entries["jina"]["url"], "https://mcp.jina.ai/v1")
+        self.assertEqual(entries["jina"]["bearerTokenEnv"], "JINA_API_KEY")
+        self.assertEqual(entries["context7"]["command"], "npx")
+        self.assertNotIn("imports", json.loads(rendered))
 
     def test_codex_output_is_valid_toml(self):
         rendered = next(iter(sync.render_codex(SERVERS).values()))

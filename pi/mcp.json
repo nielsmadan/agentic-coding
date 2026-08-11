@@ -1,5 +1,15 @@
 {
-  "imports": [
-    "claude-code"
-  ]
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    },
+    "jina": {
+      "url": "https://mcp.jina.ai/v1",
+      "bearerTokenEnv": "JINA_API_KEY"
+    }
+  }
 }
