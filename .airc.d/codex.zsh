@@ -7,3 +7,6 @@ codex-raw() { _sops_exec codex "$@"; }
 
 alias cxco="codex resume --last"
 alias cxcof="codex fork --last"
+
+alias cxco-raw="codex-raw resume --last"
+alias cxcof-raw="codex-raw fork --last"

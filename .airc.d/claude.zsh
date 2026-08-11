@@ -7,11 +7,18 @@ claude() { _agent_sandboxed claude-local claude "$@"; }
 claude-raw() { _sops_exec claude "$@"; }
 
 alias clco="claude --continue"
+alias clco-raw="claude-raw --continue"
 
 clcof() {
   local name
   name="$(command clcof)" || return
   claude --continue --fork-session --name "$name" "$@"
+}
+
+clcof-raw() {
+  local name
+  name="$(command clcof)" || return
+  claude-raw --continue --fork-session --name "$name" "$@"
 }
 
 _ccone() { claude -p "$*"; }
