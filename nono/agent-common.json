@@ -22,7 +22,8 @@
       "$HOME/.gradle/native",
       "$HOME/.gradle/jdks",
       "$HOME/.m2/repository",
-      "$HOME/.local/state/splashdown"
+      "$HOME/.local/state/splashdown",
+      "$HOME/.local/state/watchman"
     ],
     "read": [
       "/AppleInternal",
@@ -54,6 +55,9 @@
     ],
     "unix_socket_dir_bind": [
       "$HOME/.agent-browser"
+    ],
+    "unix_socket_subtree": [
+      "$HOME/.local/state/watchman"
     ]
   },
   "network": {

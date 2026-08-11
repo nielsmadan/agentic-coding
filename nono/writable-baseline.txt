@@ -17,6 +17,7 @@ $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
 $HOME/.local/state/claude/locks	profile
 $HOME/.local/state/splashdown	profile
+$HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pub-cache/_temp	profile
@@ -50,6 +51,7 @@ $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
 $HOME/.local/state/splashdown	profile
+$HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pub-cache/_temp	profile
@@ -84,6 +86,7 @@ $HOME/.local/share/opencode	profile
 $HOME/.local/share/opentui	profile
 $HOME/.local/state/opencode	profile
 $HOME/.local/state/splashdown	profile
+$HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.opencode	profile
@@ -113,6 +116,7 @@ $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
 $HOME/.local/state/splashdown	profile
+$HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pi	profile
