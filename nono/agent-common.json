@@ -22,10 +22,14 @@
       "$HOME/.gradle/daemon",
       "$HOME/.gradle/native",
       "$HOME/.gradle/jdks",
-      "$HOME/.m2/repository"
+      "$HOME/.m2/repository",
+      "$HOME/.local/state/splashdown",
+      "/private/var/tmp"
     ],
     "read": [
       "/AppleInternal",
+      "$HOME/Library/Developer/Xcode",
+      "$HOME/Library/Developer/CoreSimulator",
       "$HOME/.local/share/uv/python",
       "$HOME/.local/share/mise/installs",
       "$HOME/.agents/skills",
@@ -48,6 +52,7 @@
   "unsafe_macos_seatbelt_rules": [
     "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
-    "(allow iokit-open)"
+    "(allow iokit-open)",
+    "(allow lsopen)"
   ]
 }
