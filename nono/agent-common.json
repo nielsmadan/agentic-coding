@@ -32,23 +32,20 @@
       "$HOME/.local/share/uv/python",
       "$HOME/.local/share/mise/installs",
       "$HOME/.agents/skills",
-      "$HOME/ac"
+      "$HOME/ac",
+      "$HOME/.yarn",
+      "$HOME/.config/yarn"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",
       "$HOME/.config/gh/config.yml",
       "$HOME/.config/gh/hosts.yml",
       "$HOME/.local/state/gh/device-id",
-      {
-        "path": "$HOME/Library/Keychains/login.keychain-db",
-        "when": "macos"
-      }
+      "$HOME/.yarnrc",
+      "$HOME/.npmrc"
     ],
     "bypass_protection": [
-      {
-        "path": "$HOME/Library/Keychains/login.keychain-db",
-        "when": "macos"
-      }
+      "$HOME/.npmrc"
     ],
     "unix_socket": [
       "$HOME/.colima/default/docker.sock"
