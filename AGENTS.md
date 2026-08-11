@@ -10,7 +10,7 @@ This repository contains shared configuration for agentic coding tools. It inclu
 
 - `claude/` - Claude Code specific configuration
   - `settings.json`, `settings.autonomous.json` - **generated in full** (see Permissions below)
-  - `settings.base.json`, `settings.autonomous.base.json` - the hand-maintained half of the two files above (hooks, statusLine, model, env, `permissions.defaultMode`, ...); **edit these, not the generated `settings.json`**
+  - the hand-maintained half of the two files above lives in `loadout/settings/` (see Permissions below); **edit those, not the generated `settings.json`**
   - `mcp-permissions.json` - **generated** `PermissionRequest` hook policy
   - `CLAUDE.md`, `CLAUDE.autonomous.md` - global Claude guidance (**generated** — see Global Instructions below)
   - `skills/` - Custom skills in `<skill-name>/SKILL.md` format (a few are **generated** — see Multi-Harness Skills below)
@@ -129,11 +129,11 @@ Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, 
 | edit this | to change | which is generated into |
 |---|---|---|
 | `loadout/permissions.toml` | any shell or MCP rule, on every agent | all seven permission files |
-| `loadout/bases/settings.base.json` | hooks, statusLine, model, env, `permissions.defaultMode` | `~/.claude/settings.json` |
-| `loadout/bases/settings.autonomous.base.json` | the same, for the autonomous profile | `~/.claude/settings.json` under the autonomous profile |
+| `loadout/settings/claude.json` | hooks, statusLine, model, env, `permissions.defaultMode` — for **both** profiles | `~/.claude/settings.json` |
+| `loadout/settings/claude-afk.json` | the default profile's `env.CLAUDE_AFK_TIMEOUT_MS` only | `~/.claude/settings.json` under the default profile |
 | `loadout/bases/opencode.base.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
 
-`~/.claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `loadout/bases/settings.base.json` loses the edit at the next sync. Claude Code writing to it itself no longer gets silently merged either: `loadout sync` stops and prints the added lines so you can move them into the base.
+`~/.claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `loadout/settings/claude.json` loses the edit at the next sync. Claude Code writing to it itself no longer gets silently merged either: `loadout sync` stops and prints the added lines so you can move them into the base.
 
 To change permissions: edit the source, then run `loadout sync --global` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/reference/`, and is only needed when changing loadout itself.
 
@@ -177,10 +177,10 @@ Project-scoped MCP servers are a different mechanism: those live in a project's 
 
 ## Hooks
 
-Event-triggered shell scripts live in `claude/hooks/` and are wired in under the `hooks` key of **`claude/settings.base.json`** — not `claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
+Event-triggered shell scripts live in `claude/hooks/` and are wired in under the `hooks` key of **`loadout/settings/claude.json`** — not `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
 
 - **Make it executable (`chmod 755`).** A non-executable hook is silently skipped — the event fires as if no hook existed. Git preserves mode `100755` once set.
-- **Propagate to the autonomous profile.** The two profiles have separate base documents, so a hook added to `settings.base.json` must be added to `settings.autonomous.base.json` too. Nothing derives one from the other — that decoupling is deliberate (it is what lets the autonomous profile omit `env.CLAUDE_AFK_TIMEOUT_MS`), and the cost is that shared edits are made twice. Run `loadout sync` afterwards.
+- **Both profiles get it automatically.** They compose the same `loadout/settings/claude.json` fragment — `claude` for autonomous, `claude` + `claude-afk` for default — so a hook added there reaches both. The overlay exists only for `env.CLAUDE_AFK_TIMEOUT_MS`, which is default-only. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
 ## Sandbox (nono)
@@ -227,7 +227,7 @@ there, not five times over. The per-agent files hold only what one agent needs:
 - **`~/.claude.json.tmp.*` writes are denied** ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open).
 - **Keychain access is a single-file grant.** `~/Library/Keychains` stays denied; only `login.keychain-db` is opened, via `read_file` *plus* `bypass_protection` (the grant alone is not enough — the deny group wins without the bypass). Codex cannot reach its ChatGPT auth without it.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
-- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/bases/settings.base.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block has been relocated above the first table by hand — **check it is still there after any `nono update`**.
+- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block has been relocated above the first table by hand — **check it is still there after any `nono update`**.
 
 ## Global Instructions
 

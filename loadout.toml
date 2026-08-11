@@ -29,13 +29,13 @@ order = [
 destinations = ["~/.claude/settings.json"]
 profile      = "default"
 render       = "claude"
-base         = "loadout/bases/settings.base.json"
+settings     = ["claude", "claude-afk"]
 
 [permissions.claude-autonomous]
 destinations = ["~/.claude/settings.json"]
 profile      = "autonomous"
 render       = "claude"
-base         = "loadout/bases/settings.autonomous.base.json"
+settings     = ["claude"]
 rules        = []
 
 [permissions.claude-mcp]
