@@ -15,7 +15,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Code review workflow. Runs 9 language-agnostic aspects, plus auto-detected language reviews (`review-<lang>`) and a per-project `review-project` skill when present |
+| `/code-review` | Code review workflow. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer for routine small changes |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -65,9 +65,10 @@ Code review workflow with optional multi-model feedback.
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
+- `--quick` - One integrated review pass with no independent scorer-agent round; cannot combine with aspect flags or `--multi`
 - `--multi` - Also get a review from Codex
 
-**Example:** `/code-review src/api/ --multi`
+**Examples:** `/code-review --quick`, `/code-review src/api/ --multi`
 
 Ends with a selectable fix-scope prompt (Critical only / Critical + Should Fix / everything incl. Nice to Have / don't fix) whenever the review found anything actionable.
 

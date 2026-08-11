@@ -1,7 +1,7 @@
 ---
 name: code-review
-description: Code review workflow. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
-argument-hint: <target> [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--typescript] [--project] [--library-use] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]
+description: Code review workflow with comprehensive and quick modes. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
+argument-hint: '[target] [--quick] [--logic] [--architecture] [--security] [--performance] [--history] [--comments] [--test] [--interface] [--clean-code] [--typescript] [--project] [--library-use] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]'
 effort: xhigh
 ---
 
@@ -13,8 +13,8 @@ Review the code related to: **$ARGUMENTS**
 
 | File | Load when |
 |------|-----------|
-| `references/agents.md` | Step 3c — the per-agent briefs for Agents 1–11, plus how language / project / library-use reviews plug in. |
-| `references/scoring-and-output.md` | Steps 4, 4.5 and 5 — confidence scoring, likelihood/blast-radius triage, and the output format. |
+| `references/agents.md` | Step 3c in comprehensive mode — the per-agent briefs for Agents 1–11, plus how language / project / library-use reviews plug in. |
+| `references/scoring-and-output.md` | Steps 4, 4.5 and 5 in comprehensive mode — confidence scoring, likelihood/blast-radius triage, and the output format. |
 
 Flag parsing and scope resolution (Steps 1–3b.5) need neither.
 
@@ -22,6 +22,7 @@ Flag parsing and scope resolution (Steps 1–3b.5) need neither.
 
 ```
 /code-review                          # All 9 aspects, default scope (staged, or unstaged if nothing staged)
+/code-review --quick                  # One integrated review pass, no scorer-agent round
 /code-review <target>                 # All 9 aspects, scoped to target (overrides scope flags)
 /code-review --architecture           # Architecture only
 /code-review --security --performance # Two aspects
@@ -39,7 +40,15 @@ Flag parsing and scope resolution (Steps 1–3b.5) need neither.
 /code-review --rereview               # Re-review automatically after fixes are applied
 ```
 
-`--rereview` composes with any aspect, scope, or `--multi` selection.
+`--rereview` composes with comprehensive aspect selections, `--quick`, scope flags, or `--multi`.
+
+## Review Modes
+
+The default mode is comprehensive: run all selected perspectives independently, then independently score and triage their findings.
+
+`--quick` is an explicit low-latency preset for routine small changes. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--rereview` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
+
+`--quick` composes with a target, one scope flag, or `--rereview`. It cannot be combined with aspect flags or `--multi`; abort with `--quick is a complete review preset; remove the aspect flags or --multi.`
 
 ## Aspect Selection
 
@@ -66,8 +75,9 @@ Two further aspects are **conditional add-ons** — in the default (no-aspect-fl
 | `--library-use` | Agent 11: Library-Use Review — delegates to `review-library-use` (checks code against the repo's `library-use` conventions). Auto-included when the repo has a `library-use` reference. |
 
 **Aspect rules:**
-- No aspect flags → run all 9 core agents, **plus** any detected language review, the project review, and the library-use review if present.
+- In comprehensive mode, no aspect flags → run all 9 core agents, **plus** any detected language review, the project review, and the library-use review if present.
 - One or more aspect flags → run only those agents, skip the rest. The conditional add-ons run only if `--typescript` / `--project` / `--library-use` (or another `--<language>`) is among the flags.
+- `--quick` is a complete preset and cannot be combined with aspect flags.
 - `--multi` composes with any aspect selection.
 - The non-flag portion of `$ARGUMENTS` is the review target (e.g. `src/auth/`).
 
@@ -75,7 +85,7 @@ Agents 9–11 are the plug-and-play extension layer (add a language by creating 
 
 ## Scope Selection
 
-Scope flags determine *which files* the agents review. The resolved scope is passed through to every delegated sub-agent.
+Scope flags determine *which files* the reviewers inspect. The resolved scope is passed through to every review agent or delegated sub-skill.
 
 | Flag | Meaning |
 |------|---------|
@@ -92,8 +102,8 @@ Scope flags determine *which files* the agents review. The resolved scope is pas
 - **Target argument wins:** if a non-flag target is provided (e.g. `/code-review src/auth/`), it overrides scope flags entirely. The target is passed to all sub-agents as-is.
 
 ## Gotchas
-- The 80-point confidence threshold silently drops findings. A legitimate 75/100 security issue is filtered out with no trace.
-- Step 4.5's triage never drops anything silently — every issue routed out of the main severity sections appears in the `Improbable / Not Worth Handling` appendix with its `file:line` and a one-line reason. This is the deliberate contrast to the confidence gate above.
+- Both modes silently drop findings below the 80-point confidence threshold. Comprehensive mode uses independent scorers; quick mode trades that independent validation for a single reviewer's self-filter.
+- In comprehensive mode, Step 4.5's triage never drops anything silently — every issue routed out of the main severity sections appears in the `Improbable / Not Worth Handling` appendix with its `file:line` and a one-line reason. Quick mode omits low/medium-impact improbable findings entirely to stay concise.
 
 ## Step 1: Locate and Read Project Guidelines
 First, find and read any CLAUDE.md files in the repository root and relevant directories to understand project-specific conventions and rules.
@@ -104,13 +114,15 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 - Related tests
 - Usages/consumers of this code
 
-## Step 3: Resolve Scope and Launch Parallel Review Agents
+## Step 3: Resolve Scope and Run the Review
 
 ### 3a. Parse flags
 
-Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`, `--typescript`, `--project`, `--library-use`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
+Strip aspect flags (`--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--comments`, `--test`, `--interface`, `--clean-code`, `--typescript`, `--project`, `--library-use`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--quick`, `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
 
-If any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when `--typescript`/`--project`/`--library-use` is passed). Otherwise launch all 9 core agents plus whatever Step 3b.5 detects.
+If `--quick` appears with any aspect flag or with `--multi`, abort with `--quick is a complete review preset; remove the aspect flags or --multi.` It may compose with a target, one scope flag, and `--rereview`.
+
+In comprehensive mode, if any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when `--typescript`/`--project`/`--library-use` is passed). Otherwise launch all 9 core agents plus whatever Step 3b.5 detects. In quick mode, follow the single-reviewer branch in Step 3c.
 
 ### 3b. Resolve scope
 
@@ -142,9 +154,9 @@ This file list is passed to inline agents and is also used to build the target a
 
 ### 3b.5. Detect language & project reviews
 
-Determine which conditional add-on agents apply. Skip this entirely if explicit aspect flags were passed **and** none of them is `--typescript`/`--project`/`--library-use`/another `--<language>` — in that case the user asked for a specific subset and add-ons don't run.
+Determine which conditional add-on reviews apply. In comprehensive mode these become additional agents. In quick mode their skill/reference text becomes guidance for the single integrated reviewer. Skip this entirely if explicit aspect flags were passed **and** none of them is `--typescript`/`--project`/`--library-use`/another `--<language>` — in that case the user asked for a specific subset and add-ons don't run.
 
-**Language detection registry.** For each language below, it applies if the resolved file list matches its extensions, or (for the `all` scope / when the file list is empty) the repo root has its marker file. If it applies **and** a `review-<language>` skill is installed, include that agent.
+**Language detection registry.** For each language below, it applies if the resolved file list matches its extensions, or (for the `all` scope / when the file list is empty) the repo root has its marker file. If it applies **and** a `review-<language>` skill is installed, include that agent in comprehensive mode or record its `SKILL.md` as guidance for quick mode.
 
 | Language | File extensions | Repo marker | Skill |
 |---|---|---|---|
@@ -153,15 +165,32 @@ Determine which conditional add-on agents apply. Skip this entirely if explicit 
 
 *(To add a language: create a `review-<language>` skill and add a row here.)*
 
-**Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md` **or** `.agents/skills/review-project/SKILL.md`, include the project review agent. If neither exists, skip silently.
+**Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md` **or** `.agents/skills/review-project/SKILL.md`, include the project review agent in comprehensive mode or record its `SKILL.md` as guidance for quick mode. If neither exists, skip silently.
 
-**Library-use review detection.** If the repo has a `library-use` reference at `.claude/skills/library-use/SKILL.md` **or** `.agents/skills/library-use/SKILL.md`, include the library-use review agent (`review-library-use`). If neither exists, skip silently (suggesting `library-docs` once is fine, but don't block the review).
+**Library-use review detection.** If the repo has a `library-use` reference at `.claude/skills/library-use/SKILL.md` **or** `.agents/skills/library-use/SKILL.md`, include the `review-library-use` agent in comprehensive mode or record the reference as guidance for quick mode. If neither exists, skip silently (suggesting `library-docs` once is fine, but don't block the review).
 
 Check both paths — `.claude/skills/` is where Claude Code and `aiconf` put project skills; `.agents/skills/` is where the other harnesses discover them. In an `aiconf`-deployed project the latter is a symlink to the former, so either check finds it; a project set up outside `aiconf` may only have `.agents/skills/`.
 
-Announce what got auto-included, e.g. `Detected TypeScript — adding review-typescript`, `Found project review skill — adding review-project`, or `Found library-use reference — adding review-library-use`.
+Announce what got auto-included. In comprehensive mode, use messages such as `Detected TypeScript — adding review-typescript`. In quick mode, say `Detected TypeScript — applying review-typescript guidance in the quick review` (and likewise for project and library-use guidance).
 
-### 3c. Launch agents
+### 3c. Run the selected mode
+
+#### Quick mode (`--quick`)
+
+Do not load `references/agents.md`. Launch exactly **one read-only review agent** and give it the resolved scope or target. Use the harness's fast read-only profile or lower per-agent reasoning effort when available. It must not delegate to sub-skills or dispatch more agents.
+
+Give the reviewer this integrated brief:
+
+- Read the applicable `AGENTS.md` / `CLAUDE.md` files, the scoped diff or files, relevant callers/consumers, and related tests.
+- Review correctness, edge cases, error handling, regressions, missing or weak tests, security red flags, and interface compatibility. Flag obvious performance hazards only when directly supported by the changed path.
+- If Step 3b.5 detected language, project, or library-use guidance, read those matching `SKILL.md` files as review references and apply their checks directly. Do not invoke them as skills.
+- Return only actionable findings supported by a concrete code path. For each finding, include severity (`Critical`, `Should Fix`, or `Nice to Have`), `file:line`, what is wrong, why it matters, a concise fix, self-confidence from 0–100, likelihood (`routine`, `plausible`, `rare`, or `theoretical`), and blast radius (`low`, `medium`, or `high`). For `rare` or `theoretical`, name the reachability reason and cite any excluding guard.
+- Self-filter aggressively: omit findings below 80 confidence and omit `rare`/`theoretical` findings with low or medium blast radius. Keep rare high-blast-radius findings and tag them with the short reachability reason.
+- Return `No actionable findings.` if nothing survives.
+
+After the agent returns, deduplicate its findings and render the surviving items under `Critical Issues (Must Fix)`, `Improvements (Should Fix)`, and `Suggestions (Nice to Have)`, omitting empty sections. Explain what is wrong, why it matters, and how to fix it. Do not show self-confidence metadata and do not launch scorer agents. Then continue to Step 6.
+
+#### Comprehensive mode
 
 **Load `references/agents.md`** — it carries the brief for each of Agents 1–11.
 
@@ -201,15 +230,15 @@ Then append: "Provide a focused code review in 300 words or less covering: poten
 
 **IMPORTANT:** Do NOT proceed to Step 4 until the second-opinion results have been fully received. Wait for all background commands to complete and collect their output before continuing. This prevents completion notifications from appearing after the review summary. If an advisor is missing or errors out, continue with whichever responded — don't drop the others.
 
-## Steps 4, 4.5 and 5: Score, Triage, Format
+## Steps 4, 4.5 and 5: Score, Triage, Format (comprehensive mode only)
 
-**Load `references/scoring-and-output.md`** and follow it. In short: score every issue with independent parallel scorers (>= 80 passes), have those same scorers return likelihood + blast radius so improbable findings route to an appendix instead of the work list, then render the severity sections.
+Skip these steps in quick mode; Step 3c already produced the filtered, formatted review. In comprehensive mode, **load `references/scoring-and-output.md`** and follow it. In short: score every issue with independent parallel scorers (>= 80 passes), have those same scorers return likelihood + blast radius so improbable findings route to an appendix instead of the work list, then render the severity sections.
 
 When that reference is done, **come back here and do Step 6** — the rendered output is not the end of the run.
 
 ## Step 6: Offer to Fix
 
-**This step is mandatory and is the last thing the run does.** Rendering the review output in Step 5 is *not* the end of the workflow — do not end the turn after printing the findings. If there is at least one **Critical** or **Should Fix** finding, you MUST call the **AskUserQuestion tool** so the user picks a fix scope by selection instead of typing one out.
+**This step is mandatory.** Rendering the review output is *not* the end of the workflow — do not end the turn after printing the findings. If there is at least one **Critical** or **Should Fix** finding, you MUST call the **AskUserQuestion tool** so the user picks a fix scope by selection instead of typing one out.
 
 Build the options list from the severity tiers that actually have findings, most-inclusive first:
 
@@ -233,7 +262,7 @@ When the user selects a fix option, apply the fixes for exactly the chosen sever
 
 If `--rereview` was passed AND fixes were applied in Step 6, automatically run the review again to verify the fixes landed cleanly and didn't introduce new issues:
 
-- Re-run Steps 3–6 with the **same aspect, `--multi`, and target/scope selection** as the original run.
+- Re-run Steps 3–6 with the **same review mode, aspect, `--multi`, and target/scope selection** as the original run.
 - Review the **same file list** computed in step 3b — fixes turn staged files into unstaged edits, so re-resolving scope from scratch could miss them. Reuse the original file list directly rather than recomputing from `git diff`.
 - Announce the re-review at the start, e.g. `Re-reviewing after fixes (--rereview)`.
 - The re-review's Step 6 fix prompt runs as normal. This forms a natural loop: review → fix → re-review → fix … It terminates when the re-review surfaces no Critical/Should Fix findings (Step 6 is skipped) or the user picks "Don't fix anything".
@@ -246,6 +275,11 @@ Without `--rereview`, Step 6 ends the run after fixes are applied — the user m
 > /code-review
 
 Runs 9 parallel review agents (bug/logic, architecture, security, performance, historical context, comment quality, test quality, interface design, clean code) against staged changes (or unstaged changes if nothing is staged) and produces a prioritized list of issues grouped by severity.
+
+**Quick review of a routine small change:**
+> /code-review --quick
+
+Runs one integrated read-only reviewer against staged changes (or unstaged changes if nothing is staged). It applies detected language, project, and library-use guidance directly, self-filters to well-supported actionable findings, and skips the independent scorer-agent round.
 
 **Focused single-aspect review:**
 > /code-review --architecture
