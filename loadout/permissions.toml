@@ -271,6 +271,7 @@ ask = []
 
 allow = [
   "jina/*",
+  "context7/*",
 ]
 
 deny = []
@@ -286,8 +287,6 @@ allow = [
   "Read(~/.claude/skills/*)",
   "WebSearch",
   "WebFetch",
-  "mcp__context7__resolve-library-id",
-  "mcp__context7__query-docs",
   "Skill(code-review)",
   "Skill(debug-log)",
   "Skill(doc)",
