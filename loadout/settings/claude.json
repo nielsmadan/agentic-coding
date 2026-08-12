@@ -205,5 +205,6 @@
   "awaySummaryEnabled": false,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "skipWorkflowUsageWarning": true
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark"
 }
