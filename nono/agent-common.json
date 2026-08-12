@@ -34,7 +34,9 @@
       "$HOME/.agents/skills",
       "$HOME/ac",
       "$HOME/.yarn",
-      "$HOME/.config/yarn"
+      "$HOME/.config/yarn",
+      "$HOME/.docker/cli-plugins",
+      "$HOME/.docker/contexts"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",
@@ -42,10 +44,22 @@
       "$HOME/.config/gh/hosts.yml",
       "$HOME/.local/state/gh/device-id",
       "$HOME/.yarnrc",
-      "$HOME/.npmrc"
+      "$HOME/.npmrc",
+      {
+        "path": "$HOME/Library/Keychains/login.keychain-db",
+        "when": "macos"
+      },
+      "$HOME/.docker/config.json"
     ],
     "bypass_protection": [
-      "$HOME/.npmrc"
+      "$HOME/.npmrc",
+      {
+        "path": "$HOME/Library/Keychains/login.keychain-db",
+        "when": "macos"
+      },
+      "$HOME/.docker/config.json",
+      "$HOME/.docker/cli-plugins",
+      "$HOME/.docker/contexts"
     ],
     "unix_socket": [
       "$HOME/.colima/default/docker.sock"
@@ -55,6 +69,10 @@
     ],
     "unix_socket_subtree": [
       "$HOME/.local/state/watchman"
+    ],
+    "suppress_save_prompt": [
+      "$HOME",
+      "/home"
     ]
   },
   "network": {

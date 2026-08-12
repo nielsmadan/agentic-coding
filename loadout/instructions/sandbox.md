@@ -21,6 +21,11 @@ on the strength of that footer.
    — even when run outside a sandbox entirely, and even for paths the session can freely write.
    A bare `nono why` is never evidence that something is blocked, nor that you are sandboxed.
    `nono why --self` prints `NOT SANDBOXED` when you are not.
+
+   **`nono why` also ignores `bypass_protection`.** A path in a permanent deny group that a
+   profile re-opens with `bypass_protection` still reports `DENIED / filesystem_deny`, while the
+   sandboxed process reads it fine. If `nono why` says denied but the command works, believe the
+   command.
 2. *A tool sandboxing itself.* Seatbelt cannot nest, so any tool that calls `sandbox-exec`
    fails inside nono. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
    or an error naming a path that `nono why` says is **allowed**. The fix is to disable the
