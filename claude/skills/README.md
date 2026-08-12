@@ -15,7 +15,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/check-claude-projects` | Search past session transcripts under `~/.claude/projects` (current project + sibling checkouts) to recover prior context — e.g. a bug fixed in an earlier session you can't locate |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Code review workflow. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer for routine small changes |
+| `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 8 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -38,7 +38,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
-| `/review-comments` | Review and clean up low-quality code comments (--all, --staged, --changed) |
+| `/review-comments` | Review comments for necessity, accuracy, duplication, clarity, and concision (--all, --staged, --changed) |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
 | `/review-library-use` | Reviews code against the repo's `library-use` conventions — stale/renamed APIs, deprecated patterns, missing required setup a general reviewer misses. Auto-invoked by `code-review` when a `library-use` reference exists |
@@ -61,7 +61,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 ### /code-review
 
-Code review workflow with optional multi-model feedback.
+Clean up comments automatically, then review code with optional multi-model feedback. Comment cleanup is reported separately instead of being scored as a review finding.
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
@@ -233,13 +233,15 @@ Resolve git conflicts from any operation (merge, rebase, cherry-pick, stash, rev
 
 ### /review-comments
 
-Review code comments for quality. Ensures comments explain "why" not "what".
+Review comments in full-file context. Finds repeated rationale, stale or vague explanations, verbose "why" comments, code narration, and comments better replaced by naming or structure.
 
 **Arguments:**
 - `--all` - Entire codebase (uses parallel agents)
 - `--staged` - Git staged files
 - `--unpushed` - Files changed across all unpushed commits
 - `--changed` - Git unstaged changes
+- `<target...>` - One or more source files or directories
+- `--fix` - Apply safe comment-only removals and rewrites
 - Default: `--staged --changed` combined
 
 **Example:** `/review-comments --staged`

@@ -59,7 +59,7 @@ The citation requirement exists to stop `theoretical` from becoming a vibes-base
 
 That last row is load-bearing: rare-but-catastrophic is never suppressed, only flagged as low-frequency.
 
-**Scope:** triage applies only to the itemized findings from the internal aspect agents (Agents 1–11), matching Step 4's scope. External advisor prose from Step 3.5 is free-text, not discrete scoreable issues — leave it untouched.
+**Scope:** triage applies only to the itemized findings from the internal aspect agents (Agents 1–10), matching Step 4's scope. Comment preflight results and external advisor prose are not discrete scoreable issues — leave them untouched.
 
 **Do not push this upstream to Step 3c.** Aspect agents must not self-assess likelihood at emit time, for the same reason Step 3c already forbids them assigning confidence scores: an agent that just found an edge case is motivated to describe it as plausible rather than "will basically never happen." Emission and likelihood-judging stay separate.
 

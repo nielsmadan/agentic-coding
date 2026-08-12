@@ -42,49 +42,43 @@ Operate on the file list from step 3b.
 - Check for TODO/FIXME comments that need addressing
 - Identify code that may be stale or unused
 
-## Agent 5: Comment Quality Review (`--comments`)
-Invoke `review-comments` with the scope-translated arguments.
-- Identify "what" comments that should be "why" comments
-- Flag comments that could be replaced with better naming
-- Ensure comments add value, not noise
-
-## Agent 6: Test Quality Review (`--test`)
+## Agent 5: Test Quality Review (`--test`)
 Invoke `test --review` with the scope-translated arguments.
 - Check for missing edge cases and coverage gaps
 - Identify brittle or flaky test patterns
 - Flag over-mocking and testing implementation instead of behavior
 - Ensure tests have meaningful assertions
 
-## Agent 7: Interface Design Review (`--interface`)
+## Agent 6: Interface Design Review (`--interface`)
 Invoke `review-interfaces` with the scope-translated arguments.
 - Check for pit-of-success violations (multiple ways to do the same thing, easy to misuse)
 - Flag poor naming, inconsistent vocabulary, weak types
 - Identify over-engineered or YAGNI interfaces
 - Check encapsulation and public surface area
 
-## Agent 8: Clean Code Review (`--clean-code`)
+## Agent 7: Clean Code Review (`--clean-code`)
 Invoke `review-cleancode` with the scope-translated arguments.
 - Check SOLID principles (SRP, OCP, LSP, ISP, DIP)
 - Flag DRY violations, YAGNI, unnecessary complexity (KISS)
 - Identify code smells (god classes, long methods, feature envy, primitive obsession, shotgun surgery)
 - Check design principles (Law of Demeter, separation of concerns, composition over inheritance)
 
-## Agent 9: Language Review (`--typescript` / other `--<language>`) — conditional
+## Agent 8: Language Review (`--typescript` / other `--<language>`) — conditional
 Only if Step 3b.5 detected a language (or the flag was passed explicitly). For each applicable language, invoke its `review-<language>` skill with the scope-translated arguments.
 - TypeScript → `review-typescript`: judgment-level type design a linter can't decide — type modeling (make invalid states unrepresentable, unions of interfaces, outputs no wider than needed), inference-vs-annotation calls, and casts/`any` that compile but hide a wrong upstream type or unvalidated boundary data. Deliberately non-overlapping with typescript-eslint.
 - Swift → `review-swift`: judgment-level design a linter and the compiler can't decide — state modeling with enums and value types (make invalid states unrepresentable), optional/error/Codable modeling, concurrency isolation intent (actors, `Sendable`, state assumptions across `await`, `Task` lifetime), SwiftUI identity/lifetime/dependencies, ARC ownership, and escape hatches (`!`, `as!`, `try!`, `@unchecked Sendable`) that hide a modeling problem. Deliberately non-overlapping with SwiftLint, swift-format, and Swift 6 strict-concurrency diagnostics. Note it establishes a build-settings baseline first (language mode, default actor isolation, enabled SwiftLint rules) — isolation findings are unreviewable without it.
 
-## Agent 10: Project-Specific Review (`--project`) — conditional
+## Agent 9: Project-Specific Review (`--project`) — conditional
 Only if Step 3b.5 found a `review-project` skill in the repo (or the flag was passed explicitly). Invoke the project's `review-project` skill with the scope-translated arguments. This agent checks issues unique to this codebase that the language-agnostic and language-specific agents don't know about.
 
-## Agent 11: Library-Use Review (`--library-use`) — conditional
+## Agent 10: Library-Use Review (`--library-use`) — conditional
 Only if Step 3b.5 found a `library-use` reference in the repo (or the flag was passed explicitly). Invoke `review-library-use` with the scope-translated arguments. This agent checks the scoped code against the repo's documented, version-specific library conventions (stale/renamed APIs, deprecated patterns, missing required setup) — non-overlapping with the language-agnostic and language-specific agents.
 
 ---
 
-## The extensible layer (how 9, 10 and 11 plug in)
+## The extensible layer (how 8, 9 and 10 plug in)
 
-Language reviews and the project review sit on top of the 9 language-agnostic aspects:
+Language reviews and the project review sit on top of the 8 language-agnostic aspects:
 
 - **Language reviews** live globally in `claude/skills/review-<language>/`. They hold checks that apply to *every* project in that language. To add a new language, create a `review-<language>` skill and add a row to the detection registry in Step 3b.5 — `code-review` will auto-route to it. Nothing else to wire.
 - **The project review** is a skill the *project* defines at `.claude/skills/review-project/` for issues unique to that one codebase (conventions, gotchas, house rules that don't generalize). `code-review` calls it only when it exists — projects without one are unaffected. Minimal shape:
