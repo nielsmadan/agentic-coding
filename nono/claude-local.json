@@ -41,11 +41,6 @@
       "$NONO_PACKAGES",
       "$NONO_CONFIG/profiles",
       "$HOME/.local/share/claude"
-    ],
-    "allow_file": [
-      "$HOME/.claude.json",
-      "$HOME/.claude.json.lock",
-      "$HOME/.claude.lock"
     ]
   },
   "network": {

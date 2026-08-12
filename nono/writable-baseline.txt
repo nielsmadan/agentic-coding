@@ -7,9 +7,6 @@ $HOME/.cache/claude	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
-$HOME/.claude.json.lock	profile
-$HOME/.claude.lock	profile
-$HOME/.claude/claude.json	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.gradle/caches	profile
 $HOME/.gradle/daemon	profile
