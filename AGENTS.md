@@ -183,6 +183,32 @@ Event-triggered shell scripts live in `claude/hooks/` and are wired in under the
 - **Both profiles get it automatically.** They compose the same `loadout/settings/claude.json` fragment — `claude` for autonomous, `claude` + `claude-afk` for default — so a hook added there reaches both. The overlay exists only for `env.CLAUDE_AFK_TIMEOUT_MS`, which is default-only. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
+## GitHub tokens
+
+`gh` authenticates with read-only fine-grained PATs from the sops store — there is no
+write-capable GitHub credential on this machine, and `gh auth logout` removed the keyring one.
+Writes fail with `403 Resource not accessible by personal access token`.
+
+Fine-grained PATs are scoped to **one resource owner**, so a single token cannot cover both a
+personal account and an organisation. `GH_TOKEN` holds the `nielsmadan` token;
+`GH_TOKEN_<OWNER>` holds one per organisation (`GH_TOKEN_QUANTUMCRAFTIO` today). `bin/gh` picks
+the right one from the repo owner — read off `-R owner/repo`, a positional `owner/repo`, a
+`repos/owner/…` API path, or the origin remote of the working directory — and execs the real
+`gh`.
+
+It is wired in twice because neither mechanism covers both contexts:
+
+- **Inside the sandbox**, `_agent_sandboxed` puts `~/ac/bin` first on `PATH`, so the shim wins.
+  A shell function would not exist there at all: shell configs are in nono's permanent deny
+  group, so `~/.zshrc` never loads.
+- **In an interactive shell**, PATH order cannot win — mise re-prepends its own bin directories
+  on every prompt, leaving `~/ac/bin` far down the list. The `gh()` function in
+  `.airc.d/gh.zsh` outranks PATH entirely.
+
+Adding an organisation means adding `GH_TOKEN_<OWNER>` to sops; no code change. Note the
+`quantumcraftio` org caps fine-grained PAT lifetime at 366 days, so that token needs annual
+rotation.
+
 ## Sandbox (nono)
 
 Every agent CLI runs inside [nono](https://github.com/nolabs-ai/nono), a Seatbelt-based
