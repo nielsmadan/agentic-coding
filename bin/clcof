@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Print a fresh fork-session name for the current cwd's most recent session.
 
-Picks the most recent session for the current cwd from ~/.claude/sessions/*.json,
-strips its trailing 6-hex suffix, appends a fresh one, and prints:
+Picks the most recent transcript for the current cwd, reads its durable name,
+strips any trailing 6-hex suffix, appends a fresh one, and prints:
 
     <base>-<hex>
 
@@ -16,7 +16,6 @@ trigger a login prompt.
 """
 from __future__ import annotations
 
-import glob
 import json
 import os
 import re
@@ -25,19 +24,78 @@ from pathlib import Path
 
 
 SUFFIX_RE = re.compile(r"-[0-9a-f]{6}$")
+SLUG_MAX_LEN = 200
+NAME_KEYS = ("customTitle", "agentName", "aiTitle")
 
 
-def latest_session_name(cwd: str) -> str | None:
+def rolling_hash(value: str) -> int:
+    result = 0
+    for char in value:
+        result = (result << 5) - result + ord(char)
+        result &= 0xFFFFFFFF
+        if result >= 0x80000000:
+            result -= 0x100000000
+    return result
+
+
+def base36(value: int) -> str:
+    if value == 0:
+        return "0"
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+    result = ""
+    while value:
+        value, remainder = divmod(value, 36)
+        result = digits[remainder] + result
+    return result
+
+
+def project_slug(cwd: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
+    if len(slug) <= SLUG_MAX_LEN:
+        return slug
+    return slug[:SLUG_MAX_LEN] + "-" + base36(abs(rolling_hash(cwd)))
+
+
+def transcript_name(path: Path) -> str | None:
+    latest: dict[str, str] = {}
+    try:
+        with path.open(encoding="utf-8") as transcript:
+            for line in transcript:
+                if 'Title"' not in line and 'Name"' not in line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                for key in NAME_KEYS:
+                    value = entry.get(key)
+                    if isinstance(value, str) and value:
+                        latest[key] = value
+    except OSError:
+        return None
+    return latest.get("customTitle") or latest.get("agentName") or latest.get("aiTitle")
+
+
+def latest_transcript(cwd: str, home: Path) -> Path | None:
+    directory = home / ".claude" / "projects" / project_slug(cwd)
+    try:
+        transcripts = (path for path in directory.glob("*.jsonl") if path.is_file())
+        return max(transcripts, key=lambda path: path.stat().st_mtime, default=None)
+    except OSError:
+        return None
+
+
+def registry_name(cwd: str, home: Path, session_id: str | None = None) -> str | None:
     best_name: str | None = None
     best_updated = -1
-    pattern = str(Path.home() / ".claude" / "sessions" / "*.json")
-    for path in glob.iglob(pattern):
+    for path in (home / ".claude" / "sessions").glob("*.json"):
         try:
-            with open(path) as f:
-                data = json.load(f)
+            data = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError):
             continue
         if data.get("cwd") != cwd:
+            continue
+        if session_id is not None and data.get("sessionId") != session_id:
             continue
         updated = data.get("updatedAt")
         if not isinstance(updated, (int, float)):
@@ -46,6 +104,14 @@ def latest_session_name(cwd: str) -> str | None:
             best_updated = updated
             best_name = data.get("name") or None
     return best_name
+
+
+def latest_session_name(cwd: str, home: Path | None = None) -> str | None:
+    home = home or Path.home()
+    transcript = latest_transcript(cwd, home)
+    if transcript is not None:
+        return transcript_name(transcript) or registry_name(cwd, home, transcript.stem)
+    return registry_name(cwd, home)
 
 
 def main() -> int:
