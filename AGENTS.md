@@ -234,6 +234,11 @@ two parents — the vendor pack and our shared overlay:
 **Pull the packs first** (`nono pull nolabs-ai/{claude,codex,opencode,pi}`); without
 the pack the profile is inert. Multi-parent `extends` unions the grants of both.
 
+`nono/agent-private.json` is the escape hatch for grants that should not be in this **public**
+repo — client or employer paths, anything identifying. It is gitignored, every `<agent>-local`
+profile extends it, and `sync.sh` creates an empty one when absent so a fresh clone still works.
+Put machine-specific grants there, not in `agent-common.json`.
+
 `nono/agent-common.json` holds everything the four share: `~/wrksp` read+write, read on `~/ac`
 (the agents' own config lives there behind symlinks), mise installs, the colima docker socket, the
 agent-browser socket directory, and the Chrome-for-testing Seatbelt rules. Change a shared grant

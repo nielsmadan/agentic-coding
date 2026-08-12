@@ -1,3 +1,7 @@
 {
-  "extends": ["nolabs-ai/codex", "agent-common"]
+  "extends": [
+    "nolabs-ai/codex",
+    "agent-common",
+    "agent-private"
+  ]
 }

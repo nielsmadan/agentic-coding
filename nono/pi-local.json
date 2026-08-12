@@ -1,3 +1,7 @@
 {
-  "extends": ["nolabs-ai/pi", "agent-common"]
+  "extends": [
+    "nolabs-ai/pi",
+    "agent-common",
+    "agent-private"
+  ]
 }

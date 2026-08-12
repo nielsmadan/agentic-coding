@@ -14,3 +14,6 @@ claude/skills/use-railway
 # Python
 __pycache__/
 *.py[cod]
+
+# Machine-specific nono grants (client names, private paths) — see AGENTS.md
+nono/agent-private.json

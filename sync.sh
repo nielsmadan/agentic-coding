@@ -73,6 +73,7 @@ SYMLINKS=(
   # must be pulled first (`nono pull nolabs-ai/<agent>`) — without the pack the
   # profile is inert. agent-common carries the grants they all share.
   "$SCRIPT_DIR/nono/agent-common.json:$HOME/.config/nono/profiles/agent-common.json"
+  "$SCRIPT_DIR/nono/agent-private.json:$HOME/.config/nono/profiles/agent-private.json"
   "$SCRIPT_DIR/nono/claude-local.json:$HOME/.config/nono/profiles/claude-local.json"
   "$SCRIPT_DIR/nono/codex-local.json:$HOME/.config/nono/profiles/codex-local.json"
   "$SCRIPT_DIR/nono/opencode-local.json:$HOME/.config/nono/profiles/opencode-local.json"
@@ -110,6 +111,16 @@ CODEX_SKILLS=(
   review-security review-swift review-typescript research-general research-tech second-opinion skill-creator
   squash-commits temp test
 )
+
+# agent-private.json holds machine-specific grants (client names, private paths)
+# and is gitignored, so a fresh clone has none. Every <agent>-local profile
+# extends it, so it must exist — create an empty one rather than fail.
+seed_private_profile() {
+  local target="$SCRIPT_DIR/nono/agent-private.json"
+  [[ -f "$target" ]] && return
+  printf '%s\n' '{' '  "meta": { "name": "agent-private" },' '  "filesystem": {}' '}' > "$target"
+  echo "✓  Created empty $target (gitignored; add machine-specific grants here)"
+}
 
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
 # (a symlink holds no data); a real file/dir where a link belongs → back it up
@@ -371,6 +382,8 @@ echo ""
 
 sync_codex_config
 echo ""
+seed_private_profile
+
 
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"
