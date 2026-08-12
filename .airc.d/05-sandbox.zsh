@@ -19,6 +19,7 @@ _agent_sandboxed() {
   shift 2
   if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
     PATH="$HOME/ac/bin:$PATH" \
+    AGENT_SANDBOX=1 \
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
     OTHER_SWIFT_FLAGS='$(inherited) -disable-sandbox' \
     AGENT_BROWSER_ARGS=--no-sandbox \
