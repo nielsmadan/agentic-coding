@@ -103,7 +103,7 @@ RETIRED_LINKS=(
 # Skills shared with Codex (subset of claude/skills/). A name with a real dir
 # in codex/skills/ uses that override; otherwise it links from claude/skills/.
 CODEX_SKILLS=(
-  check-claude-projects check-notes commit
+  check-agent-logs check-notes commit
   code-review debug-log deslop doc evaluate-tech explain guide ideation
   library-docs nono-sandbox pdf
   perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments

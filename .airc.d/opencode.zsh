@@ -1,6 +1,6 @@
 # OpenCode aliases
 # No -raw variant: opencode is never run outside the sandbox.
-opencode() { _agent_sandboxed opencode-local opencode "$@"; }
+opencode() { AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "$@"; }
 
 alias oc="opencode"
 alias ocs="opencode -m openrouter/meta/muse-spark-1.2"

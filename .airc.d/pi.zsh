@@ -1,5 +1,5 @@
 # No -raw variant: pi is never run outside the sandbox.
-pi() { _agent_sandboxed pi-local pi "$@"; }
+pi() { AGENT_HARNESS=pi _agent_sandboxed pi-local pi "$@"; }
 
 alias pico="pi --continue"
 

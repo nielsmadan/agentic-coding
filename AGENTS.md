@@ -469,7 +469,7 @@ When the user's prompt mentions `.pdf` files or asks to work with PDFs (merge, s
 
 When the user's prompt contains "review logs", "session analysis", or "failure patterns", automatically invoke the `/review-logs` skill to analyze session transcripts.
 
-When the user's prompt contains "look through claude projects", "check claude projects", "search past sessions", "search past transcripts", or "find the session where", or otherwise asks to recover context from a previous session whose location is unknown ("we fixed/discussed this before", "which checkout was that in"), automatically invoke the `/check-claude-projects` skill to search `~/.claude/projects`.
+When the user's prompt contains "check agent logs", "look through claude projects", "check claude projects", "search past sessions", "search past transcripts", or "find the session where", or otherwise asks to recover context from a previous session whose agent or location is unknown ("we fixed/discussed this before", "which checkout was that in"), automatically invoke the `/check-agent-logs` skill to search Claude Code, Codex, OpenCode, and Pi logs.
 
 When the user's prompt contains "pre-existing", "preexisting", "already broken", or "flaky test", or when you are about to label a test/lint/type/build/CI failure as pre-existing, unrelated, or not your fault, automatically invoke the `/pre-existing` skill before stopping.
 

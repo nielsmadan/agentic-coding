@@ -2,8 +2,8 @@
 # inside nono, `workspace-write` fails every command with
 # `sandbox-exec: sandbox_apply: Operation not permitted`. Overridden per
 # invocation rather than in config.toml so codex-raw keeps its own sandbox.
-codex() { _agent_sandboxed codex-local codex -c sandbox_mode='"danger-full-access"' "$@"; }
-codex-raw() { _sops_exec codex "$@"; }
+codex() { AGENT_HARNESS=codex _agent_sandboxed codex-local codex -c sandbox_mode='"danger-full-access"' "$@"; }
+codex-raw() { AGENT_HARNESS=codex _sops_exec codex "$@"; }
 
 alias cxco="codex resume --last"
 alias cxcof="codex fork --last"

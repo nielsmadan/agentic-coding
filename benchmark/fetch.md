@@ -26,7 +26,7 @@ v1 only ran A vs B and presented it as a verdict on Jina. That was the main flaw
 ## Choosing URLs
 
 Derive them from actual usage, not from intuition. Parse `~/.claude/projects` **and**
-`~/.local/share/ringleader/archive` (see `check-claude-projects`; the archive holds
+`~/.local/share/ringleader/archive` (see `check-agent-logs`; the archive holds
 more transcripts than the live dir and archiving *moves* files, so a live-only scan
 silently under-reports by ~40%).
 

@@ -1,10 +1,10 @@
 # Claude Code aliases
 
-claude() { _agent_sandboxed claude-local claude "$@"; }
+claude() { AGENT_HARNESS=claude _agent_sandboxed claude-local claude "$@"; }
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.
-claude-raw() { _sops_exec claude "$@"; }
+claude-raw() { AGENT_HARNESS=claude _sops_exec claude "$@"; }
 
 alias clco="claude --continue"
 alias clco-raw="claude-raw --continue"
@@ -43,6 +43,7 @@ CLAUDE_CODE_SUBAGENT_MODEL='deepseek/deepseek-v4-flash-0731[1m]' \
 CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 \
 CLAUDE_CODE_EFFORT_LEVEL=$(printf '%q' "$effort") \
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+AGENT_HARNESS=claude \
 DOCKER_HOST=unix://$HOME/.colima/default/docker.sock \
 nono run -p claude-local -- claude --model $(printf '%q' "$start") --permission-mode acceptEdits $(printf '%q ' "$@")"
 }
