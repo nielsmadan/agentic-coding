@@ -24,6 +24,7 @@ SOURCE = REPO_ROOT / "codex" / "config.toml"
 PERMISSIONS_SOURCE = REPO_ROOT / "codex" / "mcp-permissions.toml"
 DEFAULT_TARGET = Path.home() / ".codex" / "config.toml"
 MANAGED_COMMENT = "# Managed by codex/config.toml via sync.sh."
+INSTRUCTIONS_SOURCE = REPO_ROOT / "codex" / "developer-instructions.md"
 TABLE_HEADER = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
 
 
@@ -135,13 +136,43 @@ def strip_owned_tables(content: str, roots: tuple[str, ...]) -> str:
     return "\n".join(kept)
 
 
+DEVELOPER_INSTRUCTIONS = re.compile(
+    r'^developer_instructions\s*=\s*""".*?"""\n*', re.MULTILINE | re.DOTALL
+)
+
+
+def set_developer_instructions(content: str) -> str:
+    """Own the top-level `developer_instructions` key.
+
+    The nono codex pack injects its own copy, which tells the agent to treat any
+    `Operation not permitted` as a sandbox boundary and offer `nono run --allow`.
+    That produced repeated false denial reports, so ours replaces it — and a
+    `nono update` puts the pack's back, which this undoes on the next sync.
+
+    The key must sit above the first table header or TOML reads it as a member of
+    the preceding table.
+    """
+    if not INSTRUCTIONS_SOURCE.exists():
+        return content
+
+    body = INSTRUCTIONS_SOURCE.read_text().strip()
+    block = f'developer_instructions = """\n{body}\n"""'
+
+    content = DEVELOPER_INSTRUCTIONS.sub("", content)
+    lines = content.splitlines()
+    for index, line in enumerate(lines):
+        if table_path(line) is not None:
+            return "\n".join(lines[:index] + [block] + lines[index:]) + "\n"
+    return content.rstrip() + "\n\n" + block
+
+
 def render(current: str, source: str) -> str:
     tomllib.loads(source)
     roots = managed_roots(source)
     unmanaged = strip_owned_tables(current, roots)
     managed = source.strip()
     blocks = [block for block in (unmanaged, MANAGED_COMMENT, managed) if block]
-    result = "\n\n".join(blocks) + "\n"
+    result = set_developer_instructions("\n\n".join(blocks) + "\n")
     tomllib.loads(result)
     return result
 
