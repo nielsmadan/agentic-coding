@@ -1,6 +1,3 @@
 {
-  "extends": ["nolabs-ai/pi", "agent-common"],
-  "filesystem": {
-    "read_file": ["$HOME/.claude.json"]
-  }
+  "extends": ["nolabs-ai/pi", "agent-common"]
 }

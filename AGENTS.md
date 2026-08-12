@@ -167,7 +167,7 @@ Which MCP servers **exist** machine-wide is generated from a single source of tr
 
 A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
 
-**Claude Code is the exception to the symlink pattern.** `~/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
+**Claude Code is the exception to the symlink pattern.** `$CLAUDE_CONFIG_DIR/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
 
 **Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields).
 
@@ -216,7 +216,6 @@ there, not five times over. The per-agent files hold only what one agent needs:
 | profile | extra grant | why |
 |---|---|---|
 | `claude-local` | read `~/.local/share/claude` | |
-| `pi-local` | read-file `~/.claude.json` | `pi-mcp-adapter` resolves its `claude-code` MCP import by reading Claude's store directly |
 | `opencode-local` | read-file `~/.claude/CLAUDE.md`, read `~/.claude/skills` | opencode falls back to Claude's global rules and skills |
 
 ### Gotchas
@@ -224,7 +223,7 @@ there, not five times over. The per-agent files hold only what one agent needs:
 - **`filesystem.deny` does not override an inherited group allow** ([nono#727](https://github.com/nolabs-ai/nono/issues/727)) — nothing can be *subtracted* from a base profile, only added.
 - **Seatbelt sandboxes cannot nest**, so anything that sandboxes itself must be told not to — Chrome needs `--no-sandbox` under `agent-browser`.
 - **`DOCKER_HOST` must be set explicitly** (the wrapper does it): `~/.docker/config.json` is in nono's permanent deny group, so docker cannot read its context and falls back to a socket colima never creates.
-- **`~/.claude.json.tmp.*` writes are denied** ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open).
+- **`~/.claude.json` lives inside `~/.claude`, not `$HOME`.** `.airc.d/10-env.zsh` exports `CLAUDE_CONFIG_DIR=$HOME/.claude`, which relocates that file into the directory Claude already owns. Claude writes it by creating `.claude.json.tmp.<random>` and renaming; a random suffix in `$HOME` matches no grant, so the write was denied ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open). Inside `~/.claude` the directory grant covers it. The variable is exported globally rather than in the sandbox wrapper so `claude` and `claude-raw` share one store — anything launching Claude Code outside the shell will not see it and will read the old path.
 - **No agent has keychain access, and none needs it.** `~/Library/Keychains` is denied to all four profiles; Claude and Codex both authenticate with it fully denied (their credentials are not keychain-backed here). `claude-local` reproduces the `nolabs-ai/claude` policy rather than extending it, precisely to drop that pack's directory-wide read+write grant.
 - **`deny_credentials` paths need `bypass_protection`, not just a grant.** `~/.npmrc` and `~/.netrc` sit in nono's permanent deny group: a `read_file` entry alone still yields `filesystem_deny`, and only adding the path to `bypass_protection` opens it. `~/.npmrc` is granted that way — its registry token was already expired; a live one would want this revisited, and `~/.npmrc` carries a comment saying so.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
