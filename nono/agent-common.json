@@ -36,7 +36,11 @@
       "$HOME/.yarn",
       "$HOME/.config/yarn",
       "$HOME/.docker/cli-plugins",
-      "$HOME/.docker/contexts"
+      "$HOME/.docker/contexts",
+      "$HOME/.claude/projects",
+      "$HOME/.local/share/ringleader/archive",
+      "$HOME/.codex/sessions",
+      "$HOME/.pi/agent/sessions"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",
@@ -49,7 +53,10 @@
         "path": "$HOME/Library/Keychains/login.keychain-db",
         "when": "macos"
       },
-      "$HOME/.docker/config.json"
+      "$HOME/.docker/config.json",
+      "$HOME/.local/share/opencode/opencode.db",
+      "$HOME/.local/share/opencode/opencode.db-wal",
+      "$HOME/.local/share/opencode/opencode.db-shm"
     ],
     "bypass_protection": [
       "$HOME/.npmrc",
