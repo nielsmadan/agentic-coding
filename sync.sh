@@ -11,6 +11,7 @@
 #     agents read (loadout owns those; nothing is staged in this repo first)
 #   - apply the remaining symlinks (skip-if-correct; back up a real file, never
 #     clobber) for the files other generators still stage here
+#   - make installed Codex Superpowers skills explicit-invocation only
 #   - relink the Codex/Pi skill subset and Pi permission policy
 #
 # Usage: ./sync.sh [--autonomous | --normal]
@@ -300,6 +301,22 @@ sync_codex_config() {
   python3 "$script"
 }
 
+sync_codex_superpowers() {
+  local script="$SCRIPT_DIR/codex/sync_superpowers.py"
+
+  if [[ ! -f "$script" ]]; then
+    echo "⚠️  Codex Superpowers sync not found: $script (skipping)"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping Codex Superpowers policy sync"
+    return
+  fi
+
+  echo "Making Codex Superpowers skills explicit-invocation only..."
+  python3 "$script"
+}
+
 install_codex_skills() {
   local dest_dir="$HOME/.agents/skills"
   local claude_src="$SCRIPT_DIR/claude/skills"
@@ -381,6 +398,8 @@ generate_loadout
 echo ""
 
 sync_codex_config
+echo ""
+sync_codex_superpowers
 echo ""
 seed_private_profile
 
