@@ -216,7 +216,12 @@ capability sandbox. The shell wrappers in `.airc.d/` do this transparently — `
 `opencode` and `pi` are zsh functions that call `_agent_sandboxed` (`.airc.d/05-sandbox.zsh`),
 which wraps the real binary in `nono run -p <agent>-local` *inside* `_sops_exec`. Each has a
 `<name>-raw` escape hatch that keeps the secret injection but drops the sandbox; use it for
-`loadout sync`, work in `~/ac` / `~/rc`, and anything that must write outside `~/wrksp`.
+`loadout sync` and anything that must write outside `~/wrksp`.
+
+**`claude` and `codex` route to `-raw` automatically inside `~/ac` and `~/rc`** (the
+`AGENT_RAW_DIRS` check in `.airc.d/05-sandbox.zsh`), since work in those repos writes outside
+`~/wrksp` by definition. They announce the switch on stderr; `AGENT_FORCE_SANDBOX=1` overrides
+it. `pi` and `opencode` have no raw variant and always sandbox.
 
 **`~/rc/.zshrc` must not define these four functions.** It sources `~/.airc` first, so a wrapper
 there silently overrides the sandboxed one and the sandbox quietly stops applying. It still owns

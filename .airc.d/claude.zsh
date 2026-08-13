@@ -1,6 +1,13 @@
 # Claude Code aliases
 
-claude() { AGENT_HARNESS=claude _agent_sandboxed claude-local claude "$@"; }
+claude() {
+  if _agent_raw_dir; then
+    print -u2 -r -- "claude: unsandboxed (${PWD:A})"
+    claude-raw "$@"
+    return
+  fi
+  AGENT_HARNESS=claude _agent_sandboxed claude-local claude "$@"
+}
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.

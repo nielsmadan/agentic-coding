@@ -14,6 +14,27 @@
 # needs -IDEPackageSupportDisableManifestSandbox=1 and
 # -IDEPackageSupportDisablePluginExecutionSandbox=1, which are NSUserDefaults and
 # cannot come from the environment.
+#
+# DISABLE_AUTOUPDATER keeps Claude Code from nagging about an update it cannot
+# install: ~/.local/share/claude and the ~/.local/bin/claude symlink are read-only
+# here on purpose, since claude-raw executes whatever that symlink resolves to.
+# claude-raw picks the update up instead.
+# Working in these repos means writing outside ~/wrksp (loadout sync, these
+# wrappers themselves), which the sandbox exists to prevent — so claude and codex
+# route to their -raw variant here. AGENT_FORCE_SANDBOX=1 overrides. pi and
+# opencode have no raw variant and are unaffected.
+AGENT_RAW_DIRS=("$HOME/ac" "$HOME/rc")
+
+_agent_raw_dir() {
+  [[ -n $AGENT_FORCE_SANDBOX ]] && return 1
+  local dir here=${PWD:A}
+  for dir in "${AGENT_RAW_DIRS[@]}"; do
+    dir=${dir:A}
+    [[ $here == $dir || $here == $dir/* ]] && return 0
+  done
+  return 1
+}
+
 _agent_sandboxed() {
   local profile=$1 cmd=$2
   shift 2
@@ -23,6 +44,7 @@ _agent_sandboxed() {
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
     OTHER_SWIFT_FLAGS='$(inherited) -disable-sandbox' \
     AGENT_BROWSER_ARGS=--no-sandbox \
+    DISABLE_AUTOUPDATER=1 \
       _sops_exec nono run -p "$profile" -- "$cmd" "$@"
   else
     _sops_exec "$cmd" "$@"
