@@ -24,6 +24,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
+| `/huh` | Explain the previous assistant reply, or supplied text, in more detail with selectively relevant context |
 | `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
 | `/improve-agent-instructions` | Audit and improve the always-loaded instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) — scores gotcha density, derivable/duplicated content, progressive disclosure, and conflicting rules; proposes removals as well as additions |
 | `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
