@@ -151,5 +151,3 @@ State confidence, and name anything that stayed unknown. "Could not determine wh
 **Candidates are not comparable** — They solve different-sized problems. Return to Step 1: the job statement was too loose. Re-scope and re-enumerate.
 
 **The user pushes back on a hard constraint** — They are usually right; they know the system. Move it to soft, re-run Step 4, and note that the candidate pool changed.
-
-**`npm view` returns nothing or stale data** — `~/.npmrc` on this machine points at a corporate Artifactory mirror. Append `--registry=https://registry.npmjs.org`.

@@ -125,5 +125,3 @@ Add to core:
 | pub.dev | `curl -s https://pub.dev/api/packages/{pkg}` — `latest.version`, `latest.published` |
 | crates.io | `curl -s -H "User-Agent: eval" https://crates.io/api/v1/crates/{name}` — `crate.updated_at`, `crate.downloads`, `crate.recent_downloads` |
 | Go | `curl -s https://proxy.golang.org/{module}/@latest` |
-
-**npm gotcha on this machine:** `~/.npmrc` points at a corporate Artifactory mirror. Mirrors lag and can omit packages. Add `--registry=https://registry.npmjs.org` to any `npm view` used for evaluation.
