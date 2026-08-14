@@ -2,64 +2,32 @@
 name = "ac"
 path = "loadout"
 
-[instructions.claude]
-destinations = ["~/.claude/CLAUDE.md"]
-profile      = "default"
-order = [
+# Destinations and renderers come from loadout's agent preset, which carries each
+# harness's config-directory variable — so no machine path is named here.
+# `permissions` and `mcp` render without being asked for; `instructions` needs an
+# order and `settings` names an input, so both are stated.
+
+[claude]
+settings = ["claude", "claude-afk"]
+instructions = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
     "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
-[instructions.claude-autonomous]
-destinations = ["~/.claude/CLAUDE.md"]
-profile      = "autonomous"
-order = [
-    "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "sandbox", "agent-dispatch.autonomous", "git-policy.autonomous", "git-commit-policy", "working-style",
-]
-
-[instructions.shared]
-destinations = ["~/.codex/AGENTS.md", "~/.pi/agent/AGENTS.md"]
-order = [
+[codex]
+instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
     "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
 ]
 
-[permissions.claude]
-destinations = ["~/.claude/settings.json"]
-profile      = "default"
-render       = "claude"
-settings     = ["claude", "claude-afk"]
-
-[permissions.claude-autonomous]
-destinations = ["~/.claude/settings.json"]
-profile      = "autonomous"
-render       = "claude"
-settings     = ["claude"]
-rules        = []
-
-[permissions.claude-mcp]
-destinations = ["~/.claude/mcp-permissions.json"]
-render       = "claude-mcp"
-
-[permissions.codex]
-destinations = ["~/.codex/rules/permissions.rules"]
-render       = "codex"
-
-# No destination: codex/sync_config.py reads this staged file and merges it into
-# ~/.codex/config.toml, which holds hand-maintained keys loadout does not own.
-[permissions.codex-mcp]
-output = "codex/mcp-permissions.toml"
-render = "codex-mcp"
-
 # mcp/sync.py co-owns this document's `mcp` key and writes the same destination;
 # `preserve` reads that key back out of the destination before overwriting.
-[permissions.opencode]
-destinations = ["~/.config/opencode/opencode.json"]
-render       = "opencode"
-base         = "loadout/bases/opencode.base.json"
-preserve     = ["mcp"]
+[opencode]
+settings = "opencode"
+preserve = ["mcp"]
 
-[permissions.pi]
-destinations = ["~/.pi/agent/extensions/pi-permission-system/config.json"]
-render       = "pi"
+[pi]
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
+    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+]
