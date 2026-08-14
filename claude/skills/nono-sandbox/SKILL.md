@@ -36,9 +36,9 @@ from a shell that is not sandboxed at all. A bare `nono why` is never evidence.
 
 Two ways `nono why` still misleads you:
 
-- **It ignores `bypass_protection`.** Paths in a permanent deny group that a profile re-opens
-  (the keychain, `~/.npmrc`, `~/.netrc`) report `DENIED / filesystem_deny` while the sandboxed
-  process reads them fine. If it says denied but the command works, believe the command.
+- **It misreports grants inside the built-in keychain protection.** A `read_file` grant on a
+  path under `~/Library/Keychains` is honored by the sandbox while `nono why` reports
+  `DENIED / filesystem_deny`. If it says denied but the command works, believe the command.
 - **It resolves real paths.** A path that does not exist yet reports `path_not_granted` even
   when its parent directory is granted.
 

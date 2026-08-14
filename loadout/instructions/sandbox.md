@@ -22,9 +22,9 @@ on the strength of that footer.
    A bare `nono why` is never evidence that something is blocked, nor that you are sandboxed.
    `nono why --self` prints `NOT SANDBOXED` when you are not.
 
-   **`nono why` also ignores `bypass_protection`.** A path in a permanent deny group that a
-   profile re-opens with `bypass_protection` still reports `DENIED / filesystem_deny`, while the
-   sandboxed process reads it fine. If `nono why` says denied but the command works, believe the
+   **`nono why` can also disagree with the sandbox outright.** A `read_file` grant on a path
+   under `~/Library/Keychains` is honored at runtime while `nono why` still reports
+   `DENIED / filesystem_deny`. If `nono why` says denied but the command works, believe the
    command.
 2. *A tool sandboxing itself.* Seatbelt cannot nest, so any tool that calls `sandbox-exec`
    fails inside nono. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
