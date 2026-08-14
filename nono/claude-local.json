@@ -32,7 +32,6 @@
   },
   "filesystem": {
     "allow": [
-      "$HOME/.claude",
       "$HOME/.local/state/claude/locks",
       "$HOME/.cache/claude",
       "$NONO_CONFIG/profile-drafts",
@@ -40,8 +39,7 @@
     ],
     "read": [
       "$NONO_PACKAGES",
-      "$NONO_CONFIG/profiles",
-      "$HOME/.local/share/claude"
+      "$NONO_CONFIG/profiles"
     ]
   },
   "network": {
