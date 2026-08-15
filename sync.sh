@@ -109,7 +109,7 @@ CODEX_SKILLS=(
   library-docs nono-sandbox pdf
   perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments
   review-history review-interfaces review-library-use review-perf review-plan review-product
-  review-security review-swift review-typescript research-general research-tech second-opinion skill-creator
+  review-security review-swift review-todo review-typescript research-general research-tech second-opinion skill-creator
   squash-commits temp test
 )
 
