@@ -60,10 +60,11 @@ into it and preserves all other user and Codex-managed settings.
 ## Skills
 
 Skills are reusable `/<name>` workflows — code review, research, debugging,
-documentation, security audits, and more. There are ~38 of them under
-`claude/skills/`; invoke one with `/<skill-name>` plus any arguments.
+documentation, security audits, and more. There are 50 of them under
+`loadout/skills/`; invoke one with `/<skill-name>` plus any arguments. loadout
+renders every one to Claude, Codex, OpenCode and Pi.
 
-- **Full catalog:** [`claude/skills/README.md`](claude/skills/README.md) — every
+- **Full catalog:** [`loadout/skills/README.md`](loadout/skills/README.md) — every
   skill with arguments and examples. There's also a summary table in
   [`AGENTS.md`](AGENTS.md#skills).
 - **Codex** gets a curated subset (see `CODEX_SKILLS` in `sync.sh`), shared
@@ -133,5 +134,5 @@ entries).
 
 - [`AGENTS.md`](AGENTS.md) — project instructions, policies, and detailed
   subsystem docs
-- [`claude/skills/README.md`](claude/skills/README.md) — full skill catalog
+- [`loadout/skills/README.md`](loadout/skills/README.md) — full skill catalog
 - [`templates/`](templates/) — per-project-type config and skills

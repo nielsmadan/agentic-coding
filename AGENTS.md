@@ -17,7 +17,6 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
-  - `skills/` - Codex-specific overrides; `install.sh` syncs the curated subset of `claude/skills/` to `~/.agents/skills/`
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
@@ -59,10 +58,14 @@ Add a new CLI command with flags, validation, or non-trivial logic: write it as 
 
 ## Skills
 
-Global skills live in `claude/skills/<name>/SKILL.md`; every harness surfaces the
+Global skills live in `loadout/skills/<name>/`; every harness surfaces the
 available ones with their descriptions, so this file does not restate them. The
 human-facing catalog (arguments, examples) is
-[`claude/skills/README.md`](claude/skills/README.md).
+[`loadout/skills/README.md`](loadout/skills/README.md).
+
+loadout renders each skill to all four harnesses — `~/.claude/skills/`,
+`~/.codex/skills/`, `~/.config/opencode/skills/` and `~/.pi/agent/skills/`. Those
+are generated directories: edit the source, never the output.
 
 What follows is the part that is *not* discoverable from the skill list itself.
 
@@ -71,38 +74,64 @@ What follows is the part that is *not* discoverable from the skill list itself.
 `code-review` first runs `review-comments --fix` as an unscored cleanup preflight. The review then layers four tiers of checks:
 
 1. **8 language-agnostic aspects** — the default comprehensive set (logic, architecture, security, …); explicit aspect flags select a subset.
-2. **Language reviews** — global skills named `review-<language>` in `claude/skills/`. Auto-invoked when `code-review` detects that language in the scoped files. `review-typescript` and `review-swift` are the current ones. Add a new language by creating `review-<language>/SKILL.md` and adding a row to the detection registry in `code-review`'s Step 3b.5.
+2. **Language reviews** — global skills named `review-<language>` in `loadout/skills/`. Auto-invoked when `code-review` detects that language in the scoped files. `review-typescript` and `review-swift` are the current ones. Add a new language by creating `review-<language>/SKILL.md` and adding a row to the detection registry in `code-review`'s Step 3b.5.
 3. **Project review** — an *individual project* can define `.claude/skills/review-project/SKILL.md` for checks unique to that codebase. `code-review` calls it only when it exists; projects without one are unaffected. The minimal shape is documented in `code-review`'s "Language & project reviews" section.
 4. **Library-use review** — global `review-library-use` checks code against a per-repo `library-use` reference (docs-derived, version-specific correct-usage conventions). Auto-invoked when the repo has `.claude/skills/library-use/SKILL.md`, which the global `library-docs` skill generates and refreshes. Trio: `library-docs` (build/refresh) → `library-use` (per-repo reference) → `review-library-use` (audit).
 
 ### Adding a skill
 
-Drop the skill at `claude/skills/<name>/SKILL.md` — the `claude/skills` → `~/.claude/skills` directory symlink exposes it to Claude Code automatically. Two manual hookups make it available everywhere else:
+Drop the skill at `loadout/skills/<name>/SKILL.md` and run `loadout sync --global`.
+The directory *is* the declaration — there is no list to add it to, and it reaches
+all four harnesses.
 
-1. Add `<name>` to the `CODEX_SKILLS` array in `sync.sh` (this is what creates the `~/.agents/skills/<name>` symlink Codex and Pi read). Skip this for project-only skills under `templates/<type>/skills/`, and for Claude-only skills that rely on Claude-Code-specific mechanics (e.g. `plan`, which pins a subagent to Fable).
-2. Add an entry to [`claude/skills/README.md`](claude/skills/README.md) (the human-facing catalog — agents read the skill's own `description:` field, so that frontmatter is what actually needs to be good).
+One optional hookup: add an entry to
+[`loadout/skills/README.md`](loadout/skills/README.md) (the human-facing catalog —
+agents read the skill's own `description:` field, so that frontmatter is what
+actually needs to be good).
 
-Then run `./sync.sh` to create the Codex symlink (non-interactive; also run by `install.sh`).
+Supporting files (`references/`, `scripts/`) are copied byte-for-byte with their
+mode preserved, so an executable script stays executable. `__pycache__` and other
+build artifacts are skipped.
 
 ### Multi-harness skills
 
-A skill whose text must differ per harness is generated from a template in `skills/`, the same
-generate-and-check pattern used for permissions and global instructions. `second-opinion` is the
-case that motivated it: each harness consults the *other* agents, so the advisor list, CLI
-invocations, and per-CLI gotchas differ, while the surrounding workflow is identical.
+A skill whose text must differ per harness marks the differing parts inline. Two
+skills do today, for different reasons.
 
-Source: `skills/<name>.template.md` (shared body with `{{PLACEHOLDER}}` slots) plus the per-target
-replacement tables in `skills/sync.py`. Targets:
+`second-opinion` is the case that motivated the mechanism: each harness consults
+the *other* agents, so the advisor list and CLI invocations differ while the
+surrounding workflow is identical. `nono-sandbox` is the other: OpenCode carries a
+substantially longer version, so the two documents are wrapped whole.
 
-- `claude/skills/second-opinion/SKILL.md` — advisors are Codex + OpenCode/GLM
-- `codex/skills/second-opinion/SKILL.md` — advisors are Claude + OpenCode/GLM; this is the real
-  directory that `install_codex_skills` prefers over `claude/skills/<name>` when linking
-  `~/.agents/skills/<name>`, so both Codex and Pi get the Claude-consulting
-  variant
+Marked sections wrap whole blocks:
 
-**Never hand-edit the generated `SKILL.md` files** — a lefthook pre-commit hook
-(`skills/sync.py --check`) rejects any drift. Edit the template or `sync.py`, then run
-`python3 skills/sync.py` (also run by `./sync.sh` and `install.sh`).
+```markdown
+::: claude
+- **Codex** blocks on "Reading additional input from stdin…" unless stdin is closed.
+:::
+::: codex opencode
+- **Claude** runs non-interactively in print mode (`claude -p`).
+:::
+```
+
+A marker never sits *inside* a fenced code block — to vary a code example, mark the
+whole fence twice. Adjacent blocks must have no blank line between them, or that
+line reaches every harness.
+
+Frontmatter is YAML, so a `:::` there would be data. Per-harness *values* use a
+block keyed by harness instead, merged over the shared keys and stripped from the
+output:
+
+```yaml
+name: second-opinion
+description: …advisors are Codex and OpenCode+GLM.
+codex:
+  description: …advisors are Claude and OpenCode+GLM.
+```
+
+Unmarked skills — 48 of 50 — pass through untouched, so the mechanism costs nothing
+until used. `loadout check --global` reports any drift, and `loadout sync` refuses
+to overwrite a hand-edited output rather than discarding it.
 
 Two constraints on the generator: the `<!-- GENERATED ... -->` banner is inserted *below* the YAML
 frontmatter (anything above the opening `---` leaves the frontmatter unparsed, and the skill then
@@ -257,16 +286,16 @@ there, not five times over. The per-agent files hold only what one agent needs:
 ### Gotchas
 
 - **`filesystem.deny` does not override an inherited group allow** ([nono#727](https://github.com/nolabs-ai/nono/issues/727)) — nothing can be *subtracted* from a base profile, only added.
-- **Seatbelt sandboxes cannot nest**, so anything that sandboxes itself must be told not to — Chrome needs `--no-sandbox` under `agent-browser`.
+- **Nono blocks sandbox re-initialization** under the profile, so anything that starts its own Seatbelt sandbox must be told not to — Chrome needs `--no-sandbox` under `agent-browser`. It is usually a spawned process rather than the agent, and nono reports it as the system service `forbidden-sandbox-reinit`. Measured: `nono run -p codex-local -- sandbox-exec -p '(version 1)(allow default)' /bin/echo hi` fails with exit 71 while the same command outside `nono run` succeeds. The denial names no path, so nono's own `--allow <path>` suggestion cannot apply to it.
 - **Docker needs three grants plus `DOCKER_HOST`.** All of `~/.docker` sits in nono's permanent deny group, so each path needs `bypass_protection` as well as a grant. `DOCKER_HOST` (set by the wrapper) is enough for the plain `docker` CLI, but not for `docker compose`: the plugin is discovered via `config.json`'s `cliPluginsExtraDirs` (without it, `docker compose -f …` degrades to `docker -f …` and fails with `unknown shorthand flag: 'f'`), and compose resolves the daemon through `contexts/` rather than `DOCKER_HOST`. Granted: `config.json`, `cli-plugins`, `contexts`. None holds a secret — `credsStore` is `osxkeychain`, so the registry credential lives in the keychain, which stays denied.
 - **`~/.claude.json` lives inside `~/.claude`, not `$HOME`.** `.airc.d/10-env.zsh` exports `CLAUDE_CONFIG_DIR=$HOME/.claude`, which relocates that file into the directory Claude already owns. Claude writes it by creating `.claude.json.tmp.<random>` and renaming; a random suffix in `$HOME` matches no grant, so the write was denied ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open). Inside `~/.claude` the directory grant covers it. The variable is exported globally rather than in the sandbox wrapper so `claude` and `claude-raw` share one store. `~/.claude.json` and its lock file have been removed from `$HOME` entirely; anything launching Claude Code without the variable will create a fresh empty one there rather than silently diverging from the real store.
 - **No agent has keychain access, and none needs it.** `~/Library/Keychains` is denied to all four profiles; Claude and Codex both authenticate with it fully denied (their credentials are not keychain-backed here). `claude-local` reproduces the `nolabs-ai/claude` policy rather than extending it, precisely to drop that pack's directory-wide read+write grant.
 - **`nono why` misreports grants inside the built-in keychain protection.** Measured on 0.72.0: with `read_file` on `$HOME/Library/Keychains/login.keychain-db`, `nono why` says `DENIED / filesystem_deny` while `nono run` reads the file; with no grant at all the read fails, so the grant is what opens the path and the diagnostic does not account for it. Adding `bypass_protection` changes nothing in either direction. This is **not** a general `bypass_protection` blind spot — for `~/.netrc` the diagnostic tracks the runtime exactly (grant alone → both deny, grant + `bypass_protection` → both allow), as do `filesystem.deny` rules written in the profile or inherited through `extends`. Where the two disagree, believe the sandbox; trusting `nono why` here has already cost one load-bearing grant.
 - **`deny_credentials` paths need `bypass_protection`, not just a grant.** `~/.npmrc` and `~/.netrc` sit in nono's permanent deny group: a `read_file` entry alone still yields `filesystem_deny`, and only adding the path to `bypass_protection` opens it. Weigh that against exfiltration before opening one: sandboxed agents have open outbound network, so a readable credential file is an exfiltratable one.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
-- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block's `developer_instructions` text is **replaced with ours** by `codex/sync_config.py`, sourced from `codex/developer-instructions.md` and inserted above the first table (a top-level key after a table header is absorbed into it). A `nono update` restores the pack's copy; the next `./sync.sh` overwrites it again, so this self-heals — the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day. Ours mirrors `claude/skills/nono-sandbox/SKILL.md`, which is the canonical wording. **After a `nono update`, run `./sync.sh`** — it restores both the instructions and the skill symlink.
+- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block's `developer_instructions` text is **replaced with ours** by `codex/sync_config.py`, sourced from `codex/developer-instructions.md` and inserted above the first table (a top-level key after a table header is absorbed into it). A `nono update` restores the pack's copy; the next `./sync.sh` overwrites it again, so this self-heals — the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day. Ours mirrors `loadout/skills/nono-sandbox/SKILL.md`, which is the canonical wording. **After a `nono update`, run `./sync.sh`** — it restores the instructions.
 
-The same applies to the skill: `claude/skills/nono-sandbox/SKILL.md` overrides the pack's copy for all four agents (it is in `CODEX_SKILLS`, so `sync.sh` points `~/.agents/skills/nono-sandbox` at ours, and Claude reads it through the `claude/skills` symlink). Re-run `./sync.sh` after a pack update to relink it.
+The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides the pack's copy for all four agents, because `loadout sync --global` writes it into each harness's own skills directory. It carries a `::: opencode` section — OpenCode's version is substantially longer than the one the other three get. Re-run `loadout sync --global` after a pack update to restore it.
 
 ## Global Instructions
 
@@ -383,9 +412,10 @@ from one does not auto-overwrite the other. `settings.local.json` is intentional
 scope for sync — recommend `aiconf <type> <dir>` for mechanical settings refresh.
 
 Project-only skills live *inside* their template (`templates/<type>/skills/<name>/`), not in
-`claude/skills/`, so `install.sh` never exposes them globally. To turn an existing global skill
-into a project-only one, move its directory from `claude/skills/<name>/` to
-`templates/<type>/skills/<name>/`.
+`loadout/skills/`, so they are never rendered globally. To turn an existing global skill
+into a project-only one, move its directory from `loadout/skills/<name>/` to
+`templates/<type>/skills/<name>/` and re-run `loadout sync --global`, which drops it from
+all four harnesses.
 
 Templates cover config only; machine prerequisites (e.g. `npx`, `uvx`, `dart` for the Flutter
 MCP servers) must be installed separately.

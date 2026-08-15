@@ -63,11 +63,9 @@ PROFILE="${PROFILE:-default}"
 # blocks in loadout.toml), so it needs no link.
 SYMLINKS=(
   # Claude
-  "$SCRIPT_DIR/claude/skills:$HOME/.claude/skills"
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
   # Pi (pi-coding-agent) — settings.json holds packages and enabledModels.
-  # Skills need no wiring: pi auto-discovers ~/.agents/skills (populated by
-  # install_codex_skills below).
+  # Skills need no wiring: loadout writes them straight to each harness.
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
   "$SCRIPT_DIR/pi/mcp.json:$HOME/.pi/agent/mcp.json"
   # nono sandbox. Each <agent>-local profile extends its nolabs-ai pack, which
@@ -99,18 +97,6 @@ RETIRED_LINKS=(
   "$HOME/.pi/agent/AGENTS.md"
   "$HOME/.pi/agent/extensions/pi-permission-system/config.json"
   "$HOME/.config/opencode/opencode.json"
-)
-
-# Skills shared with Codex (subset of claude/skills/). A name with a real dir
-# in codex/skills/ uses that override; otherwise it links from claude/skills/.
-CODEX_SKILLS=(
-  check-agent-logs check-notes commit
-  code-review debug-log deslop doc evaluate-tech explain guide huh ideation
-  library-docs nono-sandbox pdf
-  perf-test permission read-docs resolve-conflicts review-architecture review-cleancode review-comments
-  review-history review-interfaces review-library-use review-perf review-plan review-product
-  review-security review-swift review-todo review-typescript research-general research-tech second-opinion skill-creator
-  squash-commits temp test
 )
 
 # agent-private.json holds machine-specific grants (client names, private paths)
@@ -195,27 +181,6 @@ generate_loadout() {
     echo "✓  Instructions and permission config up to date"
   else
     echo "⚠️  loadout sync failed — this machine's existing config is unchanged"
-  fi
-}
-
-generate_skills() {
-  local script="$SCRIPT_DIR/skills/sync.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  Skills generator not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping skills generation"
-    echo "    (the committed skill files will be used as-is)"
-    return
-  fi
-
-  echo "Generating multi-harness skill files from skills/..."
-  if python3 "$script"; then
-    echo "✓  Skill files up to date"
-  else
-    echo "⚠️  Skills generation failed — using committed files"
   fi
 }
 
@@ -317,78 +282,11 @@ sync_codex_superpowers() {
   python3 "$script"
 }
 
-install_codex_skills() {
-  local dest_dir="$HOME/.agents/skills"
-  local claude_src="$SCRIPT_DIR/claude/skills"
-  local override_src="$SCRIPT_DIR/codex/skills"
-
-  mkdir -p "$dest_dir"
-
-  echo ""
-  echo "Installing Codex skills to $dest_dir..."
-
-  local wanted=" ${CODEX_SKILLS[*]} "
-
-  # Stale cleanup: only remove symlinks pointing into this repo whose target
-  # is gone or whose basename is no longer in CODEX_SKILLS. Links pointing
-  # outside this repo (e.g. find-skills from the npx skills CLI) are untouched.
-  for dest in "$dest_dir"/*; do
-    if [[ ! -L "$dest" ]]; then
-      continue
-    fi
-
-    local target
-    local name
-    target="$(readlink "$dest")"
-    name="$(basename "$dest")"
-
-    if [[ "$target" == "$SCRIPT_DIR/"* ]]; then
-      if [[ ! -e "$dest" ]] || [[ "$wanted" != *" $name "* ]]; then
-        rm -f "$dest"
-        echo "✓  Removed stale skill link: $dest"
-      fi
-    fi
-  done
-
-  for name in "${CODEX_SKILLS[@]}"; do
-    local source="$claude_src/$name"
-    # Prefer a real override dir in codex/skills/ (ignore lingering symlinks).
-    if [[ -d "$override_src/$name" && ! -L "$override_src/$name" ]]; then
-      source="$override_src/$name"
-    fi
-
-    if [[ ! -e "$source" ]]; then
-      echo "⚠️  Source for skill '$name' does not exist (skipping): $source"
-      continue
-    fi
-
-    create_symlink "$source" "$dest_dir/$name"
-  done
-
-  # Legacy cleanup: remove repo-pointing symlinks from the old ~/.codex/skills/
-  # (Codex now reads ~/.agents/skills/). Leaves .system/ and non-ours untouched.
-  local legacy_dir="$HOME/.codex/skills"
-  if [[ -d "$legacy_dir" ]]; then
-    for dest in "$legacy_dir"/*; do
-      if [[ ! -L "$dest" ]]; then
-        continue
-      fi
-      local target
-      target="$(readlink "$dest")"
-      if [[ "$target" == "$SCRIPT_DIR/"* ]]; then
-        rm -f "$dest"
-        echo "✓  Removed legacy Codex skill link: $dest"
-      fi
-    done
-  fi
-}
-
 # --- Reconcile ---
 echo "Syncing agentic coding config... (${PROFILE} profile)"
 echo ""
 
 retire_links
-generate_skills
 echo ""
 # Before loadout: mcp/sync.py owns the `mcp` key of ~/.config/opencode/opencode.json
 # and loadout preserves it, so the key has to be current when loadout renders.
@@ -403,7 +301,6 @@ sync_codex_superpowers
 echo ""
 seed_private_profile
 
-
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"
   dest="${entry##*:}"
@@ -412,8 +309,6 @@ done
 echo ""
 
 sync_claude_mcp
-
-install_codex_skills
 
 echo ""
 echo "✓  Sync complete (${PROFILE} profile)."
