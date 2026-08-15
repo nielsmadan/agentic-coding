@@ -1,18 +1,18 @@
-# The autonomous profile. `extends` inherits the sources and every agent block
-# loadout.toml declares; only what differs is stated here.
+# The autonomous profile. `extends` inherits everything loadout.toml declares;
+# blocks merge per key, so naming one key leaves the rest alone.
 #
-# Claude runs with no permission rules at all so the auto-mode classifier judges
-# every call — clearing deny is what lets `git push` through, since deny overrides
-# every mode. It also drops the CLAUDE_AFK_TIMEOUT_MS overlay, which restores the
-# short default fuse rather than the ~25-day one interactive sessions use.
+# `substitute` swaps two fragments out of the ten Claude lists, without
+# restating the order. Nothing is inferred from the filenames — the swap is
+# declared here, so `git-policy.autonomous` is just a name.
+#
+# Claude also runs with no permission rules at all, so the auto-mode classifier
+# judges every call — clearing deny is what lets `git push` through, since deny
+# overrides every mode. And dropping the CLAUDE_AFK_TIMEOUT_MS overlay restores
+# the short default fuse rather than the ~25-day one interactive sessions use.
 
 extends = "default"
 
 [claude]
 settings    = ["claude"]
 permissions = []
-instructions = [
-    "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "sandbox", "agent-dispatch.autonomous", "git-policy.autonomous",
-    "git-commit-policy", "working-style",
-]
+substitute  = { agent-dispatch = "agent-dispatch.autonomous", git-policy = "git-policy.autonomous" }
