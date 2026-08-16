@@ -21,7 +21,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
 | `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
 | `/evaluate-tech` | Structured adoption decision for a library, tool, or hosted service — triages hard vs. soft constraints so current architecture never silently eliminates options, enumerates 5-8 candidates wide, then scores every one in parallel against one rubric with maintenance health as a mandatory gate |
-| `/explain` | Generate project explanation docs in `docs/explain/` (--architecture, --flows, --syntax, --system, --infra, --test, --all, --staged, optional topic filter) |
+| `/explain` | Generate project explanation docs in `docs/explain/`, or explain a diff in the conversation (`--diff`, `--architecture`, `--flows`, `--syntax`, `--system`, `--infra`, `--test`, `--all`, `--staged`, optional topic filter) |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
 | `/huh` | Explain the previous assistant reply, or supplied text, in more detail with selectively relevant context |
@@ -142,18 +142,22 @@ For learning how to use something already chosen, or open-ended research, use `/
 
 ### /explain
 
-Explain unfamiliar code grouped by logical concepts. For language learners, includes syntax explanations.
+Generate aspect-based project explanations. `--diff` instead explains a code change directly in the conversation and writes no files.
 
 **Arguments:**
-- `--staged` - Explain code in git staged files
-- `--unpushed` - Explain code changed across all unpushed commits
-- `--all` - Interactive file/directory selection
-- `--code` - Include language syntax explanations and alternatives
-- Default: explain code related to current conversation context
+- `--diff [target]` - Explain current changes, a commit/range/branch, or a PR in the conversation without writing files
+- `--architecture`, `--flows`, `--syntax`, `--system`, `--infra`, `--test` - Generate the selected aspect document(s)
+- `--all` - Generate all six aspect documents
+- `--staged` - Scope an aspect or `--diff` to staged files
+- `--unpushed` - Scope an aspect or `--diff` to unpushed commits
+- `[topic]` - Narrow an aspect to a topic such as `database` or `login`
 
 **Examples:**
-- `/explain --staged`
-- `/explain --all --code`
+- `/explain --diff`
+- `/explain --diff --staged`
+- `/explain --diff 123`
+- `/explain --architecture database`
+- `/explain --all`
 
 ---
 

@@ -1,13 +1,13 @@
 ---
 name: explain
-description: "Generate project explanation docs in docs/explain/ covering architecture, flows, syntax, system APIs, infra, testing. Per-aspect flags + optional topic filter."
-argument-hint: "[--all | --architecture | --flows | --syntax | --system | --infra | --test] [--staged | --unpushed] [topic]"
+description: "Generate project explanation docs in docs/explain/ covering architecture, flows, syntax, system APIs, infra, and testing, or explain a code diff, commit, branch, or PR directly in the conversation with --diff."
+argument-hint: "[--diff [--staged | --unpushed | target] | --all | --architecture | --flows | --syntax | --system | --infra | --test] [topic]"
 effort: medium
 ---
 
 # Explain
 
-Generate project explanation documents in `docs/explain/`. Each aspect of the project gets its own file. An `overview.md` acts as the index (opened first); a `preliminary.md` carries the shared project context every other doc assumes.
+Generate project explanation documents in `docs/explain/`. Each aspect of the project gets its own file. An `overview.md` acts as the index (opened first); a `preliminary.md` carries the shared project context every other doc assumes. The exception is `--diff`, which explains a change directly in the conversation and never writes files.
 
 ## Flags
 
@@ -20,14 +20,19 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 | `--infra` | Build, CI/CD, deploy, release pipelines. Include how to run each piece locally (scripts, commands, env setup). |
 | `--test` | Testing infrastructure: frameworks, test types, fixtures, how to run. |
 | `--all` | All six aspects above, dispatched to parallel sub-agents. |
-| `--staged` | Scope to files returned by `git diff --cached --name-only`. Combines with any aspect flag(s). |
-| `--unpushed` | Scope to files changed across unpushed commits (`git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD`). Combines with any aspect flag(s). |
+| `--diff [target]` | Explain a code change directly in the conversation. `target` may be a commit, revision range, branch comparison, PR number, or PR URL. With no target or scope flag, explain current tracked worktree changes against `HEAD` plus any untracked files. This is a standalone, read-only mode: do not generate `docs/explain/` files or modify anything. |
+| `--staged` | Scope to files returned by `git diff --cached --name-only`. Combines with any aspect flag or with `--diff`. |
+| `--unpushed` | Scope to files changed across unpushed commits (`git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD`). Combines with any aspect flag or with `--diff`. |
 | _topic_ | A positional word after an aspect flag narrows the focus (e.g. `--architecture database` = architecture of the database layer only, `--flows login` = just the login flow). |
 
 ## Usage
 
 ```
 /explain --all                      # Full project explanation
+/explain --diff                     # Explain current worktree changes in this conversation
+/explain --diff --staged            # Explain staged changes in this conversation
+/explain --diff HEAD~2..HEAD        # Explain a revision range in this conversation
+/explain --diff 123                 # Explain PR #123 in this conversation
 /explain --architecture             # Just architecture
 /explain --architecture database    # Architecture, focused on the database
 /explain --flows                    # End-to-end walkthroughs of representative code paths
@@ -41,12 +46,44 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 ## Workflow
 
 ### 1. Parse arguments
+- If `--diff` is present, enter the conversational diff mode below. It is standalone: do not combine it with an aspect flag or `--all`.
+- For `--diff`, accept at most one of `--staged`, `--unpushed`, or an explicit target. A target can be a commit, revision range, branch comparison, PR number, or PR URL.
 - Collect requested aspect flags. `--all` expands to all six.
 - Check for `--staged` / `--unpushed`.
 - Capture any positional topic filter that follows an aspect flag, and pass it to that aspect's sub-agent only.
-- If no aspect flag and no `--all` was given, ask the user which aspect(s) to cover before proceeding.
+- If neither `--diff`, an aspect flag, nor `--all` was given, ask the user which mode or aspect(s) to cover before proceeding.
 
-### 2. Determine scope
+### 2. Handle `--diff` in the conversation and stop
+
+`--diff` is strictly read-only. Do not create, edit, or overwrite files; do not run formatters or generators; and do not dispatch write-capable sub-agents. Inspect the change and surrounding code with read-only tools, give the explanation in the current conversation, and stop before step 3.
+
+Resolve the change in this order:
+
+| Input | Change to inspect |
+|-------|-------------------|
+| Diff already supplied by the user | The supplied diff and any repository context available locally |
+| `--staged` | `git diff --cached` |
+| `--unpushed` | The full unpushed range used by the document modes |
+| PR number or URL | PR metadata and patch; for GitHub, use `gh pr view` and `gh pr diff` |
+| Commit | The commit patch and metadata, using read-only git commands |
+| Revision range or branch comparison | The diff for that exact range or merge-base comparison |
+| No target | `git status --short` plus tracked worktree changes against `HEAD`; inspect untracked files separately because `git diff HEAD` omits them |
+
+If the target is genuinely ambiguous, ask one concise question rather than guessing. If the resolved diff is empty, say which scope was checked and stop.
+
+Treat the diff as a map, not as sufficient context. Read the changed functions plus the callers, callees, tests, types, configuration, and docs needed to explain the existing system and the behavioral change. Reconstruct the relevant before-and-after flow. State uncertain motivation as an inference rather than fact.
+
+Return one coherent chat response with these sections:
+
+1. **Summary** — lead with the change's purpose and observable effect in one or two sentences.
+2. **Background (skip if familiar)** — first give the minimum beginner context, then narrow to the existing components, data flow, and constraints directly involved in the change.
+3. **Intuition** — explain the central idea before implementation details. Use a concrete example or toy data. Add a small diagram or table only when it materially improves understanding.
+4. **Code walkthrough** — group changes by behavior or concept in the order a reader needs, not raw file order. Cite real files and line numbers, distinguish changed code from surrounding context, and connect each edit to the behavior it enables.
+5. **Check your understanding** — ask five medium-difficulty multiple-choice questions that test the substance of the change without gotchas. Do not reveal the answers until the user responds; then grade each answer and explain why it is right or wrong.
+
+Do not dump the whole diff or reproduce long functions. Quote only the snippets needed to anchor an explanation. This is an explanation, not a code review: do not turn it into a findings list unless the user also asked for review.
+
+### 3. Determine document scope
 
 | Mode | Scope |
 |------|-------|
@@ -56,7 +93,7 @@ Generate project explanation documents in `docs/explain/`. Each aspect of the pr
 
 Empty scope: if `--staged` is set but nothing is staged, tell the user to stage files first or drop `--staged`. Do not proceed. Likewise, if `--unpushed` is set but nothing is unpushed — or there is no remote/upstream so the range can't be determined reliably (or it walks back to the root commit) — tell the user and do not proceed.
 
-### 3. Write `preliminary.md` first
+### 4. Write `preliminary.md` first
 Before dispatching aspect sub-agents, write `docs/explain/preliminary.md`. Keep it tight — just enough shared context that a new reader can follow the other docs:
 - Project name and purpose
 - Primary language(s) and major frameworks
@@ -65,7 +102,7 @@ Before dispatching aspect sub-agents, write `docs/explain/preliminary.md`. Keep 
 
 Every aspect sub-agent should be told to assume readers have read `preliminary.md` and link to it rather than restate its content.
 
-### 4. Run aspect sub-agents in parallel
+### 5. Run aspect sub-agents in parallel
 For each requested aspect, dispatch one sub-agent — all in a single message so they execute concurrently.
 
 **The sub-agent must be able to write files.** Its deliverable is a markdown file it creates itself, so dispatch a general-purpose agent, never a read-only one (Claude Code's `Explore`, or any harness's read-only agent profile). A read-only agent either fails outright ("I'm in read-only mode") or flails improvising via `Bash` heredocs, which can stall it. Read-only agents suit tasks whose deliverable is a returned message, not a file.
@@ -83,12 +120,12 @@ Each sub-agent prompt must include:
 - An explicit "use the `Write` tool to create the file" instruction
 - The "Do not dispatch sub-agents" line from above
 
-### 5. Write `overview.md`
+### 6. Write `overview.md`
 After sub-agents return, write `docs/explain/overview.md` as the entry index: short intro, link to `preliminary.md`, one link per generated aspect file with a one-line summary. In the final chat response, tell the user to open `overview.md` first.
 
-## Output
+## File output for document modes
 
-All output goes to `docs/explain/`. Existing files there are overwritten — this is generated content, not hand-written.
+All output for aspect modes goes to `docs/explain/`. Existing files there are overwritten — this is generated content, not hand-written. `--diff` never writes any of these files.
 
 ```
 docs/explain/
@@ -192,6 +229,12 @@ Only include bullets for aspects actually generated this run.
 
 ## Examples
 
+### `/explain --diff`
+Read the current tracked worktree diff against `HEAD` and inspect untracked files separately. Explore the surrounding code needed to explain the change, then respond in the conversation with background, intuition, a concept-grouped code walkthrough, and five multiple-choice questions. Do not write any files.
+
+### `/explain --diff 123`
+Use GitHub CLI read-only commands to inspect PR #123 and its surrounding repository context. Explain it with the same conversational structure and leave the working tree untouched.
+
 ### `/explain --all`
 Writes `preliminary.md`, dispatches six parallel sub-agents (one per aspect), writes `overview.md` last. Final chat message lists the files and tells the user to open `overview.md` first.
 
@@ -208,6 +251,9 @@ Whole-project scope. Write `preliminary.md`. Dispatch one architecture sub-agent
 
 ### No staged files
 "No staged files found. Stage files with `git add` first, or drop `--staged` to cover the whole project." Do not fall back to the whole project silently.
+
+### No diff found
+For `--diff`, name the checked target or scope and say that it contains no changes. Do not fall back to a broader scope and do not generate documentation files.
 
 ### Aspect not applicable to the project
 E.g. `--infra` on a project with no CI/CD. Generate the file anyway with a clear "No CI/CD configured. Build runs manually via `…`" note, and still link to it from `overview.md`. Silent omission leaves the user wondering.
