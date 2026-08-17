@@ -162,6 +162,23 @@ materialise_link() {
   echo "✓  Unlinked from repo, now written directly: $dest"
 }
 
+materialise_nono_skill_link() {
+  local dest="$HOME/.config/opencode/skills/nono-sandbox"
+
+  [[ -L "$dest" ]] || return
+  [[ "$(readlink "$dest")" == "$HOME/.config/nono/packages/"* ]] || return
+
+  if [[ -e "$dest" ]]; then
+    cp -RL "$dest" "$dest.materialising"
+    rm -f "$dest"
+    mv "$dest.materialising" "$dest"
+  else
+    rm -f "$dest"
+    mkdir -p "$dest"
+  fi
+  echo "✓  Detached generated OpenCode skill from nono's signed package store"
+}
+
 retire_links() {
   for dest in "${RETIRED_LINKS[@]}"; do
     materialise_link "$dest"
@@ -287,6 +304,7 @@ echo "Syncing agentic coding config... (${PROFILE} profile)"
 echo ""
 
 retire_links
+materialise_nono_skill_link
 echo ""
 # Before loadout: mcp/sync.py owns the `mcp` key of ~/.config/opencode/opencode.json
 # and loadout preserves it, so the key has to be current when loadout renders.
