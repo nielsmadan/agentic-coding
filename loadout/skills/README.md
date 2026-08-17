@@ -49,7 +49,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
 | `/review-swift` | Swift judgment-level review a linter and the compiler can't do — state modeling, optional/error/Codable modeling, concurrency isolation intent, SwiftUI identity/lifetime/dependencies, ARC ownership, escape hatches hiding a modeling problem. Non-overlapping with SwiftLint / Swift 6 strict concurrency. Auto-invoked by `code-review` on Swift projects |
-| `/review-todo` | Turns a completed review into a persistent interactive todo: records fix/ignore decisions and agreed approaches, implements every accepted finding, and commits the work in logical chunks |
+| `/review-todo` | Turns a completed review into a persistent workflow: proposes the complete ordered plan for approval, then implements accepted findings and commits them in logical chunks |
 | `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling, inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
@@ -78,16 +78,17 @@ Ends with a selectable fix-scope prompt (Critical only / Critical + Should Fix /
 
 ### /review-todo
 
-Turns the most recent completed review into `.review-todo.md`, then walks through undecided findings in priority order. Related findings may be grouped; obvious low-risk items are batched at the end. Decisions, implementation approaches, verification, and commit results stay in the file so the workflow can resume after context loss.
+Turns the most recent completed review into `.review-todo.md`, inspects every finding, and immediately presents the complete proposed disposition and ordered implementation plan. Decisions, implementation approaches, verification, and commit results stay in the file so the workflow can resume after context loss.
 
-Once every finding is planned or ignored, implementation starts automatically. Accepted fixes are verified and committed in the fewest self-contained chunks; the temporary state file is never committed and is removed after successful completion.
+No implementation starts until you approve the whole current plan. Requested changes are folded into the state file and the complete revised plan is presented again. After approval, accepted fixes are verified and committed in the fewest self-contained chunks; the temporary state file is never committed and is removed after successful completion.
 
 **Arguments:**
-- `fix <ids>` - Accept the inspected default approach for specific findings
-- `ignore <ids>` - Decline specific findings
+- `fix <ids>` - Request proposed fixes for specific findings
+- `ignore <ids>` - Request proposed ignores for specific findings
 - `resume` - Continue the active `.review-todo.md` workflow
+- `go` - Approve the complete current plan and begin implementation
 
-**Examples:** `/review-todo`, `/review-todo fix 2,3,9; ignore 7`, `/review-todo resume`
+**Examples:** `/review-todo`, `/review-todo fix 2,3,9; ignore 7`, `/review-todo resume`, `/review-todo go`
 
 ---
 
