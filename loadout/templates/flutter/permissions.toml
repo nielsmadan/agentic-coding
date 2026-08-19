@@ -1,0 +1,19 @@
+# Permissions every project of this type gets.
+#
+# A template is a source and sits at the bottom of the tier chain, so anything
+# the project itself declares outranks it. Entries are prefixes in loadout's own
+# vocabulary, not a harness's rendered form — `loadout sync` renders them for
+# each harness the project enables.
+
+[mcp]
+
+allow = [
+  "ios-sim/get_booted_sim_id",
+  "ios-sim/screenshot",
+  "ios-sim/ui_view",
+  "ios-sim/ui_describe_all",
+  "ios-sim/ui_tap",
+  "ios-sim/ui_swipe",
+  "ios-sim/ui_describe_point",
+  "ios-sim/ui_type",
+]

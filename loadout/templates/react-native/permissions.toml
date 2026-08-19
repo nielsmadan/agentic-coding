@@ -1,0 +1,13 @@
+# Permissions every project of this type gets.
+#
+# A template is a source and sits at the bottom of the tier chain, so anything
+# the project itself declares outranks it. Entries are prefixes in loadout's own
+# vocabulary, not a harness's rendered form — `loadout sync` renders them for
+# each harness the project enables.
+
+[shell]
+
+allow = [
+  "agent-device",
+  "rn-logs",
+]

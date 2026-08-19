@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(agent-device:*)",
-      "Bash(rn-logs:*)"
-    ]
-  }
-}
