@@ -228,6 +228,8 @@ allow = [
   # external advisor commands (used by /second-opinion)
   "codex exec -s read-only",
   "opencode run",
+  # Pi as an advisor: -p is non-interactive, --tools is the read-only guard.
+  "pi -p",
   # Claude as an advisor for the non-Claude harnesses: read-only built-ins only.
   "claude --tools",
   "aiperm list",

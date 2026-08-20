@@ -138,6 +138,39 @@ frontmatter (anything above the opening `---` leaves the frontmatter unparsed, a
 advertises the banner as its description), and each advisor CLI needs a matching allow rule in
 `permissions/permissions.toml` — `codex exec -s read-only`, `opencode run`, `claude --tools`.
 
+### Repo-local skills
+
+`.claude/skills/<name>/` holds skills that only make sense *inside this repo* —
+they edit this repo's own files, so rendering them globally would be noise in
+every other project. They are not part of the loadout pipeline: no sync step, no
+`loadout check` coverage, and Claude Code picks them up directly.
+
+**To reach Codex too, symlink it into `.codex/skills/`** — that is Codex's
+project-local skill directory, discovered relative to the project root, the same
+way `.claude/skills/` is for Claude Code:
+
+```
+ln -sfn ../../.claude/skills/<name> .codex/skills/<name>
+```
+
+One source of truth, two harnesses, still scoped to this repo — `~/.codex/skills/`
+(the global directory loadout renders into) stays untouched, so the skill does not
+appear in unrelated projects. Verified against codex-cli 0.147.0.
+
+- **`agent-models`** — picks the low / mid / high-main / high-fallback OpenRouter
+  models and writes them into every file that pins a model id (`pi/settings.json`,
+  `loadout/settings/opencode.json`, `clor` in `.airc.d/claude.zsh`, the `ocs`
+  alias, the `occli` backend, and the two `second-opinion` advisors). Ranks
+  candidates from Artificial Analysis by agentic index vs cost per task; never
+  picks Grok, and prefers non-frontier-lab models on a tie.
+
+  The Artificial Analysis models page is JS-rendered — fetchers return prose with
+  no numbers. `scripts/rank_models.py` parses the full per-model dataset out of
+  the RSC payload (`self.__next_f`) the page server-renders, then resolves exact
+  OpenRouter ids from `openrouter.ai/api/v1/models`. Model *names* collide across
+  builds (`deepseek/deepseek-v4-pro` is the 0423 build, not the 0813 one), so ids
+  always come from that API, never from a name.
+
 ## Claude Desktop Skills
 
 Skills under `claude/desktop/skills/` are deployed to Claude Desktop manually:
