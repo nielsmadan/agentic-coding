@@ -30,7 +30,7 @@ _llmcli_run() {
       rm -f "$outfile"
       ;;
     occli)
-      opencode run -m openrouter/deepseek/deepseek-v4-flash-0731 \
+      opencode run -m openrouter/deepseek/deepseek-v4-pro-0813 \
         "Return ONLY a single shell command that can be executed directly. No explanation, no markdown, no code blocks - just the raw command. Request: $input" | tail -1
       ;;
     *)

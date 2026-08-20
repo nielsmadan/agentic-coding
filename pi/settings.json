@@ -2,14 +2,15 @@
   "lastChangelogVersion": "0.82.1",
   "theme": "dark",
   "defaultProvider": "openrouter",
-  "defaultModel": "deepseek/deepseek-v4-flash-0731",
-  "defaultThinkingLevel": "high",
+  "defaultModel": "meta/muse-spark-1.2",
+  "defaultThinkingLevel": "xhigh",
   "enabledModels": [
     "openai-codex/gpt-5.6-luna",
     "openai-codex/gpt-5.6-terra",
     "openai-codex/gpt-5.6-sol",
-    "openrouter/deepseek/deepseek-v4-flash-0731",
+    "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/meta/muse-spark-1.2",
+    "openrouter/z-ai/glm-5.3",
     "openrouter/moonshotai/kimi-k3"
   ],
   "packages": [
