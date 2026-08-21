@@ -26,12 +26,18 @@
       "$HOME/Library/Developer/Xcode/DerivedData",
       "$HOME/Library/Developer/CoreSimulator",
       "$HOME/.config/cadet",
+      "$HOME/.gc",
       "$HOME/.local/share/ringleader",
       "$HOME/.claude",
       "$HOME/.codex",
       "$HOME/.pi",
       "$HOME/.config/opencode",
       "$HOME/.local/share/opencode",
+      "$HOME/.dolt",
+      "$HOME/.local/share/mise/migrations",
+      "$HOME/.local/state/mise/hints",
+      "$HOME/.local/state/mise/tracked-configs",
+      "$HOME/.local/state/mise/trusted-configs",
       "$HOME/.local/state/splashdown",
       "$HOME/.local/state/watchman"
     ],
@@ -61,6 +67,9 @@
       },
       "$HOME/.docker/config.json"
     ],
+    "deny": [
+      "$HOME/.dolt/creds"
+    ],
     "bypass_protection": [
       {
         "path": "$HOME/Library/Keychains/login.keychain-db",
@@ -74,7 +83,8 @@
       "$HOME/.colima/default/docker.sock"
     ],
     "unix_socket_dir_bind": [
-      "$HOME/.agent-browser"
+      "$HOME/.agent-browser",
+      "$HOME/.gc"
     ],
     "unix_socket_subtree": [
       "$HOME/.local/state/watchman"
@@ -94,6 +104,7 @@
   "unsafe_macos_seatbelt_rules": [
     "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
+    "(allow mach-register (global-name-prefix \"com.google.Chrome.\"))",
     "(allow iokit-open)"
   ]
 }
