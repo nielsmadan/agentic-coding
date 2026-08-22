@@ -26,10 +26,12 @@ on the strength of that footer.
    under `~/Library/Keychains` is honored at runtime while `nono why` still reports
    `DENIED / filesystem_deny`. If `nono why` says denied but the command works, believe the
    command.
-2. *A tool sandboxing itself.* Seatbelt cannot nest, so any tool that calls `sandbox-exec`
-   fails inside nono. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
-   or an error naming a path that `nono why` says is **allowed**. The fix is to disable the
-   inner sandbox, never to grant a path:
+2. *Something under nono starting its own sandbox.* Nono blocks sandbox re-initialization for
+   anything running under the profile — usually a process the agent spawned, not the agent
+   itself. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
+   `forbidden-sandbox-reinit` in the footer, or an error naming a path that `nono why` says is
+   **allowed**. The denial carries no path, so no grant can address it — disable the inner
+   sandbox instead:
 
    | tool | flag |
    |---|---|

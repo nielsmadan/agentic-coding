@@ -50,6 +50,22 @@ Two ways `nono why` still misleads you:
 When the verdict contradicts the error, trust an actual read or write inside `nono run` over
 either.
 
+**4. A denial can arrive as a non-permission errno.** A hidden path reports *absent* to `stat`
+and *present* to an operation on it:
+
+```
+DENIED   exists(): False   mkdir: EEXIST   open(…,'x'): EEXIST   link: EPERM
+GRANTED  exists(): True    mkdir: EEXIST   open(…,'x'): EEXIST   link: CREATED
+```
+
+`EEXIST` alone means nothing — it fires on every path that exists. The **disagreement** is the
+signal. Calls that check permission before existence stay honest, so this only shows up where
+the existence check runs first.
+
+The general form: **the most legible output can point away from the actual cause.** An errno
+lying about existence, and a `forbidden-sandbox-reinit` denial suggesting `--allow <path>` when
+it carries no path, are the same trap.
+
 ## The most common cause: something under nono starting its own sandbox
 
 Nono blocks sandbox re-initialization for **anything** running under the profile — usually not
@@ -68,8 +84,11 @@ The denial carries **no path**, so no grant can address it — ignore nono's own
 | Chrome / Chromium | `--no-sandbox` |
 | Codex | `-c sandbox_mode="danger-full-access"` |
 
-The wrappers already set `OTHER_SWIFT_FLAGS` and `AGENT_BROWSER_ARGS`, so swiftc and
-agent-browser are handled; SwiftPM and xcodebuild take theirs from argv only.
+Most of this is already handled: the wrappers set `OTHER_SWIFT_FLAGS` and
+`AGENT_BROWSER_ARGS`, and `bin/sandbox-shims/xcodebuild` appends the two
+`-IDEPackageSupport…` flags, which are NSUserDefaults and so reachable only through
+argv. A tool that spawns `xcodebuild` itself therefore works without doing anything.
+`swift build` and `swift test` still take `--disable-sandbox` on their own command line.
 
 ## Known limits — report these, do not try to fix them
 
@@ -133,6 +152,17 @@ Use `--op write` for write-only failures and `--op readwrite` when the operation
 If `NONO_CAP_FILE` is set, inspect the full capability set:
 
     cat "$NONO_CAP_FILE"
+
+### Denials that arrive as a non-permission errno
+
+A denied path is hidden from `stat` but still exists, so an operation that checks existence before permission reports it as present. The two answers contradict each other:
+
+    DENIED   exists(): False   mkdir: EEXIST   open(…,'x'): EEXIST   link: EPERM
+    GRANTED  exists(): True    mkdir: EEXIST   open(…,'x'): EEXIST   link: CREATED
+
+`EEXIST` on its own means nothing — it fires on every path that exists. The disagreement is the signal. Calls that check permission before existence stay honest, which is why `link` reports EPERM rather than EEXIST.
+
+A tool that stats a directory, finds nothing, tries to create it and dies on "file exists" has hit a denial, not a stale-state bug. `mkdir /path: file exists` from a tool reading its own config directory is the usual shape.
 
 ## Two options to present to the user
 

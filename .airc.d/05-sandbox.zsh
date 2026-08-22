@@ -15,6 +15,11 @@
 # -IDEPackageSupportDisablePluginExecutionSandbox=1, which are NSUserDefaults and
 # cannot come from the environment.
 #
+# bin/sandbox-shims holds wrappers for tools whose inner-sandbox switch is an
+# NSUserDefault rather than an env var, so argv is the only channel. Only the
+# sandbox wrapper prepends it; 00-path.zsh puts bin/ alone on the interactive
+# PATH, which keeps the shims off the user's own shell.
+#
 # DISABLE_AUTOUPDATER keeps Claude Code from nagging about an update it cannot
 # install: ~/.local/share/claude and the ~/.local/bin/claude symlink are read-only
 # here on purpose, since claude-raw executes whatever that symlink resolves to.
@@ -45,7 +50,7 @@ _agent_sandboxed() {
   local profile=$1 cmd=$2
   shift 2
   if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
-    PATH="$HOME/ac/bin:$PATH" \
+    PATH="$HOME/ac/bin/sandbox-shims:$HOME/ac/bin:$PATH" \
     AGENT_SANDBOX=1 \
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
     OTHER_SWIFT_FLAGS='$(inherited) -disable-sandbox' \

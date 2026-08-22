@@ -6,7 +6,7 @@
 
 3. Verify that exact path with `nono why --self --path <path> --op read|write|readwrite`. `--self` is required: without it nono why evaluates the DEFAULT profile and reports DENIED for almost anything, even outside a sandbox. It also reports DENIED for a granted path under `~/Library/Keychains`, which in fact reads fine. If it says denied but the command works, believe the command.
 
-Most such failures are a tool sandboxing itself. Seatbelt cannot nest, so `sandbox-exec: sandbox_apply: Operation not permitted` — or any error naming a path `nono why --self` says is allowed — means an inner sandbox, which no grant will fix. Disable it: `swift` takes `--disable-sandbox`; `xcodebuild` takes `-IDEPackageSupportDisableManifestSandbox=1 -IDEPackageSupportDisablePluginExecutionSandbox=1`; Chrome takes `--no-sandbox`. Codex's own is already disabled by the wrapper.
+Most such failures are something under nono starting its own sandbox — usually a process the agent spawned, not the agent itself. Nono blocks sandbox re-initialization under the profile, so `sandbox-exec: sandbox_apply: Operation not permitted`, `forbidden-sandbox-reinit`, or any error naming a path `nono why --self` says is allowed means an inner sandbox. The denial carries no path, so no grant will fix it. Disable it: `swift` takes `--disable-sandbox`; `xcodebuild` takes `-IDEPackageSupportDisableManifestSandbox=1 -IDEPackageSupportDisablePluginExecutionSandbox=1`; Chrome takes `--no-sandbox`. Codex's own is already disabled by the wrapper.
 
 A profile change never reaches a running session — Seatbelt applies policy at process start. If a grant was added after this session began, say it needs a restart rather than requesting it again.
 

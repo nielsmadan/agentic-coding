@@ -1,0 +1,7 @@
+#!/bin/sh
+# SwiftPM evaluates Package.swift inside sandbox-exec; nono blocks sandbox
+# re-init, so package resolution fails. These are NSUserDefaults — argv is the
+# only channel, which is why the wrapper's env vars cannot carry them.
+exec /usr/bin/xcodebuild "$@" \
+  -IDEPackageSupportDisableManifestSandbox=1 \
+  -IDEPackageSupportDisablePluginExecutionSandbox=1
