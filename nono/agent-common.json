@@ -51,7 +51,6 @@
       "$HOME/ac",
       "$HOME/.yarn",
       "$HOME/.config/yarn",
-      "$HOME/.docker/cli-plugins",
       "$HOME/.docker/contexts",
       "$HOME/.local/share/claude"
     ],
@@ -76,7 +75,6 @@
         "when": "macos"
       },
       "$HOME/.docker/config.json",
-      "$HOME/.docker/cli-plugins",
       "$HOME/.docker/contexts"
     ],
     "unix_socket": [

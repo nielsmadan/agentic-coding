@@ -22,8 +22,6 @@ This repository contains shared configuration for agentic coding tools. It inclu
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
     `~/.pi/agent/AGENTS.md` (the shared `global/AGENTS.md`) and auto-discovers skills from
     `~/.agents/skills/`, so those need no pi-specific files.
-  - `permissions.json` - generated policy for `@gotgenes/pi-permission-system`, symlinked to
-    `~/.pi/agent/extensions/pi-permission-system/config.json`.
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
   - `manage.py` - project-local permission management behind `aiperm` / `/permission`
@@ -320,7 +318,7 @@ there, not five times over. The per-agent files hold only what one agent needs:
 
 - **`filesystem.deny` does not override an inherited group allow** ([nono#727](https://github.com/nolabs-ai/nono/issues/727)) — nothing can be *subtracted* from a base profile, only added.
 - **Nono blocks sandbox re-initialization** under the profile, so anything that starts its own Seatbelt sandbox must be told not to — Chrome needs `--no-sandbox` under `agent-browser`. It is usually a spawned process rather than the agent, and nono reports it as the system service `forbidden-sandbox-reinit`. Measured: `nono run -p codex-local -- sandbox-exec -p '(version 1)(allow default)' /bin/echo hi` fails with exit 71 while the same command outside `nono run` succeeds. The denial names no path, so nono's own `--allow <path>` suggestion cannot apply to it.
-- **Docker needs three grants plus `DOCKER_HOST`.** All of `~/.docker` sits in nono's permanent deny group, so each path needs `bypass_protection` as well as a grant. `DOCKER_HOST` (set by the wrapper) is enough for the plain `docker` CLI, but not for `docker compose`: the plugin is discovered via `config.json`'s `cliPluginsExtraDirs` (without it, `docker compose -f …` degrades to `docker -f …` and fails with `unknown shorthand flag: 'f'`), and compose resolves the daemon through `contexts/` rather than `DOCKER_HOST`. Granted: `config.json`, `cli-plugins`, `contexts`. None holds a secret — `credsStore` is `osxkeychain`, so the registry credential lives in the keychain, which stays denied.
+- **Docker needs two grants plus `DOCKER_HOST`.** All of `~/.docker` sits in nono's permanent deny group, so each path needs `bypass_protection` as well as a grant. `DOCKER_HOST` (set by the wrapper) is enough for the plain `docker` CLI, but not for `docker compose`: the plugin is discovered via `config.json`'s `cliPluginsExtraDirs` (without it, `docker compose -f …` degrades to `docker -f …` and fails with `unknown shorthand flag: 'f'`), and compose resolves the daemon through `contexts/` rather than `DOCKER_HOST`. Granted: `config.json`, `contexts`. Neither holds a secret — `credsStore` is `osxkeychain`, so the registry credential lives in the keychain, which stays denied. On this machine the compose plugin lives in homebrew's directory, so `~/.docker/cli-plugins` does not exist and granting it only produced a startup warning; a machine that does keep plugins there would need it back.
 - **`~/.claude.json` lives inside `~/.claude`, not `$HOME`.** `.airc.d/10-env.zsh` exports `CLAUDE_CONFIG_DIR=$HOME/.claude`, which relocates that file into the directory Claude already owns. Claude writes it by creating `.claude.json.tmp.<random>` and renaming; a random suffix in `$HOME` matches no grant, so the write was denied ([nono#1481](https://github.com/nolabs-ai/nono/issues/1481), open). Inside `~/.claude` the directory grant covers it. The variable is exported globally rather than in the sandbox wrapper so `claude` and `claude-raw` share one store. `~/.claude.json` and its lock file have been removed from `$HOME` entirely; anything launching Claude Code without the variable will create a fresh empty one there rather than silently diverging from the real store.
 - **No agent has keychain access, and none needs it.** `~/Library/Keychains` is denied to all four profiles; Claude and Codex both authenticate with it fully denied (their credentials are not keychain-backed here). `claude-local` reproduces the `nolabs-ai/claude` policy rather than extending it, precisely to drop that pack's directory-wide read+write grant.
 - **`nono why` misreports grants inside the built-in keychain protection.** Measured on 0.72.0: with `read_file` on `$HOME/Library/Keychains/login.keychain-db`, `nono why` says `DENIED / filesystem_deny` while `nono run` reads the file; with no grant at all the read fails, so the grant is what opens the path and the diagnostic does not account for it. Adding `bypass_protection` changes nothing in either direction. This is **not** a general `bypass_protection` blind spot — for `~/.netrc` the diagnostic tracks the runtime exactly (grant alone → both deny, grant + `bypass_protection` → both allow), as do `filesystem.deny` rules written in the profile or inherited through `extends`. Where the two disagree, believe the sandbox; trusting `nono why` here has already cost one load-bearing grant.
@@ -357,13 +355,12 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   first directory is already populated by `install_codex_skills`, so Pi gets the same curated skill
   subset as Codex with no pi-specific config. Skills surface as `/skill:<name>` and via
   progressive disclosure in the system prompt.
-- **Permissions** — `pi/settings.json` loads `@gotgenes/pi-permission-system`, and
-  `loadout` generates `pi/permissions.json` from the shared `[shell]` and `[mcp]`
-  rules. `sync.sh`
-  links that file to `~/.pi/agent/extensions/pi-permission-system/config.json`. Pi uses
-  last-match-wins rules, so the generator emits allow rules first, ask rules next, and deny rules
-  last. The universal tool fallback remains `allow`; unmatched Bash commands prompt, preserving
-  this repository's shared permission scope. This is an approval layer, not an OS sandbox.
+- **Permissions** — Pi has none, deliberately. Its core ships no approval layer at all: `--tools`
+  scopes which tools exist and `--approve` trusts project-local files, but neither gates an
+  individual call. Nothing here supplies one either, so every tool call runs unprompted. That is
+  safe only because Pi is sandbox-only — the `pi` wrapper has no `-raw` variant, so nono is always
+  the boundary and an approval prompt would add friction without adding containment. **A `pi-raw`
+  variant would need this revisited.**
 - **MCP servers** — `pi/mcp.json` holds real `mcpServers` definitions rendered from
   `mcp/servers.toml`, symlinked to `~/.pi/agent/mcp.json`. HTTP auth uses `bearerTokenEnv` (the
   variable NAME), so no token is written. It previously imported Claude's registry
