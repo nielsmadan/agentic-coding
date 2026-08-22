@@ -23,13 +23,21 @@ in `references/principles.md`.
    decision itself changed. **Skip append-only records** (`docs/decisions/`,
    `docs/log/`): never rewrite their bodies to match code — they describe the past on
    purpose. At most add a new entry or fix a broken link (see Doc lifecycles in
-   `references/principles.md`).
+   `references/principles.md`). **Skip `docs/reference/` on a source-scoped run** — it is
+   anchored to external things, so our refactor cannot make it stale (see step 5).
 4. **New behavior with no doc**: if there's a clear home pattern (e.g.
    `docs/features/<name>.md`), create that doc from the template; otherwise list it
    as an undocumented gap and suggest `--generate`. Don't create docs with no obvious
    home.
-5. **Fan out**: if >5 affected files/docs, spawn one sub-agent per doc/area, merge.
-6. **Report**: which docs were edited and what was synced; any gaps left for
+5. **Reference docs go stale on a *dependency* bump, not a code change.** Include
+   `docs/reference/` only when the diff touches a manifest/lockfile, on `--all`, or when the
+   target names the subject. Then, per affected doc: re-run the probe each verified claim
+   records, and either refresh its date + version stamp or mark it unverified against the new
+   version. **Never bump a stamp you did not re-check** — a false stamp is worse than an old
+   one. Drop claims that stopped being true rather than archiving them; if the change forces
+   one on us, propose an ADR.
+6. **Fan out**: if >5 affected files/docs, spawn one sub-agent per doc/area, merge.
+7. **Report**: which docs were edited and what was synced; any gaps left for
    `--generate`.
 
 ## Troubleshooting

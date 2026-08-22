@@ -11,7 +11,7 @@ against the principles in `references/principles.md`, then offers to apply fixes
 | `<target>` | A feature/area as a whole | Find all docs covering that feature |
 | `--staged` | Staged .md files | `git diff --cached --name-only -- '*.md'` |
 | `--unpushed` | .md files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD -- '*.md'` |
-| `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`, `docs/superpowers/`) + `README.md` + `CLAUDE.md`. Include `docs/user/` (check for accuracy vs behavior, but it's human-format — don't flag verbosity). Include `docs/decisions/` + `docs/log/` for link/quality checks but never sync their bodies to code (append-only). |
+| `--all` | All documentation | Glob `docs/**/*.md` (excluding `docs/explain/`, `docs/product/`, `docs/superpowers/`) + `README.md` + `CLAUDE.md`. Include `docs/user/` (check for accuracy vs behavior, but it's human-format — don't flag verbosity). Include `docs/decisions/` + `docs/log/` for link/quality checks but never sync their bodies to code (append-only). Include `docs/reference/`, but judge it against the external subject and the version the repo now resolves — never against our code. |
 
 `--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope.
 
@@ -41,6 +41,9 @@ against the principles in `references/principles.md`, then offers to apply fixes
 - [ ] Class/function names are current; described behavior matches the code
 - [ ] No signatures restated in prose (should reference code instead)
 - [ ] Links to related docs work
+- [ ] `docs/reference/`: every verified claim carries a date **and** the version probed;
+      upstream links resolve; no claim is stamped against a version older than the one the
+      repo now resolves (report it as needing re-verification — do not rewrite the claim)
 
 **Quality:**
 - [ ] No verbatim duplication across files
@@ -78,3 +81,9 @@ Number findings sequentially across all tiers so the user can select by number.
 ### Review finds no issues but coverage is incomplete
 **Solution:** Use `--all` to scan the full `docs/` tree against source modules; missing
 docs for key modules surface as completeness gaps.
+
+### Review "fixed" a reference doc by rewriting a verified claim
+**Cause:** Treating `docs/reference/` like a live code-derived doc. **Solution:** Review may
+flag a claim as stale against the current version and may fix links and prose, but the claim
+itself changes only by re-running the probe (that is `--update`'s job). Revert the rewrite and
+report it as needing re-verification instead.

@@ -130,12 +130,58 @@ that terse index tells an agent something faster than reading the code or the us
 `docs/user/` is a real, maintained tree (kept accurate as behavior changes, in human format),
 **not** frozen scratch. Only a *published* docs site (outside `docs/`, e.g. `site/`) is out of scope.
 
+### External reference (`docs/reference/`) — also orthogonal to the profile
+Knowledge about things **outside this repo**: how a dependency actually behaves, a platform or
+harness quirk, an external API's contract, a protocol, the runtime environment. `tech/` and
+`<flow>.md` answer *how our code works*; `reference/` answers *how the thing we build against
+works*, and no amount of reading our source will produce it. That is why it is a bucket of its
+own rather than a corner of `tech/`.
+
+**The test — all three, or it is not a reference doc:**
+1. **External subject.** Not our code. A dependency, service, tool, OS, protocol, or harness.
+2. **Cost to establish.** It came from an experiment, a binary/source dig, an issue thread, or
+   an hour of reading upstream — or the team keeps re-looking it up.
+3. **Not cheaply re-derivable.** If one quick doc lookup answers it next time, skip it.
+
+Strong signals, usually from a session: "I tested it and it actually…", behavior that
+contradicts the upstream docs, version-specific quirks, the same upstream page fetched three
+times, a comparison across several external things.
+
+**Where near-miss knowledge goes instead:**
+
+| knowledge | home |
+|---|---|
+| correct-usage conventions for a library we call | the repo's `library-use` skill (`library-docs` generates it) |
+| how our own subsystem works | `docs/tech/` or `docs/<flow>.md` |
+| why we picked this dependency | `docs/decisions/` |
+| how an end user performs a task | `docs/user/` |
+
+**Every claim says how it was established.** This is the convention that keeps the doc
+trustworthy as the external thing moves:
+- **Verified** — we ran it. Stamp the date *and* the version probed: "Verified 2026-08-09
+  against Claude Code 2.1.226."
+- **Documented** — upstream says so. Link the page.
+
+Keep the two visibly separate. When the dependency moves, the verified claims are the ones to
+re-check first — no changelog will tell you they changed.
+
+**Link upstream, don't mirror it** (Principle 3, aimed outward). Upstream is one click away;
+the doc earns its keep on the delta — what you verified, what surprised you, what upstream
+omits or gets wrong, and what it means for us.
+
+One file per subject. Add `docs/reference/overview.md` once there are ~3+ of them; that index is
+also the right home for a cross-cutting comparison table when the subjects are peers (several
+harnesses, several providers, several backends).
+
 ### Minimal: tiny or single-purpose repo
 ```
 AGENTS.md        # lean (Principle 8): commands, conventions, gotchas, one-line entry-point map
 CLAUDE.md        # one line: @AGENTS.md   (+ Claude-only overrides if any)
 ```
 No `docs/` tree. The README serves humans; `AGENTS.md` serves agents.
+
+A Minimal repo may still carry a single `docs/reference/<subject>.md` if it wraps one gnarly
+external system — that one file is not a reason to grow the rest of a tree.
 
 ### Lean: DEFAULT for most repos (a handful of non-derivable areas)
 ```
@@ -149,6 +195,8 @@ docs/
                        #   reusable lesson into the relevant live doc / AGENTS.md gotcha
   <flow>.md            # one explanation doc per genuinely cross-cutting flow (auth, sync,
                        #   data pipeline) that no single source file reveals
+  reference/           # OPTIONAL: how EXTERNAL things behave — dependency/platform/API quirks,
+    <subject>.md       #   verified findings stamped with date + version (see the test above)
   overview.md          # ONLY once there are ~3+ docs to index
 ```
 No `docs/features`+`docs/tech` split. No per-directory `overview.md`. Each doc is
@@ -161,6 +209,7 @@ docs/
   product/     # who & why: personas, jobs        (owned by review-product, not doc)
   features/    # WHAT each feature does — current behavior   (doc)
   tech/        # HOW it's built: architecture, mechanisms, API internals   (doc)
+  reference/   # how EXTERNAL deps/platforms/APIs behave — verified findings (doc)
   decisions/   # ADRs                             (doc)
   user/        # how to USE it — verbose human how-tos, README-linked (only if there are end users)
   overview.md  # index
@@ -196,6 +245,12 @@ over-structured-and-stale tree is the worst case and the strongest reason to shr
 ### Doc lifecycles (which docs `--update` syncs to code)
 - **Live / current-state** — `features/`, `tech/`, `<flow>.md`, `overview.md`. `--update`
   keeps these in sync with the code. The bulk of the tree.
+- **Externally anchored** — `reference/`. Maintained, and rewritten in place when the external
+  truth changes — but **not synced to our code**: a refactor here cannot make one stale. It goes
+  stale when the *dependency* moves, so its staleness signal is a version bump in the
+  manifest/lockfile, not a git diff over source. Re-verify by re-running the probe the doc
+  records. Drop a claim that stops being true (this tree holds current external reality, not
+  history); if that change forced a change on us, that is an ADR.
 - **Append-only records** — `decisions/` (ADRs) and `log/` (incident post-mortems).
   Doc-owned and part of the tree, but **never rewritten to match code** (they intentionally
   describe past decisions/code). `--update` adds new entries and fixes broken links only; it

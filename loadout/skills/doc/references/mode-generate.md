@@ -23,6 +23,9 @@ Create documentation for code that isn't documented yet, following
    - `docs/features/` — **what** each feature does (Structured; mirrors `docs/product/`
      use cases, tracks the implementation).
    - `docs/tech/` — **how** it's built (Structured; non-derivable only, never restate code).
+   - `docs/reference/` — how **external** things behave (dependency / platform / API quirks).
+     Orthogonal to the profile: warranted by the three-part test in `references/principles.md`,
+     not by repo size — even a Minimal repo can earn one.
    - `docs/decisions/` — ADRs (why-this-way).
    - Root `docs/overview.md` index once ~3+ docs exist; a subdirectory `overview.md` only
      where a subdir warrants one (Principle 5), not by default.
@@ -36,9 +39,32 @@ Create documentation for code that isn't documented yet, following
    This is the moment a project opts into maintaining docs, so the trigger is
    installed exactly here — not globally.
 
+## Generating a reference doc
+
+When the target is an external subject rather than our code, generate into `docs/reference/`
+using the Reference Template. Four things differ:
+
+- **The source is not our code.** Gather from upstream docs, changelogs and issues, from what
+  this session already established, and from git history / prior notes.
+- **Separate verified from documented**, and stamp every verified claim with the date and the
+  version probed. A claim nobody ran is a documented claim with a link.
+- **Don't invent verification.** If an unverified claim matters and the probe is cheap, run it;
+  otherwise mark it as upstream's word.
+- **Record the delta only.** Upstream is one link away — the doc earns its keep on what
+  upstream doesn't say, gets wrong, or leaves ambiguous, plus what it means for us.
+
+Add `docs/reference/overview.md` once ~3+ subjects exist; when they are peers, that index
+carries the cross-cutting comparison table.
+
 ## Troubleshooting
 
 ### Generated docs restate function signatures
 **Cause:** The generator should reference code, not copy it. **Solution:** Re-run
 `--update` on the doc; signatures belong as `file:line` references (principle 3), with
 prose describing the contract and why.
+
+### A reference doc came out as a copy of the upstream docs
+**Cause:** Same failure aimed outward — mirroring the canonical source instead of linking it.
+**Solution:** Cut everything the linked page already says. What remains is the doc: what we
+verified, where reality diverged from the docs, and the consequence for this repo. If nothing
+remains, the doc wasn't warranted — a link in the relevant `tech/` doc is enough.

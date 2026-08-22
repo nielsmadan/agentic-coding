@@ -95,6 +95,9 @@ directly from a diff); `--generate` is for greenfield.
   `docs/`) is out of scope.
 - `docs/decisions/` and `docs/log/` are **append-only**: `--update` never rewrites their
   bodies, only adds entries / fixes links.
+- `docs/reference/` is **externally anchored**: a source-scoped `--update` skips it, because
+  our refactor cannot make it stale. It goes stale when a *dependency version* moves, and a
+  verified claim is only re-stamped by re-running its probe.
 
 ## Assess Mode (default)
 
@@ -115,6 +118,11 @@ It never writes without your go-ahead — the plan comes first.
      (how it's built), `docs/decisions/` (ADRs), with `overview.md` indexes. This
      is the layer `--update`/`--generate` maintain. (`docs/features/` was formerly
      `docs/prd/`; it absorbs any legacy `docs/prd`, `docs/api` behavior.)
+   - **External reference — `docs/reference/`:** how the *dependencies, platforms and APIs
+     we build against* behave — verified findings stamped with date + version, and the
+     upstream links. Doc-owned and maintained, but anchored to external things rather than
+     to our code. Orthogonal to the profile (see "External reference" in
+     `references/principles.md`), so a repo can warrant one at any size.
    - **User-facing tree — `docs/user/`:** verbose human how-tos, README-linked, its
      own audience/format (see "Two audiences" in `references/principles.md`). Part of the
      project's docs, kept accurate when behavior changes, but not the terse agent-facing
@@ -154,6 +162,13 @@ It never writes without your go-ahead — the plan comes first.
      over-sized tree just because it exists. When you meet gitignored `docs/superpowers/`,
      offer to harvest embedded decisions into `decisions/` and then delete the completed
      plans (on confirmation).
+     Then check for an **external-reference gap**: knowledge about a dependency, platform,
+     harness or external API that this repo keeps re-establishing — a quirk that cost an
+     experiment to find, a version-specific behavior, a contradiction with upstream's docs,
+     something the session or git history shows being looked up more than once. That belongs
+     in `docs/reference/`, not in `tech/`, and is warranted by the three-part test in
+     `references/principles.md` rather than by repo size. Correct-usage conventions for a
+     single library are **not** this — they belong to `library-docs` / `library-use`.
      Also check the **instruction file itself** (Principle 8 in `references/principles.md`):
      is `AGENTS.md`/`CLAUDE.md`
      bloated with derivable/enforceable content or over ~200 lines? That is a Generate/
@@ -181,7 +196,8 @@ It never writes without your go-ahead — the plan comes first.
    1. {e.g. "Small app, no docs/ tree — recommend Lean profile: AGENTS.md + docs/decisions + 1-2 flow docs" OR "AGENTS.md is 340 lines with restated dir layout — trim to lean" OR "Considered a docs/ tree — skipped: single-purpose repo, Minimal profile covers it"}
 
    ### Update (stale)
-   2. {doc} — {code changed / broken ref}   (or: "none — docs match code")
+   2. {doc} — {code changed / broken ref / dependency bumped past a verified claim's version}
+      (or: "none — docs match code")
 
    ### Review (quality)
    3. {doc} — {issue}   (or: "none — checked, conforms")
