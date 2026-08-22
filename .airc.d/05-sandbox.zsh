@@ -19,6 +19,12 @@
 # install: ~/.local/share/claude and the ~/.local/bin/claude symlink are read-only
 # here on purpose, since claude-raw executes whatever that symlink resolves to.
 # claude-raw picks the update up instead.
+#
+# VHS_NO_SANDBOX makes vhs pass --no-sandbox to the Chrome it drives; without it
+# recording dies at `could not open ttyd`. Chrome additionally needs the
+# com.google.Chrome. mach-register rule in nono/agent-common.json — both are
+# required, neither is sufficient alone.
+#
 # Working in these repos means writing outside ~/wrksp (loadout sync, these
 # wrappers themselves), which the sandbox exists to prevent — so claude and codex
 # route to their -raw variant here. AGENT_FORCE_SANDBOX=1 overrides. pi and
@@ -44,6 +50,7 @@ _agent_sandboxed() {
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
     OTHER_SWIFT_FLAGS='$(inherited) -disable-sandbox' \
     AGENT_BROWSER_ARGS=--no-sandbox \
+    VHS_NO_SANDBOX=true \
     DISABLE_AUTOUPDATER=1 \
       _sops_exec nono run -p "$profile" -- "$cmd" "$@"
   else
