@@ -7,8 +7,8 @@ path = "loadout"
 # `permissions` and `mcp` render without being asked for; `instructions` needs an
 # order and `settings` names an input, so both are stated.
 
-# Everything an agent does not override. Codex and Pi take it as-is; Claude
-# names its own instructions and keeps the rest.
+# Everything an agent does not override. OpenCode and Pi take it as-is; Claude
+# names its own instructions and Codex appends one harness-specific fragment.
 [all]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
@@ -23,6 +23,11 @@ instructions = [
 ]
 
 [codex]
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
+    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "codex-proactivity",
+]
 
 # mcp/sync.py co-owns this document's `mcp` key and writes the same destination;
 # `preserve` reads that key back out of the destination before overwriting.
