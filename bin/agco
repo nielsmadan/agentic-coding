@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""Print which agent was most recently active in the current directory.
+
+Usage:
+    agco
+
+Checks Claude Code, Codex, OpenCode and Pi session stores for sessions whose
+recorded cwd is exactly the current directory, and prints the name of the agent
+holding the newest one on stdout, plus a human-readable note on stderr.
+
+This only emits the name — the actual resume launch is done by the `agco` zsh
+function (see .airc.d/agents.zsh), which routes through the sandboxed,
+sops-wrapped shell function for that agent. Exec'ing the agent here would bypass
+those wrappers.
+"""
+from __future__ import annotations
+
+import importlib.machinery
+import importlib.util
+import json
+import os
+import sqlite3
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+
+HEADER_LINES = 8
+
+
+def load_clcof():
+    # Shares clcof's project_slug so the two never drift on Claude's path encoding.
+    path = Path(__file__).resolve().with_name("clcof")
+    loader = importlib.machinery.SourceFileLoader("clcof", str(path))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+CLCOF = load_clcof()
+
+
+@dataclass
+class Roots:
+    claude_projects: Path
+    codex_sessions: Path
+    opencode_db: Path
+    pi_sessions: Path
+
+    @classmethod
+    def from_environment(cls) -> "Roots":
+        home = Path.home()
+        xdg_data = Path(os.environ.get("XDG_DATA_HOME", home / ".local" / "share"))
+        claude_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR", home / ".claude"))
+        codex_dir = Path(os.environ.get("CODEX_HOME", home / ".codex"))
+        pi_dir = Path(os.environ.get("PI_CODING_AGENT_DIR", home / ".pi" / "agent"))
+        return cls(
+            claude_projects=claude_dir / "projects",
+            codex_sessions=codex_dir / "sessions",
+            opencode_db=xdg_data / "opencode" / "opencode.db",
+            pi_sessions=Path(
+                os.environ.get("PI_CODING_AGENT_SESSION_DIR", pi_dir / "sessions")
+            ),
+        )
+
+
+def by_mtime(root: Path, pattern: str) -> list[tuple[Path, float]]:
+    entries: list[tuple[Path, float]] = []
+    try:
+        candidates = root.rglob(pattern)
+    except OSError:
+        return entries
+    for path in candidates:
+        try:
+            entries.append((path, path.stat().st_mtime))
+        except OSError:
+            continue
+    entries.sort(key=lambda entry: entry[1], reverse=True)
+    return entries
+
+
+def header_cwd(path: Path, extract) -> str | None:
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for _ in range(HEADER_LINES):
+                line = handle.readline()
+                if not line:
+                    break
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(record, dict):
+                    continue
+                found = extract(record)
+                if found is not None:
+                    return found
+    except OSError:
+        return None
+    return None
+
+
+def newest_jsonl(root: Path, cwd: str, extract) -> float | None:
+    for path, mtime in by_mtime(root, "*.jsonl"):
+        if header_cwd(path, extract) == cwd:
+            return mtime
+    return None
+
+
+def codex_cwd(record: dict) -> str | None:
+    if record.get("type") != "session_meta":
+        return None
+    payload = record.get("payload")
+    if not isinstance(payload, dict):
+        return None
+    cwd = payload.get("cwd")
+    return cwd if isinstance(cwd, str) else None
+
+
+def pi_cwd(record: dict) -> str | None:
+    if record.get("type") != "session":
+        return None
+    cwd = record.get("cwd")
+    return cwd if isinstance(cwd, str) else None
+
+
+def claude_latest(cwd: str, roots: Roots) -> float | None:
+    entries = by_mtime(roots.claude_projects / CLCOF.project_slug(cwd), "*.jsonl")
+    return entries[0][1] if entries else None
+
+
+def codex_latest(cwd: str, roots: Roots) -> float | None:
+    return newest_jsonl(roots.codex_sessions, cwd, codex_cwd)
+
+
+def pi_latest(cwd: str, roots: Roots) -> float | None:
+    return newest_jsonl(roots.pi_sessions, cwd, pi_cwd)
+
+
+def opencode_latest(cwd: str, roots: Roots) -> float | None:
+    if not roots.opencode_db.is_file():
+        return None
+    try:
+        connection = sqlite3.connect(f"file:{roots.opencode_db}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return None
+    try:
+        row = connection.execute(
+            "SELECT MAX(time_updated) FROM session WHERE directory = ?", (cwd,)
+        ).fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        connection.close()
+    if row is None or row[0] is None:
+        return None
+    return float(row[0]) / 1000
+
+
+FINDERS = {
+    "claude": claude_latest,
+    "codex": codex_latest,
+    "opencode": opencode_latest,
+    "pi": pi_latest,
+}
+
+
+def human_age(seconds: float) -> str:
+    seconds = max(0.0, seconds)
+    if seconds < 90:
+        return f"{int(seconds)}s ago"
+    minutes = seconds / 60
+    if minutes < 90:
+        return f"{int(minutes)}m ago"
+    hours = minutes / 60
+    if hours < 36:
+        return f"{int(hours)}h ago"
+    return f"{int(hours / 24)}d ago"
+
+
+def most_recent_agent(cwd: str, roots: Roots) -> tuple[str, float] | None:
+    found: dict[str, float] = {}
+    for agent, finder in FINDERS.items():
+        stamp = finder(cwd, roots)
+        if stamp is not None:
+            found[agent] = stamp
+    if not found:
+        return None
+    agent = max(found, key=found.__getitem__)
+    return agent, found[agent]
+
+
+def main() -> int:
+    cwd = str(Path.cwd().resolve())
+    recent = most_recent_agent(cwd, Roots.from_environment())
+    if recent is None:
+        print(f"agco: no agent session found for {cwd}", file=sys.stderr)
+        return 1
+    agent, stamp = recent
+    print(f"agco: {agent} ({human_age(time.time() - stamp)})", file=sys.stderr)
+    print(agent)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
