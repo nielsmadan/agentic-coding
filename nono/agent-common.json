@@ -59,6 +59,7 @@
       "$HOME/.config/gh/config.yml",
       "$HOME/.config/gh/hosts.yml",
       "$HOME/.local/state/gh/device-id",
+      "$HOME/.config/splashdown/config.toml",
       "$HOME/.yarnrc",
       {
         "path": "$HOME/Library/Keychains/login.keychain-db",
