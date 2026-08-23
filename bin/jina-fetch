@@ -284,13 +284,15 @@ def in_parallel(fn: Callable[[T], R], items: list[T]) -> list[R]:
         pool.shutdown(wait=False, cancel_futures=True)
 
 
-def fetch(url: str, timeout: int) -> str:
+def fetch(url: str, timeout: int, proxy: str | None = None) -> str:
     headers = {
         "Authorization": "Bearer " + require_key("JINA_API_KEY"),
         "X-Return-Format": "markdown",
         # Jina 403s the default Python-urllib User-Agent.
         "User-Agent": "jina-fetch/1.0",
     }
+    if proxy:
+        headers["X-Proxy"] = proxy
     attempts: list[str] = []
     thin: str | None = None
     # A host that blocks Jina answers 200 with a stub body rather than an error
@@ -330,12 +332,13 @@ def fetch(url: str, timeout: int) -> str:
     raise ToolError(f"Jina could not fetch {url} ({'; '.join(attempts)})")
 
 
-def load(url: str, timeout: int, use_cache: bool) -> Page:
+def load(url: str, timeout: int, use_cache: bool,
+         proxy: str | None = None) -> Page:
     path = cache_path(url)
     if use_cache and os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             return Page(url, path, f.read())
-    doc = fetch(url, timeout)
+    doc = fetch(url, timeout, proxy)
     # A blocked host returns 200 with an interstitial. Caching that would serve
     # the block page instantly forever, so only real pages are written — via a
     # temp file, so an interrupted run cannot leave a partial page behind.
@@ -402,7 +405,7 @@ def extract(fenced: str, ex: Extraction, nonce: str) -> str:
             ) from second
 
 
-def report_page(page: Page, prompt: str) -> None:
+def report_page(page: Page, prompt: str, proxy: str | None = None) -> None:
     title = page_title(page.doc)
     # The exact path — "newest file in the cache dir" is wrong when fetches overlap.
     where = page.path if os.path.exists(page.path) else "(not cached)"
@@ -414,6 +417,9 @@ def report_page(page: Page, prompt: str) -> None:
     if blocked:
         warn(f"warning: Jina could not really read {page.url} — {blocked} "
              f"(not cached)")
+        if not proxy:
+            warn("  hint: retry with --proxy to route through Jina's "
+                 "residential pool, which reaches Reddit and many bot walls")
     if prompt != DEFAULT_PROMPT:
         missing = off_topic_terms(prompt, page.doc)
         if missing:
@@ -462,6 +468,12 @@ def build_parser() -> argparse.ArgumentParser:
                         f"else {DEFAULT_MODEL})")
     p.add_argument("--out", metavar="PATH", help="also write the full markdown here")
     p.add_argument("--no-cache", action="store_true", help="re-fetch even if cached")
+    p.add_argument("--proxy", action="store_true",
+                   help="route through Jina's rotating residential proxy pool, "
+                        "which reaches Reddit and many bot-walled hosts")
+    p.add_argument("--proxy-country", metavar="CC", default=None,
+                   help="pin the proxy to a country, e.g. de. Needs the paid "
+                        "Proxy allocation tier and 402s without it. Implies --proxy")
     p.add_argument("--clean", metavar="URL", action="append",
                    help="drop the cache for URL (repeatable)")
     p.add_argument("--clean-all", action="store_true",
@@ -502,8 +514,10 @@ def main() -> int:
             warn(f"warning: --raw skips the model, so {', '.join(ignored)} "
                  f"had no effect")
 
+    proxy = opts.proxy_country or ("auto" if opts.proxy else None)
     results = in_parallel(
-        lambda u: _load_or_fail(u, opts.timeout, not opts.no_cache), urls
+        lambda u: _load_or_fail(u, opts.timeout, not opts.no_cache, proxy),
+        urls,
     )
     pages = [r for r in results if isinstance(r, Page)]
     failures = [r for r in results if isinstance(r, Failure)]
@@ -513,7 +527,7 @@ def main() -> int:
         return 1
 
     for page in pages:
-        report_page(page, prompt)
+        report_page(page, prompt, proxy)
 
     if opts.out:
         with open(opts.out, "w", encoding="utf-8") as f:
@@ -555,9 +569,10 @@ def main() -> int:
     return 1 if failures else 0
 
 
-def _load_or_fail(url: str, timeout: int, use_cache: bool) -> Page | Failure:
+def _load_or_fail(url: str, timeout: int, use_cache: bool,
+                  proxy: str | None = None) -> Page | Failure:
     try:
-        return load(url, timeout, use_cache)
+        return load(url, timeout, use_cache, proxy)
     except ToolError as e:
         return Failure(url, str(e))
 

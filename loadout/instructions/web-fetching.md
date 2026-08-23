@@ -14,9 +14,17 @@
 
 **Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
 
-**Go straight to `jina-fetch` for Stack Overflow** — it blocks `WebFetch` at the client (`"Claude Code is unable to fetch"`, request never sent), and works through Jina, so don't waste the failed call. **Reddit is now blocked for both** — Jina gets a 403 interstitial ("blocked by network security" / CAPTCHA). Treat Reddit as unreachable and say so, rather than retrying.
+**Go straight to `jina-fetch` for Stack Overflow** — it blocks `WebFetch` at the client (`"Claude Code is unable to fetch"`, request never sent), and works through Jina, so don't waste the failed call.
 
-**On a long page, prefer `jina-fetch` even when `WebFetch` works.** `WebFetch` truncates: on the Kubernetes Deployment page it refused the question outright, reporting `[Content truncated due to length...]`, while `jina-fetch` answered it correctly from the full page. If a `WebFetch` answer mentions truncation, or reads like it stopped before the section you asked about, re-fetch with `jina-fetch` rather than accepting it.
+**When a host blocks Jina, escalate with `jina-fetch --proxy`** before giving up. That routes through Jina's rotating residential pool (`X-Proxy: auto`), which is on the current key and handles common anti-bot challenges. `jina-fetch` hints at this itself whenever a page comes back blocked. `--proxy-country de` pins a country but needs the paid Proxy allocation tier and returns HTTP 402 without it, so only reach for it if the geo actually matters. Proxied requests likely bill more than plain ones, so keep `--proxy` an escalation rather than a default.
+
+**Reddit needs `--proxy`, and nothing else works.** Verified 2026-08-22: plain Jina returns a "Prove your humanity" CAPTCHA; `WebFetch`, raw curl from this machine (403), `old.reddit.com` (302) and public redlib mirrors (403) all fail, and so does a real local browser via `agent-browser` ("blocked by network security" after the JS challenge, so Reddit fingerprints automation). `jina-fetch --proxy <thread-url>` returns the full thread, post body and comments, ~50k chars. The `.rss` endpoint also works but 429s on the very next request, so it is not a substitute.
+
+**Split by page type, not by length alone.** Use `WebFetch` first for anything **transactional** (shop listings, prices, stock, shipping, delivery estimates): those pages are short enough that truncation is no risk, and `WebFetch` runs on this machine's German IP while Jina exits in the US. Go straight to `jina-fetch` for **long-form reading** (reviews, docs, articles, roundups), where truncation is the real risk and geography is irrelevant. Length alone is a weak signal, because in a research-heavy session almost every page is long and the exception quietly eats the stated default.
+
+Real case, 2026-08-22: `thomannmusic.com` fetched through Jina returned a price in USD, which got misread as a Jina geolocation artifact and written into a doc as fact. The German domain `thomann.de` returns EUR through Jina perfectly well. When a price looks foreign, check the domain before blaming the tool.
+
+**`WebFetch` truncates on long pages.** On the Kubernetes Deployment page it refused the question outright, reporting `[Content truncated due to length...]`, while `jina-fetch` answered it correctly from the full page. If a `WebFetch` answer mentions truncation, or reads like it stopped before the section you asked about, re-fetch with `jina-fetch` rather than accepting it.
 
 **Reading several pages**: `jina-fetch <url> <url> <url> "<what to extract>"` fetches them in parallel and extracts each separately. Add `--combined` for one extraction across all of them when the question spans sources ("which of these disagree?"). Use this instead of `mcp__jina__parallel_read_url`, which dumps every page into the conversation at once.
 
