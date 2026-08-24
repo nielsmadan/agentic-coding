@@ -1,5 +1,8 @@
 #!/bin/bash
 input=$(cat)
+# ringleader-capture
+printf '%s' "$input" | jq -c '{captured_at: (now|floor), rate_limits}' > "/Users/nielsmadan/.local/share/ringleader/claude-limits.json.tmp" 2>/dev/null && mv -f "/Users/nielsmadan/.local/share/ringleader/claude-limits.json.tmp" "/Users/nielsmadan/.local/share/ringleader/claude-limits.json";
+# ringleader-capture
 
 eval "$(printf '%s' "$input" | jq -r '
 def used: if . == null or .used_percentage == null then "" else (.used_percentage | round) end;
