@@ -37,8 +37,6 @@ $HOME/.pub-cache/hosted-hashes	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
-$HOME/Library/Keychains	group:claude_code_macos
-$HOME/Library/Keychains/metadata.keychain-db	group:claude_code_macos
 $HOME/Library/Logs	group:user_caches_macos
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
@@ -86,7 +84,6 @@ $HOME/.pub-cache/hosted-hashes	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
-$HOME/Library/Keychains/metadata.keychain-db	group:codex_macos
 $HOME/Library/Logs	group:user_caches_macos
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos

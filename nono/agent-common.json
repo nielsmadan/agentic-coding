@@ -61,20 +61,12 @@
       "$HOME/.local/state/gh/device-id",
       "$HOME/.config/splashdown/config.toml",
       "$HOME/.yarnrc",
-      {
-        "path": "$HOME/Library/Keychains/login.keychain-db",
-        "when": "macos"
-      },
       "$HOME/.docker/config.json"
     ],
     "deny": [
       "$HOME/.dolt/creds"
     ],
     "bypass_protection": [
-      {
-        "path": "$HOME/Library/Keychains/login.keychain-db",
-        "when": "macos"
-      },
       "$HOME/.docker/config.json",
       "$HOME/.docker/contexts"
     ],

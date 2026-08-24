@@ -15,6 +15,12 @@
 # -IDEPackageSupportDisablePluginExecutionSandbox=1, which are NSUserDefaults and
 # cannot come from the environment.
 #
+# SSL_CERT_FILE replaces the login keychain for TLS trust. Codex's Rust stack
+# reads trust settings from ~/Library/Keychains/login.keychain-db, and granting
+# that file opened the whole unlocked keychain to every agent. The PEM bundle
+# carries the same public roots; a CA added only to the keychain will not be
+# trusted by sandboxed agents.
+#
 # bin/sandbox-shims holds wrappers for tools whose inner-sandbox switch is an
 # NSUserDefault rather than an env var, so argv is the only channel. Only the
 # sandbox wrapper prepends it; 00-path.zsh puts bin/ alone on the interactive
@@ -57,6 +63,7 @@ _agent_sandboxed() {
     AGENT_BROWSER_ARGS=--no-sandbox \
     VHS_NO_SANDBOX=true \
     DISABLE_AUTOUPDATER=1 \
+    SSL_CERT_FILE=/etc/ssl/cert.pem \
       _sops_exec nono run -p "$profile" -- "$cmd" "$@"
   else
     _sops_exec "$cmd" "$@"

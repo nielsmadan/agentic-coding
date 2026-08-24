@@ -11,10 +11,6 @@
   "groups": {
     "include": [
       {
-        "name": "claude_code_macos",
-        "when": "macos"
-      },
-      {
         "name": "user_caches_macos",
         "when": "macos"
       },
@@ -38,6 +34,7 @@
       "/tmp/claude-$UID"
     ],
     "read": [
+      "$HOME/Applications/Claude Code URL Handler.app",
       "$NONO_PACKAGES",
       "$NONO_CONFIG/profiles"
     ]

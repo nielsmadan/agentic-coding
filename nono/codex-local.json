@@ -3,5 +3,10 @@
     "nolabs-ai/codex",
     "agent-common",
     "agent-private"
-  ]
+  ],
+  "groups": {
+    "exclude": [
+      "codex_macos"
+    ]
+  }
 }
