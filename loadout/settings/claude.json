@@ -191,7 +191,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "telegram@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "nono@nolabs-ai": true
+    "nono@nolabs-ai": true,
+    "mouthfeel@mouthfeel": true
   },
   "sandbox": {
     "filesystem": {
