@@ -6,8 +6,9 @@ printf '%s' "$input" | jq -c '{captured_at: (now|floor), rate_limits}' > "/Users
 
 eval "$(printf '%s' "$input" | jq -r '
 def used: if . == null or .used_percentage == null then "" else (.used_percentage | round) end;
+def workday: ((. - (5 * 3600)) | strflocaltime("%Y-%m-%d") | . + "T00:00:00Z" | fromdateiso8601);
 def pace: if . == null or .used_percentage == null or .resets_at == null then ""
-  else ((((604800 - (.resets_at - now)) / 86400) | floor) + 1
+  else (((((now | workday) - ((.resets_at - 604800) | workday)) / 86400) | floor) + 1
         | if . < 1 then 1 elif . > 7 then 7 else . end) as $day
     | (($day * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
