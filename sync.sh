@@ -57,6 +57,14 @@ fi
 PROFILE="$(sed -n 's/^profile *= *"\(.*\)"/\1/p' "$MACHINE_CONFIG" | tail -1)"
 PROFILE="${PROFILE:-default}"
 
+# --- Locally-developed Claude plugins: "name:built-marketplace-path" ---
+# Only the marketplace registration lives here. `~/.claude/plugins/known_marketplaces.json`
+# is an install registry Claude rewrites itself, so loadout cannot render it (ADR 0015).
+# The enabling half is `enabledPlugins` in loadout/settings/claude.json.
+LOCAL_MARKETPLACES=(
+  "mouthfeel:$HOME/wrksp/oss/mouthfeel/dist/claude"
+)
+
 # --- Symlinks: "source:destination" ---
 # Only files this repo still stages. Everything loadout generates is written
 # straight to its destination (see the [instructions.*] and [permissions.*]
@@ -226,6 +234,43 @@ generate_mcp() {
 # runtime state and ~/.claude/settings.json has no mcpServers key. So register
 # missing servers through the CLI instead. Add-only — `claude mcp add-json`
 # has no overwrite flag, so a changed url/args needs a manual remove + re-add.
+sync_claude_plugins() {
+  echo ""
+  echo "Registering local Claude plugin marketplaces..."
+
+  if ! command -v claude &>/dev/null; then
+    echo "⚠️  Claude CLI not found — skipping marketplace registration"
+    return
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping marketplace registration"
+    return
+  fi
+
+  local entry name path
+  for entry in "${LOCAL_MARKETPLACES[@]}"; do
+    name="${entry%%:*}"
+    path="${entry#*:}"
+
+    if [[ ! -d "$path" ]]; then
+      echo "⚠️  $name not built yet: $path (skipping)"
+      continue
+    fi
+    if python3 -c 'import json, os, sys
+registry = os.path.expanduser("~/.claude/plugins/known_marketplaces.json")
+known = json.load(open(registry)) if os.path.exists(registry) else {}
+sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
+      echo "✓  $name marketplace already configured"
+      continue
+    fi
+    if claude plugin marketplace add "$path"; then
+      echo "✓  Added $name marketplace"
+    else
+      echo "⚠️  Failed to add $name marketplace"
+    fi
+  done
+}
+
 sync_claude_mcp() {
   local source="$SCRIPT_DIR/claude/mcp-servers.generated.json"
 
@@ -327,6 +372,7 @@ done
 echo ""
 
 sync_claude_mcp
+sync_claude_plugins
 
 echo ""
 echo "✓  Sync complete (${PROFILE} profile)."

@@ -235,6 +235,17 @@ A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `trans
 
 Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
 
+## Local Claude Plugins
+
+A plugin developed locally (`mouthfeel`, at `~/wrksp/oss/mouthfeel`) is wired up in **two halves with two owners**, and they must agree:
+
+- **Enablement** — `enabledPlugins` in `loadout/settings/claude.json`, rendered into the generated `~/.claude/settings.json`. Without an entry there, `claude plugin enable` writes the key at runtime and the next `loadout sync` discards it, silently disabling the plugin.
+- **Marketplace registration** — `sync.sh`'s `sync_claude_plugins`, driven by the `LOCAL_MARKETPLACES` array. `~/.claude/plugins/known_marketplaces.json` is an install registry Claude rewrites itself (install paths, timestamps), so loadout deliberately does not render it — the same constraint as `.claude.json` for MCP servers. Add-only, like `sync_claude_mcp`: if the built path moves, `claude plugin marketplace remove <name>` and re-run.
+
+**`enabledPlugins` lives in the settings base only because this repo declares no `plugins` slice.** loadout has one, and it assigns `enabledPlugins` unconditionally; composition is residual-first, so the moment `loadout.toml` gains `[claude] plugins = [...]` the slice wins and the settings-base copy is overwritten with no message. If you declare one, move the entry into a plugins fragment at the same time.
+
+Reload after a source change is `npm run dev:claude` in the plugin repo: it stamps a fresh version into `dist/claude/mouthfeel/.claude-plugin/plugin.json`, then runs `claude plugin update` and `claude plugin enable`. The version stamp is what stops Claude serving the cached copy. Nothing sandbox-specific is needed — `~/wrksp` and `~/.claude/plugins` are both granted.
+
 ## Hooks
 
 Event-triggered shell scripts live in `claude/hooks/` and are wired in under the `hooks` key of **`loadout/settings/claude.json`** — not `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
