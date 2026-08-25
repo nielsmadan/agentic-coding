@@ -1,6 +1,17 @@
 # OpenCode aliases
 # No -raw variant: opencode is never run outside the sandbox.
-opencode() { AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "$@"; }
+#
+# nono writes an ~80-line capability banner to stderr before exec'ing the child,
+# and opencode's redraw does not reclaim it, so it shows through the scroll area.
+# The sh shim clears the visible screen from inside the sandbox — after the
+# banner, before opencode draws. nono's exit summary survives because it prints
+# after the child exits, which `--silent` would have suppressed along with the
+# banner. Deliberately not \033[3J: that clears the scrollback the user had
+# before launching, and the banner is worth keeping there.
+opencode() {
+  AGENT_HARNESS=opencode _agent_sandboxed opencode-local \
+    /bin/sh -c 'printf "\033[2J\033[H"; exec "$@"' sh opencode "$@"
+}
 
 alias oc="opencode"
 alias ocs="opencode -m openrouter/moonshotai/kimi-k3"
