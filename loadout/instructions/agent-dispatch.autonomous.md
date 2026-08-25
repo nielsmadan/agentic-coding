@@ -10,4 +10,4 @@ Sub-agents are the fastest way to spend a lot of tokens. There is no human in th
 
 **When an agent must be write-capable, tell it not to recurse.** Put a literal line in its prompt: *"Do not dispatch sub-agents; do this work yourself."* This is the only guard available once read-only is off the table.
 
-Give each agent **one question**, not a six-part brief that invites decomposition. Report how many agents ran and roughly what they consumed.
+Give each agent **one question**, not a six-part brief that invites decomposition. When a dispatch reaches three agents or more than one round, report how many ran and roughly what they consumed; below that, leave it out.

@@ -10,4 +10,4 @@ Sub-agents are the fastest way to spend a lot of tokens without the user seeing 
 
 **When an agent must be write-capable, tell it not to recurse.** Put a literal line in its prompt: *"Do not dispatch sub-agents; do this work yourself."* This is the only guard available once read-only is off the table.
 
-Two habits that keep the budget honest: give each agent **one question**, not a six-part brief that invites decomposition; and report the cost when you are done — how many agents ran and roughly what they consumed — so the next decision is an informed one.
+Give each agent **one question**, not a six-part brief that invites decomposition. Report the cost only when the dispatch was big enough to be worth knowing — three or more agents, or more than one round: how many ran and roughly what they consumed, in one line. Below that, say nothing; a spend report on every one- or two-agent lookup is noise, not budget discipline.
