@@ -88,9 +88,11 @@ SYMLINKS=(
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
   # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs
-  # source no shell config, so jina-fetch is also linked into ~/.local/bin,
-  # which their plists put on PATH.
+  # source no shell config, so these are also linked into ~/.local/bin, which
+  # their plists put on PATH. sops-exec is additionally what ~/rc's editor
+  # wrappers call, so it must resolve without ~/.airc having been sourced.
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
+  "$SCRIPT_DIR/bin/sops-exec:$HOME/.local/bin/sops-exec"
 )
 
 # Destinations loadout now writes directly, which earlier versions of this

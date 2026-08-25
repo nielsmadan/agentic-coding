@@ -1,0 +1,42 @@
+#!/bin/zsh
+# Run a command with the SOPS-encrypted dev secrets injected into its own
+# environment, never into the caller's.
+#
+# A script rather than a shell function so there is exactly one definition and
+# no repo has to source another's shell config to reach it: ~/rc's editor
+# wrappers and non-interactive launchers (agent supervisors, launchd jobs) call
+# it off PATH. sync.sh also links it into ~/.local/bin for consumers that load
+# no shell config at all.
+#
+# `sops exec-env <file> <command>` takes the command as a single string that
+# sops re-tokenizes via the shell, NOT a `--`-separated argv, so each argument
+# is shell-quoted with `printf '%q '` to survive the round-trip.
+
+: ${SOPS_SECRETS:=$HOME/.config/sops/secrets.yaml}
+: ${SOPS_AGE_KEY_FILE:=$HOME/.config/sops/age/keys.txt}
+export SOPS_AGE_KEY_FILE
+
+if (( $# == 0 )); then
+  print -u2 -r -- "usage: sops-exec <command> [args...]"
+  exit 64
+fi
+
+cmd=$1; shift
+
+if command -v sops >/dev/null 2>&1 && [[ -f $SOPS_SECRETS && -f $SOPS_AGE_KEY_FILE ]]; then
+  exec sops exec-env "$SOPS_SECRETS" "$cmd $(printf '%q ' "$@")"
+fi
+
+# Nothing to inject. Fresh installs that just want mvim/nvim to work fall
+# through to the bare command; a caller that cannot function without the keys
+# sets AGENT_REQUIRE_SECRETS=1 and gets a loud failure instead of a subscription
+# quietly billed or an agent running keyless.
+if [[ -n $AGENT_REQUIRE_SECRETS ]]; then
+  print -u2 -r -- "sops-exec: refusing to run '$cmd' without secrets (AGENT_REQUIRE_SECRETS is set)"
+  command -v sops >/dev/null 2>&1 || print -u2 -r -- "  sops not on PATH"
+  [[ -f $SOPS_SECRETS ]]           || print -u2 -r -- "  no secrets file at $SOPS_SECRETS"
+  [[ -f $SOPS_AGE_KEY_FILE ]]      || print -u2 -r -- "  no age identity at $SOPS_AGE_KEY_FILE"
+  exit 78
+fi
+
+exec "$cmd" "$@"

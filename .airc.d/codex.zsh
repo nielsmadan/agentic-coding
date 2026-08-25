@@ -16,7 +16,7 @@ codex() {
   fi
   AGENT_HARNESS=codex _agent_sandboxed codex-local codex -c sandbox_mode='"danger-full-access"' -c approval_policy='"never"' "$@"
 }
-codex-raw() { AGENT_HARNESS=codex _sops_exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
+codex-raw() { AGENT_HARNESS=codex sops-exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
 
 alias cxco="codex resume --last"
 alias cxcof="codex fork --last"

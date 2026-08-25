@@ -64,8 +64,13 @@ _agent_sandboxed() {
     VHS_NO_SANDBOX=true \
     DISABLE_AUTOUPDATER=1 \
     SSL_CERT_FILE=/etc/ssl/cert.pem \
-      _sops_exec nono run -p "$profile" -- "$cmd" "$@"
+      sops-exec nono run -p "$profile" -- "$cmd" "$@"
+  elif [[ -n $AGENT_REQUIRE_SANDBOX ]]; then
+    print -u2 -r -- "$cmd: refusing to run unsandboxed (AGENT_REQUIRE_SANDBOX is set)"
+    command -v nono >/dev/null 2>&1 || print -u2 -r -- "  nono not on PATH"
+    [[ -f "$HOME/.config/nono/profiles/$profile.json" ]] || print -u2 -r -- "  no profile at ~/.config/nono/profiles/$profile.json"
+    return 78
   else
-    _sops_exec "$cmd" "$@"
+    sops-exec "$cmd" "$@"
   fi
 }

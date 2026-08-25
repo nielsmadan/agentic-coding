@@ -46,13 +46,33 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order
   - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
-- `bin/` - standalone CLI scripts on PATH (e.g. `ccmove`, `clcof`); add new ones here rather than as zsh functions. `.airc.d/00-path.zsh` covers interactive shells only — a script that must also run under launchd needs an explicit `~/.local/bin` symlink in `sync.sh`'s `SYMLINKS` (as `jina-fetch` has)
+- `bin/` - standalone CLI scripts on PATH (e.g. `ccmove`, `clcof`); add new ones here rather than as zsh functions. `.airc.d/00-path.zsh` covers interactive shells only — a script that must also run under launchd needs an explicit `~/.local/bin` symlink in `sync.sh`'s `SYMLINKS` (as `jina-fetch` and `sops-exec` have)
 
 ## Shell Config
 
 Add a new alias or shell function: drop it in the appropriate `.airc.d/<topic>.zsh`, or create a new topic file. Reload with `source ~/.airc` (idempotent — re-sourcing does not duplicate PATH entries).
 
 Add a new CLI command with flags, validation, or non-trivial logic: write it as a Python script under `bin/<name>` (no extension) with `#!/usr/bin/env python3` and `chmod +x`. It becomes available on PATH automatically. Keep zsh wrappers only when shell-specific behavior is needed (e.g. `print -z` to put text on the zle buffer, backgrounding with `& disown`).
+
+### Sourcing `~/.airc` from a script
+
+`~/.airc` is a supported entry point for non-interactive consumers — agent supervisors, launchd
+jobs, wrapper scripts — not just for `~/.zshrc`. Two rules keep it that way, and both were
+learned by breaking them:
+
+- **Nothing under `.airc.d/` may depend on a symbol defined in `~/.zshrc`.** That file is read
+  by interactive shells only, so the dependency is invisible until a script sources `~/.airc`
+  alone and gets callers without their callee. Secret injection is therefore `bin/sops-exec`, a
+  script, rather than a function in either repo; `~/rc`'s editor wrappers call the same one.
+- **`00-path.zsh` appends the mise shims and `~/.local/bin`.** `mise activate` also lives in the
+  interactive-only file, so without this a script finds neither `sops` nor `nono` and both
+  wrappers fall through to an unsandboxed, keyless command.
+
+Those fallbacks are deliberate (a machine with no secrets still gets a working `nvim`) and
+therefore silent. A launcher that cannot tolerate them sets **`AGENT_REQUIRE_SECRETS=1`** and/or
+**`AGENT_REQUIRE_SANDBOX=1`**, which turn each into a diagnostic on stderr and exit 78. Prefer
+that to trusting PATH: a keyless agent bills the subscription and an unsandboxed one has the
+whole filesystem.
 
 ## Skills
 
@@ -285,7 +305,7 @@ rotation.
 Every agent CLI runs inside [nono](https://github.com/nolabs-ai/nono), a Seatbelt-based
 capability sandbox. The shell wrappers in `.airc.d/` do this transparently — `claude`, `codex`,
 `opencode` and `pi` are zsh functions that call `_agent_sandboxed` (`.airc.d/05-sandbox.zsh`),
-which wraps the real binary in `nono run -p <agent>-local` *inside* `_sops_exec`. Each has a
+which wraps the real binary in `nono run -p <agent>-local` *inside* `sops-exec`. Each has a
 `<name>-raw` escape hatch that keeps the secret injection but drops the sandbox; use it for
 `loadout sync` and anything that must write outside `~/wrksp`.
 
@@ -295,8 +315,9 @@ which wraps the real binary in `nono run -p <agent>-local` *inside* `_sops_exec`
 it. `pi` and `opencode` have no raw variant and always sandbox.
 
 **`~/rc/.zshrc` must not define these four functions.** It sources `~/.airc` first, so a wrapper
-there silently overrides the sandboxed one and the sandbox quietly stops applying. It still owns
-`_sops_exec` itself, plus `gemini`, `railway`, and the editor wrappers.
+there silently overrides the sandboxed one and the sandbox quietly stops applying. It owns the
+`nvim` / `mvim` / `neovide` wrappers, which call `bin/sops-exec` off PATH behind a `command -v`
+guard, so neither repo depends on the other's shell config.
 
 ### Profiles
 

@@ -11,7 +11,7 @@ claude() {
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.
-claude-raw() { AGENT_HARNESS=claude _sops_exec claude "$@"; }
+claude-raw() { AGENT_HARNESS=claude sops-exec claude "$@"; }
 
 alias clco="claude --continue"
 alias clco-raw="claude-raw --continue"
@@ -31,7 +31,7 @@ clcof-raw() {
 _ccone() { claude -p "$*"; }
 alias ccone="noglob _ccone"
 
-# Claude Code against OpenRouter. No _sops_exec fallback on purpose: falling
+# Claude Code against OpenRouter. No sops-exec fallback on purpose: falling
 # through to a bare `claude` would silently bill the subscription instead.
 # The tier aliases are remapped cheap->strong so /model haiku|sonnet|opus
 # switches models mid-session. [1m] declares the real 1M context window.
