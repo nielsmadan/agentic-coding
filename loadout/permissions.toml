@@ -92,6 +92,10 @@ allow = [
 
 [opencode.extra]
 # Written to opencode.json permission.<key>.
+# external_directory — opencode otherwise prompts the first time a tool resolves
+# a path outside the worktree. nono already decides what is reachable, so the
+# prompt adds friction without adding containment (same reasoning as `default`).
+external_directory = "allow"
 skill = "allow"
 webfetch = "allow"
 websearch = "allow"
