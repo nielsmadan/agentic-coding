@@ -302,6 +302,10 @@ rotation.
 
 ## Sandbox (nono)
 
+What the sandbox is *for* — the threat model, git and `gh` authentication, why `git push` differs
+between sandboxed, raw and interactive contexts, and the known gaps — is
+[`docs/security-model.md`](docs/security-model.md). This section is the mechanics.
+
 Every agent CLI runs inside [nono](https://github.com/nolabs-ai/nono), a Seatbelt-based
 capability sandbox. The shell wrappers in `.airc.d/` do this transparently — `claude`, `codex`,
 `opencode` and `pi` are zsh functions that call `_agent_sandboxed` (`.airc.d/05-sandbox.zsh`),
