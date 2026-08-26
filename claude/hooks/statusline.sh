@@ -13,7 +13,10 @@ def pace: if . == null or .used_percentage == null or .resets_at == null then ""
     | (($day * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
   else ((.resets_at - now) | if . < 0 then 0 else . end | floor) end;
-@sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") output_style=\(.output_style.name // "default") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left)"')"
+@sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left)"')"
+
+E=$'\033'
+sep_str="${E}[2m │ ${E}[0m"
 
 pct_color() {
   if [ "$1" -ge 80 ]; then printf '\033[31m'
@@ -21,7 +24,22 @@ pct_color() {
   else printf '\033[32m'; fi
 }
 
-sep() { printf '\033[2m │ '; }
+ctx_color() {
+  if [ "$1" -ge 90 ]; then printf '\033[38;5;167m'
+  elif [ "$1" -ge 70 ]; then printf '\033[38;5;173m'
+  elif [ "$1" -ge 45 ]; then printf '\033[38;5;179m'
+  else printf '\033[38;5;108m'; fi
+}
+
+ctx_bar() {
+  local pct=$1 width=10 filled empty fill pad
+  filled=$((pct * width / 100))
+  [ "$filled" -gt "$width" ] && filled=$width
+  empty=$((width - filled))
+  [ "$filled" -gt 0 ] && printf -v fill "%${filled}s"
+  [ "$empty" -gt 0 ] && printf -v pad "%${empty}s"
+  printf '%s%s\033[0m\033[2m%s\033[0m' "$(ctx_color "$pct")" "${fill// /▓}" "${pad// /░}"
+}
 
 fmt_left() {
   local d=$(($1 / 86400)) h=$((($1 % 86400) / 3600)) m=$((($1 % 3600) / 60))
@@ -31,40 +49,83 @@ fmt_left() {
 }
 
 window() {
-  local label=$1 pct=$2 pace=$3 left=$4
-  printf '\033[36m %s \033[0m%s%s%%\033[0m' "$label" "$(pct_color "$pct")" "$pct"
+  local pct=$1 pace=$2 left=$3 l
+  window_out="$(pct_color "$pct")${pct}%${E}[0m"
+  window_w=$((${#pct} + 1))
   if [ -n "$pace" ]; then
-    if [ "$pace" -gt 0 ]; then printf ' \033[32m+%s\033[0m' "$pace"
-    elif [ "$pace" -le -10 ]; then printf ' \033[31m%s\033[0m' "$pace"
-    elif [ "$pace" -lt 0 ]; then printf ' \033[33m%s\033[0m' "$pace"
-    else printf ' \033[36m0\033[0m'; fi
+    if [ "$pace" -gt 0 ]; then window_out+=" ${E}[32m+${pace}${E}[0m"; window_w=$((window_w + 2 + ${#pace}))
+    elif [ "$pace" -le -10 ]; then window_out+=" ${E}[31m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace}))
+    elif [ "$pace" -lt 0 ]; then window_out+=" ${E}[33m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace}))
+    else window_out+=" ${E}[36m0${E}[0m"; window_w=$((window_w + 2)); fi
   fi
-  if [ -n "$left" ]; then printf ' \033[37m%s\033[0m' "$(fmt_left "$left")"; fi
+  if [ -n "$left" ]; then
+    l=$(fmt_left "$left")
+    window_out+=" ${E}[37m${l}${E}[0m"
+    window_w=$((window_w + 1 + ${#l}))
+  fi
 }
 
-project_type=""
-if [ -f "$current_dir/pubspec.yaml" ]; then
-  if grep -q "flutter:" "$current_dir/pubspec.yaml" 2>/dev/null; then project_type="📱"; else project_type="🎯"; fi
+# prio 100 is pinned; lower values are dropped first when the line will not fit
+segs=(); widths=(); prios=()
+add_seg() { prios+=("$1"); widths+=("$2"); segs+=("$3"); }
+
+if [ -n "$AGENT_SANDBOX" ]; then
+  add_seg 100 10 "${E}[32m🔒 sandbox${E}[0m"
+else
+  add_seg 100 6 "${E}[31m🥩 raw${E}[0m"
 fi
 
-printf '\033[34m📁 %s\033[0m' "$dir_name"
-sep
-if [ -n "$project_type" ]; then
-  printf '\033[35m%s Flutter\033[0m' "$project_type"
-  sep
+add_seg 90 $((3 + ${#dir_name})) "${E}[34m📁 ${dir_name}${E}[0m"
+
+if [ -f "$current_dir/pubspec.yaml" ]; then
+  if grep -q "flutter:" "$current_dir/pubspec.yaml" 2>/dev/null; then
+    add_seg 30 10 "${E}[35m📱 Flutter${E}[0m"
+  else
+    add_seg 30 10 "${E}[35m🎯 Flutter${E}[0m"
+  fi
 fi
-printf '\033[33m🤖 %s\033[0m' "$model_name"
-if [ -n "$fast_mode" ]; then printf ' \033[33m⚡\033[0m'; fi
-if [ -n "$effort" ]; then printf ' \033[35m%s\033[0m' "$effort"; fi
-sep
-printf '\033[37m✨ %s\033[0m' "$output_style"
-sep
-printf '🧠 %s%s%%\033[0m' "$(pct_color "$ctx_pct")" "$ctx_pct"
-sep
+
+model_seg="${E}[33m🤖 ${model_name}${E}[0m"
+model_w=$((3 + ${#model_name}))
+if [ -n "$fast_mode" ]; then
+  model_seg+=" ${E}[33m⚡${E}[0m"
+  model_w=$((model_w + 3))
+fi
+if [ -n "$effort" ]; then
+  model_seg+=" ${E}[35m${effort}${E}[0m"
+  model_w=$((model_w + 1 + ${#effort}))
+fi
+add_seg 60 "$model_w" "$model_seg"
+
+add_seg 80 $((3 + 10 + 1 + ${#ctx_pct} + 1)) \
+  "🧠 $(ctx_bar "$ctx_pct")$(ctx_color "$ctx_pct") ${ctx_pct}%${E}[0m"
+
 if [ -n "$seven_d" ]; then
-  printf '⏳'
-  window 7d "$seven_d" "$seven_pace" "$seven_left"
-  sep
+  window "$seven_d" "$seven_pace" "$seven_left"
+  add_seg 70 $((3 + window_w)) "⏳ ${window_out}"
 fi
-if [ -n "$AGENT_SANDBOX" ]; then printf '\033[32m🔒 sandbox\033[0m'; else printf '\033[31m🥩 raw\033[0m'; fi
-printf '\033[0m'
+
+if [ -n "$COLUMNS" ]; then
+  total=0
+  for w in "${widths[@]}"; do total=$((total + w)); done
+  total=$((total + 3 * (${#segs[@]} - 1) + 2))
+  while [ "$total" -gt "$COLUMNS" ]; do
+    victim=-1 low=100
+    for i in "${!segs[@]}"; do
+      [ -z "${segs[$i]}" ] && continue
+      if [ "${prios[$i]}" -lt "$low" ]; then low=${prios[$i]} victim=$i; fi
+    done
+    [ "$victim" -lt 0 ] && break
+    total=$((total - widths[victim] - 3))
+    segs[$victim]=""
+  done
+fi
+
+first=1
+for i in "${!segs[@]}"; do
+  [ -z "${segs[$i]}" ] && continue
+  [ "$first" -eq 0 ] && printf '%s' "$sep_str"
+  printf '%s' "${segs[$i]}"
+  first=0
+done
+printf '%s' "${E}[0m"
