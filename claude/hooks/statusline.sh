@@ -65,7 +65,7 @@ window() {
   fi
 }
 
-# prio 100 is pinned; lower values are dropped first when the line will not fit
+# prio 100 is pinned; lower values are dropped first when two lines will not fit
 segs=(); widths=(); prios=()
 add_seg() { prios+=("$1"); widths+=("$2"); segs+=("$3"); }
 
@@ -105,26 +105,47 @@ if [ -n "$seven_d" ]; then
   add_seg 70 $((3 + window_w)) "⏳ ${window_out}"
 fi
 
+# greedy left-to-right pack into at most $max_lines rows; sets line_of[] and lines_used
+max_lines=2
+pack() {
+  local avail=$1 i w cur=0 line=0
+  lines_used=1
+  for i in "${!segs[@]}"; do
+    [ -z "${segs[$i]}" ] && continue
+    w=${widths[$i]}
+    if [ "$cur" -eq 0 ]; then cur=$w
+    elif [ $((cur + 3 + w)) -le "$avail" ]; then cur=$((cur + 3 + w))
+    else line=$((line + 1)); lines_used=$((lines_used + 1)); cur=$w; fi
+    line_of[$i]=$line
+  done
+}
+
+line_of=()
 if [ -n "$COLUMNS" ]; then
-  total=0
-  for w in "${widths[@]}"; do total=$((total + w)); done
-  total=$((total + 3 * (${#segs[@]} - 1) + 2))
-  while [ "$total" -gt "$COLUMNS" ]; do
+  while :; do
+    pack $((COLUMNS - 2))
+    [ "$lines_used" -le "$max_lines" ] && break
     victim=-1 low=100
     for i in "${!segs[@]}"; do
       [ -z "${segs[$i]}" ] && continue
       if [ "${prios[$i]}" -lt "$low" ]; then low=${prios[$i]} victim=$i; fi
     done
     [ "$victim" -lt 0 ] && break
-    total=$((total - widths[victim] - 3))
     segs[$victim]=""
   done
+else
+  for i in "${!segs[@]}"; do line_of[$i]=0; done
 fi
 
-first=1
+first=1 prev_line=-1
 for i in "${!segs[@]}"; do
   [ -z "${segs[$i]}" ] && continue
-  [ "$first" -eq 0 ] && printf '%s' "$sep_str"
+  if [ "${line_of[$i]}" -ne "$prev_line" ]; then
+    [ "$first" -eq 0 ] && printf '\n'
+    prev_line=${line_of[$i]}
+  else
+    printf '%s' "$sep_str"
+  fi
   printf '%s' "${segs[$i]}"
   first=0
 done
