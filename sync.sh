@@ -119,6 +119,20 @@ seed_private_profile() {
   echo "✓  Created empty $target (gitignored; add machine-specific grants here)"
 }
 
+# nono ignores a grant whose path does not exist ("... does not exist and will be
+# ignored"), so a tool that creates its state directory lazily can never create
+# it: the grant is skipped for being absent, and the mkdir is then denied. Only
+# an unsandboxed step can break that cycle. List directories granted in
+# nono/agent-common.json that nothing else creates first.
+seed_granted_state_dirs() {
+  local dir
+  for dir in "$HOME/.local/state/mouthfeel"; do
+    [[ -d "$dir" ]] && continue
+    mkdir -p "$dir"
+    echo "✓  Created $dir (granted in nono/agent-common.json; nono skips absent paths)"
+  done
+}
+
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
 # (a symlink holds no data); a real file/dir where a link belongs → back it up
 # (never rm -rf unattended), then link.
@@ -365,6 +379,7 @@ echo ""
 sync_codex_superpowers
 echo ""
 seed_private_profile
+seed_granted_state_dirs
 
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"

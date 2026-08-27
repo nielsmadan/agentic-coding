@@ -25,6 +25,7 @@ $HOME/.local/state/claude/locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
+$HOME/.local/state/mouthfeel	profile
 $HOME/.local/state/splashdown	profile
 $HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
@@ -72,6 +73,7 @@ $HOME/.local/share/ringleader	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
+$HOME/.local/state/mouthfeel	profile
 $HOME/.local/state/splashdown	profile
 $HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
@@ -119,6 +121,7 @@ $HOME/.local/share/ringleader	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
+$HOME/.local/state/mouthfeel	profile
 $HOME/.local/state/opencode	profile
 $HOME/.local/state/splashdown	profile
 $HOME/.local/state/watchman	profile
@@ -166,6 +169,7 @@ $HOME/.local/share/ringleader	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
+$HOME/.local/state/mouthfeel	profile
 $HOME/.local/state/splashdown	profile
 $HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
