@@ -17,6 +17,8 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
+  - `model-defaults.toml` - default model + reasoning effort, merged into `~/.codex/config.toml`
+    by `sync_config.py` (see Codex Model Defaults below)
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
@@ -254,6 +256,46 @@ A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `trans
 **`~/.config/opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. Both write that path directly — it is the one `mcp/sync.py` output that is not staged in this repo, precisely so the two writers share one file with no symlink between them. `mcp/sync.py` reads the current file and mutates only its own key; `loadout` builds the file from `loadout/bases/opencode.base.json` and passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml`. **`sync.sh` runs `mcp/sync.py` before `loadout`** so the key loadout preserves is the current one; `mcp/sync.py` must still never rebuild the file from scratch.
 
 Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
+
+## Codex Model Defaults
+
+Codex's default model and reasoning effort come from **`codex/model-defaults.toml`**, merged into
+`~/.codex/config.toml` by `codex/sync_config.py` (already wired into `./sync.sh`). Edit that file
+and re-run `./sync.sh`; a hand edit to `~/.codex/config.toml` is reverted on the next sync, and
+`codex/sync_config.py --check` reports the drift.
+
+**Only the top-level keys the source names are touched** — currently `model` and
+`model_reasoning_effort`. `plan_mode_reasoning_effort` is deliberately not among them and stays
+hand-maintained in `~/.codex/config.toml`. Named keys are replaced where they already
+sit, so Codex's own `[projects."…"]` trust entries, the nono block, `developer_instructions` and
+the `[mcp_servers.*]` tables all survive. Nested tables are rejected: this file is model defaults,
+not a second home for everything in `config.toml`.
+
+**Nothing here reserializes `~/.codex/config.toml`, and that is the design.** The merge is line-wise
+text surgery — `strip_owned_tables` drops managed tables, `set_developer_instructions` and
+`set_model_defaults` replace their own keys in place — with `tomllib` used only to read the sources
+and to validate the result. The comments, the nono block and the project tables survive because no
+code path touches those bytes, not because a writer preserved them. Do not "improve" this into a
+parse-mutate-serialize round trip with a TOML library: that trades untouched for preserved-if-the-
+library-is-careful, and adds a dependency to a script `install.sh` runs on a fresh machine.
+
+That file cannot be generated whole, which is why this is a merge rather than a loadout target.
+Three writers share it — Codex rewrites it as it visits projects, the nono pack appends its block,
+and this repo owns a few keys — and loadout's residual mechanism (`owned_key` + `preserve`) reads
+and writes JSON only, so no `[codex] settings` slice can express it today. The same reasoning
+already applies to `[mcp_servers.*]` and `developer_instructions`.
+
+**Codex validates none of this.** `model_reasoning_effort = "bogus"` is accepted silently and
+reported as the session's effort; a wrong value fails server-side at first use. The published
+[config reference](https://learn.chatgpt.com/docs/config-file/config-reference) also lags the
+binary — it lists `minimal | low | medium | high | xhigh`, while codex-cli 0.149.1 carries `max`
+and `ultra` as well. Verify a new value by running `codex exec` once and reading the effort it
+reports back.
+
+`codex/test_sync_config.py` covers the merge, including the empty-target case: rendering was not
+idempotent there, and a populated target hides it because it reuses what is on disk. The
+nested-table test matches on the error message — without that, a missing guard still raises
+`ValueError` further down in `toml_value` and the test passes either way.
 
 ## Local Claude Plugins
 

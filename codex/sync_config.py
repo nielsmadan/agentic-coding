@@ -25,6 +25,7 @@ PERMISSIONS_SOURCE = REPO_ROOT / "codex" / "mcp-permissions.toml"
 DEFAULT_TARGET = Path.home() / ".codex" / "config.toml"
 MANAGED_COMMENT = "# Managed by codex/config.toml via sync.sh."
 INSTRUCTIONS_SOURCE = REPO_ROOT / "codex" / "developer-instructions.md"
+MODEL_DEFAULTS_SOURCE = REPO_ROOT / "codex" / "model-defaults.toml"
 TABLE_HEADER = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
 
 
@@ -136,6 +137,56 @@ def strip_owned_tables(content: str, roots: tuple[str, ...]) -> str:
     return "\n".join(kept)
 
 
+ASSIGNMENT = re.compile(r"^\s*([A-Za-z0-9_-]+)\s*=")
+
+
+def set_model_defaults(content: str) -> str:
+    """Own the top-level keys named in codex/model-defaults.toml.
+
+    Codex rewrites this file as it goes — project trust entries, plugins — so the
+    keys are replaced where they already sit rather than the file being rebuilt.
+    Like developer_instructions they must stay above the first table header, or
+    TOML reads them as members of the preceding table.
+    """
+    if not MODEL_DEFAULTS_SOURCE.exists():
+        return content
+
+    defaults = tomllib.loads(MODEL_DEFAULTS_SOURCE.read_text())
+    if any(isinstance(value, dict) for value in defaults.values()):
+        raise ValueError(f"{MODEL_DEFAULTS_SOURCE} may only hold top-level keys")
+    if not defaults:
+        return content
+
+    lines = content.splitlines()
+    first_table = next(
+        (index for index, line in enumerate(lines) if table_path(line) is not None),
+        len(lines),
+    )
+
+    pending = dict(defaults)
+    kept: list[str] = []
+    for index, line in enumerate(lines):
+        match = ASSIGNMENT.match(line) if index < first_table else None
+        if match and match.group(1) in pending:
+            key = match.group(1)
+            kept.append(f"{toml_key(key)} = {toml_value(pending.pop(key))}")
+        else:
+            kept.append(line)
+
+    if pending:
+        block = [f"{toml_key(key)} = {toml_value(value)}" for key, value in pending.items()]
+        # Land beside the other top-level scalars, not against the first table
+        # header — that sits below nono's marker, where these would read as part
+        # of its managed block.
+        last = max(
+            (index for index in range(first_table) if ASSIGNMENT.match(lines[index])),
+            default=None,
+        )
+        at = first_table if last is None else last + 1
+        kept = kept[:at] + block + kept[at:]
+    return "\n".join(kept) + "\n"
+
+
 DEVELOPER_INSTRUCTIONS = re.compile(
     r'^developer_instructions\s*=\s*""".*?"""\n*', re.MULTILINE | re.DOTALL
 )
@@ -170,8 +221,18 @@ def render(current: str, source: str) -> str:
     tomllib.loads(source)
     roots = managed_roots(source)
     unmanaged = strip_owned_tables(current, roots)
+    # The model keys belong to the preserved region, so they are set before the
+    # blocks are composed — otherwise a target that started empty gains them
+    # above the managed comment on one run and below it on the next.
+    # developer_instructions is re-inserted afterwards; dropping it first keeps
+    # its multiline body out of the region set_model_defaults edits by line.
+    unmanaged = set_model_defaults(DEVELOPER_INSTRUCTIONS.sub("", unmanaged))
     managed = source.strip()
-    blocks = [block for block in (unmanaged, MANAGED_COMMENT, managed) if block]
+    blocks = [
+        stripped
+        for block in (unmanaged, MANAGED_COMMENT, managed)
+        if (stripped := block.strip("\n"))
+    ]
     result = set_developer_instructions("\n\n".join(blocks) + "\n")
     tomllib.loads(result)
     return result
