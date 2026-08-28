@@ -10,6 +10,14 @@ Default to zero comments. Never write JSDoc-style `/** … */` blocks, multi-par
 
 A negative assertion earns its place only when the absence *is* the behaviour under test and names a specific thing that would otherwise have happened: `expect(write).not.toHaveBeenCalled()` after a rejected request, or no sidebar in a no-access state. If you cannot name what would have produced the thing, do not assert it is missing.
 
+## Verifying Results
+
+**Read the whole result, not the part you filtered for.** When checking a claim, don't pipe the check through `head`, `tail`, or a `grep` for the outcome you expect — a filter that hides the disagreeing half turns a real result into a confirming one. Read the summary line (`FAILED (failures=N, errors=M)`, the exit code, the full failure list) before concluding, and be most careful when the result matches what you predicted.
+
+**A mutation that fails to apply looks exactly like a passing test.** When you break code deliberately to prove a test catches it, grep for the mutated construct to confirm the edit landed. Green after a real mutation means the test is weak; green after an edit that silently did nothing means nothing at all.
+
+**"Nothing else would have caught it" is a claim about the whole suite**, not about the test in front of you. Don't call a test uniquely load-bearing without running every other test against the same break — pinning a property and covering it uniquely are different claims, and passing establishes only the first.
+
 ## Preserve User Edits
 
 When a system-reminder shows the user modified a file (especially "the change was intentional"), treat those edits as load-bearing. When you later edit that file for an unrelated reason, do not reword their comments, rename their variables, or reformat lines they chose to format a certain way. If a refactor genuinely requires changing one of their choices, flag it out loud first — never silently revert it inside a larger edit. When in doubt, keep their version.
