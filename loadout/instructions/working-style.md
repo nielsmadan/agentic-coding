@@ -18,6 +18,8 @@ A negative assertion earns its place only when the absence *is* the behaviour un
 
 **"Nothing else would have caught it" is a claim about the whole suite**, not about the test in front of you. Don't call a test uniquely load-bearing without running every other test against the same break — pinning a property and covering it uniquely are different claims, and passing establishes only the first.
 
+**Never report git state from memory.** Before saying anything is uncommitted, unpushed, unstaged, or untracked — including in a closing summary — run `git status` (and `git log @{u}..` for unpushed commits) and report what they show. The user commits and pushes outside the session, so state observed earlier in the turn is stale by default.
+
 ## Preserve User Edits
 
 When a system-reminder shows the user modified a file (especially "the change was intentional"), treat those edits as load-bearing. When you later edit that file for an unrelated reason, do not reword their comments, rename their variables, or reformat lines they chose to format a certain way. If a refactor genuinely requires changing one of their choices, flag it out loud first — never silently revert it inside a larger edit. When in doubt, keep their version.
