@@ -36,7 +36,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 
 | Path | What it holds |
 |------|---------------|
-| `claude/` | Claude Code config: `skills/`, `hooks/`, `settings.json` (+ `settings.autonomous.json`), `CLAUDE.md` (+ autonomous variant), and `desktop/` (Claude Desktop skills, packaged separately) |
+| `claude/` | Claude Code config: `skills/`, `hooks/`, `settings.json` (+ `settings.autonomous.json`), and `CLAUDE.md` (+ autonomous variant) |
 | `codex/` | OpenAI Codex config: managed `config.toml` overlay, permission `rules/`, and curated skills synced to `~/.agents/skills` |
 | `opencode/` | OpenCode config (`opencode.json`) |
 | `pi/` | Pi settings plus the generated `@gotgenes/pi-permission-system` policy |
@@ -69,9 +69,6 @@ renders every one to Claude, Codex, OpenCode and Pi.
   [`AGENTS.md`](AGENTS.md#skills).
 - **Codex** gets a curated subset (see `CODEX_SKILLS` in `sync.sh`), shared
   via symlink.
-- **Claude Desktop** skills live in `claude/desktop/` and are packaged into zips
-  with `claude/desktop/package-skills.sh`, then uploaded through Claude Desktop's
-  UI (no automation).
 
 ## Permissions
 

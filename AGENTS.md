@@ -191,15 +191,6 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
   builds (`deepseek/deepseek-v4-pro` is the 0423 build, not the 0813 one), so ids
   always come from that API, never from a name.
 
-## Claude Desktop Skills
-
-Skills under `claude/desktop/skills/` are deployed to Claude Desktop manually:
-1. Edit `claude/desktop/skills/<name>/SKILL.md` (and any `references/`)
-2. Run `./claude/desktop/package-skills.sh` — produces `claude/desktop/zips/<name>.zip`
-3. Upload the zip via Claude Desktop's UI (no automation)
-
-The unpacked copies in `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/...` are read-only — never edit there.
-
 ## Permissions
 
 Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.

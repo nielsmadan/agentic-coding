@@ -1,8 +1,5 @@
 pre-commit:
   commands:
-    package-desktop-skills:
-      glob: "claude/desktop/skills/**/*"
-      run: ./claude/desktop/package-skills.sh
     sync-global:
       run: loadout check --global
     sandbox-writable:
