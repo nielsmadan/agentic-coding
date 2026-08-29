@@ -204,6 +204,11 @@
     }
   },
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-fable-5": {
+      "effortLevel": "xhigh"
+    }
+  },
   "awaySummaryEnabled": false,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
