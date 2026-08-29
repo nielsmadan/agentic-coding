@@ -535,7 +535,10 @@ def render_local(root: Path, home: Path, rules: dict, dry_run: bool) -> list[str
 
 
 def run_global_sync(root: Path) -> None:
-    subprocess.run(["loadout", "sync", "--root", str(root)], check=True)
+    # `--global`, not `--root`: it resolves the machine config's profile as well as
+    # its source, so a machine running a non-default profile renders that one. With
+    # `--root` this always rendered `default` and quietly undid the active profile.
+    subprocess.run(["loadout", "sync", "--global"], check=True)
     if os.environ.get("AIPERM_NO_INSTALL") != "1":
         subprocess.run([str(root / "sync.sh")], check=True)
 
@@ -571,7 +574,11 @@ def main() -> int:
     args = parser().parse_args()
     root = repo_root()
     project = project_root()
-    global_path = root / "permissions" / "permissions.toml"
+    # loadout/permissions.toml, not permissions/permissions.toml: the global rule
+    # source moved when loadout took over rendering, and this pointed at a path
+    # that no longer exists — `list --scope global` reported empty rules and an
+    # allow/deny raised, or would have forked a second source of truth.
+    global_path = root / "loadout" / "permissions.toml"
     local_path = project / ".aiconf" / "permissions.toml"
     try:
         if args.action == "list":
@@ -608,7 +615,7 @@ def main() -> int:
         if args.scope == "global":
             content = edit_global_source(global_path, args.action, kind, target)
             if args.dry_run:
-                print("would update permissions/permissions.toml and regenerate global config")
+                print("would update loadout/permissions.toml and regenerate global config")
                 return 0
             original = global_path.read_text()
             atomic_write(global_path, content)
