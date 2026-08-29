@@ -19,7 +19,7 @@ cd ~/ac
 
 `install.sh` is idempotent and prompts before replacing anything. It:
 
-- generates each agent's permission config from `permissions/permissions.toml`
+- generates each agent's permission config from `loadout/permissions.toml`
 - symlinks config into `~/.claude`, `~/.codex`, `~/.opencode`, and `~/.airc`
 - installs the curated Codex skill subset into `~/.agents/skills`
 - optionally adds `source ~/.airc` to your `~/.zshrc` and wires up the configured
@@ -49,13 +49,14 @@ MCP servers) are **not** auto-installed — set those up separately.
 ## The four agents
 
 A single config feeds all four tools. Shared shell-command and MCP permissions are
-defined once in `permissions/permissions.toml` and generated out to each agent;
+defined once in `loadout/permissions.toml` and generated out to each agent;
 agent-native settings (tool toggles, MCP entries, skill subsets) live in the
 per-agent directories above. Codex and Pi pick up Claude's skills through symlinks rather than separate copies.
 
 Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
-symlinked. `sync.sh` merges the table subtrees declared in `codex/config.toml`
-into it and preserves all other user and Codex-managed settings.
+symlinked. loadout writes it in place instead, owning only the keys it declares
+— `mcp_servers`, `plugins`, `marketplaces` and the model defaults — and leaving
+every other user and Codex-managed setting untouched.
 
 ## Skills
 
@@ -73,7 +74,7 @@ renders every one to Claude, Codex, OpenCode and Pi.
 ## Permissions
 
 All four agents' shell-command and MCP permissions are **generated** from
-`permissions/permissions.toml`. Never hand-edit the generated files
+`loadout/permissions.toml`. Never hand-edit the generated files
 (`claude/settings.json`, `codex/rules/permissions.rules`, `pi/permissions.json`,
 etc.) — a pre-commit hook rejects drift. To change permissions, edit
 `permissions.toml` and run:

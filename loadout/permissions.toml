@@ -4,13 +4,14 @@
 # regenerate every agent's permission config. NEVER hand-edit the generated
 # files — the lefthook pre-commit hook rejects drift.
 #
-# Generated files (all written straight to the machine, bar the staged one):
+# Generated files (all written straight to the machine):
 #   ~/.claude/settings.json                   (permissions.allow / deny / ask)
 #   ~/.claude/mcp-permissions.json            (PermissionRequest hook policy)
 #   ~/.codex/rules/permissions.rules
-#   codex/mcp-permissions.toml                (staged — codex/sync_config.py merges it)
+#   ~/.codex/config.toml                      ([mcp_servers.*] approval policy)
 #   ~/.config/opencode/opencode.json          (permission.bash / MCP tools)
-#   ~/.pi/agent/extensions/pi-permission-system/config.json
+#   (not Pi: `[pi] permissions = false` — the extension was removed, so nothing
+#    reads what loadout would write. The renderer stays a loadout capability.)
 #
 # Entries in [shell] are command prefixes — emitted to ALL FOUR agents.
 # An entry ending in `*` is a glob: kept literally for Claude, OpenCode and Pi,

@@ -17,8 +17,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
-  - `model-defaults.toml` - default model + reasoning effort, merged into `~/.codex/config.toml`
-    by `sync_config.py` (see Codex Model Defaults below)
+  - `developer-instructions.md` - the one `~/.codex/config.toml` key loadout cannot hold,
+    written by `sync_config.py` (see Codex Model Defaults below). Model defaults moved to
+    `loadout/defaults/codex.json`.
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
@@ -156,7 +157,7 @@ to overwrite a hand-edited output rather than discarding it.
 Two constraints on the generator: the `<!-- GENERATED ... -->` banner is inserted *below* the YAML
 frontmatter (anything above the opening `---` leaves the frontmatter unparsed, and the skill then
 advertises the banner as its description), and each advisor CLI needs a matching allow rule in
-`permissions/permissions.toml` — `codex exec -s read-only`, `opencode run`, `claude --tools`.
+`loadout/permissions.toml` — `codex exec -s read-only`, `opencode run`, `claude --tools`.
 
 ### Repo-local skills
 
@@ -193,9 +194,9 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 ## Permissions
 
-Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`permissions/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
+Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`loadout/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules` and the rest. Only `codex/mcp-permissions.toml` still lands here, because `codex/sync_config.py` consumes it.
+**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. Two exceptions land here: `claude/mcp-servers.generated.json`, because `.claude.json` is runtime state and `claude mcp add-json` is the only way in; and `loadout/defaults/codex.owned`, which is the record of which keys loadout manages in `config.toml` rather than a config file itself.
 
 **Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
 
@@ -211,14 +212,14 @@ Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, 
 To change permissions: edit the source, then run `loadout sync --global` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/reference/`, and is only needed when changing loadout itself.
 
 Use `/permission` or `aiperm` to change permissions. Global changes update
-`permissions/permissions.toml`, then regenerate and install every harness config. Personal
+`loadout/permissions.toml`, then regenerate and install every harness config. Personal
 project rules live in `.aiconf/permissions.toml` and generate native local adapters. `[shell]`
 and `[mcp]` entries go to all four agents; `[claude.extra]` / `[opencode.extra]` hold remaining
 tool-native entries with no cross-agent equivalent. Codex's token matcher can't express legacy
 shell glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
 `[mcp]` here is *policy* — which tools of a server may be called. Which servers exist at all is
-`mcp/servers.toml` (see MCP Servers below); the two sources are edited independently.
+`loadout/mcp.toml` (see MCP Servers below); the two sources are edited independently.
 
 **Auto-mode gotcha:** Claude Code's auto-mode classifier blocks writes to `settings.json` files (so it blocks `loadout sync`, which regenerates them) and hard-blocks any command containing the string `--dangerously-skip-permissions`. In default mode these only prompt. An explicit `Bash` allow-rule is honored *before* the classifier in every mode — the sanctioned way to let a specific such command through (vs. obfuscating the flag, which is evasion).
 
@@ -230,51 +231,63 @@ Select the profile with `./install.sh --autonomous` or `./sync.sh --autonomous`,
 
 ## MCP Servers
 
-Which MCP servers **exist** machine-wide is generated from a single source of truth: **`mcp/servers.toml`**. Which of their *tools* may be called is the separate `[mcp]` section of `permissions/permissions.toml` — definitions here, policy there. The two sources name servers independently, so adding one here does not grant it any permissions.
+Which MCP servers **exist** machine-wide comes from a single source of truth: **`loadout/mcp.toml`**. Which of their *tools* may be called is the separate `[mcp]` section of `loadout/permissions.toml` — definitions there, policy here. The two sources name servers independently, so adding one does not grant it any permissions.
 
-**Never hand-edit these generated files** — a lefthook pre-commit hook (`mcp/sync.py --check`) rejects any drift:
-- `claude/mcp-servers.generated.json` (input to `claude mcp add-json`; **not** symlinked — see below)
-- `codex/config.toml` (`[mcp_servers.*]` tables, merged into `~/.codex/config.toml` by `codex/sync_config.py`)
-- `~/.config/opencode/opencode.json` (the `mcp` key only — written straight to the destination, not staged here)
-- `pi/mcp.json` (`mcpServers`, the shape `pi-mcp-adapter`'s `ServerEntry` takes; symlinked to `~/.pi/agent/mcp.json`)
+loadout renders both, and for Codex it renders them **together**: definitions and approval policy share the `[mcp_servers.<name>]` table, so one renderer emits both. Two writers would declare that table twice and Codex would refuse to parse its own config.
 
-A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and `mcp/test_sync.py` asserts no renderer can emit a literal token.
+**Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift:
+- `claude/mcp-servers.generated.json` (staged — input to `claude mcp add-json`; **not** symlinked, see below)
+- `~/.codex/config.toml` (`[mcp_servers.*]`, written directly; loadout owns that key and leaves the rest of the file alone)
+- `~/.config/opencode/opencode.json` (the `mcp` key only)
+- `~/.pi/agent/mcp.json` (`mcpServers`, the shape `pi-mcp-adapter`'s `ServerEntry` takes — written directly, no longer symlinked from this repo)
 
-**Claude Code is the exception to the symlink pattern.** `$CLAUDE_CONFIG_DIR/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `mcp/servers.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
+A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and loadout refuses a server whose keys it does not recognise rather than silently rendering one that connects unauthenticated.
+
+**Claude Code is the exception to the symlink pattern.** `$CLAUDE_CONFIG_DIR/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `loadout/mcp.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
 
 **Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields).
 
-**`~/.config/opencode/opencode.json` has two owners:** `mcp/sync.py` writes the `mcp` key, `loadout` writes `permission`. Both write that path directly — it is the one `mcp/sync.py` output that is not staged in this repo, precisely so the two writers share one file with no symlink between them. `mcp/sync.py` reads the current file and mutates only its own key; `loadout` builds the file from `loadout/bases/opencode.base.json` and passes `mcp` through untouched, declared as `preserve = ["mcp"]` in `loadout.toml`. **`sync.sh` runs `mcp/sync.py` before `loadout`** so the key loadout preserves is the current one; `mcp/sync.py` must still never rebuild the file from scratch.
+**`~/.config/opencode/opencode.json` has one owner now.** loadout writes both the `mcp` key and `permission`, composing them into one document. It used to have two — `mcp/sync.py` owned `mcp` and loadout carried it across with `preserve = ["mcp"]`, which is why sync order was load-bearing. Both are gone: loadout generates that key, so `preserve` would name a generated key and loadout refuses it outright.
 
 Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
 
 ## Codex Model Defaults
 
-Codex's default model and reasoning effort come from **`codex/model-defaults.toml`**, merged into
-`~/.codex/config.toml` by `codex/sync_config.py` (already wired into `./sync.sh`). Edit that file
-and re-run `./sync.sh`; a hand edit to `~/.codex/config.toml` is reverted on the next sync, and
-`codex/sync_config.py --check` reports the drift.
+Codex's default model and reasoning effort come from **`loadout/defaults/codex.json`**, rendered
+into `~/.codex/config.toml` by loadout's `defaults` slice (`defaults = "codex"` under `[codex]` in
+`loadout.toml`). Edit that file and re-run `./sync.sh`; a hand edit to `~/.codex/config.toml` is
+reverted on the next sync, and `loadout check --global` reports the drift.
 
-**Only the top-level keys the source names are touched** — currently `model` and
+**Only the keys the fragment names are touched** — currently `model` and
 `model_reasoning_effort`. `plan_mode_reasoning_effort` is deliberately not among them and stays
-hand-maintained in `~/.codex/config.toml`. Named keys are replaced where they already
-sit, so Codex's own `[projects."…"]` trust entries, the nono block, `developer_instructions` and
-the `[mcp_servers.*]` tables all survive. Nested tables are rejected: this file is model defaults,
-not a second home for everything in `config.toml`.
+hand-maintained. Named keys are replaced where they already sit, so Codex's own `[projects."…"]`
+trust entries, the nono block, `developer_instructions` and the `[mcp_servers.*]` tables all
+survive. Nested tables are rejected: this is model defaults, not a second home for everything in
+`config.toml`.
 
-**Nothing here reserializes `~/.codex/config.toml`, and that is the design.** The merge is line-wise
-text surgery — `strip_owned_tables` drops managed tables, `set_developer_instructions` and
-`set_model_defaults` replace their own keys in place — with `tomllib` used only to read the sources
-and to validate the result. The comments, the nono block and the project tables survive because no
-code path touches those bytes, not because a writer preserved them. Do not "improve" this into a
-parse-mutate-serialize round trip with a TOML library: that trades untouched for preserved-if-the-
-library-is-careful, and adds a dependency to a script `install.sh` runs on a fresh machine.
+**The slice is opt-in, and it strips every key it manages.** A machine that never declares it
+never has its hand-maintained Codex settings touched.
 
-That file cannot be generated whole, which is why this is a merge rather than a loadout target.
-Three writers share it — Codex rewrites it as it visits projects, the nono pack appends its block,
-and this repo owns a few keys — and loadout's residual mechanism (`owned_key` + `preserve`) reads
-and writes JSON only, so no `[codex] settings` slice can express it today. The same reasoning
-already applies to `[mcp_servers.*]` and `developer_instructions`.
+**Removal works, and that needs a record.** The key names here are yours, not a set loadout could
+enumerate, so ownership is *derived* — and a derived set cannot say a key was ever managed once it
+leaves the fragment. loadout therefore keeps `loadout/defaults/codex.owned` beside the fragment:
+the union of what it wrote last time and what it writes now is what gets stripped. That file is
+generated and committed. Edit the fragment, never the record; `loadout check --global` reports a
+record that disagrees with it. See loadout's
+[ADR 0017](https://github.com/nielsmadan/loadout/blob/main/docs/decisions/0017-ownership-may-be-declared-instead-of-derived.md).
+
+**Nothing reserializes `~/.codex/config.toml`, and that is the design.** Both loadout's surgery and
+this repo's `codex/sync_config.py` work line-wise, using `tomllib` only to validate the result. The
+comments, the nono block and the project tables survive because no code path touches those bytes,
+not because a writer preserved them. Do not "improve" either into a parse-mutate-serialize round
+trip: that trades untouched for preserved-if-the-library-is-careful, and adds a dependency to a
+script `install.sh` runs on a fresh machine.
+
+**`codex/sync_config.py` survives for exactly one key.** Everything else it used to merge —
+`[mcp_servers.*]`, `[plugins.*]`, `[marketplaces.*]`, the model defaults — is loadout's now. What
+remains is `developer_instructions`, which loadout cannot hold: it is a multi-line TOML string, and
+loadout's surgery works line-wise over top-level scalars. The nono codex pack keeps re-injecting
+its own copy, so something must keep undoing that.
 
 **Codex validates none of this.** `model_reasoning_effort = "bogus"` is accepted silently and
 reported as the session's effort; a wrong value fails server-side at first use. The published
@@ -283,10 +296,10 @@ binary — it lists `minimal | low | medium | high | xhigh`, while codex-cli 0.1
 and `ultra` as well. Verify a new value by running `codex exec` once and reading the effort it
 reports back.
 
-`codex/test_sync_config.py` covers the merge, including the empty-target case: rendering was not
-idempotent there, and a populated target hides it because it reuses what is on disk. The
-nested-table test matches on the error message — without that, a missing guard still raises
-`ValueError` further down in `toml_value` and the test passes either way.
+`codex/test_sync_config.py` covers what is left, including the empty-target case: rendering was not
+idempotent there, and a populated target hides it because it reuses what is on disk. It also pins
+that our block *replaces* an injected one rather than sitting beside it — two
+`developer_instructions` keys is invalid TOML.
 
 ## Local Claude Plugins
 
@@ -430,8 +443,8 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   safe only because Pi is sandbox-only — the `pi` wrapper has no `-raw` variant, so nono is always
   the boundary and an approval prompt would add friction without adding containment. **A `pi-raw`
   variant would need this revisited.**
-- **MCP servers** — `pi/mcp.json` holds real `mcpServers` definitions rendered from
-  `mcp/servers.toml`, symlinked to `~/.pi/agent/mcp.json`. HTTP auth uses `bearerTokenEnv` (the
+- **MCP servers** — `~/.pi/agent/mcp.json` holds real `mcpServers` definitions, rendered
+  directly from `loadout/mcp.toml` (no longer symlinked from this repo). HTTP auth uses `bearerTokenEnv` (the
   variable NAME), so no token is written. It previously imported Claude's registry
   (`{"imports": ["claude-code"]}`), which made Pi's MCP depend on Claude being installed and
   registered — and on `~/.claude.json`, the one file loadout cannot write.
