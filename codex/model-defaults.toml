@@ -1,5 +1,0 @@
-# Codex model defaults, merged into ~/.codex/config.toml by codex/sync_config.py.
-# Top-level scalars only: Codex reads a key after a table header as a member of
-# that table, so these are kept above the first one.
-model = "gpt-5.6-sol"
-model_reasoning_effort = "max"

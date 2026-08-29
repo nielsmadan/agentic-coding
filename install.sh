@@ -48,7 +48,7 @@ echo ""
 
 # --- One-time interactive bootstrap ---
 # MCP servers are registered by sync.sh (sync_claude_mcp) from
-# mcp/servers.toml, so they need no bootstrap step here.
+# loadout/mcp.toml, so they need no bootstrap step here.
 
 add_airc_to_zshrc() {
   local zshrc="$HOME/.zshrc"

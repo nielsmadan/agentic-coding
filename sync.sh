@@ -75,7 +75,6 @@ SYMLINKS=(
   # Pi (pi-coding-agent) — settings.json holds packages and enabledModels.
   # Skills need no wiring: loadout writes them straight to each harness.
   "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
-  "$SCRIPT_DIR/pi/mcp.json:$HOME/.pi/agent/mcp.json"
   # nono sandbox. Each <agent>-local profile extends its nolabs-ai pack, which
   # must be pulled first (`nono pull nolabs-ai/<agent>`) — without the pack the
   # profile is inert. agent-common carries the grants they all share.
@@ -107,6 +106,7 @@ RETIRED_LINKS=(
   "$HOME/.pi/agent/AGENTS.md"
   "$HOME/.pi/agent/extensions/pi-permission-system/config.json"
   "$HOME/.config/opencode/opencode.json"
+  "$HOME/.pi/agent/mcp.json"
 )
 
 # agent-private.json holds machine-specific grants (client names, private paths)
@@ -226,27 +226,6 @@ generate_loadout() {
     echo "✓  Instructions and permission config up to date"
   else
     echo "⚠️  loadout sync failed — this machine's existing config is unchanged"
-  fi
-}
-
-generate_mcp() {
-  local script="$SCRIPT_DIR/mcp/sync.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  MCP generator not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping MCP server generation"
-    echo "    (the committed MCP files will be used as-is)"
-    return
-  fi
-
-  echo "Generating agent MCP server config from mcp/servers.toml..."
-  if python3 "$script"; then
-    echo "✓  MCP server config up to date"
-  else
-    echo "⚠️  MCP server generation failed — using committed files"
   fi
 }
 
@@ -370,10 +349,6 @@ echo ""
 
 retire_links
 materialise_nono_skill_link
-echo ""
-# Before loadout: mcp/sync.py owns the `mcp` key of ~/.config/opencode/opencode.json
-# and loadout preserves it, so the key has to be current when loadout renders.
-generate_mcp
 echo ""
 generate_loadout
 echo ""

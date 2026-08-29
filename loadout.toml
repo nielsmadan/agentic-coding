@@ -23,17 +23,15 @@ instructions = [
 ]
 
 [codex]
+defaults = "codex"
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
     "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
     "codex-proactivity",
 ]
 
-# mcp/sync.py co-owns this document's `mcp` key and writes the same destination;
-# `preserve` reads that key back out of the destination before overwriting.
 [opencode]
 settings = "opencode"
-preserve = ["mcp"]
 
 [pi]
 # pi-permission-system was removed from pi/settings.json (5648342), so nothing

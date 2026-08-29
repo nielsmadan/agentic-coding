@@ -5,8 +5,6 @@ pre-commit:
       run: ./claude/desktop/package-skills.sh
     sync-global:
       run: loadout check --global
-    sync-mcp:
-      run: python3 mcp/sync.py --check
     sandbox-writable:
       glob: "nono/*.json"
       run: ./bin/nono-audit --check
