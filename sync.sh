@@ -189,8 +189,12 @@ materialise_link() {
 materialise_nono_skill_link() {
   local dest="$HOME/.config/opencode/skills/nono-sandbox"
 
-  [[ -L "$dest" ]] || return
-  [[ "$(readlink "$dest")" == "$HOME/.config/nono/packages/"* ]] || return
+  # `return 0`, not a bare `return`: a bare one inherits the failed test's status,
+  # and under `set -e` that aborts the whole sync. This function converts the link
+  # into a real directory, so from its second run onwards the first test is false —
+  # which silently killed every sync after the first successful materialisation.
+  [[ -L "$dest" ]] || return 0
+  [[ "$(readlink "$dest")" == "$HOME/.config/nono/packages/"* ]] || return 0
 
   if [[ -e "$dest" ]]; then
     cp -RL "$dest" "$dest.materialising"
