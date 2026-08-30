@@ -1,0 +1,28 @@
+{
+  "plugins": {
+    "pi-mcp-adapter": {
+      "source": "npm:pi-mcp-adapter"
+    },
+    "pi-subagents": {
+      "source": "npm:pi-subagents"
+    },
+    "pi-plan-mode": {
+      "source": "npm:@narumitw/pi-plan-mode"
+    },
+    "superpowers": {
+      "source": "git:github.com/obra/superpowers",
+      "pi": {
+        "extensions": []
+      }
+    },
+    "pi-lsp": {
+      "source": "npm:@narumitw/pi-lsp"
+    },
+    "pi-statusline": {
+      "source": "npm:@narumitw/pi-statusline"
+    },
+    "nono": {
+      "source": "/Users/nielsmadan/.config/nono/packages/nolabs-ai/pi"
+    }
+  }
+}

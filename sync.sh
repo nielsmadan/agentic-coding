@@ -72,9 +72,6 @@ LOCAL_MARKETPLACES=(
 SYMLINKS=(
   # Claude
   "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
-  # Pi (pi-coding-agent) — settings.json holds packages and enabledModels.
-  # Skills need no wiring: loadout writes them straight to each harness.
-  "$SCRIPT_DIR/pi/settings.json:$HOME/.pi/agent/settings.json"
   # nono sandbox. Each <agent>-local profile extends its nolabs-ai pack, which
   # must be pulled first (`nono pull nolabs-ai/<agent>`) — without the pack the
   # profile is inert. agent-common carries the grants they all share.
@@ -105,6 +102,7 @@ RETIRED_LINKS=(
   "$HOME/.codex/AGENTS.md"
   "$HOME/.pi/agent/AGENTS.md"
   "$HOME/.pi/agent/extensions/pi-permission-system/config.json"
+  "$HOME/.pi/agent/settings.json"
   "$HOME/.config/opencode/opencode.json"
   "$HOME/.pi/agent/mcp.json"
 )

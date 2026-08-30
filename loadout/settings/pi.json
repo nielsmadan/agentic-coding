@@ -12,19 +12,5 @@
     "openrouter/meta/muse-spark-1.2",
     "openrouter/z-ai/glm-5.3",
     "openrouter/moonshotai/kimi-k3"
-  ],
-  "packages": [
-    "npm:pi-mcp-adapter",
-    "npm:pi-subagents",
-    "npm:@narumitw/pi-plan-mode",
-    {
-      "source": "git:github.com/obra/superpowers",
-      "extensions": []
-    },
-    "npm:@narumitw/pi-lsp",
-    "npm:@narumitw/pi-statusline",
-    {
-      "source": "/Users/nielsmadan/.config/nono/packages/nolabs-ai/pi"
-    }
   ]
 }

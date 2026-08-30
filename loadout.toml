@@ -36,6 +36,8 @@ instructions = [
 settings = "opencode"
 
 [pi]
+settings = "pi"
+plugins = ["pi"]
 # pi-permission-system was removed from pi/settings.json (5648342), so nothing
 # reads the config loadout was writing. The renderer stays a loadout capability
 # for anyone still running the extension; this machine just has no use for it.
