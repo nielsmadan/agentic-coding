@@ -17,6 +17,7 @@ instructions = [
 
 [claude]
 settings = ["claude", "claude-afk"]
+hooks = ["claude", "ringleader"]
 instructions = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
     "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
