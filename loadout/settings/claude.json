@@ -18,15 +18,6 @@
     "command": "~/.claude/hooks/statusline.sh",
     "refreshInterval": 60
   },
-  "enabledPlugins": {
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "telegram@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "nono@nolabs-ai": true,
-    "mouthfeel@mouthfeel": true
-  },
   "sandbox": {
     "filesystem": {
       "allowWrite": [

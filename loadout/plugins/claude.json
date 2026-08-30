@@ -1,0 +1,25 @@
+{
+  "plugins": {
+    "rust-analyzer-lsp": {
+      "marketplace": "claude-plugins-official"
+    },
+    "swift-lsp": {
+      "marketplace": "claude-plugins-official"
+    },
+    "typescript-lsp": {
+      "marketplace": "claude-plugins-official"
+    },
+    "telegram": {
+      "marketplace": "claude-plugins-official"
+    },
+    "superpowers": {
+      "marketplace": "claude-plugins-official"
+    },
+    "nono": {
+      "marketplace": "nolabs-ai"
+    },
+    "mouthfeel": {
+      "marketplace": "mouthfeel"
+    }
+  }
+}
