@@ -1,0 +1,6 @@
+{
+  "fleetViewPlacement": "aboveEditor",
+  "inlineToolDisplay": "summary",
+  "globalConcurrencyLimit": 8,
+  "maxSubagentDepth": 2
+}
