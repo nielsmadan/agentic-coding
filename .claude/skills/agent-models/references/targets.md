@@ -12,17 +12,20 @@ hand-guess one. `deepseek/deepseek-v4-pro` is the **0423** build;
 
 Proposed on each run, confirmed by the user before anything is written.
 
-The interactive harnesses default to **mid** — the everyday driving tier. **low**
-is for the slots that are cheap-and-fast by nature (subagents, one-shot command
-generation), and the **high** pair is reached deliberately: `clor`'s opus alias,
-`ocs`, and the two second-opinion advisors.
+**Every default is the low tier.** Whatever a harness starts a session on
+without being told otherwise — pi's `defaultModel`, OpenCode's `model`, `clor`'s
+starting alias — takes **low**, and so do the slots that are cheap-and-fast by
+nature (subagents, one-shot command generation). Anything above low is reached
+deliberately: `clor`'s sonnet and opus aliases, `ocs`, and the two
+second-opinion advisors. Never bind a default to mid or high — an unattended
+default is the one that quietly drains the OpenRouter balance.
 
 | # | File | Key | Tier |
 |---|------|-----|------|
-| 1 | `pi/settings.json` | `defaultModel` | mid |
-| 1 | `pi/settings.json` | `defaultThinkingLevel` | mid tier's effort |
-| 1 | `pi/settings.json` | `enabledModels` | all four |
-| 2 | `loadout/settings/opencode.json` | `model` | mid |
+| 1 | `loadout/settings/pi.json` | `defaultModel` | low |
+| 1 | `loadout/settings/pi.json` | `defaultThinkingLevel` | low tier's effort |
+| 1 | `loadout/settings/pi.json` | `enabledModels` | all four |
+| 2 | `loadout/settings/opencode.json` | `model` | low |
 | 2 | `loadout/settings/opencode.json` | `provider.openrouter.models` | all four |
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_HAIKU_MODEL` | low |
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_SONNET_MODEL` | mid |
@@ -46,15 +49,16 @@ generation), and the **high** pair is reached deliberately: `clor`'s opus alias,
 
 ---
 
-## 1. `pi/settings.json`
+## 1. `loadout/settings/pi.json`
 
-Symlinked to `~/.pi/agent/settings.json`, so editing the repo file is the whole
-change — no sync step.
+This is the loadout **base document** — an input, never generated. The generated
+file is `~/.pi/agent/settings.json`, composed from this base plus the `plugins`
+slice (which supplies `packages`).
 
 ```json
 "defaultProvider": "openrouter",
-"defaultModel": "<mid id>",
-"defaultThinkingLevel": "<mid effort>",
+"defaultModel": "<low id>",
+"defaultThinkingLevel": "<low effort>",
 "enabledModels": [
   "openai-codex/gpt-5.6-luna",
   "openai-codex/gpt-5.6-terra",
@@ -69,8 +73,9 @@ change — no sync step.
 - `enabledModels` entries carry an `openrouter/` prefix; `defaultModel` does not.
 - Leave the `openai-codex/*` entries alone — that ladder is not OpenRouter and
   is not part of the trio.
-- Pi is runtime-mutable and writes `/model` picks back through the symlink, so
-  re-read the file immediately before editing rather than trusting a stale copy.
+- **Run `loadout sync --global` after editing** or the change never reaches Pi.
+- Pi writes `/model` and `/settings` picks into the *generated* file, where the
+  next sync discards them. A pick worth keeping has to be copied into this base.
 - Pi caches its resolved model list in `~/.pi/agent/mcp-cache.json`-style state
   and its catalog in `~/.pi/agent/models-store.json`. A model too new for the
   catalog still works but warns `Model "…" not found for provider "openrouter".
@@ -83,7 +88,7 @@ This is the loadout **base document** — an input, never generated. The generat
 file is `~/.config/opencode/opencode.json`.
 
 ```json
-"model": "openrouter/<mid id>",
+"model": "openrouter/<low id>",
 "provider": { "openrouter": { "models": {
   "<low id>": {}, "<mid id>": {},
   "<high-main id>": {}, "<high-fallback id>": {}
@@ -133,8 +138,9 @@ alias ocs="opencode -m openrouter/<high-fallback id>"
 ```
 
 `ocs` exists to reach *past* the configured default, so it has to stay strictly
-above target 2's tier. Now that OpenCode defaults to mid, mid would make the
-alias a no-op — it tracks high-fallback, matching OpenCode's second-opinion role.
+above target 2's tier. It tracks high-fallback rather than mid, matching
+OpenCode's second-opinion role — mid is reachable from `/model` when the low
+default is not enough but a second opinion is not what is wanted.
 
 ## 5. `.airc.d/llmcli.zsh` — the `occli` backend
 
@@ -170,7 +176,7 @@ New advisor CLIs need an allow rule in `loadout/permissions.toml`, in the
 
 ## After writing
 
-1. `loadout sync --global` — required for targets 2 and 6. Needs an unsandboxed
-   shell (`claude-raw`), since it writes outside `~/wrksp`.
+1. `loadout sync --global` — required for targets 1, 2 and 6. Needs an
+   unsandboxed shell (`claude-raw`), since it writes outside `~/wrksp`.
 2. `source ~/.airc` — reloads targets 3–5 in the current shell. Idempotent.
 3. `loadout check --global` — must be clean; the lefthook pre-commit hook runs it.

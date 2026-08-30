@@ -44,8 +44,8 @@ buys almost nothing for a lot of money is the cliff between tiers.
 
 | Tier | Rule |
 |------|------|
-| **low** | Cheapest frontier model still worth running — agentic index within ~80% of high-main. The everyday/cheap slot. |
-| **mid** | A real capability or context step above low, well before the cliff. Prefer a different lab from low; a much stronger intelligence index or context window justifies picking slightly off the agentic frontier. |
+| **low** | Cheapest frontier model still worth running — agentic index within ~80% of high-main. **Every unattended default binds here** (pi, OpenCode, `clor`'s starting alias, subagents, `occli`), so weigh it as the tier that will do most of the work. |
+| **mid** | A real capability or context step above low, well before the cliff. Prefer a different lab from low; a much stronger intelligence index or context window justifies picking slightly off the agentic frontier. Nothing defaults to mid — it is the manual step-up (`clor`'s sonnet alias, `/model` in pi or OpenCode) when low is not carrying the task. |
 | **high-main** | Highest agentic index *before* the first cost cliff. Buying past a cliff is the mistake this ranking exists to prevent. |
 | **high-fallback** | Best model from a **different creator** at comparable capability — within ~6 agentic points of high-main, at similar cost. A second opinion from the same lab is not a second opinion. |
 
@@ -95,7 +95,7 @@ Then confirm what landed:
 
 ```bash
 grep -n "MODEL=" .airc.d/claude.zsh
-python3 -c "import json;d=json.load(open('pi/settings.json'));print(d['defaultModel'],d['defaultThinkingLevel'],d['enabledModels'])"
+python3 -c "import json;d=json.load(open('loadout/settings/pi.json'));print(d['defaultModel'],d['defaultThinkingLevel'],d['enabledModels'])"
 ```
 
 Report the diff summary and leave the commit to the user.

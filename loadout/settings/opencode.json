@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/meta/muse-spark-1.2",
+  "model": "openrouter/deepseek/deepseek-v4-pro-0813",
   "provider": {
     "openrouter": {
       "models": {
