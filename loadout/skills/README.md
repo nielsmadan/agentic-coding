@@ -29,7 +29,6 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
-| `/permission` | Manage personal project or shared global shell/MCP permissions across every harness |
 | `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/read-docs` | Search internal project documentation (proactive) |
@@ -341,15 +340,6 @@ that (or `skills/sync.py`), never the `SKILL.md` files.
 Guide for creating effective skills. Use when creating or updating skills.
 
 **Example:** `/skill-creator`
-
----
-
-### /permission
-
-Manage shell-command and MCP allow, ask, and deny rules across every configured
-agent harness. Supports personal project-local rules and shared global rules.
-
-**Example:** `/permission allow pytest locally`
 
 ---
 

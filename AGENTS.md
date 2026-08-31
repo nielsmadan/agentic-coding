@@ -27,7 +27,6 @@ This repository contains shared configuration for agentic coding tools. It inclu
     `~/.agents/skills/`, so those need no pi-specific files.
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
-  - `manage.py` - project-local permission management behind `aiperm` / `/permission`
   - `sync.py` - retained entry point only; the global renderers moved to `loadout` (see Permissions below)
 - `mcp/` - Single source of truth for **global** MCP server definitions (see MCP Servers below)
   - `servers.toml` - the source; edit this
@@ -207,10 +206,9 @@ Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, 
 
 To change permissions: edit the source, then run `loadout sync --global` (also run by `./sync.sh` and `./install.sh`). `loadout explain <fragment>` reports where an instruction fragment came from and which targets use it. Deeper reference — per-harness matcher semantics, pattern shapes, known upstream bugs — lives in the loadout repo under `docs/reference/`, and is only needed when changing loadout itself.
 
-Use `/permission` or `aiperm` to change permissions. Global changes update
-`loadout/permissions.toml`, then regenerate and install every harness config. Personal
-project rules live in `.aiconf/permissions.toml` and generate native local adapters. `[shell]`
-and `[mcp]` entries go to all four agents; `[claude.extra]` / `[opencode.extra]` hold remaining
+Use `/loadout` to change permissions. Global rules live in `loadout/permissions.toml`;
+a project's own live in its `loadout/permissions.toml`, with `permissions.local.toml` for
+personal rules that are never committed. `[shell]` and `[mcp]` entries go to all four agents; `[claude.extra]` / `[opencode.extra]` hold remaining
 tool-native entries with no cross-agent equivalent. Codex's token matcher can't express legacy
 shell glob entries (those ending in `*`), so they fall through to its normal approval prompt.
 
@@ -503,7 +501,7 @@ MCP servers) must be installed separately.
 Projects deployed by the old system keep working — their files are plain and still read — but
 are no longer managed. Migrate one by running the opt-in above, then `git rm --cached` whatever
 loadout now generates (`init` gitignores those paths but does not untrack them). Delete only
-`.aiconf/state.json`: the rest of `.aiconf/` belongs to `aiperm`.
+`.aiconf/` entirely — both `aiconf` and `aiperm`, which wrote the rest of it, are retired.
 
 ### Considered but not bundled
 
