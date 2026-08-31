@@ -70,8 +70,6 @@ LOCAL_MARKETPLACES=(
 # straight to its destination (see the [instructions.*] and [permissions.*]
 # blocks in loadout.toml), so it needs no link.
 SYMLINKS=(
-  # Claude
-  "$SCRIPT_DIR/claude/hooks:$HOME/.claude/hooks"
   # nono sandbox. Each <agent>-local profile extends its nolabs-ai pack, which
   # must be pulled first (`nono pull nolabs-ai/<agent>`) — without the pack the
   # profile is inert. agent-common carries the grants they all share.
@@ -98,6 +96,7 @@ RETIRED_LINKS=(
   "$HOME/.claude/CLAUDE.md"
   "$HOME/.claude/mcp-permissions.json"
   "$HOME/.claude/settings.json"
+  "$HOME/.claude/hooks"
   "$HOME/.codex/rules"
   "$HOME/.codex/AGENTS.md"
   "$HOME/.pi/agent/AGENTS.md"
