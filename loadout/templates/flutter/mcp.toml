@@ -1,0 +1,17 @@
+# Servers a Flutter project needs. Ported from templates/flutter/.mcp.json when
+# aiconf was retired; `env` is omitted because parse_servers defaults it to {}.
+
+[ios-sim]
+transport = "stdio"
+command = "npx"
+args = ["-y", "ios-simulator-mcp"]
+
+[dart-mcp]
+transport = "stdio"
+command = "dart"
+args = ["mcp-server"]
+
+[android]
+transport = "stdio"
+command = "uvx"
+args = ["--python", "3.13", "android-mcp"]

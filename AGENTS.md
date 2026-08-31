@@ -39,13 +39,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
   - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
   - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.pi/agent/AGENTS.md`); see Global Instructions below
-- `templates/` - Project-type config + skills deployed per-project (see Project Templates below)
-  - `<type>/` - config fragments and project-only skills for a project type (e.g. `flutter/`)
-    - `.mcp.json`, `settings.local.json` - merged into the target project
-    - `skills/<name>/` - project-only skills, copied into the target's `.claude/skills/`
-    - `claude-md.md` *(optional)* - markdown snippet appended once to the project's
-      `CLAUDE.md` on first install; updates flow through `aiconf sync` afterwards
-  - `deploy.py` - copies/merges a type's contents into a target project
+- `loadout/templates/<type>/` - Project-type config a project opts into by name (see Project
+  Templates below); each may carry `permissions.toml`, `instructions.md`, `mcp.toml` and
+  `skills/<name>/`, and need not carry all four
 - `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order
   - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
@@ -249,7 +245,7 @@ A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `trans
 
 **`~/.config/opencode/opencode.json` has one owner now.** loadout writes both the `mcp` key and `permission`, composing them into one document. It used to have two — `mcp/sync.py` owned `mcp` and loadout carried it across with `preserve = ["mcp"]`, which is why sync order was load-bearing. Both are gone: loadout generates that key, so `preserve` would name a generated key and loadout refuses it outright.
 
-Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, shipped by `templates/<type>/` (see Project Templates).
+Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, rendered from a project's own `loadout/mcp.toml` and from any template it declares (see Project Templates).
 
 ## Codex Model Defaults
 
@@ -466,71 +462,48 @@ into the repo file, so expect the occasional small diff to commit or discard.
 
 ## Project Templates
 
-`templates/<type>/` holds config and skills that belong to a *kind* of project rather than to
-every session. For example `templates/flutter/` carries the Flutter MCP servers (`.mcp.json`),
-their enablement + `mcp__*` permissions (`settings.local.json`), and project-only skills like
-`flutter-upgrade` (`skills/<name>/`). Keeping it here version-controls the config centrally
-without making it global: a project-root `.mcp.json` is project-scoped (only loads inside that
-project), and a skill bundled with a template only shows up after deployment — it never
-pollutes Claude sessions in unrelated projects.
+`loadout/templates/<type>/` holds config that belongs to a *kind* of project rather than to
+every session. `flutter/` carries the Flutter MCP servers (`mcp.toml`), the permissions they
+need (`permissions.toml`), an instructions block (`instructions.md`) and project-only skills
+(`skills/<name>/`). A template need not carry all four — `railway/` is skills only.
 
-Every `aiconf` verb (defined in `.airc`) routes to the `/aiconf` skill, which assesses the
-project and picks the path; `deploy.py` is invoked by the skill, not called directly:
+Keeping them here version-controls the config centrally without making it global: a template
+reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
+unrelated projects.
+
+A project opts in:
 
 ```
-aiconf                # assess cwd: install the detected template, or reconcile drift
-aiconf <dir>          # same, for <dir>
-aiconf sync [dir]     # skip detection, go straight to the sync path
-aiconf <type> [dir]   # skip detection, install <type> (still confirms before writing)
+loadout init --harness claude    # scaffold loadout/config.toml
+loadout template add flutter     # adds templates = ["flutter"]
+loadout sync
 ```
 
-**Install** (`aiconf <type> [dir]`) runs `templates/deploy.py`. It **copies** (not symlinks)
-so the target project owns real, committable files. Each step is idempotent in its own way:
-- `.mcp.json` and `settings.local.json` merge (union arrays, preserve unrelated entries).
-  `.mcp.json` is read by all four agents at project root; `settings.local.json` stays
-  Claude-scoped at `.claude/settings.local.json`
-- `skills/<name>/` recursively copy into `<target>/.claude/skills/<name>/`, only writing files
-  whose bytes differ. A `.agents/skills/<name>` symlink is added pointing back at the
-  Claude copy, so Codex and Pi pick up the same project skills
-- `instructions.md` (optional) is **appended once each** to `<target>/CLAUDE.md` and
-  `<target>/AGENTS.md` on first install for a given type. State is tracked per (type,
-  target-file) pair in `<target>/.aiconf/state.json` so subsequent installs skip files that
-  already received the append (and can backfill a missing one). After install, the snippet is
-  yours — refactor, integrate, move it freely; use `aiconf sync` to mirror edits between
-  project and template.
+A template is a **source**, sitting at the bottom of the precedence chain — anything the project
+declares itself outranks it — and it merges through each slice's own operator, so no template-
+specific merge rule exists. All four artifact types project scope has flow through it:
+permissions, instructions, skills and MCP server definitions.
 
-Add `.aiconf/` to a project's `.gitignore` (alongside `.claude/settings.local.json`) — it's
-machine-local install state.
+Declared templates (resolved from `~/ac`) update everywhere on the next `loadout sync`. A
+template can instead be **vendored** into a project's own `loadout/templates/<name>/` so the
+repo stands alone for contributors who don't run loadout; `loadout template sync` compares a
+vendored copy against its origin by content hash and refuses rather than overwriting local
+edits.
 
-**Deploy is additive, not reconciling.** Re-running `aiconf <type>` after a template *drops*
-something only ever ADDS the new bits — it cannot remove an MCP server, `mcp__*` grant, or
-instruction snippet the template no longer ships (`.mcp.json` / `settings.local.json`
-union-merge, and instruction snippets are marked installed in `.aiconf/state.json` and then
-skipped). Migrating a project set up on an *older* template (e.g. swapping one MCP server for
-another) therefore means manual cleanup or `aiconf sync` (`/aiconf`), never a plain
-re-deploy. (Deleting a template file like `.mcp.json` may be blocked by the auto-mode
-classifier; emptying it to `{ "mcpServers": {} }` is equivalent, since `deploy.py` merges nothing
-from an empty map.)
-
-To update template-side fragments, edit `templates/<type>/` and re-deploy (for the mechanical
-artifacts) or use `aiconf sync` (for the instructions snippet, since install doesn't touch
-the CLAUDE.md / AGENTS.md passages after first run).
-
-**Sync** (`aiconf sync [dir]`) opens an interactive Claude session that invokes the
-`/aiconf` skill on its sync path. The skill picks per-file direction (pull project→template or
-push template→project) from `diff` + `git log` / `git status`, scoped to artifacts already
-defined in the template. CLAUDE.md and AGENTS.md are synced as independent targets — a pull
-from one does not auto-overwrite the other. `settings.local.json` is intentionally out of
-scope for sync — recommend `aiconf <type> <dir>` for mechanical settings refresh.
-
-Project-only skills live *inside* their template (`templates/<type>/skills/<name>/`), not in
-`loadout/skills/`, so they are never rendered globally. To turn an existing global skill
-into a project-only one, move its directory from `loadout/skills/<name>/` to
-`templates/<type>/skills/<name>/` and re-run `loadout sync --global`, which drops it from
-all four harnesses.
+Project-only skills live *inside* their template (`loadout/templates/<type>/skills/<name>/`),
+not in `loadout/skills/`, so they are never rendered globally. Moving a skill between the two
+changes where it renders — but **nothing prunes**: `loadout sync` only writes the paths it
+renders, so the copies already written under `~/.claude/skills/`, `~/.codex/skills/`,
+`~/.config/opencode/skills/` and `~/.pi/agent/skills/` must be deleted by hand.
 
 Templates cover config only; machine prerequisites (e.g. `npx`, `uvx`, `dart` for the Flutter
 MCP servers) must be installed separately.
+
+**`aiconf` and `templates/deploy.py` were retired**; loadout's template mechanism replaced them.
+Projects deployed by the old system keep working — their files are plain and still read — but
+are no longer managed. Migrate one by running the opt-in above, then `git rm --cached` whatever
+loadout now generates (`init` gitignores those paths but does not untrack them). Delete only
+`.aiconf/state.json`: the rest of `.aiconf/` belongs to `aiperm`.
 
 ### Considered but not bundled
 

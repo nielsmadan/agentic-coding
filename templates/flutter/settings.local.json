@@ -1,7 +1,0 @@
-{
-  "enabledMcpjsonServers": [
-    "ios-sim",
-    "dart-mcp",
-    "android"
-  ]
-}

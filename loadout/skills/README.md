@@ -10,7 +10,6 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 | Skill | Purpose |
 |-------|---------|
-| `/aiconf` | Single entry point for project-template config (invoked by every `aiconf` verb) — assesses whether the project is configured, installs the detected template if not, otherwise compares each deployed artifact against the template and reconciles drift (pull, push, or semantic merge) |
 | `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
 | `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/check-agent-logs` | Search Claude Code, Codex, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
@@ -351,23 +350,6 @@ Manage shell-command and MCP allow, ask, and deny rules across every configured
 agent harness. Supports personal project-local rules and shared global rules.
 
 **Example:** `/permission allow pytest locally`
-
----
-
-### /aiconf
-
-Single entry point for project-template config, invoked by every `aiconf` shell verb. Assesses
-whether a project is configured; if not, detects its type (`flutter`, `react-native`, `web`,
-`railway`), confirms, and installs it. If it is, compares each deployed artifact (`.mcp.json`,
-bundled skills, CLAUDE.md / AGENTS.md snippets) against the template and reconciles drift —
-direction per artifact decided from diff + git history, with a semantic merge when both sides
-moved. Multiple types can be installed in one project (`railway` composes with `web`).
-
-**Examples:**
-- `/aiconf` (from inside a project dir)
-- `/aiconf /path/to/project` (from `~/ac`)
-- `/aiconf sync` (skip detection, go straight to sync)
-- `/aiconf flutter` (skip detection, install a known type)
 
 ---
 

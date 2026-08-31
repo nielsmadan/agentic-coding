@@ -99,20 +99,18 @@ model (shared vs. agent-native entries, the autonomous profile).
 
 ## Project templates
 
-`templates/<type>/` carries config and skills that belong to a *kind* of project
-rather than every session. The CLI verbs (defined in `.airc`):
+`loadout/templates/<type>/` carries config that belongs to a *kind* of project
+rather than every session — permissions, instructions, MCP servers and
+project-only skills, in any combination. A project opts in by name:
 
 ```sh
-aiconf [dir]          # assess a project: install its template, or reconcile drift
-aiconf sync [dir]     # bidirectionally sync project edits with its template
-aiconf <type> [dir]   # install a specific template (copies real files)
+loadout init --harness claude    # scaffold loadout/config.toml
+loadout template add flutter     # adds templates = ["flutter"]
+loadout sync
 ```
 
-Every verb routes to the `/aiconf` skill. It checks whether the project is
-configured and installs the detected template if not; otherwise it compares each
-deployed artifact against the template and decides per file whether to pull
-project changes back into the template, push template updates out, or
-semantically merge when both sides moved. See the
+A template is a source at the bottom of the precedence chain, so anything the
+project declares itself outranks it. See the
 [Project Templates section in `AGENTS.md`](AGENTS.md#project-templates).
 
 ## Shell config
