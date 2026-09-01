@@ -125,8 +125,8 @@ operation, so complete it yourself:
 **Guardrails — do not run these automatically:**
 - **Aborts** (`git merge/rebase/cherry-pick/revert --abort`) discard work. If
   resolution isn't viable, stop and tell the user the abort command to run.
-- **`git reset --hard`** (the stash abort path) is hard-blocked at the harness
-  level — the user must run it themselves.
+- **`git reset --hard`** (the stash abort path) discards work and nothing blocks
+  it — the user must run it themselves.
 - If a continue command fails (remaining unmerged paths, a rejected pre-commit
   hook, etc.), surface the error and stop. Do not force it through.
 

@@ -213,8 +213,8 @@ git log --oneline <BASE>..HEAD
 <new oneline log>
 
 Original tip: `<ORIG_TIP>` (retained in `<BRANCH>`'s reflog).
-- Undo: `git reset --hard <ORIG_TIP>` (run it yourself — `reset --hard` is blocked for
-  the agent).
+- Undo: `git reset --hard <ORIG_TIP>` (run it yourself — the agent does not run
+  `reset --hard`).
 - Cleanup: complete — no backup tag, branch, stash, or temporary message files remain.
 ```
 
@@ -285,8 +285,8 @@ the merges manually or rebase to a linear history first.
 
 **Cause:** The new grouping/messages aren't what they wanted.
 **Solution:** Use the `ORIG_TIP` printed in the completion report:
-`git reset --hard <ORIG_TIP>` (the user runs this — `reset --hard` is blocked for the
-agent). If the report is unavailable, inspect `git reflog <BRANCH>` and identify the tip
+`git reset --hard <ORIG_TIP>` (the user runs this — the agent does not run
+`reset --hard`). If the report is unavailable, inspect `git reflog <BRANCH>` and identify the tip
 immediately before the squash. Then adjust the plan and re-run.
 
 ### Legacy `squash-backup-*` tags exist
