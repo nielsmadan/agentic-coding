@@ -179,7 +179,12 @@ Announce what got auto-included. In comprehensive mode, use messages such as `De
 
 ### 3b.6. Clean up comments
 
+::: claude codex opencode
 Before launching any review agent, invoke `review-comments --fix` exactly once against the resolved scope:
+:::
+::: pi
+Before launching any review agent, run the `review-comments` cleanup exactly once against the resolved scope — **in this session, not as a subagent**. pi has no Skill tool, so read `review-comments/SKILL.md` and apply it directly. Cleanup edits files, which the read-only `reviewer` agent cannot do. And note the shape of the error if you try: `agent:` names an agent, never a skill, so `{ agent: "review-comments" }` fails the workflow with `Unknown agent: review-comments`.
+:::
 
 | Resolved scope | Invocation |
 |---|---|
@@ -200,7 +205,12 @@ Keep the file list resolved in Step 3b even if cleanup edits change git status. 
 
 #### Quick mode (`--quick`)
 
+::: claude codex opencode
 Do not load `references/agents.md`. Launch exactly **one read-only review agent** and give it the resolved scope or target. Use the harness's fast read-only profile or lower per-agent reasoning effort when available. It must not delegate to sub-skills or dispatch more agents.
+:::
+::: pi
+Do not load `references/agents.md`. Launch exactly **one** child via `subagent` using the builtin **`reviewer`** agent, and give it the brief below plus the resolved file list. `reviewer` grants only `read, grep, find, ls` — no bash, no edit, no nested dispatch — so it is read-only by construction. Because it has no bash it cannot resolve a scope itself: pass the concrete file list, not `--staged`.
+:::
 
 Give the reviewer this integrated brief:
 
@@ -219,11 +229,39 @@ After the agent returns, deduplicate its findings and render the surviving items
 
 Launch the selected review perspectives IN PARALLEL.
 
+::: claude codex opencode
 **Launch them read-only** — Claude Code's `Explore`, or any harness's read-only agent profile. A review agent's deliverable is a returned list of issues, never an edit, so read-only costs nothing and buys two things: it cannot modify the code it is reviewing, and it has no agent-spawning tool, so it cannot turn one perspective into its own fan-out. With many parallel perspectives, recursion here is the most expensive failure mode in this skill. (Read-only profiles retain the Skill tool, so the sub-skill delegation below still works.)
+:::
+::: pi
+**Launch them read-only, as one `subagent` workflow.** pi fans out through a `workflowScript`, not through repeated tool calls — one `subagent` call carrying `runs.all([...])`, one entry per perspective, every entry on the builtin **`reviewer`** agent:
+:::
+::: pi
+```js
+{ workflowScript: `
+  const results = await runs.all([
+    { key: "logic",    agent: "reviewer", task: "<brief for Agent 1 + resolved file list>" },
+    { key: "security", agent: "reviewer", task: "<brief for Agent 3 + resolved file list>" }
+  ]);
+  return results.map(r => r.output);
+` }
+```
+:::
+::: pi
+`reviewer` grants only `read, grep, find, ls`, so it cannot edit the code it reviews and cannot dispatch further. Use it for the scorer round in Steps 4–5 too. Two pi-specific rules:
+
+- **The `agent` field takes a pi agent name, never a skill name.** The builtins are `scout`, `researcher`, `worker`, `reviewer`, `oracle`, `delegate`; custom agents live in `~/.pi/agent/agents/`. `{ agent: "review-security" }` fails the whole workflow with `Unknown agent: review-security`. Every harness works this way — identity comes from the agent registry, the task comes from the prompt — so this is not a pi quirk.
+- **Children reach a sub-skill as a file, not as a tool call.** pi has no Skill tool. `reviewer` runs with `inheritSkills: true` (set in `loadout/settings/pi.json` under `subagents.agentOverrides`), so it sees the skills catalog and loads a `SKILL.md` with `read` when a brief names one.
+:::
 
 Each agent should output a list of issues. For each issue, include: what the problem is, where it is (file + line), and why it matters. Do NOT assign confidence scores — scoring happens in a separate pass.
 
+::: claude codex opencode
 **Sub-agent invocation pattern.** When a sub-agent delegates to a sub-skill, pass the resolved scope through directly:
+:::
+::: pi
+**Sub-agent invocation pattern.** Name the sub-skill in the child's `task` and let it `read` that `SKILL.md` itself — delegation works, it just resolves through the filesystem rather than a Skill tool. What does *not* carry over is the scope flag: `reviewer` has no bash, so it cannot turn `--staged` into a file list. Pass the concrete list resolved in Step 3b instead. The table below is therefore read as scope→file-list on pi, not scope→flag.
+:::
+::: claude codex opencode
 
 | Resolved scope | Argument passed to sub-skill |
 |---|---|
@@ -235,13 +273,19 @@ Each agent should output a list of issues. For each issue, include: what the pro
 
 All delegated review sub-skills (`review-architecture`, `review-security`, `review-perf`, `review-interfaces`, `review-cleancode`, `review-typescript`, `test --review`) accept `--staged | --unpushed | --changed | --all`. No special-casing needed. The project's `review-project` skill is expected to accept the same scope flags — if it doesn't, pass it the target/file list instead.
 
+:::
 Inline agents (no delegation) work directly against the file list computed in step 3b.
 
 ## Step 3.5: External Advisor Reviews (--multi only)
 
 If `--multi` flag is present in $ARGUMENTS, also get external opinions:
 
+::: claude codex opencode
 Use the **Skill tool** to invoke `second-opinion --quick`, which queries every external advisor it has configured, in parallel. (The advisor roster lives in the `second-opinion` skill — don't enumerate it here.) Phrase the prompt according to the resolved scope from step 3b:
+:::
+::: pi
+pi has no Skill tool. Read `second-opinion/SKILL.md` from the skills directory and run its advisor commands yourself with `bash`, backgrounding them so they run in parallel. Do not dispatch `second-opinion` as a subagent — it is a skill name, not an agent name. Phrase the prompt according to the resolved scope from step 3b:
+:::
 
 - `staged` → "Review the staged changes (`git diff --cached`) in this repository."
 - `unpushed` → "Review the changes across all unpushed commits (`git diff` against the last pushed commit) in this repository."
