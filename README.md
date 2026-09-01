@@ -5,9 +5,11 @@ Version-controlled configuration shared across the AI coding tools I run:
 One repo holds the skills, hooks, permissions, project templates, and shell glue
 for all of them.
 
-Everything is installed by **symlink**, so editing a file here updates the live
-config for every tool — no copy step, no drift. Permissions are the exception:
-they're *generated* for each agent from a single source of truth.
+Most harness config is rendered in place by **loadout** from the fragments under
+`loadout/`. A smaller set of static assets still uses symlinks, including the
+nono profiles, `.airc`, and launchd-facing helper binaries.
+Treat `loadout.toml` as the ownership manifest: edit the declared source
+fragment, never the generated file in a harness's config directory.
 
 ## Quick start
 
@@ -17,13 +19,14 @@ cd ~/ac
 ./install.sh
 ```
 
-`install.sh` is idempotent and prompts before replacing anything. It:
+`install.sh` bootstraps a machine and delegates repeatable reconciliation to
+`sync.sh`. Together they:
 
-- generates each agent's permission config from `loadout/permissions.toml`
-- symlinks config into `~/.claude`, `~/.codex`, `~/.opencode`, and `~/.airc`
-- installs the curated Codex skill subset into `~/.agents/skills`
-- optionally adds `source ~/.airc` to your `~/.zshrc` and wires up the configured
-  MCP servers
+- render instructions, permissions, MCP definitions, settings, hooks, plugins,
+  skills, defaults, and module config into each harness's live paths
+- install the remaining static symlinks
+- register missing Claude MCP servers and local plugin marketplaces
+- optionally add `source ~/.airc` to your `~/.zshrc`
 
 Use `./install.sh --autonomous` to install the broader **autonomous-dev profile**
 (permits `git push` and other unattended ops — for machines running headless
@@ -36,22 +39,36 @@ MCP servers) are **not** auto-installed — set those up separately.
 
 | Path | What it holds |
 |------|---------------|
-| `claude/` | Claude Code config: `skills/`, `hooks/`, `settings.json` (+ `settings.autonomous.json`), and `CLAUDE.md` (+ autonomous variant) |
-| `codex/` | OpenAI Codex config: managed `config.toml` overlay, permission `rules/`, and curated skills synced to `~/.agents/skills` |
-| `opencode/` | OpenCode config (`opencode.json`) |
-| `pi/` | Pi settings plus the generated `@gotgenes/pi-permission-system` policy |
-| `permissions/` | Single source of truth for shell-command and MCP permissions — `permissions.toml` plus `sync.py`, which generates every agent's permission config |
-| `templates/` | Per-project-type config + project-only skills (`flutter/`, `react-native/`, `web/`), deployed into projects with `aiconf` |
+| `loadout/` | Source fragments for generated instructions, permissions, MCP servers, settings, hooks, plugins, skills, defaults, templates, and module config |
+| `loadout.toml` | Manifest selecting and composing those fragments for each harness |
+| `claude/` | The generated MCP registration input `sync.sh` feeds to `claude mcp add-json` |
+| `codex/` | Codex-specific synchronization helpers and the managed `developer_instructions` source |
+| `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
+| `loadout/templates/` | Per-project-type config a project opts into by name (`flutter/`, `react-native/`, `web/`, `railway/`) |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |
 | `docs/` | Repo notes |
 
 ## The four agents
 
-A single config feeds all four tools. Shared shell-command and MCP permissions are
-defined once in `loadout/permissions.toml` and generated out to each agent;
-agent-native settings (tool toggles, MCP entries, skill subsets) live in the
-per-agent directories above. Codex and Pi pick up Claude's skills through symlinks rather than separate copies.
+A single manifest feeds all four tools. Shared shell-command and MCP permissions
+are defined once in `loadout/permissions.toml`, while harness-native concerns are
+kept in separate slices and composed only at render time:
+
+| Concern | Source | Example generated destination |
+|---------|--------|-------------------------------|
+| Residual harness settings | `loadout/settings/<name>.json` | `~/.pi/agent/settings.json` |
+| Claude hook registrations | `loadout/hooks/*.json` | `~/.claude/settings.json` |
+| Enabled plugins / packages | `loadout/plugins/<name>.json` | Claude or Pi settings |
+| Scalar model defaults | `loadout/defaults/*.json` | the owned keys in a harness config |
+| Extra harness files | `loadout/module-config/<harness>/...` | the matching path below that harness's config directory |
+
+For example, Pi's ordinary settings and package list come from
+`loadout/settings/pi.json` and `loadout/plugins/pi.json`; its statusline and
+subagent files mirror `loadout/module-config/pi/` beneath `~/.pi/agent/`. These
+destinations are generated real files, not repository symlinks. Keeping hooks,
+plugins, and settings in distinct slices prevents a residual settings document
+from becoming a second owner of generated keys.
 
 Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
 symlinked. loadout writes it in place instead, owning only the keys it declares
@@ -61,38 +78,29 @@ every other user and Codex-managed setting untouched.
 ## Skills
 
 Skills are reusable `/<name>` workflows — code review, research, debugging,
-documentation, security audits, and more. There are 50 of them under
-`loadout/skills/`; invoke one with `/<skill-name>` plus any arguments. loadout
-renders every one to Claude, Codex, OpenCode and Pi.
+documentation, security audits, and more. They live under `loadout/skills/`;
+invoke one with `/<skill-name>` plus any arguments. loadout renders them to
+Claude, Codex, OpenCode, and Pi.
 
 - **Full catalog:** [`loadout/skills/README.md`](loadout/skills/README.md) — every
   skill with arguments and examples. There's also a summary table in
   [`AGENTS.md`](AGENTS.md#skills).
-- **Codex** gets a curated subset (see `CODEX_SKILLS` in `sync.sh`), shared
-  via symlink.
 
 ## Permissions
 
 All four agents' shell-command and MCP permissions are **generated** from
-`loadout/permissions.toml`. Never hand-edit the generated files
-(`claude/settings.json`, `codex/rules/permissions.rules`, `pi/permissions.json`,
-etc.) — a pre-commit hook rejects drift. To change permissions, edit
-`permissions.toml` and run:
+`loadout/permissions.toml`. Never hand-edit the live generated files under the
+harness config directories — `loadout check --global` reports drift. To change
+permissions, edit the source and run:
 
 ```sh
-loadout sync
+loadout sync --global
 ```
 
-The shared `permission` skill and `aiperm` CLI provide the normal interface:
-
-```sh
-aiperm allow --scope local --shell pytest
-aiperm allow --scope global --mcp jina/*
-aiperm list --scope all
-```
-
-Global rules are tracked and regenerated for all harnesses. Local rules are
-personal, project-scoped, and stored under `.aiconf/`.
+The `/loadout` skill is the normal interface: it edits the narrowest source
+fragment and syncs. Global rules live in `loadout/permissions.toml`; a project's
+own live in its `loadout/permissions.toml`, with `permissions.local.toml` for
+personal rules that are never committed.
 
 See the [Permissions section in `AGENTS.md`](AGENTS.md#permissions) for the full
 model (shared vs. agent-native entries, the autonomous profile).
