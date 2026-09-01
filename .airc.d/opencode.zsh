@@ -14,7 +14,7 @@ opencode() {
 }
 
 alias oc="opencode"
-alias ocs="opencode -m openrouter/moonshotai/kimi-k3"
+alias ocs="opencode -m openrouter/qwen/qwen3.8-2.4t-a95b"
 alias occo="opencode --continue"
 alias occof="opencode --continue --fork"
 

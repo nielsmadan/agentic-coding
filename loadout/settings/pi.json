@@ -1,16 +1,22 @@
 {
-  "lastChangelogVersion": "0.82.1",
   "theme": "dark",
   "defaultProvider": "openrouter",
-  "defaultModel": "deepseek/deepseek-v4-pro-0813",
+  "defaultModel": "z-ai/glm-5.3-flash",
   "defaultThinkingLevel": "max",
   "enabledModels": [
     "openai-codex/gpt-5.6-luna",
     "openai-codex/gpt-5.6-terra",
     "openai-codex/gpt-5.6-sol",
-    "openrouter/deepseek/deepseek-v4-pro-0813",
-    "openrouter/meta/muse-spark-1.2",
+    "openrouter/openai/gpt-5.6-luna",
+    "openrouter/z-ai/glm-5.3-flash",
     "openrouter/z-ai/glm-5.3",
-    "openrouter/moonshotai/kimi-k3"
-  ]
+    "openrouter/qwen/qwen3.8-2.4t-a95b"
+  ],
+  "subagents": {
+    "agentOverrides": {
+      "reviewer": {
+        "inheritSkills": true
+      }
+    }
+  }
 }

@@ -144,7 +144,7 @@ command pi -p --no-session --tools read,grep,glob,list --model openrouter/z-ai/g
 
 **OpenCode + Kimi K3:** `--agent plan` is read-only (reads/explores the repo, cannot edit files):
 ```bash
-command opencode run --agent plan -m openrouter/moonshotai/kimi-k3 "$(cat .second-opinion.md)" </dev/null
+command opencode run --agent plan -m openrouter/qwen/qwen3.8-2.4t-a95b "$(cat .second-opinion.md)" </dev/null
 ```
 
 ### Step 3: Evaluate Confidence

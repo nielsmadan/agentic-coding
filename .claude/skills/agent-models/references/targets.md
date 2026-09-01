@@ -12,29 +12,41 @@ hand-guess one. `deepseek/deepseek-v4-pro` is the **0423** build;
 
 Proposed on each run, confirmed by the user before anything is written.
 
-**Every default is the low tier.** Whatever a harness starts a session on
-without being told otherwise — pi's `defaultModel`, OpenCode's `model`, `clor`'s
-starting alias — takes **low**, and so do the slots that are cheap-and-fast by
-nature (subagents, one-shot command generation). Anything above low is reached
-deliberately: `clor`'s sonnet and opus aliases, `ocs`, and the two
-second-opinion advisors. Never bind a default to mid or high — an unattended
-default is the one that quietly drains the OpenRouter balance.
+**The default binds to the cheapest tier that can carry everyday work.** Which
+tier that is comes out of the ranking, not out of this table — the run decides it
+and says so. An unattended default is what quietly drains the OpenRouter balance,
+so it has to be the cheapest option that can actually do the job.
+
+**"Cheapest" is not always the low tier.** `$/task` is a benchmark blend; a very
+cheap model can win low on terseness while costing *more per input token* than the
+tier above it. When low is also a real capability drop, mid is the correct default
+and low keeps only the terse one-shot slots (`occli`, the haiku rung). Whichever
+tier wins, everything above it must be reached deliberately: `clor`'s opus alias,
+`ocs`, and the two second-opinion advisors.
+
+**This cycle:** low = GPT-5.6 Luna, mid = GLM-5.3-Flash, high-main = GLM-5.3,
+high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Luna is
+11.3 agentic points weaker *and* dearer per input token ($0.20/M vs $0.15/M).
 
 | # | File | Key | Tier |
 |---|------|-----|------|
-| 1 | `loadout/settings/pi.json` | `defaultModel` | low |
-| 1 | `loadout/settings/pi.json` | `defaultThinkingLevel` | low tier's effort |
+| 1 | `loadout/settings/pi.json` | `defaultModel` | **default** |
+| 1 | `loadout/settings/pi.json` | `defaultThinkingLevel` | default tier's effort |
 | 1 | `loadout/settings/pi.json` | `enabledModels` | all four |
-| 2 | `loadout/settings/opencode.json` | `model` | low |
+| 2 | `loadout/settings/opencode.json` | `model` | **default** |
 | 2 | `loadout/settings/opencode.json` | `provider.openrouter.models` | all four |
+| 3 | `.airc.d/claude.zsh` | `clor` → `CLOR_MODEL` start alias | the alias holding the default |
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_HAIKU_MODEL` | low |
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_SONNET_MODEL` | mid |
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_OPUS_MODEL` | high-main |
-| 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | low |
+| 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | **default** |
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
 | 5 | `.airc.d/llmcli.zsh` | `occli` backend | low |
 | 6 | `loadout/skills/second-opinion/SKILL.md` | pi advisor | high-main |
 | 6 | `loadout/skills/second-opinion/SKILL.md` | opencode advisor | high-fallback |
+
+Subagents take the **default**, not low: they run long-context exploration, which
+is exactly where a terse-but-pricier low tier loses on both capability and cost.
 
 ### Not targets
 
@@ -117,11 +129,19 @@ model. The three slots are remapped cheap→strong so the switcher becomes a
 low/mid/high control.
 
 ```zsh
+local start="${CLOR_MODEL:-<alias holding the default tier>}"
+…
 ANTHROPIC_DEFAULT_HAIKU_MODEL='<low id>[1m]'
 ANTHROPIC_DEFAULT_SONNET_MODEL='<mid id>[1m]'
 ANTHROPIC_DEFAULT_OPUS_MODEL='<high-main id>[1m]'
-CLAUDE_CODE_SUBAGENT_MODEL='<low id>[1m]'
+CLAUDE_CODE_SUBAGENT_MODEL='<default tier id>[1m]'
 ```
+
+- **`start` is a fifth edit, and it is easy to miss.** The three `ANTHROPIC_*`
+  slots only decide what each alias *resolves to*; `start` decides which alias a
+  `clor` session opens on. Point it at whichever alias carries the default tier —
+  `sonnet` when mid is the default, `haiku` when low is. Leaving it on `haiku`
+  while the default moved to mid silently opens every session on the weak tier.
 
 - **Keep the `[1m]` suffix.** It declares the 1M context window to Claude Code.
   Only append it to a model whose `context` column in the ranking is ≥ 1000k;
@@ -138,9 +158,9 @@ alias ocs="opencode -m openrouter/<high-fallback id>"
 ```
 
 `ocs` exists to reach *past* the configured default, so it has to stay strictly
-above target 2's tier. It tracks high-fallback rather than mid, matching
-OpenCode's second-opinion role — mid is reachable from `/model` when the low
-default is not enough but a second opinion is not what is wanted.
+above whichever tier holds it. It tracks high-fallback, matching OpenCode's
+second-opinion role — and that stays true however the default moves, which is why
+it is pinned to a named tier rather than to "one above the default".
 
 ## 5. `.airc.d/llmcli.zsh` — the `occli` backend
 

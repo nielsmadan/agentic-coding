@@ -36,17 +36,17 @@ alias ccone="noglob _ccone"
 # The tier aliases are remapped cheap->strong so /model haiku|sonnet|opus
 # switches models mid-session. [1m] declares the real 1M context window.
 clor() {
-  local start="${CLOR_MODEL:-haiku}"
+  local start="${CLOR_MODEL:-sonnet}"
   local effort="${CLOR_EFFORT:-high}"
   sops exec-env "$SOPS_SECRETS" \
 "ANTHROPIC_BASE_URL=https://openrouter.ai/api \
 ANTHROPIC_API_KEY=\$OPENROUTER_API_KEY \
 ANTHROPIC_AUTH_TOKEN= \
 CLAUDE_CODE_OAUTH_TOKEN= \
-ANTHROPIC_DEFAULT_HAIKU_MODEL='deepseek/deepseek-v4-pro-0813[1m]' \
-ANTHROPIC_DEFAULT_SONNET_MODEL='meta/muse-spark-1.2[1m]' \
+ANTHROPIC_DEFAULT_HAIKU_MODEL='openai/gpt-5.6-luna[1m]' \
+ANTHROPIC_DEFAULT_SONNET_MODEL='z-ai/glm-5.3-flash[1m]' \
 ANTHROPIC_DEFAULT_OPUS_MODEL='z-ai/glm-5.3[1m]' \
-CLAUDE_CODE_SUBAGENT_MODEL='deepseek/deepseek-v4-pro-0813[1m]' \
+CLAUDE_CODE_SUBAGENT_MODEL='z-ai/glm-5.3-flash[1m]' \
 CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 \
 CLAUDE_CODE_EFFORT_LEVEL=$(printf '%q' "$effort") \
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
