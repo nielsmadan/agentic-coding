@@ -45,6 +45,7 @@
     "read": [
       "/AppleInternal",
       "$HOME/Library/Developer/Xcode",
+      "$HOME/Library/Application Support/CleanShot/media",
       "$HOME/.local/share/uv/python",
       "$HOME/.local/share/gem",
       "$HOME/.local/share/mise/installs",
