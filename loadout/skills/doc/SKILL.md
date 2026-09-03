@@ -94,7 +94,9 @@ directly from a diff); `--generate` is for greenfield.
   human how-to format; agents don't auto-load it. Only a *published* docs site (outside
   `docs/`) is out of scope.
 - `docs/decisions/` and `docs/log/` are **append-only**: `--update` never rewrites their
-  bodies, only adds entries / fixes links.
+  bodies, only adds entries / fixes links. Superseding an ADR is the one sanctioned edit —
+  flip its `**Status:**` line and link forward to the replacement, never touch the body
+  (see Doc lifecycles in `references/principles.md`).
 - `docs/reference/` is **externally anchored**: a source-scoped `--update` skips it, because
   our refactor cannot make it stale. It goes stale when a *dependency version* moves, and a
   verified claim is only re-stamped by re-running its probe.

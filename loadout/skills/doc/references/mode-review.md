@@ -44,6 +44,10 @@ against the principles in `references/principles.md`, then offers to apply fixes
 - [ ] `docs/reference/`: every verified claim carries a date **and** the version probed;
       upstream links resolve; no claim is stamped against a version older than the one the
       repo now resolves (report it as needing re-verification — do not rewrite the claim)
+- [ ] `docs/decisions/`: an ADR marked `superseded` carries a working forward link to the ADR
+      that replaced it (one without a pointer reads as current to anyone arriving by search)
+- [ ] `docs/decisions/`: no two `accepted` ADRs answer the same question differently — report
+      the contradiction and which one is current; never settle it by editing either body
 
 **Quality:**
 - [ ] No verbatim duplication across files
@@ -81,6 +85,13 @@ Number findings sequentially across all tiers so the user can select by number.
 ### Review finds no issues but coverage is incomplete
 **Solution:** Use `--all` to scan the full `docs/` tree against source modules; missing
 docs for key modules surface as completeness gaps.
+
+### Review "fixed" a stale ADR by updating its body
+**Cause:** Treating `docs/decisions/` like a live code-derived doc. An ADR describes the past
+on purpose, so it goes out of date by design and that is not a defect. **Solution:** The only
+edit review may propose is the `**Status:**` line plus a forward link to the ADR that replaced
+it — the fix for a decision that no longer holds is a *new* ADR. Revert the rewrite and report
+it as needing supersession.
 
 ### Review "fixed" a reference doc by rewriting a verified claim
 **Cause:** Treating `docs/reference/` like a live code-derived doc. **Solution:** Review may

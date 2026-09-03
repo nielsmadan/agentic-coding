@@ -23,7 +23,9 @@ in `references/principles.md`.
    decision itself changed. **Skip append-only records** (`docs/decisions/`,
    `docs/log/`): never rewrite their bodies to match code — they describe the past on
    purpose. At most add a new entry or fix a broken link (see Doc lifecycles in
-   `references/principles.md`). **Skip `docs/reference/` on a source-scoped run** — it is
+   `references/principles.md`). A decision the diff invalidates is **superseded, not
+   edited**: write a new ADR, and on the old one change only the `**Status:**` line and its
+   forward link. **Skip `docs/reference/` on a source-scoped run** — it is
    anchored to external things, so our refactor cannot make it stale (see step 5).
 4. **New behavior with no doc**: if there's a clear home pattern (e.g.
    `docs/features/<name>.md`), create that doc from the template; otherwise list it

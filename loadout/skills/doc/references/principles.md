@@ -188,8 +188,8 @@ external system — that one file is not a reason to grow the rest of a tree.
 AGENTS.md              # canonical, lean (Principle 8)
 CLAUDE.md              # @AGENTS.md bridge
 docs/
-  decisions/           # ADRs: one file per decision, Context / Decision / Consequences,
-    0001-<slug>.md     #   superseded-not-edited (append-only record — see Doc lifecycles)
+  decisions/           # ADRs: one file per decision, Status / Context / Decision /
+    0001-<slug>.md     #   Consequences; supersede, never rewrite (see Doc lifecycles)
   log/                 # OPTIONAL: incident post-mortems (Problem/Root-cause/Fix), dated,
     2026-...-<slug>.md #   append-only. Keep for recurrence-prone bugs; also lift the
                        #   reusable lesson into the relevant live doc / AGENTS.md gotcha
@@ -261,6 +261,23 @@ over-structured-and-stale tree is the worst case and the strongest reason to shr
   when assess meets it, offer to **harvest any embedded decisions into `decisions/` ADRs, then
   (on confirmation) delete the completed/stale plans** to de-clutter — but never delete a plan
   that may still be driving in-progress work.
+
+**Superseding an ADR.** A replaced decision is never deleted and its body is never rewritten
+— the record earns its keep by saying what was chosen and why, so a later reader doesn't
+re-propose the option that was already rejected. The one sanctioned edit is the `**Status:**`
+line plus a forward link: append-only protects the *reasoning*, and the status line is metadata
+about the record's currency, not part of the record. Without that pointer a superseded ADR is a
+trap — a reader arriving by grep finds it and it reads as current.
+
+- **Wholly replaced** → the old ADR's status becomes `superseded by [0012](0012-<slug>.md)`,
+  and the new one opens with `Supersedes [0004](0004-<slug>.md)` and restates in its Context
+  what changed. The old → new link is the mandatory half (that is the one search hits); the
+  back link is cheap and worth adding.
+- **Replaced in part** → leave the status `accepted` and add a consequence bullet:
+  `Superseded in part by [0007](0007-<slug>.md), which {what moved}.` Don't carve the old ADR
+  into still-true and no-longer-true halves — that is rewriting the body by another name.
+
+Where `decisions/overview.md` exists, it states this rule in one line for human readers.
 
 **Bridge note (all profiles):** prefer `AGENTS.md` as the canonical instruction file and
 `CLAUDE.md` = `@AGENTS.md` (repo-portable, honored by both toolchains). When Generate

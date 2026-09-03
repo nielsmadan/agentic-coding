@@ -55,6 +55,34 @@ Reference the code as canonical — do NOT paste signatures.}
 {Only non-obvious decisions/tradeoffs. Omit if none.}
 ```
 
+## ADR Template (`docs/decisions/NNNN-<slug>.md`)
+
+One file per decision, numbered in order. Records what was chosen and why **at the time** —
+an append-only record, never rewritten to match today's code (see "Doc lifecycles" in
+`principles.md`).
+
+```markdown
+# {NNNN} — {the decision, stated as a claim}
+
+**Status:** accepted ({YYYY-MM-DD})
+
+## Context
+{The forces that made this a decision rather than an obvious call: the constraint, the thing
+that broke, the two options that both looked reasonable. Link the ADRs it builds on.}
+
+## Decision
+{What we chose, present tense. One paragraph.}
+
+## Consequences
+{What it buys and what it costs — including the bad parts: what is now harder, what a future
+reader will trip over, what this forecloses.}
+```
+
+When it is later replaced, the status becomes `superseded by [0012](0012-<slug>.md)` and the
+new ADR opens with `Supersedes [0004](0004-<slug>.md)`. A partial replacement keeps the status
+`accepted` and adds a `Superseded in part by [0007](0007-<slug>.md), which {what moved}.`
+bullet under Consequences. Nothing else in the file changes.
+
 ## Reference Template (`docs/reference/<subject>.md`)
 
 For an **external** subject — a dependency, platform, harness, protocol, or service. See
