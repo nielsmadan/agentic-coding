@@ -44,6 +44,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `claude/` | The generated MCP registration input `sync.sh` feeds to `claude mcp add-json` |
 | `codex/` | Codex-specific synchronization helpers and the managed `developer_instructions` source |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
+| `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
 | `loadout/templates/` | Per-project-type config a project opts into by name (`flutter/`, `react-native/`, `web/`, `railway/`) |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |

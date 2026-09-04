@@ -1,12 +1,12 @@
 ---
 name: agent-models
-description: Pick and apply the low / mid / high-main / high-fallback OpenRouter coding models for pi, OpenCode, the clor Claude-Code-on-OpenRouter wrapper, and the second-opinion advisors. Ranks candidates from Artificial Analysis by agentic index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", or asks what pi/opencode/clor are currently running.
+description: Pick and apply the low / mid / high-main / high-fallback OpenRouter coding models for pi, OpenCode, the clor Claude-Code-on-OpenRouter wrapper. Ranks candidates from Artificial Analysis by agentic index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", or asks what pi/opencode/clor are currently running.
 ---
 
 # Agent Models
 
 Chooses four OpenRouter models — **low**, **mid**, **high-main**,
-**high-fallback** — and writes them into the six places this repo pins a model id.
+**high-fallback** — and writes them into the five places this repo pins a model id.
 
 Standing constraints, not preferences:
 
@@ -130,7 +130,7 @@ confirmation**. Do not write any file before the user approves the four picks
 
 ### Step 4: Apply
 
-Read `references/targets.md` and make all six edits. It carries the exact key
+Read `references/targets.md` and make all five edits. It carries the exact key
 names, prefix rules (`openrouter/` on some keys, not others), the `[1m]` context
 suffix on `clor`, and which files are loadout sources vs generated.
 
@@ -140,7 +140,7 @@ Preserve unrelated content in every file: pi's `openai-codex/*` entries, the
 ### Step 5: Sync and verify
 
 ```bash
-loadout sync --global     # required for opencode + second-opinion; needs an unsandboxed shell
+loadout sync --global     # required for opencode; needs an unsandboxed shell
 source ~/.airc            # reloads clor / ocs / occli
 loadout check --global    # must be clean — the pre-commit hook runs it
 ```
@@ -152,7 +152,7 @@ Then confirm what landed:
 
 ```bash
 grep -n "MODEL=\|CLOR_MODEL:-" .airc.d/claude.zsh   # 4 model slots + the start alias
-grep -n "openrouter/" .airc.d/opencode.zsh .airc.d/llmcli.zsh loadout/skills/second-opinion/SKILL.md
+grep -n "openrouter/" .airc.d/opencode.zsh .airc.d/llmcli.zsh
 python3 -c "import json;d=json.load(open('loadout/settings/pi.json'));print(d['defaultModel'],d['defaultThinkingLevel'],d['enabledModels'])"
 ```
 
@@ -183,12 +183,12 @@ User says: "refresh the model tiers"
    700k). So **mid holds the default** — low keeps `occli` and the haiku rung.
 4. Present the four with runners-up, the default-tier call, and the binding
    table. Wait.
-5. On approval: the six targets, `loadout sync --global`, `source ~/.airc`,
+5. On approval: the five targets, `loadout sync --global`, `source ~/.airc`,
    `loadout check --global`.
 
 Result: pi, OpenCode and `clor` default to GLM-5.3-Flash; `clor` opens on
 `sonnet` so it lands on that default; subagents take it too; `occli` and the
-haiku rung keep Luna; the two second-opinion advisors sit on different labs.
+haiku rung keep Luna.
 
 ### Example 2: Read-only question
 

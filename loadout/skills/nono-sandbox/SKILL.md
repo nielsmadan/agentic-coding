@@ -103,13 +103,13 @@ argv. A tool that spawns `xcodebuild` itself therefore works without doing anyth
 ## Denied on purpose — these will not be granted
 
 Each was decided deliberately and measured; the reasoning is in
-[`docs/security-model.md`](../../../docs/security-model.md). Name the blocker once, hand over the
+[`docs/security-model.md`](https://github.com/nielsmadan/agentic-coding/blob/main/docs/security-model.md). Name the blocker once, hand over the
 command, and continue with what is still possible. Do not propose a grant, do not work around it,
 and do not raise it again in a later session.
 
 | Blocked | Why it stays blocked | Give the user this |
 |---|---|---|
-| `~/Library/Keychains/login.keychain-db` | Holds 470 credentials and every codesigning identity. A read grant returns them as **plaintext** through securityd with no prompt, and outbound network is unrestricted, so readable means exfiltratable. Distribution and Developer ID signing is attributable beyond this machine. | For codesigning, use `agent-signing.keychain-db` — already granted, and it holds one Apple Development identity. Anything needing the login keychain runs in a plain terminal. |
+| `~/Library/Keychains/login.keychain-db` | Holds the login credentials and codesigning identities. A read grant returns them as **plaintext** through securityd with no prompt, and outbound network is unrestricted, so readable means exfiltratable. Distribution and Developer ID signing is attributable beyond this machine. | For codesigning, use `agent-signing.keychain-db` — already granted, and it holds one Apple Development identity. Anything needing the login keychain runs in a plain terminal. |
 | `~/.ssh` | Private keys. Would let an agent `git push` and ssh to any host. `git push` is separately denied for the same reason. | `git push` — or the ssh command — themselves. |
 | `~/.local/state/mise/trusted-configs` | `mise trust` applies a repo's `[env]`, including `_.path`, to the user's own interactive shell in that directory. That is a route out of the sandbox. | `mise trust`, once, in that repo. |
 | `~/.gradle/init.d`, `~/.gradle/gradle.properties` | Gradle executes init scripts and applies `jvmargs` on **every** build, including the user's unsandboxed ones. | Nothing to run — these stay denied whether or not the rest of `~/.gradle` is granted. |

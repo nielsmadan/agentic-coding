@@ -1,6 +1,6 @@
 # Write targets
 
-Every place in this repo that pins an OpenRouter model id. All six must move
+Every place in this repo that pins an OpenRouter model id. All five must move
 together or the trio drifts apart.
 
 Ids are always OpenRouter ids (`vendor/model`), because every one of these
@@ -21,8 +21,8 @@ so it has to be the cheapest option that can actually do the job.
 cheap model can win low on terseness while costing *more per input token* than the
 tier above it. When low is also a real capability drop, mid is the correct default
 and low keeps only the terse one-shot slots (`occli`, the haiku rung). Whichever
-tier wins, everything above it must be reached deliberately: `clor`'s opus alias,
-`ocs`, and the two second-opinion advisors.
+tier wins, everything above it must be reached deliberately: `clor`'s opus alias
+and `ocs`.
 
 **This cycle:** low = GPT-5.6 Luna, mid = GLM-5.3-Flash, high-main = GLM-5.3,
 high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Luna is
@@ -42,8 +42,6 @@ high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Lun
 | 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | **default** |
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
 | 5 | `.airc.d/llmcli.zsh` | `occli` backend | low |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | pi advisor | high-main |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | opencode advisor | high-fallback |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.
@@ -173,30 +171,17 @@ opencode run -m openrouter/<low id> \
 Cheap and latency-sensitive — this slot wants the low tier regardless of what
 the interactive defaults do.
 
-## 6. `loadout/skills/second-opinion/SKILL.md`
+## 6. `loadout/skills/second-opinion/SKILL.md` — no longer a target
 
-Two advisor invocations. This file is loadout **source**; run
-`loadout sync --global` after editing so all four harnesses get it.
-
-```bash
-command pi -p --no-session --tools read,grep,glob,list \
-  --model openrouter/<high-main id> "$(cat .second-opinion.md)" </dev/null
-
-command opencode run --agent plan -m openrouter/<high-fallback id> \
-  "$(cat .second-opinion.md)" </dev/null
-```
-
-The advisor's identity is the **model**, not the CLI — pi on the high-main model
-is a genuinely different opinion from the session's own model even when the
-session is also pi.
-
-New advisor CLIs need an allow rule in `loadout/permissions.toml`, in the
-`# external advisor commands (used by /second-opinion)` block alongside
-`codex exec -s read-only` and `opencode run`.
+The advisor invocations are deliberately unpinned (`openrouter/<model-id>`
+placeholders): the skill is published to the public collection, so it tells the
+running agent to pick two capable models from different labs instead of carrying
+machine-pinned ids. Do not write concrete ids back into this file — it is a
+publish source and the publish guard cannot catch a model id.
 
 ## After writing
 
-1. `loadout sync --global` — required for targets 1, 2 and 6. Needs an
+1. `loadout sync --global` — required for targets 1 and 2. Needs an
    unsandboxed shell (`claude-raw`), since it writes outside `~/wrksp`.
 2. `source ~/.airc` — reloads targets 3–5 in the current shell. Idempotent.
 3. `loadout check --global` — must be clean; the lefthook pre-commit hook runs it.

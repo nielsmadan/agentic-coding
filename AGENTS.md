@@ -114,10 +114,12 @@ build artifacts are skipped.
 A skill whose text must differ per harness marks the differing parts inline. Two
 skills do today, for different reasons.
 
-`second-opinion` is the case that motivated the mechanism: each harness consults
-the *other* agents, so the advisor list and CLI invocations differ while the
-surrounding workflow is identical. `nono-sandbox` is the other: OpenCode carries a
-substantially longer version, so the two documents are wrapped whole.
+`code-review` is the biggest case: dispatch and sub-agent instructions differ
+between the claude/codex/opencode family and pi, which fans out through a
+`workflowScript` instead of repeated tool calls. `nono-sandbox` is the other
+shape: OpenCode carries a substantially longer version, so the two documents are
+wrapped whole. (`skill-creator` shows `:::` lines too, but only inside a fenced
+example documenting the syntax — they render as-is everywhere.)
 
 Marked sections wrap whole blocks:
 
@@ -139,10 +141,10 @@ block keyed by harness instead, merged over the shared keys and stripped from th
 output:
 
 ```yaml
-name: second-opinion
-description: …advisors are Codex and OpenCode+GLM.
-codex:
-  description: …advisors are Claude and OpenCode+GLM.
+name: nono-sandbox
+description: Decide whether a failure is actually a nono sandbox denial…
+opencode:
+  description: Diagnose and resolve permission denials when opencode runs…
 ```
 
 Unmarked skills — 48 of 50 — pass through untouched, so the mechanism costs nothing
@@ -283,6 +285,20 @@ remains is `developer_instructions`, which loadout cannot hold: it is a multi-li
 loadout's surgery works line-wise over top-level scalars. The nono codex pack keeps re-injecting
 its own copy, so something must keep undoing that.
 
+**`publish/` generates the public skills collection.** `publish/sync.py` renders the
+`publish`-classified skills from `loadout/skills/` into
+[nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin
+marketplace and `npx skills` collection; a workflow in that repo runs it hourly.
+`publish/skills.toml` classifies every skill as `publish` or `private`, fail-closed:
+the pre-commit hook runs `--check-manifest --check-sources` on every commit, so an
+unclassified skill or a personal string (`~/ac`, `/Users/nielsmadan`, …) in a
+publishable source rejects the commit — even one that seems unrelated. Run it as a
+script path (`python3 publish/sync.py`), never `python3 -m publish.sync`: `-m` puts
+the repo root on `sys.path`, where the `loadout/` config directory shadows the
+installed `loadout` package. The `loadout` package is a `uv tool` install, not
+importable from system Python — only `--out` (render) needs it; the checks and the
+tests (`python3 -m unittest publish.test_sync`) run without it.
+
 **Codex validates none of this.** `model_reasoning_effort = "bogus"` is accepted silently and
 reported as the session's effort; a wrong value fails server-side at first use. The published
 [config reference](https://learn.chatgpt.com/docs/config-file/config-reference) also lags the
@@ -400,7 +416,7 @@ there, not five times over. The per-agent files hold only what one agent needs:
 - **`nono why` misreports grants inside the built-in keychain protection.** Measured on 0.72.0: with `read_file` on `$HOME/Library/Keychains/login.keychain-db`, `nono why` says `DENIED / filesystem_deny` while `nono run` reads the file; with no grant at all the read fails, so the grant is what opens the path and the diagnostic does not account for it. Adding `bypass_protection` changes nothing in either direction. This is **not** a general `bypass_protection` blind spot — for `~/.netrc` the diagnostic tracks the runtime exactly (grant alone → both deny, grant + `bypass_protection` → both allow), as do `filesystem.deny` rules written in the profile or inherited through `extends`. Where the two disagree, believe the sandbox; trusting `nono why` here has already cost one load-bearing grant.
 - **`deny_credentials` paths need `bypass_protection`, not just a grant.** `~/.npmrc` and `~/.netrc` sit in nono's permanent deny group: a `read_file` entry alone still yields `filesystem_deny`, and only adding the path to `bypass_protection` opens it. Weigh that against exfiltration before opening one: sandboxed agents have open outbound network, so a readable credential file is an exfiltratable one.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
-- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block's `developer_instructions` text is **replaced with ours** by `codex/sync_config.py`, sourced from `codex/developer-instructions.md` and inserted above the first table (a top-level key after a table header is absorbed into it). A `nono update` restores the pack's copy; the next `./sync.sh` overwrites it again, so this self-heals — the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day. Ours mirrors `loadout/skills/nono-sandbox/SKILL.md`, which is the canonical wording. **After a `nono update`, run `./sync.sh`** — it restores the instructions.
+- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block's `developer_instructions` text is **replaced with ours** by `codex/sync_config.py`, sourced from `codex/developer-instructions.md` and inserted above the first table (a top-level key after a table header is absorbed into it). A `nono update` restores the pack's copy; the next `./sync.sh` overwrites it again, so this self-heals — the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day. Ours follows `loadout/skills/nono-sandbox/SKILL.md`, the canonical guidance — the published copy of the skill carries no personal paths, while this local copy keeps the machine-specific ones. **After a `nono update`, run `./sync.sh`** — it restores the instructions.
 
 The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides the pack's copy for all four agents, because `loadout sync --global` writes it into each harness's own skills directory. It carries a `::: opencode` section — OpenCode's version is substantially longer than the one the other three get. Re-run `loadout sync --global` after a pack update to restore it.
 

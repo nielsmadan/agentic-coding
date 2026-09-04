@@ -243,6 +243,11 @@ declaration** — nothing else needs editing to wire it up. Supporting files
 (`references/`, `scripts/`, `assets/`) are copied byte-for-byte with mode preserved,
 so an executable script stays executable; `__pycache__` is skipped.
 
+One mandatory hookup: classify the skill in `publish/skills.toml` — add its name
+to `publish` or `private`. Every global skill must appear in exactly one list; the
+pre-commit hook rejects an unclassified skill, and publishable sources must carry
+no personal strings.
+
 One optional hookup: add a row to `loadout/skills/README.md`, the human-facing
 catalog. Agents read the `description:` frontmatter instead, so that frontmatter is
 what actually has to be good.
@@ -270,7 +275,8 @@ Note: any skill body referencing `docs/` writes into the *target project's*
 
 Almost no skill needs this — 48 of 50 render identically everywhere. Reach for it
 when a skill must genuinely say different things to different agents (e.g.
-`second-opinion`, where each harness consults the *other* agents).
+`code-review`, whose dispatch instructions differ between the claude/codex/opencode
+family and pi).
 
 Mark whole blocks inline:
 
@@ -291,10 +297,10 @@ Frontmatter is YAML, so `:::` there would be data. Per-harness **values** use a 
 keyed by harness, merged over the shared keys and stripped from the output:
 
 ```yaml
-name: second-opinion
-description: …advisors are Codex and OpenCode+GLM.
-codex:
-  description: …advisors are Claude and OpenCode+GLM.
+name: nono-sandbox
+description: Decide whether a failure is actually a nono sandbox denial…
+opencode:
+  description: Diagnose and resolve permission denials when opencode runs…
 ```
 
 ## Quality Checklist
@@ -317,6 +323,7 @@ Before finalizing, verify:
 - [ ] References clearly linked from SKILL.md (if using references/)
 - [ ] File types mentioned in description (if applicable)
 - [ ] Placed by scope: `loadout/skills/` (global), `loadout/templates/<type>/skills/` (project-type), or `.claude/skills/` (this repo only)
+- [ ] Classified in `publish/skills.toml` (publish or private) — the pre-commit hook fails otherwise
 - [ ] `loadout sync --global` run, and the skill appears under all four harness skills directories
 - [ ] `loadout check --global` reports no drift
 - [ ] Row added to `loadout/skills/README.md` (the human catalog — agents read the `description:` frontmatter instead)
