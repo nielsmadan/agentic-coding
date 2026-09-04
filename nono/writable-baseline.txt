@@ -18,6 +18,7 @@ $HOME/.gradle/caches	profile
 $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
+$HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile
@@ -67,6 +68,7 @@ $HOME/.gradle/caches	profile
 $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
+$HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile
@@ -114,6 +116,7 @@ $HOME/.gradle/caches	profile
 $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
+$HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/opentui	profile
@@ -163,6 +166,7 @@ $HOME/.gradle/caches	profile
 $HOME/.gradle/daemon	profile
 $HOME/.gradle/jdks	profile
 $HOME/.gradle/native	profile
+$HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile

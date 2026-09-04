@@ -34,6 +34,27 @@ def profiles() -> list[str]:
     return sorted(p.stem for p in (REPO_ROOT / "nono").glob("*-local.json"))
 
 
+# bypass_protection outranks a deny rule, so naming a directory here silently
+# re-opens every denied file under it. Measured: bypass on ~/Library/Keychains
+# with an explicit deny on login.keychain-db left that file fully readable and
+# enumeration jumped from 1 identity to 32. Only ever bypass the single file.
+BYPASS_DIR_ONLY_FILES = ("Library/Keychains",)
+
+
+def bypass_shape_errors() -> list[str]:
+    import json
+
+    found = []
+    for path in sorted((REPO_ROOT / "nono").glob("*.json")):
+        entries = json.loads(path.read_text()).get("filesystem", {}).get("bypass_protection", [])
+        for entry in entries:
+            value = entry.get("path") if isinstance(entry, dict) else entry
+            for guarded in BYPASS_DIR_ONLY_FILES:
+                if value and value.rstrip("/").endswith(guarded):
+                    found.append(f"{path.name}: bypass_protection on the {guarded} directory — name the single file instead")
+    return found
+
+
 def writable(profile: str) -> set[str]:
     result = subprocess.run(
         ["nono", "run", "-p", profile, "--dry-run", "-v", "--", "true"],
@@ -73,6 +94,12 @@ def main() -> int:
     group.add_argument("--check", action="store_true", help="exit 1 on drift")
     group.add_argument("--update", action="store_true", help="rewrite the baseline")
     args = parser.parse_args()
+
+    shape = bypass_shape_errors()
+    if shape:
+        for line in shape:
+            print(f"nono-audit: {line}", file=sys.stderr)
+        return 1
 
     if not shutil.which("nono"):
         print("nono-audit: nono not on PATH — skipping")

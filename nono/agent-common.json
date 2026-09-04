@@ -21,6 +21,7 @@
       "$HOME/.gradle/daemon",
       "$HOME/.gradle/native",
       "$HOME/.gradle/jdks",
+      "$HOME/.gradle/wrapper",
       "$HOME/.m2/repository",
       "$HOME/.cocoapods",
       "$HOME/Library/Developer/Xcode/DerivedData",
@@ -46,6 +47,8 @@
       "/AppleInternal",
       "$HOME/Library/Developer/Xcode",
       "$HOME/Library/Application Support/CleanShot/media",
+      "$HOME/Library/Keychains",
+      "$HOME/Library/MobileDevice/Provisioning Profiles",
       "$HOME/.local/share/uv/python",
       "$HOME/.local/share/gem",
       "$HOME/.local/share/mise/installs",
@@ -64,14 +67,16 @@
       "$HOME/.local/state/gh/device-id",
       "$HOME/.config/splashdown/config.toml",
       "$HOME/.yarnrc",
-      "$HOME/.docker/config.json"
+      "$HOME/.docker/config.json",
+      "$HOME/Library/Keychains/agent-signing.keychain-db"
     ],
     "deny": [
       "$HOME/.dolt/creds"
     ],
     "bypass_protection": [
       "$HOME/.docker/config.json",
-      "$HOME/.docker/contexts"
+      "$HOME/.docker/contexts",
+      "$HOME/Library/Keychains/agent-signing.keychain-db"
     ],
     "unix_socket": [
       "$HOME/.colima/default/docker.sock"
