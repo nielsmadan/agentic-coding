@@ -4,9 +4,9 @@
 	"density": "compact",
 	"separator": "bar",
 	"segments": [
+		"provider",
 		"model",
 		"cwd",
-		"branch",
 		"context"
 	],
 	"segmentText": {
