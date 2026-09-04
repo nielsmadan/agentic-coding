@@ -51,9 +51,13 @@ class AgcoTests(unittest.TestCase):
             self.roots.codex_sessions / "2026" / "08" / name, [record], mtime
         )
 
-    def write_pi(self, cwd: str, name: str, mtime: float) -> Path:
+    def write_pi(
+        self, cwd: str, name: str, mtime: float, extra: list[dict] | None = None
+    ) -> Path:
         record = {"type": "session", "id": name, "cwd": cwd}
-        return self.write_jsonl(self.roots.pi_sessions / "slug" / name, [record], mtime)
+        return self.write_jsonl(
+            self.roots.pi_sessions / "slug" / name, [record] + (extra or []), mtime
+        )
 
     def write_opencode(self, cwd: str, session_id: str, updated_ms: int) -> None:
         self.roots.opencode_db.parent.mkdir(parents=True, exist_ok=True)
@@ -90,6 +94,55 @@ class AgcoTests(unittest.TestCase):
         self.write_pi(self.cwd, "new.jsonl", 4000)
         self.write_pi(self.other, "newest.jsonl", 9000)
         self.assertEqual(agco.pi_latest(self.cwd, self.roots), 4000)
+
+    def test_pi_provider_takes_the_last_switch(self) -> None:
+        self.write_pi(
+            self.cwd,
+            "s.jsonl",
+            1000,
+            [
+                {"type": "model_change", "provider": "openrouter", "modelId": "glm"},
+                {"type": "model_change", "provider": "openai-codex", "modelId": "sol"},
+            ],
+        )
+        self.assertEqual(agco.pi_provider(self.cwd, self.roots), "openai-codex")
+
+    def test_pi_provider_reads_assistant_messages(self) -> None:
+        self.write_pi(
+            self.cwd,
+            "s.jsonl",
+            1000,
+            [
+                {"type": "model_change", "provider": "openai-codex", "modelId": "sol"},
+                {"type": "message", "message": {"role": "assistant", "provider": "openrouter"}},
+            ],
+        )
+        self.assertEqual(agco.pi_provider(self.cwd, self.roots), "openrouter")
+
+    def test_pi_provider_uses_newest_matching_session(self) -> None:
+        self.write_pi(
+            self.cwd,
+            "old.jsonl",
+            1000,
+            [{"type": "model_change", "provider": "openrouter", "modelId": "glm"}],
+        )
+        self.write_pi(
+            self.cwd,
+            "new.jsonl",
+            4000,
+            [{"type": "model_change", "provider": "openai-codex", "modelId": "sol"}],
+        )
+        self.write_pi(
+            self.other,
+            "newest.jsonl",
+            9000,
+            [{"type": "model_change", "provider": "openrouter", "modelId": "glm"}],
+        )
+        self.assertEqual(agco.pi_provider(self.cwd, self.roots), "openai-codex")
+
+    def test_pi_provider_absent_when_session_records_none(self) -> None:
+        self.write_pi(self.cwd, "s.jsonl", 1000)
+        self.assertIsNone(agco.pi_provider(self.cwd, self.roots))
 
     def test_opencode_reads_time_updated(self) -> None:
         self.write_opencode(self.cwd, "s1", 2_000_000)

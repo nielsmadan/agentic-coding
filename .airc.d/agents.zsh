@@ -10,7 +10,8 @@ agco() {
     claude)   claude --continue "$@" ;;
     codex)    codex resume --last "$@" ;;
     opencode) opencode --continue "$@" ;;
-    pi)       pi --continue "$@" ;;
+    pi:openai-codex) pix --continue "$@" ;;
+    pi|pi:*)  pi --continue "$@" ;;
     *)        print -u2 -r -- "agco: unknown agent '$agent'"; return 1 ;;
   esac
 }
