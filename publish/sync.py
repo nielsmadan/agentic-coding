@@ -12,9 +12,8 @@ import json
 import re
 import shutil
 import tomllib
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Callable, Protocol, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO_ROOT / "publish" / "skills.toml"
@@ -38,6 +37,9 @@ def manifest_errors(
     available: list[str], publish: list[str], private: list[str]
 ) -> list[str]:
     errors: list[str] = []
+    for label, listed in (("publish", publish), ("private", private)):
+        for name in sorted({n for n in listed if listed.count(n) > 1}):
+            errors.append(f"{name}: listed more than once in {label}")
     for name in sorted(set(publish) & set(private)):
         errors.append(f"{name}: listed in both publish and private")
     classified = set(publish) | set(private)
@@ -61,11 +63,14 @@ def check_manifest() -> list[str]:
 # literal prefix. `doc/references/` legitimately uses `/Users/name/projects/app`
 # as an example of a path NOT to write, and mode-review.md tells the reader to
 # grep for `/Users/`. Broadening this re-breaks both.
-PERSONAL = re.compile(r"~/(?:ac|rc|wrksp)\b|/Users/nielsmadan|nielsmadan@|quantumcraft")
-MARKER = re.compile(r"^::: ?", re.M)
+# `$HOME/ac` and friends are the bash-snippet spelling of the same identity leak.
+PERSONAL = re.compile(
+    r"~/(?:ac|rc|wrksp)\b|\$HOME/(?:ac|rc|wrksp)\b"
+    r"|/Users/nielsmadan|nielsmadan@|quantumcraft"
+)
 _KEY = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):\s*(.*)$")
 _FENCE = re.compile(r"^---\s*$")
-_BLOCK = re.compile(r"^[>|][+-]?$")
+_BLOCK = re.compile(r"^[>|](?:[0-9][+-]?|[+-][0-9]?)?$")
 
 MAX_NAME = 64
 MAX_DESCRIPTION = 1024
@@ -146,14 +151,29 @@ def guard_errors(name: str, text: str, private: list[str]) -> list[str]:
             f"{name}: description contains '|', which breaks the README table"
         )
     for other in private:
-        if reference_pattern(other).search(text):
-            errors.append(f"{name}: references unpublished skill {other!r}")
+        for match in reference_pattern(other).finditer(text):
+            line = _line_of(text, match.start())
+            errors.append(
+                f"{name}: references unpublished skill {other!r} (SKILL.md:{line})"
+            )
     return errors
 
 
-def marker_warnings(name: str, text: str) -> list[str]:
-    if MARKER.search(text):
-        return [f"{name}: still contains ::: harness markers after rendering"]
+def marker_errors(name: str, text: str) -> list[str]:
+    # skill-creator documents the ::: syntax inside a ```markdown fence; only a
+    # marker outside any fence means rendering failed to strip it.
+    in_fence = False
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.startswith(":::"):
+            return [f"{name}: still contains ::: harness markers after rendering"]
+    if in_fence:
+        # fail closed: an odd fence count blinds this scan (and loadout's
+        # stripper shares the same toggle), so refuse rather than trust it
+        return [f"{name}: unbalanced code fence — marker check unreliable"]
     return []
 
 
@@ -168,7 +188,11 @@ def tree_guard_errors(tree: Path, private: list[str]) -> list[str]:
             errors.append(f"{skill_dir.name}: missing SKILL.md")
             continue
         errors.extend(
-            guard_errors(skill_dir.name, document.read_text(encoding="utf-8"), private)
+            guard_errors(
+                skill_dir.name,
+                document.read_text(encoding="utf-8", errors="ignore"),
+                private,
+            )
         )
         for support in sorted(skill_dir.rglob("*")):
             if not support.is_file() or support == document:
@@ -199,13 +223,15 @@ PROVENANCE = (
 HARNESS = "claude"
 
 
-@dataclass(frozen=True)
-class FakeSkill:
-    """Test double matching the shape render_tree needs from loadout's Skill."""
-
+class SkillLike(Protocol):
     name: str
     document: Path
     supporting: tuple[Path, ...]
+
+
+Loader = Callable[
+    [], tuple[Callable[[Path], Sequence[SkillLike]], Callable[[SkillLike, str], str]]
+]
 
 
 def swap_banner(text: str) -> str:
@@ -215,8 +241,8 @@ def swap_banner(text: str) -> str:
 def render_tree(
     out: Path,
     names: list[str],
-    skills: Sequence[Any],
-    render: Callable[[Any, str], str],
+    skills: Sequence[SkillLike],
+    render: Callable[[SkillLike, str], str],
 ) -> None:
     """Rebuild <out>/skills/ only. Never touch the output root — .github/ lives there."""
     destination = out / "skills"
@@ -232,9 +258,24 @@ def render_tree(
         (skill_out / "SKILL.md").write_text(document, encoding="utf-8")
         source_dir = skill.document.parent
         for relative in skill.supporting:
+            if relative.is_absolute() or ".." in relative.parts:
+                raise ValueError(
+                    f"{skill.name}: supporting path escapes the skill directory: "
+                    f"{relative}"
+                )
+            source = source_dir / relative
+            if source.is_symlink():
+                raise ValueError(
+                    f"{skill.name}: symlinked supporting file refused: {relative}"
+                )
+            if not source.resolve().is_relative_to(source_dir.resolve()):
+                raise ValueError(
+                    f"{skill.name}: supporting path escapes the skill directory: "
+                    f"{relative}"
+                )
             target = skill_out / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_dir / relative, target)
+            shutil.copy2(source, target)
 
 
 def load_loadout() -> tuple[Callable, Callable]:
@@ -245,7 +286,8 @@ def load_loadout() -> tuple[Callable, Callable]:
     except ImportError:
         raise SystemExit(
             "loadout is not importable. Install it with:\n"
-            "  pip install 'git+https://github.com/nielsmadan/loadout'\n"
+            "  pip install 'git+https://github.com/nielsmadan/loadout@<the SHA "
+            "pinned in the skills repo workflow>'\n"
             "Note: run this file as a script path, not with -m, or the loadout/ "
             "config directory shadows the package."
         )
@@ -368,28 +410,79 @@ def write_artifacts(out: Path, entries: list[tuple[str, str]]) -> None:
     (out / "README.md").write_text(build_readme(entries), encoding="utf-8")
 
 
-def build(out: Path) -> tuple[list[str], list[str]]:
+def source_errors(
+    *, manifest_path: Path = MANIFEST_PATH, skills_root: Path = SKILLS_ROOT
+) -> list[str]:
+    """Scan source skill files for personal strings only — markers and private
+    references are legal in source."""
+    publish, _ = load_manifest(manifest_path)
+    errors: list[str] = []
+    for name in sorted(publish):
+        if not (skills_root / name).is_dir():
+            errors.append(f"{name}: no such skill directory")
+            continue
+        for path in sorted((skills_root / name).rglob("*")):
+            if not path.is_file():
+                continue
+            content = path.read_text(encoding="utf-8", errors="ignore")
+            relative = path.relative_to(skills_root)
+            for match in PERSONAL.finditer(content):
+                line = _line_of(content, match.start())
+                errors.append(
+                    f"{relative}:{line}: personal string {match.group(0)!r}"
+                )
+    return errors
+
+
+def build(
+    out: Path,
+    *,
+    manifest_path: Path = MANIFEST_PATH,
+    skills_root: Path = SKILLS_ROOT,
+    loader: Loader = load_loadout,
+) -> tuple[list[str], list[str]]:
     """Render everything into `out`. Returns (errors, warnings)."""
-    publish, private = load_manifest(MANIFEST_PATH)
-    errors = manifest_errors(available_skills(SKILLS_ROOT), publish, private)
+    publish, private = load_manifest(manifest_path)
+    errors = manifest_errors(available_skills(skills_root), publish, private)
     if errors:
         return errors, []
-    discover_skills, render_skill = load_loadout()
-    skills = discover_skills(SKILLS_ROOT)
-    render_tree(out, publish, skills, render_skill)
+    discover_skills, render_skill = loader()
+    skills = discover_skills(skills_root)
+    try:
+        render_tree(out, publish, skills, render_skill)
+    except ValueError as error:
+        return [str(error)], []
     entries: list[tuple[str, str]] = []
     warnings: list[str] = []
     for name in sorted(publish):
-        text = (out / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+        document = out / "skills" / name / "SKILL.md"
+        if not document.is_file():
+            errors.append(
+                f"{name}: not rendered (missing from discover_skills output)"
+            )
+            continue
+        text = document.read_text(encoding="utf-8")
         entries.append((name, parse_frontmatter(text).get("description", "")))
-        warnings.extend(marker_warnings(name, text))
+        if PROVENANCE not in text:
+            errors.append(f"{name}: missing provenance header")
+        errors.extend(marker_errors(name, text))
+    if errors:
+        # do not write a README/manifests that claim a skill set the render
+        # did not produce
+        return errors, warnings
     write_artifacts(out, entries)
-    return tree_guard_errors(out, private), warnings
+    errors.extend(tree_guard_errors(out, private))
+    return errors, warnings
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     import argparse
     import sys
+
+    def out_path(value: str) -> Path:
+        if not value:
+            raise argparse.ArgumentTypeError("path must not be empty")
+        return Path(value)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -398,15 +491,30 @@ def main() -> int:
         help="exit 1 if any skill is unclassified",
     )
     parser.add_argument(
-        "--out", type=Path, help="render the published tree into this directory"
+        "--check-sources",
+        action="store_true",
+        help="exit 1 if any source file of a published skill contains a "
+        "personal string",
     )
-    args = parser.parse_args()
-    if args.check_manifest:
-        errors = check_manifest()
+    parser.add_argument(
+        "--out",
+        type=out_path,
+        help="render the published tree into this directory: REPLACES "
+        "<dir>/skills/ and overwrites README.md, LICENSE and .claude-plugin/",
+    )
+    args = parser.parse_args(argv)
+    if args.out is not None and (args.check_manifest or args.check_sources):
+        parser.error("--out cannot be combined with --check-manifest/--check-sources")
+    if args.check_manifest or args.check_sources:
+        errors: list[str] = []
+        if args.check_manifest:
+            errors.extend(check_manifest())
+        if args.check_sources:
+            errors.extend(source_errors())
         for error in errors:
             print(f"publish: {error}", file=sys.stderr)
         return 1 if errors else 0
-    if args.out:
+    if args.out is not None:
         errors, warnings = build(args.out)
         for warning in warnings:
             print(f"publish: warning: {warning}", file=sys.stderr)

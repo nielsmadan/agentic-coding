@@ -1,9 +1,22 @@
+import contextlib
+import io
+import os
 import tempfile
 import unittest
 import unittest.mock
+from dataclasses import dataclass
 from pathlib import Path
 
 from publish import sync
+
+
+@dataclass(frozen=True)
+class FakeSkill:
+    """Test double matching the shape render_tree needs from loadout's Skill."""
+
+    name: str
+    document: Path
+    supporting: tuple[Path, ...]
 
 
 class ManifestTest(unittest.TestCase):
@@ -40,6 +53,18 @@ class ManifestTest(unittest.TestCase):
 
     def test_fully_classified_manifest_has_no_errors(self):
         self.assertEqual(sync.manifest_errors(["a", "b"], ["a"], ["b"]), [])
+
+    def test_duplicate_publish_entry_is_an_error(self):
+        errors = sync.manifest_errors(["a", "b"], ["a", "a"], ["b"])
+        self.assertTrue(
+            any("a" in e and "more than once" in e and "publish" in e for e in errors)
+        )
+
+    def test_duplicate_private_entry_is_an_error(self):
+        errors = sync.manifest_errors(["a", "b"], ["a"], ["b", "b"])
+        self.assertTrue(
+            any("b" in e and "more than once" in e and "private" in e for e in errors)
+        )
 
 
 class GuardTest(unittest.TestCase):
@@ -94,6 +119,22 @@ class GuardTest(unittest.TestCase):
         errors = sync.guard_errors("demo", text, ["aiconf"])
         self.assertTrue(any("aiconf" in e for e in errors))
 
+    def test_private_reference_reports_line_and_every_occurrence(self):
+        text = (
+            "---\nname: demo\ndescription: d\n---\n"
+            "Run `aiconf` first.\nThen `aiconf` again.\n"
+        )
+        errors = sync.guard_errors("demo", text, ["aiconf"])
+        hits = [e for e in errors if "references unpublished skill 'aiconf'" in e]
+        self.assertEqual(len(hits), 2)
+        self.assertIn("(SKILL.md:5)", hits[0])
+        self.assertIn("(SKILL.md:6)", hits[1])
+
+    def test_home_variable_personal_path_is_an_error(self):
+        text = "---\nname: demo\ndescription: d\n---\nRun $HOME/rc/bin/tool now.\n"
+        errors = sync.guard_errors("demo", text, [])
+        self.assertTrue(any("personal string" in e for e in errors))
+
     def test_clean_skill_has_no_errors(self):
         text = "---\nname: demo\ndescription: A clean skill.\n---\nbody\n"
         self.assertEqual(sync.guard_errors("demo", text, ["aiconf"]), [])
@@ -107,10 +148,10 @@ class GuardTest(unittest.TestCase):
         )
         self.assertEqual(sync.guard_errors("demo", text, []), [])
 
-    def test_marker_is_a_warning_not_an_error(self):
+    def test_marker_is_reported_by_marker_errors_not_guard_errors(self):
         text = "---\nname: demo\ndescription: d\n---\n::: claude\nx\n:::\n"
         self.assertEqual(sync.guard_errors("demo", text, []), [])
-        self.assertTrue(sync.marker_warnings("demo", text))
+        self.assertTrue(sync.marker_errors("demo", text))
 
     def test_parse_frontmatter_folded_scalar_reads_full_value(self):
         text = (
@@ -176,6 +217,10 @@ class GuardTest(unittest.TestCase):
         text = "---\nname: demo\ndescription: >-\n  one\n  two\n---\nbody\n"
         self.assertEqual(sync.parse_frontmatter(text)["description"], "one two")
 
+    def test_parse_frontmatter_folded_scalar_with_indentation_indicator(self):
+        text = "---\nname: demo\ndescription: >2\n  one\n  two\n---\nbody\n"
+        self.assertEqual(sync.parse_frontmatter(text)["description"], "one two")
+
     def test_parse_frontmatter_empty_value_does_not_swallow_next_key(self):
         text = "---\nname: demo\ndescription:\nversion: 3\n---\nbody\n"
         parsed = sync.parse_frontmatter(text)
@@ -195,6 +240,29 @@ class GuardTest(unittest.TestCase):
         parsed = sync.parse_frontmatter(text)
         self.assertEqual(parsed["name"], "demo")
         self.assertEqual(parsed["description"], "real one")
+
+
+class MarkerTest(unittest.TestCase):
+    def test_marker_inside_backtick_fence_is_not_an_error(self):
+        text = "body\n```markdown\n::: claude\ncontent\n:::\n```\nafter\n"
+        self.assertEqual(sync.marker_errors("demo", text), [])
+
+    def test_marker_outside_fence_is_an_error(self):
+        text = "body\n::: claude\ncontent\n:::\n"
+        errors = sync.marker_errors("demo", text)
+        self.assertTrue(any("demo" in e and ":::" in e for e in errors))
+
+    def test_marker_inside_tilde_fence_is_not_an_error(self):
+        text = "body\n~~~\n::: claude\n~~~\nafter\n"
+        self.assertEqual(sync.marker_errors("demo", text), [])
+
+    def test_indented_fence_lines_still_open_and_close(self):
+        text = "body\n  ```\n::: claude\n  ```\nafter\n"
+        self.assertEqual(sync.marker_errors("demo", text), [])
+
+    def test_marker_after_a_closed_fence_is_an_error(self):
+        text = "```\nsafe\n```\n::: claude\n"
+        self.assertTrue(sync.marker_errors("demo", text))
 
 
 class TreeGuardTest(unittest.TestCase):
@@ -300,8 +368,8 @@ class RenderTest(unittest.TestCase):
             (source / "drop").mkdir(parents=True)
             (source / "drop" / "SKILL.md").write_text("DROP", encoding="utf-8")
             skills = [
-                sync.FakeSkill("keep", source / "keep" / "SKILL.md", ()),
-                sync.FakeSkill("drop", source / "drop" / "SKILL.md", ()),
+                FakeSkill("keep", source / "keep" / "SKILL.md", ()),
+                FakeSkill("drop", source / "drop" / "SKILL.md", ()),
             ]
             out = root / "out"
             out.mkdir()
@@ -325,7 +393,7 @@ class RenderTest(unittest.TestCase):
             out = root / "out"
             out.mkdir()
             skills = [
-                sync.FakeSkill(
+                FakeSkill(
                     "demo", skill_dir / "SKILL.md", (Path("scripts/run.sh"),)
                 )
             ]
@@ -358,10 +426,265 @@ class RenderTest(unittest.TestCase):
             keeper = out / ".github" / "workflows" / "sync.yml"
             keeper.write_text("name: sync\n", encoding="utf-8")
             (out / "skills" / "stale").mkdir(parents=True)
-            skills = [sync.FakeSkill("demo", skill_dir / "SKILL.md", ())]
+            skills = [FakeSkill("demo", skill_dir / "SKILL.md", ())]
             sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
             self.assertTrue(keeper.is_file())
             self.assertFalse((out / "skills" / "stale").exists())
+
+    def test_render_tree_rejects_absolute_supporting_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / "src" / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("x", encoding="utf-8")
+            out = root / "out"
+            out.mkdir()
+            skills = [
+                FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))
+            ]
+            with self.assertRaises(ValueError) as ctx:
+                sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
+            self.assertIn("escapes the skill directory", str(ctx.exception))
+
+    def test_render_tree_rejects_parent_traversal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / "src" / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("x", encoding="utf-8")
+            (root / "src" / "secret.md").write_text("s", encoding="utf-8")
+            out = root / "out"
+            out.mkdir()
+            skills = [
+                FakeSkill("demo", skill_dir / "SKILL.md", (Path("../secret.md"),))
+            ]
+            with self.assertRaises(ValueError) as ctx:
+                sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
+            self.assertIn("escapes the skill directory", str(ctx.exception))
+
+    def test_render_tree_rejects_symlinked_supporting_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            skill_dir = root / "src" / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("x", encoding="utf-8")
+            real = root / "outside.md"
+            real.write_text("real", encoding="utf-8")
+            (skill_dir / "link.md").symlink_to(real)
+            out = root / "out"
+            out.mkdir()
+            skills = [FakeSkill("demo", skill_dir / "SKILL.md", (Path("link.md"),))]
+            with self.assertRaises(ValueError) as ctx:
+                sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
+            self.assertIn("symlinked supporting file refused", str(ctx.exception))
+
+
+def _banner_render(skill, harness):
+    return (
+        f"---\nname: {skill.name}\ndescription: A clean skill.\n---\n\n"
+        f"<!-- Generated by loadout from skills/{skill.name}/. Edits here are "
+        "replaced on the next sync. -->\n\nbody\n"
+    )
+
+
+class BuildTest(unittest.TestCase):
+    def _setup(self, tmp, publish, skill_names):
+        root = Path(tmp)
+        manifest = root / "skills.toml"
+        listed = ", ".join(f'"{name}"' for name in publish)
+        manifest.write_text(f"publish = [{listed}]\n", encoding="utf-8")
+        skills_root = root / "src"
+        for name in skill_names:
+            skill_dir = skills_root / name
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("source", encoding="utf-8")
+        out = root / "out"
+        out.mkdir()
+        return manifest, skills_root, out
+
+    def _loader(self, skills_root, names, render=_banner_render):
+        def discover(root):
+            return [
+                FakeSkill(name, skills_root / name / "SKILL.md", ()) for name in names
+            ]
+
+        return lambda: (discover, render)
+
+    def test_manifest_error_returns_early_without_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(tmp, ["alpha", "ghost"], ["alpha"])
+            called = []
+
+            def loader():
+                called.append(True)
+                return (lambda root: [], _banner_render)
+
+            errors, warnings = sync.build(
+                out, manifest_path=manifest, skills_root=skills_root, loader=loader
+            )
+            self.assertTrue(any("no such skill" in e for e in errors))
+            self.assertEqual(warnings, [])
+            self.assertEqual(called, [])
+            self.assertFalse((out / "skills").exists())
+            self.assertFalse((out / "README.md").exists())
+
+    def test_happy_path_writes_sorted_artifacts_without_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(
+                tmp, ["beta", "alpha"], ["alpha", "beta"]
+            )
+            errors, warnings = sync.build(
+                out,
+                manifest_path=manifest,
+                skills_root=skills_root,
+                loader=self._loader(skills_root, ["alpha", "beta"]),
+            )
+            self.assertEqual(errors, [])
+            self.assertEqual(warnings, [])
+            for name in ("alpha", "beta"):
+                document = out / "skills" / name / "SKILL.md"
+                self.assertTrue(document.is_file())
+                self.assertIn(
+                    sync.PROVENANCE, document.read_text(encoding="utf-8")
+                )
+            for relative in (
+                "README.md",
+                "LICENSE",
+                ".claude-plugin/marketplace.json",
+                ".claude-plugin/plugin.json",
+            ):
+                self.assertTrue((out / relative).is_file(), relative)
+            readme = (out / "README.md").read_text(encoding="utf-8")
+            self.assertLess(readme.index("`alpha`"), readme.index("`beta`"))
+
+    def test_skill_missing_from_discover_is_an_error_not_a_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(
+                tmp, ["alpha", "ghost"], ["alpha", "ghost"]
+            )
+            errors, _ = sync.build(
+                out,
+                manifest_path=manifest,
+                skills_root=skills_root,
+                loader=self._loader(skills_root, ["alpha"]),
+            )
+            self.assertIn(
+                "ghost: not rendered (missing from discover_skills output)", errors
+            )
+
+    def test_render_without_banner_is_a_provenance_error(self):
+        def render(skill, harness):
+            return f"---\nname: {skill.name}\ndescription: d\n---\n\nbody\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(tmp, ["alpha"], ["alpha"])
+            errors, _ = sync.build(
+                out,
+                manifest_path=manifest,
+                skills_root=skills_root,
+                loader=self._loader(skills_root, ["alpha"], render),
+            )
+            self.assertIn("alpha: missing provenance header", errors)
+
+    def test_out_of_fence_marker_in_render_is_an_error(self):
+        def render(skill, harness):
+            return _banner_render(skill, harness) + "::: claude\nx\n:::\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(tmp, ["alpha"], ["alpha"])
+            errors, warnings = sync.build(
+                out,
+                manifest_path=manifest,
+                skills_root=skills_root,
+                loader=self._loader(skills_root, ["alpha"], render),
+            )
+            self.assertTrue(
+                any("still contains ::: harness markers" in e for e in errors)
+            )
+            self.assertEqual(warnings, [])
+
+
+class SourceErrorsTest(unittest.TestCase):
+    def _setup(self, tmp, publish):
+        root = Path(tmp)
+        manifest = root / "skills.toml"
+        listed = ", ".join(f'"{name}"' for name in publish)
+        manifest.write_text(f"publish = [{listed}]\n", encoding="utf-8")
+        skills_root = root / "src"
+        skills_root.mkdir()
+        return manifest, skills_root
+
+    def test_personal_string_in_source_skill_md_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root = self._setup(tmp, ["demo"])
+            skill_dir = skills_root / "demo"
+            skill_dir.mkdir()
+            (skill_dir / "SKILL.md").write_text(
+                "line one\nsee ~/ac/nono here\n", encoding="utf-8"
+            )
+            errors = sync.source_errors(
+                manifest_path=manifest, skills_root=skills_root
+            )
+            self.assertTrue(
+                any("demo/SKILL.md:2: personal string" in e for e in errors)
+            )
+
+    def test_personal_string_in_supporting_file_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root = self._setup(tmp, ["demo"])
+            skill_dir = skills_root / "demo" / "refs"
+            skill_dir.mkdir(parents=True)
+            (skills_root / "demo" / "SKILL.md").write_text("clean\n", encoding="utf-8")
+            (skill_dir / "notes.md").write_text(
+                "a\nb\n/Users/nielsmadan/x\n", encoding="utf-8"
+            )
+            errors = sync.source_errors(
+                manifest_path=manifest, skills_root=skills_root
+            )
+            self.assertTrue(
+                any("demo/refs/notes.md:3: personal string" in e for e in errors)
+            )
+
+    def test_markers_and_private_references_in_source_are_not_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root = self._setup(tmp, ["demo"])
+            skill_dir = skills_root / "demo"
+            skill_dir.mkdir()
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: other\n---\n::: claude\nRun `aiconf` first.\n:::\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                sync.source_errors(manifest_path=manifest, skills_root=skills_root),
+                [],
+            )
+
+
+class MainTest(unittest.TestCase):
+    def _run_main(self, argv):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as ctx:
+                sync.main(argv)
+        return ctx.exception.code
+
+    def test_empty_out_does_not_render_into_cwd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                code = self._run_main(["--out", ""])
+            finally:
+                os.chdir(cwd)
+            self.assertEqual(code, 2)
+            self.assertFalse((Path(tmp) / "skills").exists())
+
+    def test_out_and_check_manifest_are_mutually_exclusive(self):
+        code = self._run_main(["--check-manifest", "--out", "somewhere"])
+        self.assertEqual(code, 2)
+
+    def test_out_and_check_sources_are_mutually_exclusive(self):
+        code = self._run_main(["--check-sources", "--out", "somewhere"])
+        self.assertEqual(code, 2)
 
 
 class ArtifactTest(unittest.TestCase):
@@ -407,6 +730,118 @@ class ArtifactTest(unittest.TestCase):
                 "README.md",
             ):
                 self.assertTrue((out / relative).is_file(), relative)
+
+
+
+class MarkerFenceTest(unittest.TestCase):
+    def test_unbalanced_fence_is_an_error(self):
+        text = "# doc\n\n```\nunterminated\n"
+        errors = sync.marker_errors("demo", text)
+        self.assertIn("unbalanced code fence", errors[0])
+
+    def test_marker_after_unclosed_fence_still_fails(self):
+        text = "```\nopen\n\n::: claude\nleaked\n:::\n"
+        self.assertTrue(sync.marker_errors("demo", text))
+
+
+class RenderEscapeTest(unittest.TestCase):
+    def test_directory_symlink_escape_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "secret.md").write_text("s", encoding="utf-8")
+            skill_dir = root / "src" / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("x", encoding="utf-8")
+            (skill_dir / "references").symlink_to(outside)
+            out = root / "out"
+            out.mkdir()
+            skills = [
+                FakeSkill(
+                    "demo",
+                    skill_dir / "SKILL.md",
+                    (Path("references/secret.md"),),
+                )
+            ]
+            with self.assertRaises(ValueError) as ctx:
+                sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
+            self.assertIn("escapes the skill directory", str(ctx.exception))
+
+    def test_build_reports_render_escape_as_error_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = root / "skills.toml"
+            manifest.write_text('publish = ["demo"]\nprivate = []\n', encoding="utf-8")
+            src = root / "skills"
+            skill_dir = src / "demo"
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text(
+                "---\nname: demo\ndescription: d\n---\nbody\n", encoding="utf-8"
+            )
+            skills = [
+                FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))
+            ]
+            loader = lambda: (lambda r: skills, lambda s, h: "x")
+            out = root / "out"
+            out.mkdir()
+            errors, warnings = sync.build(
+                out, manifest_path=manifest, skills_root=src, loader=loader
+            )
+            self.assertTrue(any("escapes the skill directory" in e for e in errors))
+
+    def test_failed_build_does_not_write_readme(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = root / "skills.toml"
+            manifest.write_text(
+                'publish = ["demo", "ghostless"]\nprivate = []\n', encoding="utf-8"
+            )
+            src = root / "skills"
+            for name in ("demo", "ghostless"):
+                d = src / name
+                d.mkdir(parents=True)
+                (d / "SKILL.md").write_text(
+                    f"---\nname: {name}\ndescription: d\n---\nbody\n",
+                    encoding="utf-8",
+                )
+            rendered = sync.swap_banner(
+                "---\nname: demo\ndescription: d\n---\n\n"
+                "<!-- Generated by loadout from skills/demo/. Edits here are"
+                " replaced on the next sync. -->\n\nbody\n"
+            )
+            skills = [FakeSkill("demo", src / "demo" / "SKILL.md", ())]
+            loader = lambda: (lambda r: skills, lambda s, h: rendered)
+            out = root / "out"
+            out.mkdir()
+            errors, _ = sync.build(
+                out, manifest_path=manifest, skills_root=src, loader=loader
+            )
+            self.assertTrue(any("ghostless: not rendered" in e for e in errors))
+            self.assertFalse((out / "README.md").exists())
+
+
+class SourceErrorsMissingDirTest(unittest.TestCase):
+    def test_missing_skill_directory_is_an_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = root / "skills.toml"
+            manifest.write_text('publish = ["ghost"]\nprivate = []\n', encoding="utf-8")
+            errors = sync.source_errors(
+                manifest_path=manifest, skills_root=root / "skills"
+            )
+            self.assertTrue(any("ghost: no such skill directory" in e for e in errors))
+
+
+class RealTreeTest(unittest.TestCase):
+    def test_live_tree_is_fully_classified(self):
+        self.assertEqual(sync.check_manifest(), [])
+
+    def test_live_publish_sources_carry_no_personal_strings(self):
+        self.assertEqual(sync.source_errors(), [])
+
+    def test_check_flags_compose(self):
+        self.assertEqual(sync.main(["--check-manifest", "--check-sources"]), 0)
 
 
 if __name__ == "__main__":
