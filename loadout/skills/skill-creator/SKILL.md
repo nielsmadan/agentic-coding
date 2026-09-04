@@ -219,21 +219,82 @@ Run the skill on real tasks. Verify:
 
 ### Step 6: Deploy in this repo
 
-This repo (`~/ac`) is the single source for skills across all agents. A new skill
-under `claude/skills/<name>/` is picked up by Claude Code automatically (via the
-`claude/skills` → `~/.claude/skills` directory symlink), but two manual hookups
-are needed so it's wired everywhere:
+This repo (`~/ac`) is the single source for skills across all agents. Deployment is
+`loadout`'s job — there is no list to register a skill in.
 
-1. **Codex / other agents** — add `<name>` to the `CODEX_SKILLS` array in
-   `install.sh`, unless it's a *project-only template skill* (those live under
-   `templates/<type>/skills/` and are deployed per-project, not globally). Then
-   run `./install.sh` to create the `~/.agents/skills/<name>` symlink. Skipping
-   this leaves the skill Claude-only.
-2. **Skills table** — add a row to the table in `CLAUDE.md` (`| /<name> | … |`)
-   so it's discoverable in the repo's index.
+**Pick the scope first**, because it decides the directory:
+
+| Scope | Lives in | Reaches |
+|---|---|---|
+| Global | `loadout/skills/<name>/` | All four harnesses, every project |
+| Project-type | `loadout/templates/<type>/skills/<name>/` | Only projects declaring that template |
+| This repo only | `.claude/skills/<name>/` | `~/ac` sessions (see below) |
+
+**Global skill** — write `loadout/skills/<name>/SKILL.md`, then:
+
+```bash
+loadout sync --global
+```
+
+That renders it into `~/.claude/skills/`, `~/.codex/skills/`,
+`~/.config/opencode/skills/` and `~/.pi/agent/skills/`. **The directory is the
+declaration** — nothing else needs editing to wire it up. Supporting files
+(`references/`, `scripts/`, `assets/`) are copied byte-for-byte with mode preserved,
+so an executable script stays executable; `__pycache__` is skipped.
+
+One optional hookup: add a row to `loadout/skills/README.md`, the human-facing
+catalog. Agents read the `description:` frontmatter instead, so that frontmatter is
+what actually has to be good.
+
+**Repo-local skill** — `.claude/skills/<name>/` is outside the loadout pipeline: no
+sync, no `loadout check` coverage, Claude Code picks it up directly. To reach Codex
+too, symlink it into this repo's `.codex/skills/`:
+
+```bash
+ln -sfn ../../.claude/skills/<name> .codex/skills/<name>
+```
+
+**Never hand-edit a rendered output** under a harness's skills directory. Each
+carries a `<!-- GENERATED ... -->` banner; `loadout check --global` runs in
+lefthook's pre-commit hook and rejects drift, and `loadout sync` refuses to
+overwrite a hand-edited output rather than discarding it.
+
+**Nothing prunes.** Moving a skill between scopes — or deleting one — leaves the
+already-rendered copies in all four harness directories. Delete those by hand.
 
 Note: any skill body referencing `docs/` writes into the *target project's*
 `docs/`, not this repo — global skills run in arbitrary projects.
+
+### Step 7: Vary the text per harness (only if needed)
+
+Almost no skill needs this — 48 of 50 render identically everywhere. Reach for it
+when a skill must genuinely say different things to different agents (e.g.
+`second-opinion`, where each harness consults the *other* agents).
+
+Mark whole blocks inline:
+
+```markdown
+::: claude
+- **Codex** blocks on "Reading additional input from stdin…" unless stdin is closed.
+:::
+::: codex opencode
+- **Claude** runs non-interactively in print mode (`claude -p`).
+:::
+```
+
+Constraints: a marker never sits *inside* a fenced code block (to vary a code
+example, mark the whole fence twice), and adjacent blocks must have no blank line
+between them or that line reaches every harness.
+
+Frontmatter is YAML, so `:::` there would be data. Per-harness **values** use a block
+keyed by harness, merged over the shared keys and stripped from the output:
+
+```yaml
+name: second-opinion
+description: …advisors are Codex and OpenCode+GLM.
+codex:
+  description: …advisors are Claude and OpenCode+GLM.
+```
 
 ## Quality Checklist
 
@@ -247,15 +308,17 @@ Before finalizing, verify:
 - [ ] `description`: under 1024 characters
 - [ ] No XML tags (`<` `>`) in frontmatter
 - [ ] No "claude" or "anthropic" in name
-- [ ] No README.md or auxiliary files in folder
+- [ ] No README.md or auxiliary files inside the skill's own folder
 - [ ] Instructions are specific and actionable
 - [ ] Examples section included
 - [ ] Troubleshooting section included
 - [ ] SKILL.md under ~5,000 words
 - [ ] References clearly linked from SKILL.md (if using references/)
 - [ ] File types mentioned in description (if applicable)
-- [ ] Added to `CODEX_SKILLS` in `install.sh` (unless project-only template skill)
-- [ ] Entry added to `claude/skills/README.md` (the human catalog — agents read the `description:` frontmatter instead)
+- [ ] Placed by scope: `loadout/skills/` (global), `loadout/templates/<type>/skills/` (project-type), or `.claude/skills/` (this repo only)
+- [ ] `loadout sync --global` run, and the skill appears under all four harness skills directories
+- [ ] `loadout check --global` reports no drift
+- [ ] Row added to `loadout/skills/README.md` (the human catalog — agents read the `description:` frontmatter instead)
 
 ## Examples
 
