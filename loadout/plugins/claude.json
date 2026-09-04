@@ -20,6 +20,9 @@
     },
     "mouthfeel": {
       "marketplace": "mouthfeel"
+    },
+    "claude-session-driver": {
+      "marketplace": "superpowers-marketplace"
     }
   }
 }
