@@ -43,3 +43,10 @@ on the strength of that footer.
 run sandboxed: the app is launched through LaunchServices, lands outside the sandbox, and its
 connection back in never establishes. Report it and let the user run those in an unsandboxed
 session. `swift test` on a `Package.swift` target has no such problem.
+
+**Some paths are denied on purpose and stay denied** — `~/Library/Keychains/login.keychain-db`
+(credentials; codesign against the granted `agent-signing.keychain-db` instead), `~/.ssh`, and
+`~/.local/state/mise/trusted-configs` among them. Each blocks
+something the user's *own* unsandboxed tools would later trust. Do not propose a grant for these:
+name the blocker, hand the user the command to run themselves, and carry on with the rest. The
+`nono-sandbox` skill lists each one with its command; the reasoning is in `~/ac/docs/security-model.md`.

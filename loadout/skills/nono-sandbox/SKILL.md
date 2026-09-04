@@ -1,6 +1,6 @@
 ---
 name: nono-sandbox
-description: Decide whether a failure is actually a nono sandbox denial before treating it as one. Use when a command fails with "Operation not permitted", "sandbox-exec: sandbox_apply", EACCES, EPERM, or a "Sandbox denial" footer. Most such failures on this machine are NOT missing grants — verify first, then either disable a nested sandbox or report a real denial to the user.
+description: 'Decide whether a failure is actually a nono sandbox denial before treating it as one. Use when a command fails with "Operation not permitted", "sandbox-exec: sandbox_apply", EACCES, EPERM, or a "Sandbox denial" footer. Most such failures on this machine are NOT missing grants — verify first, then either disable a nested sandbox or report a real denial to the user.'
 opencode:
   description: Diagnose and resolve permission denials when opencode runs inside a nono security sandbox. Use this when a tool call, shell command, or file operation fails with "Operation not permitted", "Permission denied", EACCES, EPERM, landlock, or sandbox-denied errors, or when an outbound network request fails because the host is not on the sandbox allowlist (connection refused, timeout, or proxy/TLS errors).
   version: 1.2.0
@@ -98,6 +98,24 @@ argv. A tool that spawns `xcodebuild` itself therefore works without doing anyth
 - **A profile change does not reach a running session.** Seatbelt applies the policy at process
   start. If a grant was added after this session began, it is invisible until restart — say so
   rather than asking for it again.
+
+## Denied on purpose — these will not be granted
+
+Each was decided deliberately and measured; the reasoning is in
+[`docs/security-model.md`](../../../docs/security-model.md). Name the blocker once, hand over the
+command, and continue with what is still possible. Do not propose a grant, do not work around it,
+and do not raise it again in a later session.
+
+| Blocked | Why it stays blocked | Give the user this |
+|---|---|---|
+| `~/Library/Keychains/login.keychain-db` | Holds 470 credentials and every codesigning identity. A read grant returns them as **plaintext** through securityd with no prompt, and outbound network is unrestricted, so readable means exfiltratable. Distribution and Developer ID signing is attributable beyond this machine. | For codesigning, use `agent-signing.keychain-db` — already granted, and it holds one Apple Development identity. Anything needing the login keychain runs in a plain terminal. |
+| `~/.ssh` | Private keys. Would let an agent `git push` and ssh to any host. `git push` is separately denied for the same reason. | `git push` — or the ssh command — themselves. |
+| `~/.local/state/mise/trusted-configs` | `mise trust` applies a repo's `[env]`, including `_.path`, to the user's own interactive shell in that directory. That is a route out of the sandbox. | `mise trust`, once, in that repo. |
+| `~/.gradle/init.d`, `~/.gradle/gradle.properties` | Gradle executes init scripts and applies `jvmargs` on **every** build, including the user's unsandboxed ones. | Nothing to run — these stay denied whether or not the rest of `~/.gradle` is granted. |
+
+The shape they share: an agent writes or reads something that the *user's own* unsandboxed tools
+later trust. A grant that only fails safe inside `~/wrksp` is a different question and may well be
+reasonable — these are not that.
 
 ## When it is a real denial
 
