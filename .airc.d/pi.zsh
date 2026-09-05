@@ -2,7 +2,7 @@
 pi() { AGENT_HARNESS=pi _agent_sandboxed pi-local pi "$@"; }
 
 # Subscription-backed Codex model; plain `pi` keeps the OpenRouter default.
-pix() { pi --model openai-codex/gpt-5.6-sol:max "$@"; }
+pix() { pi --model openai-codex/gpt-6-astra:max "$@"; }
 
 alias pico="pi --continue"
 alias pixco="pix --continue"
