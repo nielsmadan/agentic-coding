@@ -17,21 +17,22 @@ local = ["time-reconstruct"]
 [groups]
 "Code review" = [
     "code-review", "review-architecture", "review-cleancode", "review-comments",
-    "review-history", "review-interfaces", "review-library-use", "review-logs",
-    "review-perf", "review-plan", "review-product", "review-security",
-    "review-swift", "review-typescript", "review-todo", "second-opinion",
+    "review-history", "review-interfaces", "review-library-use", "review-perf",
+    "review-security", "review-swift", "review-typescript", "review-todo",
+    "second-opinion",
 ]
 "Planning & research" = [
     "blind-spots", "evaluate-tech", "ideation", "longshot",
-    "plan", "research-general", "research-tech",
+    "plan", "research-general", "research-tech", "review-plan",
+    "review-product",
 ]
 "Testing & debugging" = [
     "debug-log", "hard-fix", "perf-test", "pre-existing",
     "qa", "test",
 ]
 "Git & session history" = [
-    "check-agent-logs", "commit", "resolve-conflicts", "squash-commits",
-    "status",
+    "check-agent-logs", "commit", "resolve-conflicts", "review-logs",
+    "squash-commits", "status",
 ]
 "Docs & writing" = [
     "deslop", "doc", "explain", "huh",
