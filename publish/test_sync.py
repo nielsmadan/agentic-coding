@@ -20,13 +20,17 @@ class FakeSkill:
 
 
 class ManifestTest(unittest.TestCase):
-    def test_load_manifest_reads_both_lists(self):
+    def test_load_manifest_derives_publish_from_groups(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "skills.toml"
-            path.write_text('publish = ["a", "b"]\nprivate = ["c"]\n', encoding="utf-8")
-            publish, private = sync.load_manifest(path)
-            self.assertEqual(publish, ["a", "b"])
+            path.write_text(
+                'private = ["c"]\n[groups]\nCore = ["a", "b"]\nExtra = ["d"]\n',
+                encoding="utf-8",
+            )
+            publish, private, groups = sync.load_manifest(path)
+            self.assertEqual(publish, ["a", "b", "d"])
             self.assertEqual(private, ["c"])
+            self.assertEqual(groups, [("Core", ["a", "b"]), ("Extra", ["d"])])
 
     def test_available_skills_lists_only_directories_with_skill_md(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -492,7 +496,9 @@ class BuildTest(unittest.TestCase):
         root = Path(tmp)
         manifest = root / "skills.toml"
         listed = ", ".join(f'"{name}"' for name in publish)
-        manifest.write_text(f"publish = [{listed}]\n", encoding="utf-8")
+        manifest.write_text(
+            f"private = []\n[groups]\nAll = [{listed}]\n", encoding="utf-8"
+        )
         skills_root = root / "src"
         for name in skill_names:
             skill_dir = skills_root / name
@@ -609,7 +615,9 @@ class SourceErrorsTest(unittest.TestCase):
         root = Path(tmp)
         manifest = root / "skills.toml"
         listed = ", ".join(f'"{name}"' for name in publish)
-        manifest.write_text(f"publish = [{listed}]\n", encoding="utf-8")
+        manifest.write_text(
+            f"private = []\n[groups]\nAll = [{listed}]\n", encoding="utf-8"
+        )
         skills_root = root / "src"
         skills_root.mkdir()
         return manifest, skills_root
@@ -709,20 +717,34 @@ class ArtifactTest(unittest.TestCase):
         self.assertNotIn("version", plugin)
 
     def test_readme_lists_every_skill(self):
-        readme = sync.build_readme([("alpha", "Does alpha."), ("beta", "Does beta.")])
+        readme = sync.build_readme(
+            [("Core", [("alpha", "Does alpha."), ("beta", "Does beta.")])]
+        )
         self.assertIn("alpha", readme)
         self.assertIn("Does beta.", readme)
         self.assertIn("claude plugin marketplace add nielsmadan/skills", readme)
         self.assertIn("npx skills add nielsmadan/skills", readme)
 
     def test_readme_states_the_auto_update_caveat(self):
-        readme = sync.build_readme([("alpha", "Does alpha.")])
+        readme = sync.build_readme([("Core", [("alpha", "Does alpha.")])])
         self.assertIn("auto-update", readme.lower())
+
+    def test_readme_renders_one_section_per_group(self):
+        readme = sync.build_readme(
+            [
+                ("Code review", [("alpha", "Does alpha.")]),
+                ("Docs & writing", [("beta", "Does beta."), ("gamma", "Does gamma.")]),
+            ]
+        )
+        self.assertIn("### Code review", readme)
+        self.assertIn("### Docs & writing", readme)
+        self.assertIn("| `alpha` | Does alpha. |", readme)
+        self.assertIn("3 skills", readme)
 
     def test_write_artifacts_creates_all_four_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
-            sync.write_artifacts(out, [("alpha", "Does alpha.")])
+            sync.write_artifacts(out, [("Core", [("alpha", "Does alpha.")])])
             for relative in (
                 ".claude-plugin/marketplace.json",
                 ".claude-plugin/plugin.json",
@@ -772,7 +794,9 @@ class RenderEscapeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             manifest = root / "skills.toml"
-            manifest.write_text('publish = ["demo"]\nprivate = []\n', encoding="utf-8")
+            manifest.write_text(
+                'private = []\n[groups]\nAll = ["demo"]\n', encoding="utf-8"
+            )
             src = root / "skills"
             skill_dir = src / "demo"
             skill_dir.mkdir(parents=True)
@@ -795,7 +819,8 @@ class RenderEscapeTest(unittest.TestCase):
             root = Path(tmp)
             manifest = root / "skills.toml"
             manifest.write_text(
-                'publish = ["demo", "ghostless"]\nprivate = []\n', encoding="utf-8"
+                'private = []\n[groups]\nAll = ["demo", "ghostless"]\n',
+                encoding="utf-8"
             )
             src = root / "skills"
             for name in ("demo", "ghostless"):
@@ -826,7 +851,9 @@ class SourceErrorsMissingDirTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             manifest = root / "skills.toml"
-            manifest.write_text('publish = ["ghost"]\nprivate = []\n', encoding="utf-8")
+            manifest.write_text(
+                'private = []\n[groups]\nAll = ["ghost"]\n', encoding="utf-8"
+            )
             errors = sync.source_errors(
                 manifest_path=manifest, skills_root=root / "skills"
             )

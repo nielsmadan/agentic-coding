@@ -244,9 +244,9 @@ declaration** — nothing else needs editing to wire it up. Supporting files
 so an executable script stays executable; `__pycache__` is skipped.
 
 One mandatory hookup: classify the skill in `publish/skills.toml` — add its name
-to `publish` or `private`. Every global skill must appear in exactly one list; the
-pre-commit hook rejects an unclassified skill, and publishable sources must carry
-no personal strings.
+to one of the README groups under `[groups]`, or to `private`. Every global skill
+must appear in exactly one place; the pre-commit hook rejects an unclassified
+skill, and publishable sources must carry no personal strings.
 
 One optional hookup: add a row to `loadout/skills/README.md`, the human-facing
 catalog. Agents read the `description:` frontmatter instead, so that frontmatter is
@@ -323,7 +323,7 @@ Before finalizing, verify:
 - [ ] References clearly linked from SKILL.md (if using references/)
 - [ ] File types mentioned in description (if applicable)
 - [ ] Placed by scope: `loadout/skills/` (global), `loadout/templates/<type>/skills/` (project-type), or `.claude/skills/` (this repo only)
-- [ ] Classified in `publish/skills.toml` (publish or private) — the pre-commit hook fails otherwise
+- [ ] Classified in `publish/skills.toml` (a `[groups]` entry, or private) — the pre-commit hook fails otherwise
 - [ ] `loadout sync --global` run, and the skill appears under all four harness skills directories
 - [ ] `loadout check --global` reports no drift
 - [ ] Row added to `loadout/skills/README.md` (the human catalog — agents read the `description:` frontmatter instead)

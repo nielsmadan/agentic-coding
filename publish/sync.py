@@ -20,9 +20,15 @@ MANIFEST_PATH = REPO_ROOT / "publish" / "skills.toml"
 SKILLS_ROOT = REPO_ROOT / "loadout" / "skills"
 
 
-def load_manifest(path: Path) -> tuple[list[str], list[str]]:
+def load_manifest(
+    path: Path,
+) -> tuple[list[str], list[str], list[tuple[str, list[str]]]]:
+    """(publish, private, groups) — publish is the concatenation of the groups,
+    which drive the README's sections in manifest order."""
     data = tomllib.loads(path.read_text(encoding="utf-8"))
-    return list(data.get("publish", [])), list(data.get("private", []))
+    groups = [(title, list(names)) for title, names in data.get("groups", {}).items()]
+    publish = [name for _, names in groups for name in names]
+    return publish, list(data.get("private", [])), groups
 
 
 def available_skills(skills_root: Path) -> list[str]:
@@ -55,7 +61,7 @@ def manifest_errors(
 
 
 def check_manifest() -> list[str]:
-    publish, private = load_manifest(MANIFEST_PATH)
+    publish, private, _ = load_manifest(MANIFEST_PATH)
     return manifest_errors(available_skills(SKILLS_ROOT), publish, private)
 
 
@@ -345,11 +351,16 @@ def build_plugin() -> dict:
     }
 
 
-def build_readme(entries: list[tuple[str, str]]) -> str:
-    rows = "\n".join(f"| `{name}` | {description} |" for name, description in entries)
+def build_readme(grouped: list[tuple[str, list[tuple[str, str]]]]) -> str:
+    total = sum(len(entries) for _, entries in grouped)
+    sections = "\n\n".join(
+        f"### {title}\n\n| Skill | Description |\n|---|---|\n"
+        + "\n".join(f"| `{name}` | {description} |" for name, description in entries)
+        for title, entries in grouped
+    )
     return f"""# nlsmdn skills
 
-{SUMMARY}. {len(entries)} skills, generated from
+{SUMMARY}. {total} skills, generated from
 [nielsmadan/agentic-coding](https://github.com/nielsmadan/agentic-coding) — do not edit this repo
 directly, changes are overwritten.
 
@@ -388,9 +399,7 @@ Add `--skill <name>` to install one, or `--all` to cover every detected agent.
 
 ## Skills
 
-| Skill | Description |
-|---|---|
-{rows}
+{sections}
 
 ## License
 
@@ -398,7 +407,7 @@ MIT
 """
 
 
-def write_artifacts(out: Path, entries: list[tuple[str, str]]) -> None:
+def write_artifacts(out: Path, grouped: list[tuple[str, list[tuple[str, str]]]]) -> None:
     plugin_dir = out / ".claude-plugin"
     plugin_dir.mkdir(parents=True, exist_ok=True)
     (plugin_dir / "marketplace.json").write_text(
@@ -408,7 +417,7 @@ def write_artifacts(out: Path, entries: list[tuple[str, str]]) -> None:
         json.dumps(build_plugin(), indent=2) + "\n", encoding="utf-8"
     )
     (out / "LICENSE").write_text(LICENSE_TEXT, encoding="utf-8")
-    (out / "README.md").write_text(build_readme(entries), encoding="utf-8")
+    (out / "README.md").write_text(build_readme(grouped), encoding="utf-8")
 
 
 def source_errors(
@@ -416,7 +425,7 @@ def source_errors(
 ) -> list[str]:
     """Scan source skill files for personal strings only — markers and private
     references are legal in source."""
-    publish, _ = load_manifest(manifest_path)
+    publish, _, _ = load_manifest(manifest_path)
     errors: list[str] = []
     for name in sorted(publish):
         if not (skills_root / name).is_dir():
@@ -443,7 +452,7 @@ def build(
     loader: Loader = load_loadout,
 ) -> tuple[list[str], list[str]]:
     """Render everything into `out`. Returns (errors, warnings)."""
-    publish, private = load_manifest(manifest_path)
+    publish, private, groups = load_manifest(manifest_path)
     errors = manifest_errors(available_skills(skills_root), publish, private)
     if errors:
         return errors, []
@@ -453,7 +462,7 @@ def build(
         render_tree(out, publish, skills, render_skill)
     except ValueError as error:
         return [str(error)], []
-    entries: list[tuple[str, str]] = []
+    descriptions: dict[str, str] = {}
     warnings: list[str] = []
     for name in sorted(publish):
         document = out / "skills" / name / "SKILL.md"
@@ -463,7 +472,7 @@ def build(
             )
             continue
         text = document.read_text(encoding="utf-8")
-        entries.append((name, parse_frontmatter(text).get("description", "")))
+        descriptions[name] = parse_frontmatter(text).get("description", "")
         if PROVENANCE not in text:
             errors.append(f"{name}: missing provenance header")
         errors.extend(marker_errors(name, text))
@@ -471,7 +480,11 @@ def build(
         # do not write a README/manifests that claim a skill set the render
         # did not produce
         return errors, warnings
-    write_artifacts(out, entries)
+    grouped = [
+        (title, sorted((name, descriptions[name]) for name in names))
+        for title, names in groups
+    ]
+    write_artifacts(out, grouped)
     errors.extend(tree_guard_errors(out, private))
     return errors, warnings
 

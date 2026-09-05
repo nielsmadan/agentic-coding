@@ -1,25 +1,39 @@
 # Which skills reach the public collection at github.com/nielsmadan/skills.
 #
-# Every skill in loadout/skills/ must appear in exactly one list. A skill in
-# neither is a build failure: default-public would leak a personal skill written
-# months from now, and default-private would silently drop work.
-
-publish = [
-    "blind-spots", "breakdown-milestone", "breakdown-sprint", "check-agent-logs",
-    "code-review", "commit", "debug-log", "deslop",
-    "doc", "evaluate-tech", "explain", "guide",
-    "hard-fix", "huh", "ideation", "improve-agent-instructions",
-    "library-docs", "longshot", "nono-sandbox", "pdf",
-    "perf-test", "plan", "pre-existing", "qa",
-    "read-docs", "research-general", "research-tech", "resolve-conflicts",
-    "review-architecture", "review-cleancode", "review-comments", "review-history",
-    "review-interfaces", "review-library-use", "review-logs", "review-perf",
-    "review-plan", "review-product", "review-security", "review-swift",
-    "review-todo", "review-typescript", "second-opinion", "skill-creator",
-    "squash-commits", "status", "temp", "test",
-    "time-reconstruct", "use-railway",
-]
+# Every skill in loadout/skills/ must appear in exactly one group below, or in
+# private. A skill in neither is a build failure: default-public would leak a
+# personal skill written months from now, and default-private would silently
+# drop work. The groups drive the published README's sections, in this order.
 
 # check-notes — vault path and its hand-maintained index.md convention are personal
 # loadout     — companion skill for the loadout tool, not a standalone workflow
 private = ["check-notes", "loadout"]
+
+[groups]
+"Code review" = [
+    "code-review", "review-architecture", "review-cleancode", "review-comments",
+    "review-history", "review-interfaces", "review-library-use", "review-logs",
+    "review-perf", "review-plan", "review-product", "review-security",
+    "review-swift", "review-typescript", "review-todo", "second-opinion",
+]
+"Planning & research" = [
+    "blind-spots", "breakdown-milestone", "breakdown-sprint", "evaluate-tech",
+    "ideation", "longshot", "plan", "research-general",
+    "research-tech",
+]
+"Testing & debugging" = [
+    "debug-log", "hard-fix", "perf-test", "pre-existing",
+    "qa", "test",
+]
+"Git & session history" = [
+    "check-agent-logs", "commit", "resolve-conflicts", "squash-commits",
+    "status", "time-reconstruct",
+]
+"Docs & writing" = [
+    "deslop", "doc", "explain", "huh",
+    "improve-agent-instructions", "library-docs", "read-docs",
+]
+"Environment & tools" = [
+    "guide", "nono-sandbox", "pdf", "skill-creator",
+    "temp", "use-railway",
+]
