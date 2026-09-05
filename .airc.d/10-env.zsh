@@ -1,9 +1,6 @@
 # Disable Claude Code feedback prompts
 export CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1
 
-# Enable auto-memory
-CLAUDE_CODE_DISABLE_AUTO_MEMORY=0
-
 # Claude's config directory. Set explicitly to its own default so that
 # ~/.claude.json moves inside it: Claude writes that file by creating
 # ~/.claude.json.tmp.<random> and renaming, and a random suffix in $HOME matches
