@@ -17,9 +17,8 @@ private = ["check-notes", "loadout"]
     "review-swift", "review-typescript", "review-todo", "second-opinion",
 ]
 "Planning & research" = [
-    "blind-spots", "breakdown-milestone", "breakdown-sprint", "evaluate-tech",
-    "ideation", "longshot", "plan", "research-general",
-    "research-tech",
+    "blind-spots", "evaluate-tech", "ideation", "longshot",
+    "plan", "research-general", "research-tech",
 ]
 "Testing & debugging" = [
     "debug-log", "hard-fix", "perf-test", "pre-existing",

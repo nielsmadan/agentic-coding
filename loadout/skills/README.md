@@ -11,8 +11,6 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | Skill | Purpose |
 |-------|---------|
 | `/blind-spots` | Surface the decisions a plan or design left silently assumed — recon the repo first, then rounds of questions in dependency order, each carrying a recommendation, until the frontier is empty. Prunes to decisions that *fork the design*, so it probes forks instead of nitpicking details |
-| `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
-| `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/check-agent-logs` | Search Claude Code, Codex, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
 | `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 8 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |

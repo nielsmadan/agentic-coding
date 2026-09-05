@@ -147,7 +147,7 @@ opencode:
   description: Diagnose and resolve permission denials when opencode runs…
 ```
 
-Unmarked skills — 49 of 51 — pass through untouched, so the mechanism costs nothing
+Unmarked skills — 47 of 49 — pass through untouched, so the mechanism costs nothing
 until used. `loadout check --global` reports any drift, and `loadout sync` refuses
 to overwrite a hand-edited output rather than discarding it.
 
