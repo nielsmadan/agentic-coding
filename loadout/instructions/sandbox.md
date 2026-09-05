@@ -16,6 +16,14 @@ on the strength of that footer.
    new grant, which is the user's call. Never work around it by relocating files or weakening a
    test.
 
+   **Never offer a grant as the first remedy.** Most of these are not missing grants at all, and
+   proposing `nono run --allow` before verifying is what produces repeated false denial reports.
+   Verify first, then report; the grant is the user's decision, not the opening move.
+
+   **A profile change never reaches a running session** — Seatbelt applies policy at process
+   start. If a grant was added after this session began, say it needs a restart rather than
+   asking for it again.
+
    **`--self` is not optional.** Without it, `nono why` evaluates nono's *default* profile
    rather than the running session, and reports `DENIED / path_not_granted` for almost any path
    — even when run outside a sandbox entirely, and even for paths the session can freely write.

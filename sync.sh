@@ -263,19 +263,24 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
   done
 }
 
-sync_codex_config() {
-  local script="$SCRIPT_DIR/codex/sync_config.py"
+# The nono codex pack writes its own `developer_instructions` into config.toml,
+# telling the agent to treat any `Operation not permitted` as a sandbox boundary and
+# offer a grant — which produced repeated false denial reports. The same guidance,
+# corrected, reaches every harness through loadout/instructions/sandbox.md, so the
+# block only has to go. `nono update` puts it back; this takes it out again.
+strip_nono_codex_block() {
+  local script="$SCRIPT_DIR/codex/strip_nono_block.py"
 
   if [[ ! -f "$script" ]]; then
-    echo "⚠️  Codex config sync not found: $script (skipping)"
+    echo "⚠️  Codex block stripper not found: $script (skipping)"
     return
   fi
   if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping Codex config sync"
+    echo "⚠️  python3 not found — skipping Codex block strip"
     return
   fi
 
-  echo "Merging repo-managed Codex config..."
+  echo "Removing nono's Codex developer_instructions..."
   python3 "$script"
 }
 
@@ -305,7 +310,7 @@ echo ""
 generate_loadout
 echo ""
 
-sync_codex_config
+strip_nono_codex_block
 echo ""
 sync_codex_superpowers
 echo ""

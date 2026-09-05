@@ -17,8 +17,8 @@ This repository contains shared configuration for agentic coding tools. It inclu
   - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
 - `codex/` - OpenAI Codex CLI configuration
   - `rules/` - Permission rules (**generated** — see Permissions below)
-  - `developer-instructions.md` - the one `~/.codex/config.toml` key loadout cannot hold,
-    written by `sync_config.py` (see Codex Model Defaults below). Model defaults moved to
+  - `strip_nono_block.py` - removes nono's `developer_instructions` from
+    `~/.codex/config.toml` (see Codex Model Defaults below). Model defaults are in
     `loadout/defaults/codex.json`.
 - `pi/` - Pi (`pi-coding-agent`) configuration
   - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
@@ -282,17 +282,24 @@ record that disagrees with it. See loadout's
 [ADR 0017](https://github.com/nielsmadan/loadout/blob/main/docs/decisions/0017-ownership-may-be-declared-instead-of-derived.md).
 
 **Nothing reserializes `~/.codex/config.toml`, and that is the design.** Both loadout's surgery and
-this repo's `codex/sync_config.py` work line-wise, using `tomllib` only to validate the result. The
+this repo's `codex/strip_nono_block.py` work line-wise, using `tomllib` only to validate the result. The
 comments, the nono block and the project tables survive because no code path touches those bytes,
 not because a writer preserved them. Do not "improve" either into a parse-mutate-serialize round
 trip: that trades untouched for preserved-if-the-library-is-careful, and adds a dependency to a
 script `install.sh` runs on a fresh machine.
 
-**`codex/sync_config.py` survives for exactly one key.** Everything else it used to merge —
-`[mcp_servers.*]`, `[plugins.*]`, `[marketplaces.*]`, the model defaults — is loadout's now. What
-remains is `developer_instructions`, which loadout cannot hold: it is a multi-line TOML string, and
-loadout's surgery works line-wise over top-level scalars. The nono codex pack keeps re-injecting
-its own copy, so something must keep undoing that.
+**`codex/strip_nono_block.py` deletes one key and writes nothing.** Everything the old
+`sync_config.py` merged — `[mcp_servers.*]`, `[plugins.*]`, `[marketplaces.*]`, the model
+defaults — is loadout's now, and the last holdout is gone too: rather than maintaining a
+competing copy of `developer_instructions`, the guidance moved into
+`loadout/instructions/sandbox.md`, where it reaches all four harnesses instead of Codex alone.
+So nono's block has nothing to be replaced *with* — it only has to go, and `nono update` putting
+it back is answered by the next `./sync.sh`.
+
+Deleting is also the only thing that works. `developer_instructions` is a multi-line TOML string,
+and loadout's line-wise surgery can *remove* one but cannot *replace* one without orphaning the
+value's body — it refuses rather than corrupting the file. Owning the key in loadout would need
+a value, which is the case that cannot be written.
 
 **`publish/` generates the public skills collection.** `publish/sync.py` renders the
 `publish`-classified skills from `loadout/skills/` into
@@ -315,10 +322,12 @@ binary — it lists `minimal | low | medium | high | xhigh`, while codex-cli 0.1
 and `ultra` as well. Verify a new value by running `codex exec` once and reading the effort it
 reports back.
 
-`codex/test_sync_config.py` covers what is left, including the empty-target case: rendering was not
-idempotent there, and a populated target hides it because it reuses what is on disk. It also pins
-that our block *replaces* an injected one rather than sitting beside it — two
-`developer_instructions` keys is invalid TOML.
+`codex/test_strip_nono_block.py` pins that the body goes with the assignment — the body lines
+are not assignments, so a removal that missed them would orphan them at top level and the file
+would stop parsing — that everything around it survives, that a config without the block is
+untouched (`./sync.sh` runs this every time, not only after `nono update`), and that it works
+where nono actually puts the block: at the end, absorbed into the last table rather than
+top-level, despite the pack's `position: "top"`.
 
 ## Local Claude Plugins
 
@@ -425,7 +434,7 @@ there, not five times over. The per-agent files hold only what one agent needs:
 - **`nono why` misreports grants inside the built-in keychain protection.** Measured on 0.72.0: with `read_file` on `$HOME/Library/Keychains/login.keychain-db`, `nono why` says `DENIED / filesystem_deny` while `nono run` reads the file; with no grant at all the read fails, so the grant is what opens the path and the diagnostic does not account for it. Adding `bypass_protection` changes nothing in either direction. This is **not** a general `bypass_protection` blind spot — for `~/.netrc` the diagnostic tracks the runtime exactly (grant alone → both deny, grant + `bypass_protection` → both allow), as do `filesystem.deny` rules written in the profile or inherited through `extends`. Where the two disagree, believe the sandbox; trusting `nono why` here has already cost one load-bearing grant.
 - **`deny_credentials` paths need `bypass_protection`, not just a grant.** `~/.npmrc` and `~/.netrc` sit in nono's permanent deny group: a `read_file` entry alone still yields `filesystem_deny`, and only adding the path to `bypass_protection` opens it. Weigh that against exfiltration before opening one: sandboxed agents have open outbound network, so a readable credential file is an exfiltratable one.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
-- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) and `codex/sync_config.py` then strips it. The block's `developer_instructions` text is **replaced with ours** by `codex/sync_config.py`, sourced from `codex/developer-instructions.md` and inserted above the first table (a top-level key after a table header is absorbed into it). A `nono update` restores the pack's copy; the next `./sync.sh` overwrites it again, so this self-heals — the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day. Ours follows `loadout/skills/nono-sandbox/SKILL.md`, the canonical guidance — the published copy of the skill carries no personal paths, while this local copy keeps the machine-specific ones. **After a `nono update`, run `./sync.sh`** — it restores the instructions.
+- **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) so it is not even top-level when nono writes it. `codex/strip_nono_block.py` **removes** it rather than replacing it: the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day, and the corrected guidance now lives in `loadout/instructions/sandbox.md` where every harness gets it. A `nono update` restores the pack's copy; the next `./sync.sh` strips it again, so this self-heals. **After a `nono update`, run `./sync.sh`.**
 
 The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides the pack's copy for all four agents, because `loadout sync --global` writes it into each harness's own skills directory. It carries a `::: opencode` section — OpenCode's version is substantially longer than the one the other three get. Re-run `loadout sync --global` after a pack update to restore it.
 
