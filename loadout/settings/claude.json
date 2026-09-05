@@ -3,7 +3,7 @@
   "cleanupPeriodDays": 9999,
   "skillListingBudgetFraction": 0.02,
   "env": {
-    "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN": "1"
+    "CLAUDE_CODE_DISABLE_MOUSE_CLICKS": "1"
   },
   "attribution": {
     "commit": "",
@@ -36,5 +36,6 @@
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
+  "tui": "fullscreen",
   "theme": "dark"
 }
