@@ -35,5 +35,5 @@ private = ["check-notes", "loadout"]
 ]
 "Environment & tools" = [
     "guide", "nono-sandbox", "pdf", "skill-creator",
-    "temp", "use-railway",
+    "temp",
 ]
