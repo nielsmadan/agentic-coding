@@ -66,6 +66,7 @@
       "$HOME/.config/gh/config.yml",
       "$HOME/.config/gh/hosts.yml",
       "$HOME/.local/state/gh/device-id",
+      "$HOME/.config/loadout",
       "$HOME/.config/splashdown/config.toml",
       "$HOME/.yarnrc",
       "$HOME/.docker/config.json",
