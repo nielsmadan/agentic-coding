@@ -193,7 +193,7 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`loadout/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. Two exceptions land here: `claude/mcp-servers.generated.json`, because `.claude.json` is runtime state and `claude mcp add-json` is the only way in; and `loadout/defaults/codex.owned`, which is the record of which keys loadout manages in `config.toml` rather than a config file itself.
+**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. One exception lands here: `loadout/defaults/codex.owned`, the record of which keys loadout manages in `config.toml` rather than a config file itself.
 
 **Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
 
@@ -232,14 +232,23 @@ Which MCP servers **exist** machine-wide comes from a single source of truth: **
 loadout renders both, and for Codex it renders them **together**: definitions and approval policy share the `[mcp_servers.<name>]` table, so one renderer emits both. Two writers would declare that table twice and Codex would refuse to parse its own config.
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift:
-- `claude/mcp-servers.generated.json` (staged — input to `claude mcp add-json`; **not** symlinked, see below)
+- `$CLAUDE_CONFIG_DIR/.claude.json` (the `mcpServers` key only; the ~100 keys beside it are Claude's own runtime state and are left untouched)
 - `~/.codex/config.toml` (`[mcp_servers.*]`, written directly; loadout owns that key and leaves the rest of the file alone)
 - `~/.config/opencode/opencode.json` (the `mcp` key only)
 - `~/.pi/agent/mcp.json` (`mcpServers`, the shape `pi-mcp-adapter`'s `ServerEntry` takes — written directly, no longer symlinked from this repo)
 
 A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and loadout refuses a server whose keys it does not recognise rather than silently rendering one that connects unauthenticated.
 
-**Claude Code is the exception to the symlink pattern.** `$CLAUDE_CONFIG_DIR/.claude.json` is its only user-scope MCP store and is runtime state (session history, project entries, caches), so it can't be symlinked; `~/.claude/settings.json` has no `mcpServers` key and `--mcp-config` is per-invocation only. So `sync.sh`'s `sync_claude_mcp` feeds the generated JSON to `claude mcp add-json --scope user` for any server not already registered. **This is add-only** — `claude mcp add-json` has no overwrite flag, so changing an existing server's URL or args in `loadout/mcp.toml` will not propagate; remove it with `claude mcp remove <name>` and re-run `./sync.sh`.
+**Claude Code was the exception until 2026-09-05.** `$CLAUDE_CONFIG_DIR/.claude.json` is its
+only user-scope MCP store and is runtime state (session history, project entries, caches), so it
+cannot be symlinked — but it does carry a plain top-level `mcpServers` key, and loadout now owns
+exactly that one, leaving every other byte alone (the same declared-ownership mechanism as
+`~/.codex/config.toml`, with a JSON applier instead of a TOML one).
+
+That closed a real defect. The old path staged a document and fed it to
+`claude mcp add-json --scope user`, which has no overwrite flag — so a changed url or args in
+`loadout/mcp.toml` silently did not propagate, and a removed server stayed registered. Editing
+`mcp.toml` and running `./sync.sh` now does what it looks like it does.
 
 **Per-harness quirks worth knowing:** OpenCode's local servers take a single `command` array combining command and args (not separate fields).
 
@@ -316,7 +325,7 @@ that our block *replaces* an injected one rather than sitting beside it — two
 A plugin developed locally (`mouthfeel`, at `~/wrksp/oss/mouthfeel`) is wired up in **two halves with two owners**, and they must agree:
 
 - **Enablement** — `enabledPlugins` in `loadout/settings/claude.json`, rendered into the generated `~/.claude/settings.json`. Without an entry there, `claude plugin enable` writes the key at runtime and the next `loadout sync` discards it, silently disabling the plugin.
-- **Marketplace registration** — `sync.sh`'s `sync_claude_plugins`, driven by the `LOCAL_MARKETPLACES` array. `~/.claude/plugins/known_marketplaces.json` is an install registry Claude rewrites itself (install paths, timestamps), so loadout deliberately does not render it — the same constraint as `.claude.json` for MCP servers. Add-only, like `sync_claude_mcp`: if the built path moves, `claude plugin marketplace remove <name>` and re-run.
+- **Marketplace registration** — `sync.sh`'s `sync_claude_plugins`, driven by the `LOCAL_MARKETPLACES` array. `~/.claude/plugins/known_marketplaces.json` is an install registry Claude rewrites itself (install paths, timestamps), so loadout deliberately does not render it — the same constraint as `.claude.json` for MCP servers. Add-only: if the built path moves, `claude plugin marketplace remove <name>` and re-run.
 
 **`enabledPlugins` lives in the settings base only because this repo declares no `plugins` slice.** loadout has one, and it assigns `enabledPlugins` unconditionally; composition is residual-first, so the moment `loadout.toml` gains `[claude] plugins = [...]` the slice wins and the settings-base copy is overwritten with no message. If you declare one, move the entry into a plugins fragment at the same time.
 

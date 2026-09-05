@@ -41,7 +41,6 @@ MCP servers) are **not** auto-installed — set those up separately.
 |------|---------------|
 | `loadout/` | Source fragments for generated instructions, permissions, MCP servers, settings, hooks, plugins, skills, defaults, templates, and module config |
 | `loadout.toml` | Manifest selecting and composing those fragments for each harness |
-| `claude/` | The generated MCP registration input `sync.sh` feeds to `claude mcp add-json` |
 | `codex/` | Codex-specific synchronization helpers and the managed `developer_instructions` source |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |

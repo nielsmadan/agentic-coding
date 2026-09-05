@@ -1,7 +1,7 @@
 # Single source of truth for GLOBAL MCP server definitions.
 #
 # Edit this file, then run `./sync.sh`. loadout renders it to every harness:
-#   claude/mcp-servers.generated.json   (staged — input to `claude mcp add-json`)
+#   ${CLAUDE_CONFIG_DIR:-~}/.claude.json  (the mcpServers key; the rest is Claude's)
 #   ~/.codex/config.toml                ([mcp_servers.*], alongside approval policy)
 #   ~/.config/opencode/opencode.json    (the `mcp` key)
 #   ~/.pi/agent/mcp.json

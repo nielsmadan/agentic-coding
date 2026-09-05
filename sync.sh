@@ -226,10 +226,6 @@ generate_loadout() {
   fi
 }
 
-# Claude Code has no user-scope MCP file we can symlink: ~/.claude.json is
-# runtime state and ~/.claude/settings.json has no mcpServers key. So register
-# missing servers through the CLI instead. Add-only — `claude mcp add-json`
-# has no overwrite flag, so a changed url/args needs a manual remove + re-add.
 sync_claude_plugins() {
   echo ""
   echo "Registering local Claude plugin marketplaces..."
@@ -265,47 +261,6 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
       echo "⚠️  Failed to add $name marketplace"
     fi
   done
-}
-
-sync_claude_mcp() {
-  local source="$SCRIPT_DIR/claude/mcp-servers.generated.json"
-
-  echo ""
-  echo "Registering Claude MCP servers..."
-
-  if [[ ! -f "$source" ]]; then
-    echo "⚠️  MCP server list not found: $source (skipping)"
-    return
-  fi
-  if ! command -v claude &>/dev/null; then
-    echo "⚠️  Claude CLI not found — skipping MCP server registration"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping MCP server registration"
-    return
-  fi
-
-  local existing
-  existing="$(claude mcp list 2>/dev/null)"
-
-  local name json
-  while IFS=$'\t' read -r name json; do
-    if echo "$existing" | grep -q "^$name:"; then
-      echo "✓  $name MCP server already configured"
-      continue
-    fi
-    if claude mcp add-json "$name" "$json" --scope user; then
-      echo "✓  Added $name MCP server"
-    else
-      echo "⚠️  Failed to add $name MCP server"
-    fi
-  done < <(python3 -c '
-import json, sys
-with open(sys.argv[1]) as f:
-    for name, entry in json.load(f).items():
-        print(name, json.dumps(entry), sep="\t")
-' "$source")
 }
 
 sync_codex_config() {
@@ -364,7 +319,6 @@ for entry in "${SYMLINKS[@]}"; do
 done
 echo ""
 
-sync_claude_mcp
 sync_claude_plugins
 
 echo ""
