@@ -1,0 +1,24 @@
+# Which skills reach the public collection at github.com/nielsmadan/skills.
+#
+# Every skill in loadout/skills/ must appear in exactly one list. A skill in
+# neither is a build failure: default-public would leak a personal skill written
+# months from now, and default-private would silently drop work.
+
+publish = [
+    "breakdown-milestone", "breakdown-sprint", "check-agent-logs", "code-review",
+    "commit", "debug-log", "deslop", "doc",
+    "evaluate-tech", "explain", "guide", "hard-fix",
+    "huh", "ideation", "improve-agent-instructions", "library-docs",
+    "longshot", "nono-sandbox", "pdf", "perf-test",
+    "plan", "pre-existing", "read-docs", "research-general",
+    "research-tech", "resolve-conflicts", "review-architecture", "review-cleancode",
+    "review-comments", "review-history", "review-interfaces", "review-library-use",
+    "review-logs", "review-perf", "review-plan", "review-product",
+    "review-security", "review-swift", "review-todo", "review-typescript",
+    "second-opinion", "skill-creator", "squash-commits", "status",
+    "temp", "test", "time-reconstruct", "use-railway",
+]
+
+# check-notes — vault path and its hand-maintained index.md convention are personal
+# loadout     — companion skill for the loadout tool, not a standalone workflow
+private = ["check-notes", "loadout"]

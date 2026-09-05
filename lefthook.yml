@@ -2,6 +2,9 @@ pre-commit:
   commands:
     sync-global:
       run: loadout check --global
+    publish-manifest:
+      glob: "loadout/skills/**"
+      run: python3 publish/sync.py --check-manifest
     sandbox-writable:
       glob: "nono/*.json"
       run: ./bin/nono-audit --check
