@@ -1,6 +1,6 @@
 ---
 name: perf-test
-description: "Set up and run performance tests (profiling, load testing, or E2E scenarios). Use when measuring code or endpoint performance, or before/after optimization work."
+description: "Set up and run performance tests (profiling, load testing, or E2E scenarios), preserving occasional manual procedures and results for future repetition. Use when measuring code or endpoint performance, or before/after optimization work."
 argument-hint: "<target: file, function, endpoint, or service>"
 effort: high
 ---
@@ -8,6 +8,11 @@ effort: high
 # Performance Test
 
 Set up, run, and analyze performance tests with an iterative improvement cycle.
+
+For occasional manual runs, use the shared [manual test record convention](../doc/references/manual-tests.md)
+under `docs/tests/`. Routine automated benchmark runs keep their normal runner/CI output.
+If the request is only to save a completed run, use `doc --session` with that convention;
+capture the available evidence without starting a new test or optimization cycle.
 
 ## Usage
 
@@ -26,6 +31,9 @@ Set up, run, and analyze performance tests with an iterative improvement cycle.
 ## Workflow
 
 ### Phase 1: Understanding
+
+Look for an existing procedure and baseline under `docs/tests/` (or legacy `docs/perf/`).
+Reuse its scripts, configuration, and comparable baseline when they cover the requested target.
 
 Ask clarifying questions:
 
@@ -86,6 +94,7 @@ Present a testing plan:
 ### Files to Create
 - {test file path}
 - {config file if needed}
+- {docs/tests/<name>/README.md and dated run record, for an occasional manual test}
 
 Proceed with this plan?
 ```
@@ -100,6 +109,9 @@ Select the appropriate template from [references/templates.md](references/templa
 Adapt the template to the specific target, configuring iterations, concurrency, and metrics collection as specified in the proposal.
 
 ### Phase 4: Execution
+
+For an occasional manual run, capture the code revision, relevant local changes, environment,
+and actual configuration at execution time, as specified in the shared record convention.
 
 Run tests and capture output:
 
@@ -141,6 +153,9 @@ Parse results and identify concerns:
 ```
 
 ### Phase 6: Recommendations
+
+For occasional manual tests, save the completed run using Documentation below before proposing
+optimizations, including when thresholds failed. Save it even if no improvement cycle follows.
 
 ```markdown
 ## Optimization Recommendations
@@ -184,35 +199,22 @@ After user selects recommendations:
 
 4. Ask if further optimization needed
 
+For occasional manual tests, save each rerun as a new dated record and link the before/after
+comparison to the actual runs. Keep the earlier baseline's results intact.
+
 ### Documentation
 
-Save test setup for future replication:
+For occasional manual tests, follow the [shared procedure and run format](../doc/references/manual-tests.md):
 
-**File:** `docs/perf/{target}/README.md`
+- `docs/tests/<name>/README.md` — maintained setup, commands, workload, measurement method,
+  thresholds, and links to runs, with the comparison baseline identified.
+- `docs/tests/<name>/runs/YYYY-MM-DD-<label>.md` — actual setup, results, evidence, and
+  conclusions for this execution. Include hardware/build mode, warmup, repetitions, load
+  configuration, and aggregation method so later comparisons can be assessed.
 
-```markdown
-# Performance Tests: {target}
-
-## Setup
-{installation instructions}
-
-## Running Tests
-{command to run}
-
-## Baseline Metrics
-| Metric | Value | Date |
-|--------|-------|------|
-| {metric} | {value} | {date} |
-
-## Thresholds
-- {threshold 1}
-- {threshold 2}
-
-## History
-| Date | Change | Impact |
-|------|--------|--------|
-| {date} | {optimization} | {improvement %} |
-```
+Save the first run before recommendations and every subsequent run after analysis. A result
+record describes what was measured; later documentation updates never replace its values.
+Routine automated suite or scheduled benchmark executions do not get records here.
 
 ## Tool Reference
 

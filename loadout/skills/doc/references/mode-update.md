@@ -21,12 +21,15 @@ in `references/principles.md`.
    the stale parts, preserve formatting/style, stay concise (current state, not
    history). Update the "how it works now" sections; leave "why" alone unless the
    decision itself changed. **Skip append-only records** (`docs/decisions/`,
-   `docs/log/`): never rewrite their bodies to match code — they describe the past on
-   purpose. At most add a new entry or fix a broken link (see Doc lifecycles in
+   `docs/log/`, `docs/tests/*/runs/`): never rewrite their bodies to match code — they
+   describe the past on purpose. At most add a new entry or fix a broken link (see Doc lifecycles in
    `references/principles.md`). A decision the diff invalidates is **superseded, not
    edited**: write a new ADR, and on the old one change only the `**Status:**` line and its
    forward link. **Skip `docs/reference/` on a source-scoped run** — it is
    anchored to external things, so our refactor cannot make it stale (see step 5).
+   For `docs/tests/`, update only the live procedure when its commands or prerequisites
+   change; follow [manual-tests.md](manual-tests.md). Updating docs does not itself run the
+   operation or produce new measurements.
 4. **New behavior with no doc**: if there's a clear home pattern (e.g.
    `docs/features/<name>.md`), create that doc from the template; otherwise list it
    as an undocumented gap and suggest `--generate`. Don't create docs with no obvious
@@ -36,7 +39,9 @@ in `references/principles.md`.
    target names the subject. Then, per affected doc: re-run the probe each verified claim
    records, and either refresh its date + version stamp or mark it unverified against the new
    version. **Never bump a stamp you did not re-check** — a false stamp is worse than an old
-   one. Drop claims that stopped being true rather than archiving them; if the change forces
+   one. If verification requires an occasional operation recorded under `docs/tests/`, report
+   it as needing re-verification unless running that operation is already authorized.
+   Drop claims that stopped being true rather than archiving them; if the change forces
    one on us, propose an ADR.
 6. **Fan out**: if >5 affected files/docs, spawn one sub-agent per doc/area, merge.
 7. **Report**: which docs were edited and what was synced; any gaps left for

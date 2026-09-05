@@ -173,6 +173,15 @@ One file per subject. Add `docs/reference/overview.md` once there are ~3+ of the
 also the right home for a cross-cutting comparison table when the subjects are peers (several
 harnesses, several providers, several backends).
 
+### Occasional manual tests (`docs/tests/`) — also orthogonal to the profile
+
+Keep procedures and results for test operations run by hand from time to time, including
+performance measurements, under `docs/tests/<name>/`. Routine automated suite runs do not
+qualify. [manual-tests.md](manual-tests.md) defines the shared layout and evidence requirements
+used by `doc` and `perf-test`: a maintained `README.md` plus historical `runs/` records.
+One such procedure can warrant this folder at any repo size; accumulated runs do not count
+as living docs or justify a larger profile.
+
 ### Minimal: tiny or single-purpose repo
 ```
 AGENTS.md        # lean (Principle 8): commands, conventions, gotchas, one-line entry-point map
@@ -245,6 +254,9 @@ over-structured-and-stale tree is the worst case and the strongest reason to shr
 ### Doc lifecycles (which docs `--update` syncs to code)
 - **Live / current-state** — `features/`, `tech/`, `<flow>.md`, `overview.md`. `--update`
   keeps these in sync with the code. The bulk of the tree.
+- **Manual test procedures and history** — `tests/<name>/README.md` is live;
+  `tests/<name>/runs/` and its evidence are historical. Update the procedure as needed, but
+  preserve past results and the setup used to obtain them. See [manual-tests.md](manual-tests.md).
 - **Externally anchored** — `reference/`. Maintained, and rewritten in place when the external
   truth changes — but **not synced to our code**: a refactor here cannot make one stale. It goes
   stale when the *dependency* moves, so its staleness signal is a version bump in the

@@ -27,6 +27,8 @@ Create documentation for code that isn't documented yet, following
      Orthogonal to the profile: warranted by the three-part test in `references/principles.md`,
      not by repo size — even a Minimal repo can earn one.
    - `docs/decisions/` — ADRs (why-this-way).
+   - `docs/tests/<name>/` — occasional manual test procedures and dated results, including
+     performance measurements. Use [manual-tests.md](manual-tests.md), not the code-doc templates.
    - Root `docs/overview.md` index once ~3+ docs exist; a subdirectory `overview.md` only
      where a subdir warrants one (Principle 5), not by default.
 5. **Install the per-repo update trigger.** After writing docs, add the trigger to the
@@ -38,6 +40,13 @@ Create documentation for code that isn't documented yet, following
    > current.
    This is the moment a project opts into maintaining docs, so the trigger is
    installed exactly here — not globally.
+
+## Generating an occasional manual test record
+
+Read [manual-tests.md](manual-tests.md) and use the available session evidence, saved output,
+and actual scripts. A qualifying operation warrants `docs/tests/` even in a Minimal repo.
+Create or update its procedure and capture each evidenced run separately. Mark missing
+historical details as not recorded; creating documentation does not rerun the operation.
 
 ## Generating a reference doc
 

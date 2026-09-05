@@ -1,7 +1,7 @@
 ---
 name: doc
-description: "Assess documentation and run the right action (default, no args): a context-aware assess that, with uncommitted changes, checks those changes are documented, and on a clean tree does a whole-repo review — finding gaps / staleness / quality issues and routing into generate, update, or review. Explicit overrides: review (--review), update (--update), generate (--generate <target>), harvest a session log (--session); scope with --all, --staged, --unpushed, or a target. Use when unsure what the docs need, or for doc creation, freshness, and quality."
-argument-hint: "[ (no args = context-aware assess) | --review | --update | --generate <target> | --session --md <file>] [--all | --staged | --unpushed]"
+description: "Assess documentation and run the right action: check changed code when the tree is dirty, otherwise review the whole repo for gaps, staleness, and quality. Explicit modes: --review, --update, --generate, or --session to capture durable knowledge from the current conversation or a transcript. Use for doc creation, freshness, quality, or saving occasional manual test procedures and results for future repetition; routine automated suite runs do not need test records."
+argument-hint: "[ (no args = context-aware assess) | --review | --update | --generate <target> | --session [--md <file>]] [--all | --staged | --unpushed]"
 effort: high
 ---
 
@@ -18,6 +18,7 @@ Assess, review, update, and generate documentation following consistent principl
 | `references/mode-update.md` | `--update` |
 | `references/mode-generate.md` | `--generate` |
 | `references/mode-session.md` | `--session` |
+| `references/manual-tests.md` | Capturing occasional manual tests, or generating/updating/reviewing `docs/tests/` |
 | `references/generate-templates.md` | Writing a new doc from scratch |
 
 Routing (below) does not need any of them.
@@ -35,6 +36,10 @@ then runs your picks.
   changed-files verdict. Staged wins; fall back to unstaged.
 - **Clean tree → general review.** Whole-repo assess across all three lanes.
 
+In either state, include uncaptured occasional manual tests from the current session in the
+Generate lane. Running a test may leave no code diff; apply `references/manual-tests.md` to
+decide whether it warrants a record.
+
 **The guard that still holds** (this is why the skill used to force whole-repo): auto-scoping
 to the diff is fine, but **never collapse into a single silent action and never skip the
 Generate/structure question.** Dropping a lane, or writing without showing a plan, is the bug,
@@ -48,8 +53,8 @@ file, that surfaces even on a one-file diff.
 
 ## Modes
 
-All modes share one engine — *compare the docs against the current code
-reality* — and differ only in what they do with the result:
+All modes use code and session evidence according to each doc's lifecycle: current procedures
+track today's code, while historical records describe the run or decision that produced them.
 
 | Mode | Intent | Writes? | Default scope |
 |------|--------|---------|---------------|
@@ -57,7 +62,7 @@ reality* — and differ only in what they do with the result:
 | `--review [target]` | Assess accuracy / completeness / quality | No → findings, then interactive apply | context (or `<target>`) |
 | `--update [target]` | Sync existing docs to current code | Yes — in place, replace stale parts | staged code, falling back to unstaged |
 | `--generate <target>` | Create docs that don't exist yet | Yes — new files | the target |
-| `--session --md <file>` | Harvest durable knowledge from a session log into the docs | Yes — after preview | the conversation md |
+| `--session [--md <file>]` | Capture durable knowledge, including occasional manual tests | Yes — after preview | current conversation, or the supplied transcript |
 
 **Assess is the default** — it's what a bare `/doc` runs (see "Which mode runs"
 above). It surveys, classifies, and routes into the three modes above. The
@@ -80,6 +85,9 @@ directly from a diff); `--generate` is for greenfield.
 /doc --generate --unpushed        # Generate docs for code changed across unpushed commits
 ```
 
+Use `doc --session` to capture the current conversation, or `doc --session --md session.md`
+for an exported transcript. This includes occasional manual test procedures and dated results.
+
 ## Gotchas
 - `--update`/`--generate --staged` document uncommitted code that may change in
   review. If the code is revised but the docs are committed alongside, they drift.
@@ -100,6 +108,9 @@ directly from a diff); `--generate` is for greenfield.
 - `docs/reference/` is **externally anchored**: a source-scoped `--update` skips it, because
   our refactor cannot make it stale. It goes stale when a *dependency version* moves, and a
   verified claim is only re-stamped by re-running its probe.
+- `docs/tests/` is for **occasional manual operations**, including performance tests.
+  Procedures are live; dated `runs/` records and evidence are historical. Apply
+  `references/manual-tests.md`; routine automated suite runs do not belong here.
 
 ## Assess Mode (default)
 
@@ -125,6 +136,9 @@ It never writes without your go-ahead — the plan comes first.
      upstream links. Doc-owned and maintained, but anchored to external things rather than
      to our code. Orthogonal to the profile (see "External reference" in
      `references/principles.md`), so a repo can warrant one at any size.
+   - **Occasional manual tests — `docs/tests/`:** repeatable procedures and dated run records,
+     including performance measurements. Assess procedures as living docs and runs as historical
+     evidence; do not count accumulated runs toward the living-doc count or profile complexity.
    - **User-facing tree — `docs/user/`:** verbose human how-tos, README-linked, its
      own audience/format (see "Two audiences" in `references/principles.md`). Part of the
      project's docs, kept accurate when behavior changes, but not the terse agent-facing
@@ -177,7 +191,7 @@ It never writes without your go-ahead — the plan comes first.
      Review gap in its own right. Then the ordinary gaps: source areas with no doc,
      genuinely missing indexes. Don't over-reach to one-doc-per-file; when unsure between
      two profiles, propose the smaller and say why.
-   - **Staleness → Update.** Docs whose code changed after the doc was last
+   - **Staleness → Update.** Living docs whose code changed after the doc was last
      touched (`git log -1 --format=%cd -- <doc>` vs recent commits to the code
      it covers), and docs referencing files / `file:line` / symbols that no
      longer exist.

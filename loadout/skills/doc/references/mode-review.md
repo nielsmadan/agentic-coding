@@ -19,7 +19,9 @@ against the principles in `references/principles.md`, then offers to apply fixes
 
 1. **Get file list** based on scope.
 2. **Review** (directly if ≤5 files, parallel sub-agents if more), checking each doc
-   against the current code — prioritize accuracy/completeness/staleness over prose.
+   against its lifecycle — prioritize accuracy/completeness/staleness over prose. Check
+   living docs against current code. For `docs/tests/`, use [manual-tests.md](manual-tests.md):
+   review procedures for repeatability and runs against their recorded revision and evidence.
 3. **Report findings** by priority (see Output Format). For `docs/features/` docs, report
    divergences between the documented behavior and the implementation in **both directions**
    (doc describes behavior the code lacks; code has behavior the doc omits) without assuming
@@ -41,6 +43,10 @@ against the principles in `references/principles.md`, then offers to apply fixes
 - [ ] Class/function names are current; described behavior matches the code
 - [ ] No signatures restated in prose (should reference code instead)
 - [ ] Links to related docs work
+- [ ] `docs/tests/`: only occasional manual operations; procedures have usable commands,
+      prerequisites, inputs, and evaluation criteria
+- [ ] `docs/tests/*/runs/`: observed results and original setup are preserved; missing
+      historical details are reported as gaps, not filled from current code or measurements
 - [ ] `docs/reference/`: every verified claim carries a date **and** the version probed;
       upstream links resolve; no claim is stamped against a version older than the one the
       repo now resolves (report it as needing re-verification — do not rewrite the claim)
@@ -61,7 +67,8 @@ against the principles in `references/principles.md`, then offers to apply fixes
       flag a missing per-directory `overview.md` unless that subdir clearly needs one
 - [ ] Instruction file (`AGENTS.md`/`CLAUDE.md`) is lean: no derivable/enforceable
       content, roughly <200 lines (Principle 8)
-- [ ] Required sections present (Purpose, How it works, Gotchas)
+- [ ] Required sections match the doc type (Purpose, How it works, Gotchas for code docs;
+      procedure/run fields from `manual-tests.md` for `docs/tests/`)
 
 ## Output Format
 

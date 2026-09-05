@@ -30,9 +30,10 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
 | `/longshot` | Long autonomous build session from a brief — informed recon, a `blind-spots` interrogation up front, then hours of silent execution with per-task implementer/reviewer/fixer subagents, an on-disk rulings ledger instead of check-ins, a whole-branch review, and a handoff report with a squash proposal (`--plan`, `--no-worktree`) |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
-| `/perf-test` | Set up and run performance tests with improvement cycle |
+| `/perf-test` | Set up and run performance tests; preserve occasional manual procedures and results in `docs/tests/` |
 | `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
+| `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and save evidence and coverage; `--fix` repairs confirmed bugs and retests |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents |
 | `/research-tech` | Research any technical/developer topic online using parallel agents — libraries, errors, best practices, tool/library/model comparisons, product capabilities, ecosystem signal |
@@ -105,11 +106,15 @@ Add debug logging statements to trace code execution. Supports any language (JS/
 
 ### /doc
 
-Documentation review and generation.
+Assess, review, update, and generate documentation, or capture durable session knowledge.
 
 **Arguments:**
-- `--review` - Check existing docs against standards (default)
+- No arguments - Assess gaps, staleness, and quality; propose an action plan
+- `--review` - Check existing docs against standards
+- `--update` - Sync affected living docs to code
 - `--generate <target>` - Create docs for specified code
+- `--session [--md <file>]` - Capture the current conversation or a supplied transcript,
+  including occasional manual test procedures and dated results in `docs/tests/`
 - `--staged` - Scope to git staged files
 - `--unpushed` - Scope to files changed across all unpushed commits
 - `--all` - Scope to entire codebase
@@ -117,6 +122,10 @@ Documentation review and generation.
 **Examples:**
 - `/doc --review --staged`
 - `/doc --generate src/utils/parser.ts`
+- `doc --session` after an occasional restore drill or performance experiment
+
+`docs/tests/<name>/README.md` holds the repeatable procedure; `runs/` holds historical results.
+Routine automated suite runs do not get records, even when launched by hand.
 
 ---
 
@@ -187,6 +196,9 @@ Force a thorough investigation of "pre-existing" test, lint, type, build, or CI 
 ### /perf-test
 
 Set up and run performance tests (profiling, load testing, or E2E scenarios). Includes improvement cycle to implement fixes and compare results.
+
+Occasional manual runs save their procedure and dated results under `docs/tests/<name>/`,
+using `doc`'s shared convention. Saving a completed run uses `doc --session` without rerunning it.
 
 **Arguments:**
 - `<target>` - File, function, endpoint, or service to test
