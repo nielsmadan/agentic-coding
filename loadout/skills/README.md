@@ -323,9 +323,8 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ### /second-opinion
 
-Get input from two independent advisors on the current problem or question — Codex (GPT) and
-OpenCode+GLM when invoked from Claude, Claude and OpenCode+GLM when invoked from Codex or Pi. Both variants are generated from `skills/second-opinion.template.md`; edit
-that (or `skills/sync.py`), never the `SKILL.md` files.
+Get input from three independent advisors on the current problem or question — of
+Claude, Codex, Pi and OpenCode, the three CLIs the session is not running as.
 
 **Arguments:**
 - `--quick` - Single pass, no iteration

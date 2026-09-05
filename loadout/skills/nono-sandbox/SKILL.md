@@ -1,6 +1,7 @@
 ---
 name: nono-sandbox
 description: 'Decide whether a failure is actually a nono sandbox denial before treating it as one. Use when a command fails with "Operation not permitted", "sandbox-exec: sandbox_apply", EACCES, EPERM, or a "Sandbox denial" footer. Most such failures on this machine are NOT missing grants — verify first, then either disable a nested sandbox or report a real denial to the user.'
+compatibility: Requires the nono sandbox (https://github.com/nolabs-ai/nono).
 opencode:
   description: Diagnose and resolve permission denials when opencode runs inside a nono security sandbox. Use this when a tool call, shell command, or file operation fails with "Operation not permitted", "Permission denied", EACCES, EPERM, landlock, or sandbox-denied errors, or when an outbound network request fails because the host is not on the sandbox allowlist (connection refused, timeout, or proxy/TLS errors).
   version: 1.2.0
@@ -10,7 +11,7 @@ opencode:
 ::: claude codex pi
 # Working inside a nono sandbox
 
-`~/wrksp` is read+write. Package caches, agent config and a few named files are granted.
+Your granted workspace directory is read+write. Package caches, agent config and a few named files are granted.
 Most of the rest of `$HOME` is not.
 
 **Most failures that look like sandbox denials are not.** Of the sandbox reports raised on this
@@ -114,8 +115,8 @@ and do not raise it again in a later session.
 | `~/.gradle/init.d`, `~/.gradle/gradle.properties` | Gradle executes init scripts and applies `jvmargs` on **every** build, including the user's unsandboxed ones. | Nothing to run — these stay denied whether or not the rest of `~/.gradle` is granted. |
 
 The shape they share: an agent writes or reads something that the *user's own* unsandboxed tools
-later trust. A grant that only fails safe inside `~/wrksp` is a different question and may well be
-reasonable — these are not that.
+later trust. A grant that only fails safe inside the granted workspace is a different question and
+may well be reasonable — these are not that.
 
 ## When it is a real denial
 
@@ -125,8 +126,8 @@ look like config hold credentials.
 
 Do **not**:
 
-- offer `nono run --allow …` or `nono profile promote` as remedies — profiles live in
-  `~/ac/nono/`, are version-controlled, and are edited there, not drafted ad hoc
+- offer `nono run --allow …` or `nono profile promote` as remedies — profiles are
+  version-controlled and edited at their source, not drafted ad hoc
 - relocate files, weaken a test, or call a binary by another path to get around it
 - ask a peer session to read the path for you
 :::

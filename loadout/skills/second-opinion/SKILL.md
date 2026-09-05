@@ -1,22 +1,14 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Pi+GLM and OpenCode+Kimi.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from the agent CLIs you are not running (Claude, Codex, Pi, OpenCode).
+compatibility: Requires at least one of claude, codex, pi or opencode on PATH besides the one you are running as. Pi and OpenCode advisors need an OpenRouter key.
 argument-hint: '[--quick] [--timeout=300] [--words=500] <question or context>'
 effort: high
-claude:
-  description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Codex, Pi+GLM and OpenCode+Kimi.
-codex:
-  description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from Claude, Pi+GLM and OpenCode+Kimi.
 ---
 
 # Second Opinion Command
 
-::: claude opencode pi
-Get input from three independent advisors — Codex (GPT), Pi on GLM-5.3, and OpenCode on Kimi K3 — on the current problem or question. By default, iterates if responses lack confidence.
-:::
-::: codex
-Get input from three independent advisors — Claude (Anthropic), Pi on GLM-5.3, and OpenCode on Kimi K3 — on the current problem or question. By default, iterates if responses lack confidence.
-:::
+Get input from three independent advisors on the current problem or question. Consult the advisor CLIs you are *not* — from `claude`, `codex`, `pi` and `opencode`, skip whichever one you are running as, and query the rest. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -36,28 +28,16 @@ Get input from three independent advisors — Claude (Anthropic), Pi on GLM-5.3,
 | `--timeout` | `300` | Timeout per advisor in seconds |
 | `--words` | `500` | Max words per advisor response |
 
-::: claude opencode pi
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
-- All three CLIs (`codex`, `pi`, `opencode`) must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. All three run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on advisor commands.
+- The advisor CLIs must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
+- **The advisors are meant to read the code** — that's the point. All advisors run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on advisor commands.
+- **Claude** runs non-interactively in print mode (`claude -p`). Give it the read-only built-ins (`--tools "Read,Grep,Glob"`) so it can explore but not edit, and `--disable-slash-commands` so it can't recurse into skills.
 - **Codex** blocks on "Reading additional input from stdin..." unless stdin is closed (`</dev/null`), and prompts for confirmation outside a git repo unless given `--skip-git-repo-check`.
-- **The advisor's identity is the model, not the CLI.** Pi runs the high-main model and OpenCode the high-fallback model, deliberately from two different labs, so a session on one of those CLIs still gets an independent opinion from it. `agent-models` keeps both ids in sync with the rest of the repo — do not edit them here alone.
+- **The advisor's identity is the model, not the CLI.** Pi and OpenCode point at external models, deliberately from two different labs, so their opinions stay independent of each other.
 - **Pi** needs `-p` for non-interactive mode and `--no-session` so the consultation does not land in the session list. Restrict it with `--tools read,grep,glob,list`; there is no read-only agent preset, so the tool allowlist is what makes it read-only. A model newer than Pi's cached catalog warns `Model "…" not found for provider "openrouter". Using custom model id.` and then works normally — that warning is not a failure.
 - **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan`, **not** the default `build` agent: `plan` can read/explore the repo but has no write tools, so it gives a code-aware opinion without editing anything.
-- **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token (allowlist source: `~/ac/permissions/permissions.toml`).
-:::
-::: codex
-## Gotchas
-- `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
-- All three CLIs (`claude`, `pi`, `opencode`) must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. All three run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on advisor commands.
-- **Claude** runs non-interactively in print mode (`claude -p`). Give it the read-only built-ins (`--tools "Read,Grep,Glob"`) so it can explore but not edit, and `--disable-slash-commands` so it can't recurse into skills. Do **not** prefix it with `command`: Claude Code authenticates from a credential injected into the session's environment by the `sops exec-env` wrapper, so the bare name (which inherits that env, or re-enters the wrapper in a login shell) is what works. A bare binary with no injected credential exits immediately with `Not logged in · Please run /login`.
-- **The advisor's identity is the model, not the CLI.** Pi runs the high-main model and OpenCode the high-fallback model, deliberately from two different labs, so a session on one of those CLIs still gets an independent opinion from it. `agent-models` keeps both ids in sync with the rest of the repo — do not edit them here alone.
-- **Pi** needs `-p` for non-interactive mode and `--no-session` so the consultation does not land in the session list. Restrict it with `--tools read,grep,glob,list`; there is no read-only agent preset, so the tool allowlist is what makes it read-only. A model newer than Pi's cached catalog warns `Model "…" not found for provider "openrouter". Using custom model id.` and then works normally — that warning is not a failure.
-- **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan`, **not** the default `build` agent: `plan` can read/explore the repo but has no write tools, so it gives a code-aware opinion without editing anything.
-- **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token (allowlist source: `~/ac/permissions/permissions.toml`).
-:::
+- **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token.
 
 ## How It Works
 
@@ -105,46 +85,40 @@ If you need more context to give a confident answer, say so clearly.
 
 ### Step 2: Query Advisors (in parallel)
 
-Run all three commands in parallel, using `{timeout}` as the Bash timeout. Each
-inlines the prompt via `$(cat .second-opinion.md)` and closes stdin with `</dev/null`.
-All three run read-only and read the files the prompt points them at, typically answering
-in ~15–25s; allow longer for a question that spans many files.
+Run the advisor commands in parallel — skipping the CLI you are running as — using
+`{timeout}` as the Bash timeout. Each inlines the prompt via `$(cat .second-opinion.md)`
+and closes stdin with `</dev/null`. All advisors run read-only and read the files the
+prompt points them at, typically answering in ~15–25s; allow longer for a question that
+spans many files.
 
-::: claude opencode pi
-Prefix `codex`, `pi` and `opencode` with the `command` builtin: in some shells they are
-`sops exec-env` wrapper functions that depend on an interactive-shell variable not
-present in the agent's environment; `command` bypasses the wrapper and runs the real
-binary, which authenticates via its own on-disk credentials.
-:::
-::: codex
-Prefix `pi` and `opencode` with the `command` builtin: in some shells they are `sops exec-env`
-wrapper functions that depend on an interactive-shell variable not present in the
-agent's environment; `command` bypasses the wrapper and runs the real binary, which
-authenticates via its own on-disk credentials. Leave `claude` unprefixed — it needs
-the injected credential the wrapper (or the inherited session env) provides.
-:::
+Prefix the advisor commands with the `command` builtin where shown: in some shells
+they are wrapper functions that depend on an interactive-shell variable not present
+in the agent's environment; `command` bypasses the wrapper and runs the real binary,
+which authenticates via its own on-disk credentials. If a bare binary instead exits
+not-logged-in, its credential comes from the wrapper — drop the prefix for that one.
 
-::: claude opencode pi
-**Codex (GPT):** `--skip-git-repo-check` so it works outside a git repo:
-```bash
-command codex exec -s read-only --skip-git-repo-check "$(cat .second-opinion.md)" </dev/null
-```
-:::
-::: codex
-**Claude (Anthropic):** read-only built-ins, no slash commands, print mode:
+**Claude:** read-only built-ins, no slash commands, print mode. Leave `claude`
+unprefixed — do **not** put `command` in front of it:
 ```bash
 claude --tools "Read,Grep,Glob" --disable-slash-commands --no-session-persistence -p "$(cat .second-opinion.md)" </dev/null
 ```
-:::
 
-**Pi + GLM-5.3:** `--tools` is the read-only guard (no `edit`/`write`/`bash`). Pi has no `-m` short flag — it is `--model`:
+**Codex:** `--skip-git-repo-check` so it works outside a git repo:
 ```bash
-command pi -p --no-session --tools read,grep,glob,list --model openrouter/z-ai/glm-5.3 "$(cat .second-opinion.md)" </dev/null
+command codex exec -s read-only --skip-git-repo-check "$(cat .second-opinion.md)" </dev/null
 ```
 
-**OpenCode + Kimi K3:** `--agent plan` is read-only (reads/explores the repo, cannot edit files):
+Pi and OpenCode take a `--model` / `-m` flag. Point them at two models from different
+labs so the opinions stay independent; any capable coding model works.
+
+**Pi:** `--tools` is the read-only guard (no `edit`/`write`/`bash`). Pi has no `-m` short flag — it is `--model`:
 ```bash
-command opencode run --agent plan -m openrouter/qwen/qwen3.8-2.4t-a95b "$(cat .second-opinion.md)" </dev/null
+command pi -p --no-session --tools read,grep,glob,list --model openrouter/<model-id> "$(cat .second-opinion.md)" </dev/null
+```
+
+**OpenCode:** `--agent plan` is read-only (reads/explores the repo, cannot edit files):
+```bash
+command opencode run --agent plan -m openrouter/<model-id> "$(cat .second-opinion.md)" </dev/null
 ```
 
 ### Step 3: Evaluate Confidence
@@ -180,40 +154,23 @@ Skip this step entirely if `--quick` flag was used.
 
 Format the responses for the user:
 
-::: claude opencode pi
 ```markdown
 ## Second Opinions
 
-### Codex (GPT)
-{codex_response}
+### {advisor 1}
+{advisor_1_response}
 
-### Pi (GLM-5.3)
-{pi_response}
+### {advisor 2}
+{advisor_2_response}
 
-### OpenCode (Kimi K3)
-{opencode_response}
+### {advisor 3}
+{advisor_3_response}
 
 ### My Take
 {your brief synthesis - where they agree, disagree, and your recommendation}
 ```
-:::
-::: codex
-```markdown
-## Second Opinions
 
-### Claude (Anthropic)
-{claude_response}
-
-### Pi (GLM-5.3)
-{pi_response}
-
-### OpenCode (Kimi K3)
-{opencode_response}
-
-### My Take
-{your brief synthesis - where they agree, disagree, and your recommendation}
-```
-:::
+Name each advisor heading after the CLI and the model it ran (e.g. `Codex`, `Pi (<model>)`).
 
 If iteration occurred, note it:
 ```markdown

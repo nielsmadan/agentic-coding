@@ -219,8 +219,9 @@ Run the skill on real tasks. Verify:
 
 ### Step 6: Deploy in this repo
 
-This repo (`~/ac`) is the single source for skills across all agents. Deployment is
-`loadout`'s job — there is no list to register a skill in.
+Keep one source directory for skills and render it to each agent's skills
+directory with the loadout tool, rather than editing per-agent copies — there is
+no list to register a skill in.
 
 **Pick the scope first**, because it decides the directory:
 
@@ -228,7 +229,7 @@ This repo (`~/ac`) is the single source for skills across all agents. Deployment
 |---|---|---|
 | Global | `loadout/skills/<name>/` | All four harnesses, every project |
 | Project-type | `loadout/templates/<type>/skills/<name>/` | Only projects declaring that template |
-| This repo only | `.claude/skills/<name>/` | `~/ac` sessions (see below) |
+| This repo only | `.claude/skills/<name>/` | sessions in this repo (see below) |
 
 **Global skill** — write `loadout/skills/<name>/SKILL.md`, then:
 

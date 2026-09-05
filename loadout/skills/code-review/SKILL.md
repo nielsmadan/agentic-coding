@@ -173,7 +173,7 @@ Determine which conditional add-on reviews apply. In comprehensive mode these be
 
 **Library-use review detection.** If the repo has a `library-use` reference at `.claude/skills/library-use/SKILL.md` **or** `.agents/skills/library-use/SKILL.md`, include the `review-library-use` agent in comprehensive mode or record the reference as guidance for quick mode. If neither exists, skip silently (suggesting `library-docs` once is fine, but don't block the review).
 
-Check both paths — `.claude/skills/` is where Claude Code and `aiconf` put project skills; `.agents/skills/` is where the other harnesses discover them. In an `aiconf`-deployed project the latter is a symlink to the former, so either check finds it; a project set up outside `aiconf` may only have `.agents/skills/`.
+Check both paths — `.claude/skills/` is where Claude Code puts project skills; `.agents/skills/` is where the other harnesses discover them. In some projects the latter is a symlink to the former, so either check finds it; others may only have `.agents/skills/`.
 
 Announce what got auto-included. In comprehensive mode, use messages such as `Detected TypeScript — adding review-typescript`. In quick mode, say `Detected TypeScript — applying review-typescript guidance in the quick review` (and likewise for project and library-use guidance).
 
