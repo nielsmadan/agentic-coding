@@ -379,9 +379,10 @@ Add `--skill <name>` to install one, or `--all` to cover every detected agent.
   changes.
 - There is no `version` field: the version resolves to the source commit SHA, so
   every push is available immediately to anyone who updates.
-- Codex caps its skill catalog at 2% of the context window (or 8,000 characters)
-  and drops skills past that. Installing all {len(entries)} at once will exceed
-  it — prefer `--skill` to pick the ones you want.
+- Codex budgets its initial skill list at 2% of the model's context window
+  (8,000 characters only when the window is unknown) and shortens descriptions
+  first when over it; only very large sets see skills omitted. `--skill <name>`
+  installs a subset if you want to keep the catalog lean.
 - Some skills declare a `compatibility` requirement (an external CLI). Those
   degrade gracefully when the tool is absent.
 
