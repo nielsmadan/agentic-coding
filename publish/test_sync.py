@@ -742,6 +742,39 @@ class ArtifactTest(unittest.TestCase):
         readme = sync.build_readme([("Core", [("alpha", "Does alpha.")])])
         self.assertIn("auto-update", readme.lower())
 
+    def test_codex_plugin_carries_required_fields_and_a_version(self):
+        plugin = sync.build_codex_plugin()
+        self.assertEqual(plugin["name"], "nlsmdn")
+        self.assertEqual(plugin["version"], sync.PLUGIN_VERSION)
+        self.assertTrue(plugin["description"])
+        self.assertEqual(plugin["skills"], "./skills/")
+        self.assertEqual(
+            plugin["author"],
+            {"name": "Niels Madan", "url": "https://github.com/nielsmadan"},
+        )
+        self.assertEqual(plugin["interface"]["category"], "Developer Tools")
+
+    def test_cursor_plugin_carries_required_fields(self):
+        plugin = sync.build_cursor_plugin()
+        self.assertEqual(plugin["name"], "nlsmdn")
+        self.assertEqual(plugin["version"], sync.PLUGIN_VERSION)
+        self.assertEqual(plugin["skills"], "./skills/")
+        self.assertEqual(
+            plugin["author"],
+            {"name": "Niels Madan", "url": "https://github.com/nielsmadan"},
+        )
+
+    def test_agents_marketplace_points_at_the_repo_root(self):
+        market = sync.build_agents_marketplace()
+        self.assertEqual(market["name"], "nlsmdn")
+        entry = market["plugins"][0]
+        self.assertEqual(entry["name"], "nlsmdn")
+        self.assertEqual(entry["source"], {"source": "local", "path": "./"})
+
+    def test_readme_carries_the_codex_install_command(self):
+        readme = sync.build_readme([("Core", [("alpha", "Does alpha.")])])
+        self.assertIn("codex plugin marketplace add nielsmadan/skills", readme)
+
     def test_readme_renders_one_section_per_group(self):
         readme = sync.build_readme(
             [
@@ -761,6 +794,9 @@ class ArtifactTest(unittest.TestCase):
             for relative in (
                 ".claude-plugin/marketplace.json",
                 ".claude-plugin/plugin.json",
+                ".codex-plugin/plugin.json",
+                ".cursor-plugin/plugin.json",
+                ".agents/plugins/marketplace.json",
                 "LICENSE",
                 "README.md",
             ):

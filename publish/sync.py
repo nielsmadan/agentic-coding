@@ -315,9 +315,22 @@ def load_loadout() -> tuple[Callable, Callable]:
 
 MARKETPLACE_NAME = "nlsmdn"
 PLUGIN_NAME = "nlsmdn"
+# Codex requires a version in its manifest; the Claude side stays version-less
+# (commit-SHA pinning). Bump manually for a release Codex/Cursor users should see.
+PLUGIN_VERSION = "1.0.0"
 OWNER = {"name": "Niels Madan", "url": "https://github.com/nielsmadan"}
 HOMEPAGE = "https://github.com/nielsmadan/skills"
 SUMMARY = "Opinionated agent skills for code review, research, and daily workflow"
+LONG_SUMMARY = (
+    "Opinionated agent skills for the daily development loop, organized in "
+    "groups: multi-perspective code review (an orchestrator plus dedicated "
+    "reviewers for architecture, security, performance, interfaces, tests, and "
+    "language-specific design, with cross-CLI second opinions), planning and "
+    "research workflows, testing and debugging, git and session history, docs "
+    "and writing, and small environment tools. Generated and synced hourly "
+    "from a single source repo."
+)
+KEYWORDS = ["agent-skills", "code-review", "planning", "testing", "workflow"]
 
 LICENSE_TEXT = """MIT License
 
@@ -364,6 +377,61 @@ def build_plugin() -> dict:
     }
 
 
+def build_codex_plugin() -> dict:
+    return {
+        "name": PLUGIN_NAME,
+        "version": PLUGIN_VERSION,
+        "description": SUMMARY,
+        "author": dict(OWNER),
+        "homepage": HOMEPAGE,
+        "repository": HOMEPAGE,
+        "license": "MIT",
+        "keywords": list(KEYWORDS),
+        "skills": "./skills/",
+        "interface": {
+            "displayName": PLUGIN_NAME,
+            "shortDescription": SUMMARY,
+            "longDescription": LONG_SUMMARY,
+            "developerName": OWNER["name"],
+            "category": "Developer Tools",
+            "websiteURL": HOMEPAGE,
+        },
+    }
+
+
+def build_cursor_plugin() -> dict:
+    return {
+        "name": PLUGIN_NAME,
+        "displayName": PLUGIN_NAME,
+        "description": SUMMARY,
+        "version": PLUGIN_VERSION,
+        "author": dict(OWNER),
+        "publisher": OWNER["name"],
+        "homepage": HOMEPAGE,
+        "repository": HOMEPAGE,
+        "license": "MIT",
+        "keywords": list(KEYWORDS),
+        "category": "Developer Tools",
+        "tags": ["skills", "code-review", "workflow"],
+        "skills": "./skills/",
+    }
+
+
+def build_agents_marketplace() -> dict:
+    return {
+        "name": MARKETPLACE_NAME,
+        "interface": {"displayName": "nlsmdn skills"},
+        "plugins": [
+            {
+                "name": PLUGIN_NAME,
+                "source": {"source": "local", "path": "./"},
+                "policy": {"installation": "AVAILABLE"},
+                "category": "Developer Tools",
+            }
+        ],
+    }
+
+
 def build_readme(grouped: list[tuple[str, list[tuple[str, str]]]]) -> str:
     total = sum(len(entries) for _, entries in grouped)
     sections = "\n\n".join(
@@ -387,6 +455,14 @@ claude plugin install nlsmdn@nlsmdn
 ```
 
 Skills then appear as `/nlsmdn:code-review` and so on.
+
+Codex, as a plugin:
+
+```
+codex plugin marketplace add nielsmadan/skills
+```
+
+Then install `nlsmdn` from `/plugins` and start a new session.
 
 Any other agent (Codex, Cursor, OpenCode, Zed, Copilot CLI, Gemini CLI, Amp):
 
@@ -428,6 +504,21 @@ def write_artifacts(out: Path, grouped: list[tuple[str, list[tuple[str, str]]]])
     )
     (plugin_dir / "plugin.json").write_text(
         json.dumps(build_plugin(), indent=2) + "\n", encoding="utf-8"
+    )
+    codex_dir = out / ".codex-plugin"
+    codex_dir.mkdir(parents=True, exist_ok=True)
+    (codex_dir / "plugin.json").write_text(
+        json.dumps(build_codex_plugin(), indent=2) + "\n", encoding="utf-8"
+    )
+    cursor_dir = out / ".cursor-plugin"
+    cursor_dir.mkdir(parents=True, exist_ok=True)
+    (cursor_dir / "plugin.json").write_text(
+        json.dumps(build_cursor_plugin(), indent=2) + "\n", encoding="utf-8"
+    )
+    agents_dir = out / ".agents" / "plugins"
+    agents_dir.mkdir(parents=True, exist_ok=True)
+    (agents_dir / "marketplace.json").write_text(
+        json.dumps(build_agents_marketplace(), indent=2) + "\n", encoding="utf-8"
     )
     (out / "LICENSE").write_text(LICENSE_TEXT, encoding="utf-8")
     (out / "README.md").write_text(build_readme(grouped), encoding="utf-8")
