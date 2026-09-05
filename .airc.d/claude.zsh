@@ -6,7 +6,21 @@ claude() {
     claude-raw "$@"
     return
   fi
-  AGENT_HARNESS=claude _agent_sandboxed claude-local claude "$@"
+  local arg
+  local -a launch=(claude)
+  if [[ -t 1 ]]; then
+    # Clear after nono's banner, before the fullscreen renderer starts.
+    launch=(/bin/sh -c 'printf "\033[2J\033[H"; exec "$@"' sh claude)
+    for arg in "$@"; do
+      case "$arg" in
+        -[phv]*|-[^-]*[phv]*|--print|--help|--version|--bg|--background)
+          launch=(claude)
+          break
+          ;;
+      esac
+    done
+  fi
+  AGENT_HARNESS=claude _agent_sandboxed claude-local "${launch[@]}" "$@"
 }
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
