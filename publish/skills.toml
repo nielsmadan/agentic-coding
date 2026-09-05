@@ -5,18 +5,19 @@
 # months from now, and default-private would silently drop work.
 
 publish = [
-    "breakdown-milestone", "breakdown-sprint", "check-agent-logs", "code-review",
-    "commit", "debug-log", "deslop", "doc",
-    "evaluate-tech", "explain", "guide", "hard-fix",
-    "huh", "ideation", "improve-agent-instructions", "library-docs",
-    "longshot", "nono-sandbox", "pdf", "perf-test",
-    "plan", "pre-existing", "read-docs", "research-general",
-    "research-tech", "resolve-conflicts", "review-architecture", "review-cleancode",
-    "review-comments", "review-history", "review-interfaces", "review-library-use",
-    "review-logs", "review-perf", "review-plan", "review-product",
-    "review-security", "review-swift", "review-todo", "review-typescript",
-    "second-opinion", "skill-creator", "squash-commits", "status",
-    "temp", "test", "time-reconstruct", "use-railway",
+    "blind-spots", "breakdown-milestone", "breakdown-sprint", "check-agent-logs",
+    "code-review", "commit", "debug-log", "deslop",
+    "doc", "evaluate-tech", "explain", "guide",
+    "hard-fix", "huh", "ideation", "improve-agent-instructions",
+    "library-docs", "longshot", "nono-sandbox", "pdf",
+    "perf-test", "plan", "pre-existing", "qa",
+    "read-docs", "research-general", "research-tech", "resolve-conflicts",
+    "review-architecture", "review-cleancode", "review-comments", "review-history",
+    "review-interfaces", "review-library-use", "review-logs", "review-perf",
+    "review-plan", "review-product", "review-security", "review-swift",
+    "review-todo", "review-typescript", "second-opinion", "skill-creator",
+    "squash-commits", "status", "temp", "test",
+    "time-reconstruct", "use-railway",
 ]
 
 # check-notes — vault path and its hand-maintained index.md convention are personal
