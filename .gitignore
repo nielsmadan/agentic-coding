@@ -13,3 +13,4 @@ __pycache__/
 
 # Machine-specific nono grants (client names, private paths) — see AGENTS.md
 nono/agent-private.json
+loadout/skills/time-reconstruct/

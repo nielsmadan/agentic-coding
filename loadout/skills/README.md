@@ -56,7 +56,6 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/status` | Report changed files, the last session task and whether it is present or committed, code-review coverage, active task-list progress, open work, and the recommended next task |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 | `/test` | Tests: assess state and run the right action (default, no args — runs the suite, then routes failures to fix, gaps to generate, smells to review), or explicit review/generate (--review, --generate) |
-| `/time-reconstruct` | Reconstruct what you worked on from git history for time tracking — real complexity assessment from the diff, not its size |
 
 ## Detailed usage
 

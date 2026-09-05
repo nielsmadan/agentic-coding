@@ -22,13 +22,20 @@ SKILLS_ROOT = REPO_ROOT / "loadout" / "skills"
 
 def load_manifest(
     path: Path,
-) -> tuple[list[str], list[str], list[tuple[str, list[str]]]]:
-    """(publish, private, groups) — publish is the concatenation of the groups,
-    which drive the README's sections in manifest order."""
+) -> tuple[list[str], list[str], list[str], list[tuple[str, list[str]]]]:
+    """(publish, private, local, groups) — publish is the concatenation of the
+    groups, which drive the README's sections in manifest order. `local` skills
+    are gitignored: never published, never pushed, and allowed to be absent in
+    a fresh clone."""
     data = tomllib.loads(path.read_text(encoding="utf-8"))
     groups = [(title, list(names)) for title, names in data.get("groups", {}).items()]
     publish = [name for _, names in groups for name in names]
-    return publish, list(data.get("private", [])), groups
+    return (
+        publish,
+        list(data.get("private", [])),
+        list(data.get("local", [])),
+        groups,
+    )
 
 
 def available_skills(skills_root: Path) -> list[str]:
@@ -40,29 +47,35 @@ def available_skills(skills_root: Path) -> list[str]:
 
 
 def manifest_errors(
-    available: list[str], publish: list[str], private: list[str]
+    available: list[str],
+    publish: list[str],
+    private: list[str],
+    local: list[str] = [],
 ) -> list[str]:
     errors: list[str] = []
-    for label, listed in (("publish", publish), ("private", private)):
+    for label, listed in (("publish", publish), ("private", private), ("local", local)):
         for name in sorted({n for n in listed if listed.count(n) > 1}):
             errors.append(f"{name}: listed more than once in {label}")
-    for name in sorted(set(publish) & set(private)):
-        errors.append(f"{name}: listed in both publish and private")
-    classified = set(publish) | set(private)
+    for a, b in (("publish", "private"), ("publish", "local"), ("private", "local")):
+        lists = {"publish": publish, "private": private, "local": local}
+        for name in sorted(set(lists[a]) & set(lists[b])):
+            errors.append(f"{name}: listed in both {a} and {b}")
+    classified = set(publish) | set(private) | set(local)
     for name in available:
         if name not in classified:
             errors.append(
-                f"{name}: unclassified — add it to publish or private "
+                f"{name}: unclassified — add it to a group, private, or local "
                 f"in publish/skills.toml"
             )
-    for name in sorted(classified - set(available)):
+    # local skills are gitignored, so a fresh clone legitimately lacks them
+    for name in sorted(classified - set(available) - set(local)):
         errors.append(f"{name}: listed in publish/skills.toml but no such skill")
     return errors
 
 
 def check_manifest() -> list[str]:
-    publish, private, _ = load_manifest(MANIFEST_PATH)
-    return manifest_errors(available_skills(SKILLS_ROOT), publish, private)
+    publish, private, local, _ = load_manifest(MANIFEST_PATH)
+    return manifest_errors(available_skills(SKILLS_ROOT), publish, private, local)
 
 
 # `/Users/nielsmadan`, not `/Users/` — the risk is identity leaking, not the
@@ -425,7 +438,7 @@ def source_errors(
 ) -> list[str]:
     """Scan source skill files for personal strings only — markers and private
     references are legal in source."""
-    publish, _, _ = load_manifest(manifest_path)
+    publish, _, _, _ = load_manifest(manifest_path)
     errors: list[str] = []
     for name in sorted(publish):
         if not (skills_root / name).is_dir():
@@ -452,8 +465,9 @@ def build(
     loader: Loader = load_loadout,
 ) -> tuple[list[str], list[str]]:
     """Render everything into `out`. Returns (errors, warnings)."""
-    publish, private, groups = load_manifest(manifest_path)
-    errors = manifest_errors(available_skills(skills_root), publish, private)
+    publish, private, local, groups = load_manifest(manifest_path)
+    errors = manifest_errors(available_skills(skills_root), publish, private, local)
+    unpublished = private + local
     if errors:
         return errors, []
     discover_skills, render_skill = loader()
@@ -485,7 +499,7 @@ def build(
         for title, names in groups
     ]
     write_artifacts(out, grouped)
-    errors.extend(tree_guard_errors(out, private))
+    errors.extend(tree_guard_errors(out, unpublished))
     return errors, warnings
 
 

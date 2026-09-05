@@ -27,10 +27,23 @@ class ManifestTest(unittest.TestCase):
                 'private = ["c"]\n[groups]\nCore = ["a", "b"]\nExtra = ["d"]\n',
                 encoding="utf-8",
             )
-            publish, private, groups = sync.load_manifest(path)
+            publish, private, local, groups = sync.load_manifest(path)
             self.assertEqual(publish, ["a", "b", "d"])
             self.assertEqual(private, ["c"])
+            self.assertEqual(local, [])
             self.assertEqual(groups, [("Core", ["a", "b"]), ("Extra", ["d"])])
+
+    def test_local_skill_may_be_absent_from_the_tree(self):
+        errors = sync.manifest_errors(["a"], ["a"], [], ["ghosty"])
+        self.assertEqual(errors, [])
+
+    def test_local_skill_present_counts_as_classified(self):
+        errors = sync.manifest_errors(["a", "mine"], ["a"], [], ["mine"])
+        self.assertEqual(errors, [])
+
+    def test_skill_in_both_publish_and_local_is_an_error(self):
+        errors = sync.manifest_errors(["a"], ["a"], [], ["a"])
+        self.assertTrue(any("both publish and local" in e for e in errors))
 
     def test_available_skills_lists_only_directories_with_skill_md(self):
         with tempfile.TemporaryDirectory() as tmp:

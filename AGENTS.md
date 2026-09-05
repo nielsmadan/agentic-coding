@@ -298,7 +298,7 @@ its own copy, so something must keep undoing that.
 `publish`-classified skills from `loadout/skills/` into
 [nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin
 marketplace and `npx skills` collection; a workflow in that repo runs it hourly.
-`publish/skills.toml` classifies every skill into a README group under `[groups]` (published) or into `private`, fail-closed:
+`publish/skills.toml` classifies every skill into a README group under `[groups]` (published), into `private` (in the repo but unpublished), or into `local` (gitignored — never pushed, this repo being public), fail-closed:
 the pre-commit hook runs `--check-manifest --check-sources` on every commit, so an
 unclassified skill or a personal string (`~/ac`, `/Users/nielsmadan`, …) in a
 publishable source rejects the commit — even one that seems unrelated. Run it as a
