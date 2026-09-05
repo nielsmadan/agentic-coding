@@ -16,6 +16,11 @@ every ambiguity after the interrogation closes gets **decided and recorded**, no
 
 ## The contract
 
+Invoking longshot authorizes staging and implementation commits for the run's work
+in its writable repos, including on the primary repo's current branch. Honor any
+explicit limits the user gives. Do not ask for a separate commit confirmation.
+Final squashing requires its own approval under Phase 6.
+
 State it back to the user when the interrogation closes, verbatim in substance:
 
 1. **Every question up front.** The interrogation runs to completion first; after it
@@ -67,9 +72,6 @@ on it during the run.
 These are mandatory wherever they sit in the tree, because the run cannot proceed
 correctly without them. Put any still open into the first round:
 
-- **Commit authorization.** Ambient policy leaves git to the user. A longshot run
-  commits continuously — get an explicit yes, and get its scope (which repos, and
-  whether squashing at the end is pre-approved or needs a separate yes).
 - **Repo boundary.** Which checkouts may be written to, which are read-only
   reference, and whether new clones/worktrees may be created.
 - **Definition of done.** "A complete package I can integrate" means something
@@ -99,8 +101,7 @@ lives on disk, not in context, so it survives compaction.
 
 Follow the workflow file. Default:
 
-- Work on the primary repo's current branch if the user authorized it; otherwise a
-  branch.
+- Work on the primary repo's current branch unless the user requests another branch.
 - **Every foreign repo gets a worktree**, branched off its main:
   `git worktree add ../<project>-worktrees/<repo> -b <feature> ../all/<repo>`.
   Never commit to a foreign repo's `main`. Never combine two repos in one commit.
@@ -185,8 +186,8 @@ One question to start: what about sessions that get killed?"*
 
 Actions: read `workflow.md`, the plan doc, both neighbour repos' tooling and the
 integration surfaces (3 `Explore` agents) → answer the killed-sessions question with
-a recommendation, then `blind-spots`: round 1 asks the six answerable now (commit
-authorization, repo boundary, protocol scope, what "integrate" means, …), round 2 the
+a recommendation, then `blind-spots`: round 1 asks the questions answerable now
+(repo boundary, protocol scope, what "integrate" means, …), round 2 the
 two that only became questions once protocol scope was settled, state the contract → validate the plan
 against the repo → worktree per consumer repo → 6 tasks through the loop with pings →
 whole-branch review + contract-coherence pass + fix wave → handoff.
