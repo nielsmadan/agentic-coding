@@ -218,6 +218,25 @@ Multi-agent review of implementation plans before execution. Spawns parallel age
 
 ---
 
+### /qa
+
+Exercise the last developed feature through its real interface. Enumerate paths,
+edge cases, and loading/error/recovery states before running them. Save the
+procedure, coverage matrix, reproducible findings, and evidence in `docs/tests/`.
+
+**Arguments:**
+- No arguments - Infer the last developed feature from the conversation and relevant changes
+- `[target or scope]` - Select a feature, URL, app, command, plugin, or API workflow
+- `--fix` - Repair confirmed bugs and rerun affected paths; default is report-only
+
+**Examples:**
+- `/qa`
+- `/qa password reset, including expired links`
+- `/qa the export command`
+- `/qa plugin resume behavior --fix`
+
+---
+
 ### /read-docs
 
 Search and read internal project documentation (docs/, README.md, CLAUDE.md).
