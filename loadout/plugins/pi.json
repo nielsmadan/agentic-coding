@@ -12,7 +12,10 @@
     "superpowers": {
       "source": "git:github.com/obra/superpowers",
       "pi": {
-        "extensions": []
+        "extensions": [],
+        "skills": [
+          "!using-superpowers"
+        ]
       }
     },
     "pi-lsp": {
@@ -23,6 +26,9 @@
     },
     "nono": {
       "source": "/Users/nielsmadan/.config/nono/packages/nolabs-ai/pi"
+    },
+    "mouthfeel": {
+      "source": "dev-packages/mouthfeel"
     }
   }
 }
