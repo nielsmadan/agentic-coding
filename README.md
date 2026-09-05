@@ -41,7 +41,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 |------|---------------|
 | `loadout/` | Source fragments for generated instructions, permissions, MCP servers, settings, hooks, plugins, skills, defaults, templates, and module config |
 | `loadout.toml` | Manifest selecting and composing those fragments for each harness |
-| `codex/` | Codex-specific sync helpers: strips nono's injected `developer_instructions`, and pins Superpowers skills to explicit invocation |
+| `codex/` | Pins installed Superpowers skills to explicit invocation |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
 | `loadout/templates/` | Per-project-type config a project opts into by name (`flutter/`, `react-native/`, `web/`) |

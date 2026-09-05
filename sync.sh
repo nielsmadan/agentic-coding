@@ -263,27 +263,6 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
   done
 }
 
-# The nono codex pack writes its own `developer_instructions` into config.toml,
-# telling the agent to treat any `Operation not permitted` as a sandbox boundary and
-# offer a grant — which produced repeated false denial reports. The same guidance,
-# corrected, reaches every harness through loadout/instructions/sandbox.md, so the
-# block only has to go. `nono update` puts it back; this takes it out again.
-strip_nono_codex_block() {
-  local script="$SCRIPT_DIR/codex/strip_nono_block.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  Codex block stripper not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping Codex block strip"
-    return
-  fi
-
-  echo "Removing nono's Codex developer_instructions..."
-  python3 "$script"
-}
-
 sync_codex_superpowers() {
   local script="$SCRIPT_DIR/codex/sync_superpowers.py"
 
@@ -310,8 +289,6 @@ echo ""
 generate_loadout
 echo ""
 
-strip_nono_codex_block
-echo ""
 sync_codex_superpowers
 echo ""
 seed_private_profile
