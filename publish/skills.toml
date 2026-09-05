@@ -7,7 +7,7 @@
 
 # check-notes — vault path and its hand-maintained index.md convention are personal
 # loadout     — companion skill for the loadout tool, not a standalone workflow
-private = ["check-notes", "loadout"]
+private = ["check-notes", "loadout", "nono-sandbox"]
 
 # local skills are gitignored: never published AND never pushed — this repo is
 # public, so private alone still exposes a skill's source. Absent in fresh
@@ -38,6 +38,5 @@ local = ["time-reconstruct"]
     "improve-agent-instructions", "library-docs", "read-docs",
 ]
 "Environment & tools" = [
-    "guide", "nono-sandbox", "pdf", "skill-creator",
-    "temp",
+    "guide", "pdf", "skill-creator", "temp",
 ]
