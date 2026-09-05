@@ -1,23 +1,25 @@
 ---
 name: longshot
-description: Run a long autonomous build session from a brief — front-load every question into one round, then execute for hours without check-ins, deciding ambiguities as recorded rulings instead of stopping to ask. Per task a fresh implementer subagent, an independent spec+quality reviewer, a fix loop, then a whole-branch review and a handoff report with rulings, deferred questions and a squash proposal. Use when the user says "longshot", "work on this independently", "run with this", "ask me everything up front then go", "I'll be away", or hands over a multi-hour feature or package to build end to end. Do NOT use for a single small change — use `plan` for that.
+description: Run a long autonomous build session from a brief — interrogate every open decision up front with `blind-spots`, then execute for hours without check-ins, deciding ambiguities as recorded rulings instead of stopping to ask. Per task a fresh implementer subagent, an independent spec+quality reviewer, a fix loop, then a whole-branch review and a handoff report with rulings, deferred questions and a squash proposal. Use when the user says "longshot", "work on this independently", "run with this", "ask me everything up front then go", "I'll be away", or hands over a multi-hour feature or package to build end to end. Do NOT use for a single small change — use `plan` for that.
 argument-hint: '[--plan FILE] [--no-worktree] [--repos a,b] (brief, or blank to take it from the conversation)'
 effort: xhigh
 ---
 
 # Longshot
 
-Take a brief, ask everything once, then build for hours without the user in the loop.
+Take a brief, interrogate it until nothing is silently assumed, then build for hours
+without the user in the loop.
 
 The bet this skill makes: a session parked on a question costs the user their whole
 day and buys nothing, while a wrong ruling costs rework they can see and undo. So
-every ambiguity after the question round gets **decided and recorded**, not asked.
+every ambiguity after the interrogation closes gets **decided and recorded**, not asked.
 
 ## The contract
 
-State it back to the user in the question round, verbatim in substance:
+State it back to the user when the interrogation closes, verbatim in substance:
 
-1. **One question round.** After it, no more questions except the four stops below.
+1. **Every question up front.** The interrogation runs to completion first; after it
+   closes, no more questions except the four stops below.
 2. **Rulings, not stalls.** Every conflict, gap, plan defect or judgment call gets
    decided and written to the ledger as
    `Ruling: <decision> — <why> — <cost if wrong>`.
@@ -32,7 +34,8 @@ to be wrong about something load-bearing. Everything else is a ruling.
 
 ## Phase 0 — Recon before questions
 
-Uninformed questions waste the one round. Before asking anything, read:
+Uninformed questions waste rounds and spend the user's patience. Before asking
+anything, read:
 
 - the project instruction files (`AGENTS.md`, `CLAUDE.md`, `README.md`)
 - the workflow file — `workflow.md` / `WORKFLOW.md`, or whatever the brief names.
@@ -45,17 +48,24 @@ Uninformed questions waste the one round. Before asking anything, read:
 Dispatch at most 3 read-only `Explore` agents in parallel for the repo sweeps.
 
 If the brief opens with a technical question of the user's own, **answer it with
-analysis and a recommendation** in the question round. Do not hand it back.
+analysis and a recommendation** in the first round. Do not hand it back.
 
-## Phase 1 — The one question round
+## Phase 1 — The interrogation
 
-One message. Every question carries your recommendation, so silence-plus-"go" is a
-complete answer.
+Invoke `blind-spots` on the brief and run it to completion. Phase 0 already did the
+recon its step 2 calls for — do not repeat it.
 
-Ask only what changes the work. The test: *would a wrong guess here cost a rewrite,
-or just a follow-up commit?* Follow-up commit → rule on it, do not ask.
+**This is the one part of a longshot run that needs the user present.** It ends when
+the frontier is empty, and that close is the gate for everything after it.
 
-Always resolve these, because the run cannot proceed correctly without them:
+`blind-spots` supplies the mechanics: dependency-ordered rounds, a recommendation on
+every question so silence-plus-"go" is a complete answer, and pruning to decisions
+that fork the design. Longshot sharpens its fork test — *would a wrong guess here
+cost a rewrite, or just a follow-up commit?* Follow-up commit → do not ask it, rule
+on it during the run.
+
+These are mandatory wherever they sit in the tree, because the run cannot proceed
+correctly without them. Put any still open into the first round:
 
 - **Commit authorization.** Ambient policy leaves git to the user. A longshot run
   commits continuously — get an explicit yes, and get its scope (which repos, and
@@ -67,8 +77,8 @@ Always resolve these, because the run cannot proceed correctly without them:
 - The user's own opening question, answered.
 - Anything where a wrong guess is architectural.
 
-Use `AskUserQuestion` for the discrete choices and prose for the analysis. Close with
-the contract above.
+When the frontier is empty, state the contract above and get the go. From that point
+the contract binds: rulings, not questions.
 
 ## Phase 2 — Plan (auto-detect)
 
@@ -79,7 +89,7 @@ the contract above.
   run `review-plan` (multi-agent) over the draft and fold the findings in. Save to
   `docs/plans/<YYYY-MM-DD>-<slug>.md` with checkbox tasks.
 
-Either way there is **no approval gate here** — the question round was the gate.
+Either way there is **no approval gate here** — the interrogation was the gate.
 
 Open the ledger at `docs/plans/<YYYY-MM-DD>-<slug>-ledger.md` (see
 `references/prompts.md` for its shape) and append to it for the rest of the run. It
@@ -175,14 +185,15 @@ One question to start: what about sessions that get killed?"*
 
 Actions: read `workflow.md`, the plan doc, both neighbour repos' tooling and the
 integration surfaces (3 `Explore` agents) → answer the killed-sessions question with
-a recommendation, ask 6 batched questions (commit authorization, repo boundary,
-protocol scope, what "integrate" means, …), state the contract → validate the plan
+a recommendation, then `blind-spots`: round 1 asks the six answerable now (commit
+authorization, repo boundary, protocol scope, what "integrate" means, …), round 2 the
+two that only became questions once protocol scope was settled, state the contract → validate the plan
 against the repo → worktree per consumer repo → 6 tasks through the loop with pings →
 whole-branch review + contract-coherence pass + fix wave → handoff.
 
 Result: three branches ready to integrate, a rulings ledger explaining every decision
 made in the user's absence, one XCTest run flagged as theirs to do, and a squash plan
-waiting on a yes. Zero user turns between the question round and the report.
+waiting on a yes. Zero user turns between the interrogation closing and the report.
 
 ### Example: too small for longshot
 
@@ -220,4 +231,4 @@ unchecked task. Never restate finished work into context to "remember" it.
 
 **Cause:** normal — the contract binds you, not them.
 **Solution:** answer, then resume. Do not turn it into a check-in or re-open the
-question round.
+interrogation.

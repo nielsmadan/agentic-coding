@@ -10,6 +10,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 | Skill | Purpose |
 |-------|---------|
+| `/blind-spots` | Surface the decisions a plan or design left silently assumed — recon the repo first, then rounds of questions in dependency order, each carrying a recommendation, until the frontier is empty. Prunes to decisions that *fork the design*, so it probes forks instead of nitpicking details |
 | `/breakdown-milestone` | Break a milestone (e.g. M0) into incremental sprints of working software |
 | `/breakdown-sprint` | Break a sprint (e.g. s1) into ordered, parallelizable tasks following agile user-story principles |
 | `/check-agent-logs` | Search Claude Code, Codex, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
@@ -27,7 +28,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/ideation` | Generate ideas with structure when stumped — on what to build, the real problem, or a solution. Routes frameworks by stuck-state, diverges then converges to a prioritized shortlist (`--problem`, `--feature`, `--solution`, `--quick`) |
 | `/improve-agent-instructions` | Audit and improve the always-loaded instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) — scores gotcha density, derivable/duplicated content, progressive disclosure, and conflicting rules; proposes removals as well as additions |
 | `/library-docs` | Generate/refresh a per-repo `library-use` reference — official docs + changelog links, pinned versions, and distilled correct-usage conventions for the repo's fast-moving/niche libraries. Re-run version-checks entries: same-API bumps auto-update, API-changing bumps report + draft a migration and ask before applying |
-| `/longshot` | Long autonomous build session from a brief — informed recon, one batched question round, then hours of silent execution with per-task implementer/reviewer/fixer subagents, an on-disk rulings ledger instead of check-ins, a whole-branch review, and a handoff report with a squash proposal (`--plan`, `--no-worktree`) |
+| `/longshot` | Long autonomous build session from a brief — informed recon, a `blind-spots` interrogation up front, then hours of silent execution with per-task implementer/reviewer/fixer subagents, an on-disk rulings ledger instead of check-ins, a whole-branch review, and a handoff report with a squash proposal (`--plan`, `--no-worktree`) |
 | `/pdf` | PDF processing: read, merge, split, create, fill forms, OCR |
 | `/perf-test` | Set up and run performance tests with improvement cycle |
 | `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
