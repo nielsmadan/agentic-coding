@@ -58,7 +58,7 @@ kept in separate slices and composed only at render time:
 | Concern | Source | Example generated destination |
 |---------|--------|-------------------------------|
 | Residual harness settings | `loadout/settings/<name>.json` | `~/.pi/agent/settings.json` |
-| Claude hook registrations | `loadout/hooks/*.json` | `~/.claude/settings.json` |
+| Claude and Codex hook registrations | `loadout/hooks/*.json` | `~/.claude/settings.json`, `~/.codex/hooks.json` |
 | Enabled plugins / packages | `loadout/plugins/<name>.json` | Claude or Pi settings |
 | Scalar model defaults | `loadout/defaults/*.json` | the owned keys in a harness config |
 | Extra harness files | `loadout/module-config/<harness>/...` | the matching path below that harness's config directory |
@@ -69,6 +69,16 @@ subagent files mirror `loadout/module-config/pi/` beneath `~/.pi/agent/`. These
 destinations are generated real files, not repository symlinks. Keeping hooks,
 plugins, and settings in distinct slices prevents a residual settings document
 from becoming a second owner of generated keys.
+
+Juggler's status hooks call the shared Hooklinesinker binary. Claude and Codex
+registrations live in `loadout/hooks/hooklinesinker-*.json`; the installed Pi and
+OpenCode adapters are copied verbatim from
+`loadout/module-config/pi/extensions/hooklinesinker-pi.ts` and
+`loadout/module-config/opencode/plugins/hooklinesinker-opencode.ts`.
+The commands retain Hooklinesinker's canonical installed path so its health checks
+recognize them. Juggler manages the binary and its consumer registration. After a
+Hooklinesinker upgrade changes the hooks, copy the installed registrations and
+adapters back into these sources before syncing.
 
 Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
 symlinked. loadout writes it in place instead, owning only the keys it declares

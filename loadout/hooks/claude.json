@@ -9,16 +9,6 @@
           "timeout": 5
         }
       ]
-    },
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh PostToolUseFailure",
-          "timeout": 5
-        }
-      ]
     }
   ],
   "PreToolUse": [
@@ -41,61 +31,6 @@
           "timeout": 5
         }
       ]
-    },
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh PreToolUse",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "SessionStart": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh SessionStart",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "SessionEnd": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh SessionEnd",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "UserPromptSubmit": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh UserPromptSubmit",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "PostToolUse": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh PostToolUse",
-          "timeout": 5
-        }
-      ]
     }
   ],
   "PermissionRequest": [
@@ -105,61 +40,6 @@
         {
           "type": "command",
           "command": "~/.claude/hooks/auto-approve-mcp.sh",
-          "timeout": 5
-        }
-      ]
-    },
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh PermissionRequest",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "SubagentStart": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh SubagentStart",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "Stop": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh Stop",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "PreCompact": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh PreCompact",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "StopFailure": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "~/.claude/hooks/juggler/notify.sh StopFailure",
           "timeout": 5
         }
       ]

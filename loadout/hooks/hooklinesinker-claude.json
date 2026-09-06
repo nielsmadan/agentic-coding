@@ -1,0 +1,128 @@
+{
+  "PermissionRequest": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PermissionRequest",
+          "timeout": 5,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PostToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "PostToolUseFailure": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PostToolUseFailure",
+          "timeout": 5,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "PreCompact": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PreCompact",
+          "timeout": 5,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PreToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "SessionEnd": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event SessionEnd",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event SessionStart",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event Stop",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "StopFailure": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event StopFailure",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SubagentStart": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event SubagentStart",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event UserPromptSubmit",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ]
+}
