@@ -48,6 +48,7 @@
       "/AppleInternal",
       "$HOME/Library/Developer/Xcode",
       "$HOME/Library/Application Support/CleanShot/media",
+      "$HOME/Library/Fonts",
       "$HOME/Library/Keychains",
       "$HOME/Library/MobileDevice/Provisioning Profiles",
       "$HOME/.local/share/uv/python",
