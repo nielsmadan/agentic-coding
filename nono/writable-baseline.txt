@@ -23,6 +23,7 @@ $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/claude/locks	profile
+$HOME/.local/state/hooklinesinker	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
@@ -37,6 +38,7 @@ $HOME/.pub-cache/_temp	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
+$HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
@@ -73,6 +75,7 @@ $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile
+$HOME/.local/state/hooklinesinker	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
@@ -87,6 +90,7 @@ $HOME/.pub-cache/_temp	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
+$HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
@@ -123,6 +127,7 @@ $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
+$HOME/.local/state/hooklinesinker	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
@@ -138,6 +143,7 @@ $HOME/.pub-cache/_temp	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
+$HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
@@ -172,6 +178,7 @@ $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/ringleader	profile
+$HOME/.local/state/hooklinesinker	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mise/trusted-configs	profile
@@ -186,6 +193,7 @@ $HOME/.pub-cache/_temp	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
+$HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
