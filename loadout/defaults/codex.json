@@ -1,6 +1,14 @@
 {
   "model": "gpt-6-astra",
   "model_reasoning_effort": "xhigh",
+  "apps": {
+    "connector_openai_codex_document_control": {
+      "enabled": false
+    }
+  },
+  "skills": {
+    "max_context_tokens": 10000
+  },
   "$remove": [
     "developer_instructions"
   ]

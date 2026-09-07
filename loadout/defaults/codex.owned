@@ -1,4 +1,7 @@
 # Keys loadout manages in this destination. Generated; edit the fragment instead.
+# loadout-owned-format: 2
+apps.connector_openai_codex_document_control.enabled
 developer_instructions
 model
 model_reasoning_effort
+skills.max_context_tokens
