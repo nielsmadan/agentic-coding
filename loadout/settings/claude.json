@@ -33,6 +33,7 @@
     }
   },
   "awaySummaryEnabled": false,
+  "disableAgentView": true,
   "autoMemoryEnabled": true,
   "skipAutoPermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
