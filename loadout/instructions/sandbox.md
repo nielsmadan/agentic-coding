@@ -3,11 +3,18 @@
 Every agent CLI runs inside a [nono](https://github.com/nolabs-ai/nono) Seatbelt sandbox.
 `~/wrksp` is read+write; most of the rest of `$HOME` is not.
 
-**A denial footer is not a failure.** nono prints `Sandbox denial: N paths blocked` at exit
-even on successful runs, listing harmless probes (tools walking up from the workdir looking
-for config). Check the command's **exit code and output** before concluding the sandbox blocked
-anything. Do not rewrite a command, call a binary by its full path, or skip a verification step
-on the strength of that footer.
+**nono's exit diagnostic prints only when the command exits non-zero**, and is not proof of
+anything on its own. `Sandbox denial: N path(s) blocked.` lists each path and a `Fix flags:`
+line, but those are often harmless probes (tools walking up from the workdir looking for config)
+that merely co-occur with an unrelated failure — check the command's **exit code and output**
+before concluding the sandbox blocked anything. `No path denials were observed during this
+session.` is the opposite signal: nothing was blocked, so look elsewhere. Do not rewrite a
+command, call a binary by its full path, or skip a verification step on the strength of a denial
+line.
+
+**Claude and OpenCode run nono with `--silent`, so none of that prints.** The failing command's
+own `Operation not permitted` still reaches you; nono's banner and exit diagnostic do not, and
+their absence is not evidence that nothing was denied. Codex and Pi show both.
 
 **`Operation not permitted` has two very different causes**, and they need opposite responses:
 
@@ -37,9 +44,9 @@ on the strength of that footer.
 2. *Something under nono starting its own sandbox.* Nono blocks sandbox re-initialization for
    anything running under the profile — usually a process the agent spawned, not the agent
    itself. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
-   `forbidden-sandbox-reinit` in the footer, or an error naming a path that `nono why` says is
-   **allowed**. The denial carries no path, so no grant can address it — disable the inner
-   sandbox instead:
+   `forbidden-sandbox-reinit` in nono's exit diagnostic (Codex and Pi only), or an error naming
+   a path that `nono why` says is **allowed**. The denial carries no path, so no grant can
+   address it — disable the inner sandbox instead:
 
    | tool | flag |
    |---|---|

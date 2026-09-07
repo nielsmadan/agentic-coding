@@ -21,10 +21,16 @@ blocked me" as a hypothesis to test, never a conclusion to report.
 
 ## Before you conclude anything
 
-**1. Did the command actually fail?** nono prints `Sandbox denial: N paths blocked` at exit
-**even on successful runs**, listing harmless probes — tools walking up from the workdir looking
-for config. Check the exit code and the real output first. A denial footer next to a failure
-does not mean it caused the failure.
+**1. Did the command actually fail?** Check the exit code and the real output first — a denial
+line next to a failure does not mean it caused the failure. nono's exit diagnostic prints only
+on a non-zero exit: `Sandbox denial: N path(s) blocked.` lists each path with a `Fix flags:`
+line, and those are often harmless probes — tools walking up from the workdir looking for
+config. `No path denials were observed during this session.` means nothing was blocked and the
+failure is elsewhere.
+
+**Under Claude and OpenCode, nono runs with `--silent`: no banner and no exit diagnostic.** The
+failing command's own `Operation not permitted` is then your only signal, and the absence of a
+nono denial line proves nothing. Codex and Pi print both.
 
 **2. Quote the path from the error.** If you cannot point at a line of output naming a specific
 path, you do not have a sandbox problem — you have a guess. Never report a denial with a
@@ -72,8 +78,8 @@ it carries no path, are the same trap.
 Nono blocks sandbox re-initialization for **anything** running under the profile — usually not
 the agent itself but a process it spawned (SwiftPM evaluating `Package.swift`, xcodebuild's
 plugin execution, Chrome's zygote). The giveaway is `sandbox-exec: sandbox_apply: Operation not
-permitted`, `forbidden-sandbox-reinit` in the footer, or an error naming a path that
-`nono why --self` says is **allowed**.
+permitted`, `forbidden-sandbox-reinit` in nono's exit diagnostic (Codex and Pi only), or an
+error naming a path that `nono why --self` says is **allowed**.
 
 The denial carries **no path**, so no grant can address it — ignore nono's own
 `--allow <path>` suggestion here. Disable the inner sandbox instead:

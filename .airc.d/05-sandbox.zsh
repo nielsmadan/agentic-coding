@@ -36,6 +36,11 @@
 # com.google.Chrome. mach-register rule in nono/agent-common.json — both are
 # required, neither is sufficient alone.
 #
+# --silent covers claude and opencode only: both draw a fullscreen TUI that does
+# not reclaim the region nono's capability banner writes to, so the banner shows
+# through their scroll area. It suppresses nono's own output wholesale, exit
+# summary included; the child's own denial errors are unaffected.
+#
 # Working in these repos means writing outside ~/wrksp (loadout sync, these
 # wrappers themselves), which the sandbox exists to prevent — so claude and codex
 # route to their -raw variant here. AGENT_FORCE_SANDBOX=1 overrides. pi and
@@ -54,6 +59,8 @@ _agent_raw_dir() {
 
 _agent_sandboxed() {
   local profile=$1 cmd=$2
+  local -a nono_options=()
+  [[ $profile == (claude|opencode)-local ]] && nono_options+=(--silent)
   shift 2
   if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
     PATH="$HOME/ac/bin/sandbox-shims:$HOME/ac/bin:$PATH" \
@@ -64,7 +71,7 @@ _agent_sandboxed() {
     VHS_NO_SANDBOX=true \
     DISABLE_AUTOUPDATER=1 \
     SSL_CERT_FILE=/etc/ssl/cert.pem \
-      sops-exec nono run -p "$profile" -- "$cmd" "$@"
+      sops-exec nono run "${nono_options[@]}" -p "$profile" -- "$cmd" "$@"
   elif [[ -n $AGENT_REQUIRE_SANDBOX ]]; then
     print -u2 -r -- "$cmd: refusing to run unsandboxed (AGENT_REQUIRE_SANDBOX is set)"
     command -v nono >/dev/null 2>&1 || print -u2 -r -- "  nono not on PATH"
