@@ -32,6 +32,7 @@
       "$HOME/.cocoapods",
       "$HOME/Library/Developer/Xcode/DerivedData",
       "$HOME/Library/Developer/CoreSimulator",
+      "$HOME/Library/Developer/CoreDevice",
       "$HOME/.config/cadet",
       "$HOME/.gc",
       "$HOME/.local/share/ringleader",

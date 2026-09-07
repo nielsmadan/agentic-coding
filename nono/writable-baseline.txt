@@ -44,6 +44,7 @@ $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
 $HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
+$HOME/Library/Developer/CoreDevice	profile
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
@@ -101,6 +102,7 @@ $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
 $HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
+$HOME/Library/Developer/CoreDevice	profile
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
@@ -159,6 +161,7 @@ $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
 $HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
+$HOME/Library/Developer/CoreDevice	profile
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
@@ -214,6 +217,7 @@ $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
 $HOME/.yarn/berry	profile
 $HOME/Library/Caches	group:user_caches_macos
+$HOME/Library/Developer/CoreDevice	profile
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
