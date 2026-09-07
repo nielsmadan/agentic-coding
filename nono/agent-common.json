@@ -118,6 +118,7 @@
     "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
     "(allow mach-register (global-name-prefix \"com.google.Chrome.\"))",
-    "(allow iokit-open)"
+    "(allow iokit-open)",
+    "(allow file-issue-extension (extension-class \"com.apple.app-sandbox.read\" \"com.apple.app-sandbox.read-write\"))"
   ]
 }
