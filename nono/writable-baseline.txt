@@ -10,8 +10,11 @@ $HOME/.claude	profile
 $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
+$HOME/.config/flutter	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
+$HOME/.dart-tool	profile
+$HOME/.dartServer	profile
 $HOME/.dolt	profile
 $HOME/.gc	profile
 $HOME/.gradle/caches	profile
@@ -35,6 +38,7 @@ $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pi	profile
 $HOME/.pub-cache/_temp	profile
+$HOME/.pub-cache/active_roots	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
@@ -43,6 +47,7 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
 /private/tmp	group:system_read_macos
@@ -63,8 +68,11 @@ $HOME/.claude	profile
 $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
+$HOME/.config/flutter	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
+$HOME/.dart-tool	profile
+$HOME/.dartServer	profile
 $HOME/.dolt	profile
 $HOME/.gc	profile
 $HOME/.gradle/caches	profile
@@ -87,6 +95,7 @@ $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pi	profile
 $HOME/.pub-cache/_temp	profile
+$HOME/.pub-cache/active_roots	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
@@ -95,6 +104,7 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
 /private/tmp	group:system_read_macos
@@ -114,8 +124,11 @@ $HOME/.claude	profile
 $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
+$HOME/.config/flutter	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
+$HOME/.dart-tool	profile
+$HOME/.dartServer	profile
 $HOME/.dolt	profile
 $HOME/.gc	profile
 $HOME/.gradle/caches	profile
@@ -140,6 +153,7 @@ $HOME/.npm	profile
 $HOME/.opencode	profile
 $HOME/.pi	profile
 $HOME/.pub-cache/_temp	profile
+$HOME/.pub-cache/active_roots	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
@@ -148,6 +162,7 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
 /private/tmp	group:system_read_macos
@@ -166,8 +181,11 @@ $HOME/.claude	profile
 $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
+$HOME/.config/flutter	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
+$HOME/.dart-tool	profile
+$HOME/.dartServer	profile
 $HOME/.dolt	profile
 $HOME/.gc	profile
 $HOME/.gradle/caches	profile
@@ -190,6 +208,7 @@ $HOME/.m2/repository	profile
 $HOME/.npm	profile
 $HOME/.pi	profile
 $HOME/.pub-cache/_temp	profile
+$HOME/.pub-cache/active_roots	profile
 $HOME/.pub-cache/git	profile
 $HOME/.pub-cache/hosted	profile
 $HOME/.pub-cache/hosted-hashes	profile
@@ -198,6 +217,7 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
 /private/tmp	group:system_read_macos
