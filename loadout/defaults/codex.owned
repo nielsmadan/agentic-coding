@@ -1,5 +1,6 @@
 # Keys loadout manages in this destination. Generated; edit the fragment instead.
 # loadout-owned-format: 2
+agents.max_concurrent_threads_per_session
 apps.connector_openai_codex_document_control.enabled
 developer_instructions
 model

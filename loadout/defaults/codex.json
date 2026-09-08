@@ -1,6 +1,9 @@
 {
   "model": "gpt-6-astra",
   "model_reasoning_effort": "xhigh",
+  "agents": {
+    "max_concurrent_threads_per_session": 8
+  },
   "apps": {
     "connector_openai_codex_document_control": {
       "enabled": false
