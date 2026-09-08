@@ -10,7 +10,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 | Skill | Purpose |
 |-------|---------|
-| `/blind-spots` | Surface the decisions a plan or design left silently assumed — recon the repo first, then rounds of questions in dependency order, each carrying a recommendation, until the frontier is empty. Prunes to decisions that *fork the design*, so it probes forks instead of nitpicking details |
+| `/blind-spots` | Surface consequential decisions a plan, design, or research brief left silently assumed — read existing context, then ask in dependency order with recommendations. Returns a settled brief to a calling workflow without adding a closing confirmation; unknown facts remain research tasks |
 | `/check-agent-logs` | Search Claude Code, Codex, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
 | `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 8 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
@@ -18,7 +18,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
 | `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
-| `/evaluate-tech` | Structured adoption decision for a library, tool, or hosted service — triages hard vs. soft constraints so current architecture never silently eliminates options, enumerates 5-8 candidates wide, then scores every one in parallel against one rubric with maintenance health as a mandatory gate |
+| `/evaluate-tech` | Structured adoption decision for a library, tool, or hosted service — uses blind-spots when consequential choices remain open, triages hard vs. soft constraints, enumerates 5-8 candidates, then scores each against one rubric with maintenance health as a mandatory gate |
 | `/explain` | Generate project explanation docs in `docs/explain/`, or explain a diff in the conversation (`--diff`, `--architecture`, `--flows`, `--syntax`, `--system`, `--infra`, `--test`, `--all`, `--staged`, optional topic filter) |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
 | `/hard-fix` | Escalation workflow for stubborn bugs |
@@ -33,8 +33,8 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and save evidence and coverage; `--fix` repairs confirmed bugs and retests |
 | `/read-docs` | Search internal project documentation (proactive) |
-| `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents |
-| `/research-tech` | Research any technical/developer topic online using parallel agents — libraries, errors, best practices, tool/library/model comparisons, product capabilities, ecosystem signal |
+| `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents; uses blind-spots first when an unresolved decision would change the investigation |
+| `/research-tech` | Research technical/developer topics using parallel agents — libraries, errors, comparisons, capabilities, ecosystem signal; uses blind-spots first when an unresolved decision would change the investigation |
 | `/resolve-conflicts` | Git merge conflict resolution |
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
