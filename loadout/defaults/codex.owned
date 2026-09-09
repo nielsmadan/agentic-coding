@@ -3,7 +3,6 @@
 agents.max_concurrent_threads_per_session
 approval_policy
 approvals_reviewer
-apps.connector_openai_codex_document_control.enabled
 developer_instructions
 model
 model_reasoning_effort

@@ -6,11 +6,6 @@
   "agents": {
     "max_concurrent_threads_per_session": 8
   },
-  "apps": {
-    "connector_openai_codex_document_control": {
-      "enabled": false
-    }
-  },
   "skills": {
     "max_context_tokens": 10000
   },
