@@ -7,7 +7,7 @@ def workday: ((. - (5 * 3600)) | strflocaltime("%Y-%m-%d") | . + "T00:00:00Z" | 
 def pace: if . == null or .used_percentage == null or .resets_at == null then ""
   else (((((now | workday) - ((.resets_at - 604800) | workday)) / 86400) | floor) + 1
         | if . < 1 then 1 elif . > 7 then 7 else . end) as $day
-    | (($day * 100 / 7) - .used_percentage | round) end;
+    | ((($day - 1) * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
   else ((.resets_at - now) | if . < 0 then 0 else . end | floor) end;
 @sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left)"')"

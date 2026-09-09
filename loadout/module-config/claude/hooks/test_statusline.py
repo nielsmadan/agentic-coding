@@ -57,8 +57,8 @@ class StatuslineUsageTest(unittest.TestCase):
         before = calculate_fields(datetime(2026, 8, 24, 4, 59, tzinfo=TIMEZONE))
         after = calculate_fields(datetime(2026, 8, 24, 5, 0, tzinfo=TIMEZONE))
 
-        self.assertEqual(before["seven_pace"], "8")
-        self.assertEqual(after["seven_pace"], "22")
+        self.assertEqual(before["seven_pace"], "-7")
+        self.assertEqual(after["seven_pace"], "8")
 
     def test_reset_countdown_remains_exact(self) -> None:
         at = datetime(2026, 8, 24, 9, 20, tzinfo=TIMEZONE)
