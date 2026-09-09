@@ -28,7 +28,7 @@
       ]
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "modelSettings": {
     "claude-fable-5": {
       "effortLevel": "xhigh"
