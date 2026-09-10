@@ -1,4 +1,15 @@
 {
+  "Interrupt": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event Interrupt",
+          "timeout": 3,
+          "type": "command"
+        }
+      ]
+    }
+  ],
   "PermissionRequest": [
     {
       "hooks": [
