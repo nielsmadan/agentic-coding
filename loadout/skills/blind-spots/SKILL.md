@@ -71,6 +71,12 @@ Rules for a round:
 
 - **Every question carries your recommendation.** "Go with your defaults" must be a
   complete answer — the user may be tired, or may simply trust you on that branch.
+- **An asked question stays pending until the user answers or explicitly delegates
+  the choice.** Silence, elapsed time, an empty tool result, and a preselected
+  recommendation settle nothing. An asynchronous prompt returning only confirms
+  delivery; wait for the user's reply. Continue independent read-only work while
+  waiting, then yield if none remains. These are required decisions, not optional
+  preferences that may fall back to defaults on timeout.
 - **A question whose answer depends on another open question belongs to a later
   round**, not this one. This is the whole mechanism: question 12 does not exist as a
   question until question 4 is answered.
