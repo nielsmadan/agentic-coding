@@ -7,3 +7,4 @@ developer_instructions
 model
 model_reasoning_effort
 skills.max_context_tokens
+tui.whimsy

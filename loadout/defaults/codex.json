@@ -9,6 +9,9 @@
   "skills": {
     "max_context_tokens": 10000
   },
+  "tui": {
+    "whimsy": false
+  },
   "$remove": [
     "developer_instructions"
   ]
