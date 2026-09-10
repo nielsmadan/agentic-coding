@@ -1,0 +1,4 @@
+instructions = ["mobile", "flutter"]
+permissions = ["mobile", "flutter"]
+mcp = ["flutter"]
+skills = ["flutter-upgrade"]

@@ -44,7 +44,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `codex/` | Pins installed Superpowers skills to explicit invocation |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
-| `loadout/templates/` | Per-project-type config a project opts into by name (`flutter/`, `react-native/`, `web/`) |
+| `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-native.toml`, `web.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |
 | `docs/` | Repo notes |
@@ -117,15 +117,43 @@ model (shared vs. agent-native entries, the autonomous profile).
 
 ## Project templates
 
-`loadout/templates/<type>/` carries config that belongs to a *kind* of project
-rather than every session — permissions, instructions, MCP servers and
-project-only skills, in any combination. A project opts in by name:
+`loadout/templates/<type>.toml` selects config for a *kind* of project from shared
+`instructions/`, `permissions/`, `mcp/`, and `skills/` folders under `loadout/templates/`.
+These parts only reach projects that select a template. For example, `flutter.toml` contains:
+
+```toml
+instructions = ["mobile", "flutter"]
+permissions = ["mobile", "flutter"]
+mcp = ["flutter"]
+skills = ["flutter-upgrade"]
+```
+
+A project opts in by name:
 
 ```sh
-loadout init --harness claude    # scaffold loadout/config.toml
-loadout template add flutter     # adds templates = ["flutter"]
+loadout init --project --harness claude
+loadout template add flutter     # templates = ["flutter"]
 loadout sync
 ```
+
+Flutter and React Native select the same mobile parts directly:
+
+| Template | Shared or framework tooling |
+|---|---|
+| `mobile` | `agent-device` workflow, setup guidance, and shell permission; also usable alone for native apps |
+| `flutter` | Shared mobile tooling, Dart and simulator MCPs, simulator tool permissions, and `/flutter-upgrade` |
+| `react-native` | Shared mobile tooling, Splashdown-managed Metro ports, `rn-logs` guidance and permission, and `/rn-upgrade` |
+| `web` | Browser automation, web guidance, design, themes, and SEO skills |
+
+For React Native use `templates = ["react-native"]`. Existing declarations such as
+`["mobile", "flutter"]` still work: shared instruction parts render once. Declared templates
+pick up catalog changes on the next project `loadout sync`.
+
+Use `loadout template vendor <name>` to copy a manifest and its referenced parts into a
+project, then `loadout template sync <name>` to update that copy. Updates to shared parts
+name every affected vendored template and require confirmation. Existing vendored directory
+templates need a one-time conversion; see the migration steps in
+[Project Templates](AGENTS.md#project-templates).
 
 A template is a source at the bottom of the precedence chain, so anything the
 project declares itself outranks it. See the
@@ -149,4 +177,4 @@ entries).
 - [`AGENTS.md`](AGENTS.md) — project instructions, policies, and detailed
   subsystem docs
 - [`loadout/skills/README.md`](loadout/skills/README.md) — full skill catalog
-- [`templates/`](templates/) — per-project-type config and skills
+- [`loadout/templates/`](loadout/templates/) — per-project-type config and skills

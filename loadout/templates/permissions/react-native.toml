@@ -8,6 +8,5 @@
 [shell]
 
 allow = [
-  "agent-device",
   "rn-logs",
 ]

@@ -1,0 +1,3 @@
+instructions = ["mobile", "react-native"]
+permissions = ["mobile", "react-native"]
+skills = ["rn-upgrade"]

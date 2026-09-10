@@ -36,9 +36,9 @@ This repository contains shared configuration for agentic coding tools. It inclu
 - `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
   - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
   - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.pi/agent/AGENTS.md`); see Global Instructions below
-- `loadout/templates/<type>/` - Project-type config a project opts into by name (see Project
-  Templates below); each may carry `permissions.toml`, `instructions.md`, `mcp.toml` and
-  `skills/<name>/`, and need not carry all four
+- `loadout/templates/<type>.toml` - Project-type manifests selecting shared parts from
+  `templates/instructions/`, `templates/permissions/`, `templates/mcp/`, and
+  `templates/skills/` (see Project Templates below)
 - `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order
   - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
@@ -489,10 +489,31 @@ into the repo file, so expect the occasional small diff to commit or discard.
 
 ## Project Templates
 
-`loadout/templates/<type>/` holds config that belongs to a *kind* of project rather than to
-every session. `flutter/` carries the Flutter MCP servers (`mcp.toml`), the permissions they
-need (`permissions.toml`), an instructions block (`instructions.md`) and project-only skills
-(`skills/<name>/`). A template need not carry all four — `railway/` is skills only.
+`loadout/templates/<type>.toml` selects config for a *kind* of project from a shared catalog:
+
+```text
+loadout/templates/
+  mobile.toml
+  flutter.toml
+  react-native.toml
+  web.toml
+  instructions/<name>.md
+  permissions/<name>.toml
+  mcp/<name>.toml
+  skills/<name>/SKILL.md
+```
+
+Each manifest has optional ordered `instructions`, `permissions`, `mcp`, and `skills` lists.
+Entries are names without extensions, resolved within the corresponding catalog folder;
+paths, symlinks, duplicate references, missing parts, and unknown categories are errors.
+Edit the shared part to change its consumers; edit the manifest to change what a template
+selects. A manifest and legacy directory with the same template name are ambiguous and refused.
+
+`mobile.toml` selects shared `agent-device` instructions and shell permission. `flutter.toml`
+selects those same mobile parts plus Flutter instructions, MCP servers and permissions, and
+`/flutter-upgrade`. `react-native.toml` selects the mobile parts plus Metro and `rn-logs`
+guidance, the `rn-logs` permission, and `/rn-upgrade`. `web.toml` selects browser automation
+guidance and permissions plus its four web skills.
 
 Keeping them here version-controls the config centrally without making it global: a template
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
@@ -501,23 +522,41 @@ unrelated projects.
 A project opts in:
 
 ```
-loadout init --harness claude    # scaffold loadout/config.toml
-loadout template add flutter     # adds templates = ["flutter"]
+loadout init --project --harness claude
+loadout template add flutter     # templates = ["flutter"]
 loadout sync
 ```
 
-A template is a **source**, sitting at the bottom of the precedence chain — anything the project
-declares itself outranks it — and it merges through each slice's own operator, so no template-
-specific merge rule exists. All four artifact types project scope has flow through it:
-permissions, instructions, skills and MCP server definitions.
+React Native projects declare `templates = ["react-native"]`; native mobile projects can use
+`mobile` alone. Framework manifests reference the shared mobile parts directly. Existing
+declarations such as `["mobile", "flutter"]` still work: shared instructions concatenate
+once in first-reference order.
 
-Declared templates (resolved from `~/ac`) update everywhere on the next `loadout sync`. A
-template can instead be **vendored** into a project's own `loadout/templates/<name>/` so the
-repo stands alone for contributors who don't run loadout; `loadout template sync` compares a
-vendored copy against its origin by content hash and refuses rather than overwriting local
-edits.
+A template is a **source**, sitting below the project's own fragments. Later templates and
+then project entries replace whole same-named skills and MCP servers. Permissions use the
+existing deny-wins merge; `opencode.extra` follows last-tier precedence. Repeated permission,
+skill, and MCP parts still participate at each template's position.
 
-Project-only skills live *inside* their template (`loadout/templates/<type>/skills/<name>/`),
+Declared templates (resolved from `~/ac`) update on the next project `loadout sync`. Running
+`loadout template vendor <name>` instead copies the manifest and only its referenced parts
+into the project's `loadout/templates/`, with one shared copy per part. Qualified names such
+as `ac/flutter` place the manifest and parts under `loadout/templates/ac/`; use consistent
+qualification for templates sharing parts.
+
+`loadout template sync <name>` previews updates and checks recorded content hashes. A changed
+shared part lists every affected selected vendored template and requires confirmation; a
+local edit in any affected copy blocks the update. Run normal `loadout sync` afterwards to
+regenerate project outputs.
+
+**Migrating a vendored directory:** `template sync` cannot convert a directory into a catalog
+manifest. Back up the existing `loadout/templates/` outside that catalog, compare local
+customizations with the upstream parts, and move the old selected template directories out
+of the catalog. Run `loadout template vendor <name>` for every selected template, including
+`mobile` if it remains declared, then carry local customizations into the project's own
+fragments and run `loadout sync`. Keep the backup until the regenerated output is verified.
+Declared projects need only `loadout sync`.
+
+Project-only skills live in `loadout/templates/skills/<name>/` and are selected by manifests,
 not in `loadout/skills/`, so they are never rendered globally. Moving a skill between the two
 changes where it renders — but **nothing prunes**: `loadout sync` only writes the paths it
 renders, so the copies already written under `~/.claude/skills/`, `~/.codex/skills/`,

@@ -1,9 +1,8 @@
 ## Web project tooling
 
-This project ships with a web-aware Claude setup deployed by `aiconf web`. The
-headline tool is `agent-browser`, a globally-installed Rust CLI that drives
-Chrome/Chromium via CDP so the agent can verify its own UI work end-to-end
-instead of asking the developer for manual test results.
+Use `templates = ["web"]` in `loadout/config.toml` to select web instructions,
+permissions, and project-scoped skills. Use the globally installed `agent-browser`
+CLI to drive Chrome/Chromium via CDP and verify UI work end-to-end.
 
 ### Browser testing (`agent-browser`)
 
@@ -59,8 +58,8 @@ Use it **at the start of any HTML/CSS or client-side JS feature**: search
 first to see if a standardized pattern already exists before reaching for
 custom code or extra dependencies. Skip it for backend, CI/CD, generic
 scripts, or lint/git tasks. Network access is required (`npx` fetches the
-package on first use); the matchers in `.claude/settings.local.json`
-pre-approve the relevant invocations so they don't prompt each time.
+package on first use); the template's permissions pre-approve the relevant
+invocations for the project's supported configured harnesses.
 
 Complements `/review-security` (which audits *existing* app code for
 vulnerabilities) and `/review-perf` (which audits algorithmic/runtime
@@ -88,12 +87,11 @@ mobile/desktop UI):
 ### Notes
 
 - `agent-browser` arrives globally via `npm i -g agent-browser && agent-browser
-  install`; the template only adds the CLAUDE.md guidance and pre-approves the
-  `Bash(agent-browser:*)` matcher in `.claude/settings.local.json` so calls
-  don't prompt each time.
-- `aiconf web` is idempotent. Re-running it refreshes config but leaves this
-  CLAUDE.md section alone — use `aiconf sync` to mirror edits between project
-  and template.
+  install`; the template supplies instructions and shell permissions for the
+  project's configured harnesses.
+- Run `loadout sync` in the project to refresh template instructions,
+  permissions, and skills. For a vendored catalog, run `loadout template sync web`
+  first to update its source copy.
 - For DevTools-grade auditing (Lighthouse, performance traces, heap snapshots,
   network/CPU throttling, Chrome extension dev) consider also adding the
   separate `chrome-devtools-mcp` server. It complements `agent-browser` —
