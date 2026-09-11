@@ -10,7 +10,11 @@ def pace: if . == null or .used_percentage == null or .resets_at == null then ""
     | ((($day - 1) * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
   else ((.resets_at - now) | if . < 0 then 0 else . end | floor) end;
-@sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left)"')"
+def cache_state: if . == null then ""
+  elif .caching_observed != true then "unknown"
+  elif .warm != true or (.expires_at != null and .expires_at <= now) then "cold"
+  else "warm" end;
+@sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
 
 E=$'\033'
 sep_str="${E}[2m │ ${E}[0m"
@@ -96,6 +100,23 @@ add_seg 60 "$model_w" "$model_seg"
 
 add_seg 80 $((3 + 10 + 1 + ${#ctx_pct} + 1)) \
   "🧠 $(ctx_bar "$ctx_pct")$(ctx_color "$ctx_pct") ${ctx_pct}%${E}[0m"
+
+if [ -n "$cache_state" ]; then
+  cache_text="cache $cache_state"
+  cache_color="${E}[2m"
+  if [ "$cache_state" = "warm" ]; then
+    cache_color="${E}[32m"
+    if [ -n "$cache_left" ]; then
+      if [ "$cache_left" -lt 60 ]; then cache_time="<1m"
+      else cache_time="~$(fmt_left "$cache_left")"; fi
+      cache_text+=" $cache_time"
+      [ "$cache_left" -le 300 ] && cache_color="${E}[33m"
+    fi
+  elif [ "$cache_state" = "cold" ]; then
+    cache_color="${E}[33m"
+  fi
+  add_seg 75 "${#cache_text}" "${cache_color}${cache_text}${E}[0m"
+fi
 
 if [ -n "$seven_d" ]; then
   window "$seven_d" "$seven_pace" "$seven_left"
