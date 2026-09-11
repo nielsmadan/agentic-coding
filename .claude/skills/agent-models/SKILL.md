@@ -6,7 +6,7 @@ description: Pick and apply the low / mid / high-main / high-fallback OpenRouter
 # Agent Models
 
 Chooses four OpenRouter models — **low**, **mid**, **high-main**,
-**high-fallback** — and writes them into the five places this repo pins a model id.
+**high-fallback** — and writes them into the six places this repo pins a model id.
 
 Standing constraints, not preferences:
 
@@ -130,7 +130,7 @@ confirmation**. Do not write any file before the user approves the four picks
 
 ### Step 4: Apply
 
-Read `references/targets.md` and make all five edits. It carries the exact key
+Read `references/targets.md` and update all six targets. It carries the exact key
 names, prefix rules (`openrouter/` on some keys, not others), the `[1m]` context
 suffix on `clor`, and which files are loadout sources vs generated.
 
@@ -152,12 +152,14 @@ Then confirm what landed:
 
 ```bash
 grep -n "MODEL=\|CLOR_MODEL:-" .airc.d/claude.zsh   # 4 model slots + the start alias
-grep -n "openrouter/" .airc.d/opencode.zsh .airc.d/llmcli.zsh
+grep -n "openrouter/" .airc.d/opencode.zsh .airc.d/llmcli.zsh loadout/skills/second-opinion/SKILL.md
 python3 -c "import json;d=json.load(open('loadout/settings/pi.json'));print(d['defaultModel'],d['defaultThinkingLevel'],d['enabledModels'])"
 ```
 
 Confirm the start alias resolves to the default tier — that is the one edit with
 no model id in it, so a stale value survives every id-based check.
+Confirm the second-opinion commands match the approved advisor models and reasoning
+levels, preserving the user-selected overrides in `references/targets.md`.
 
 Report the diff summary and leave the commit to the user.
 
@@ -183,7 +185,7 @@ User says: "refresh the model tiers"
    700k). So **mid holds the default** — low keeps `occli` and the haiku rung.
 4. Present the four with runners-up, the default-tier call, and the binding
    table. Wait.
-5. On approval: the five targets, `loadout sync --global`, `source ~/.airc`,
+5. On approval: the six targets, `loadout sync --global`, `source ~/.airc`,
    `loadout check --global`.
 
 Result: pi, OpenCode and `clor` default to GLM-5.3-Flash; `clor` opens on

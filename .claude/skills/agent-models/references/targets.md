@@ -1,6 +1,6 @@
 # Write targets
 
-Every place in this repo that pins an OpenRouter model id. All five must move
+Every place in this repo that pins an OpenRouter model id. All six must move
 together or the trio drifts apart.
 
 Ids are always OpenRouter ids (`vendor/model`), because every one of these
@@ -28,7 +28,10 @@ and `ocs`.
 high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Luna is
 11.3 agentic points weaker *and* dearer per input token ($0.20/M vs $0.15/M).
 
-| # | File | Key | Tier |
+**User-selected advisors:** Pi uses GLM-5.3 at `max`; OpenCode uses Kimi K3 at
+`max`. OpenCode's advisor selection overrides its high-fallback tier binding.
+
+| # | File | Key | Binding |
 |---|------|-----|------|
 | 1 | `loadout/settings/pi.json` | `defaultModel` | **default** |
 | 1 | `loadout/settings/pi.json` | `defaultThinkingLevel` | default tier's effort |
@@ -42,6 +45,10 @@ high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Lun
 | 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | **default** |
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
 | 5 | `.airc.d/llmcli.zsh` | `occli` backend | low |
+| 6 | `loadout/skills/second-opinion/SKILL.md` | Pi advisor `--model` | high-main |
+| 6 | `loadout/skills/second-opinion/SKILL.md` | Pi advisor `--thinking` | max |
+| 6 | `loadout/skills/second-opinion/SKILL.md` | OpenCode advisor `-m` | Kimi K3 (user override) |
+| 6 | `loadout/skills/second-opinion/SKILL.md` | OpenCode advisor `--variant` | max |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.
@@ -156,9 +163,8 @@ alias ocs="opencode -m openrouter/<high-fallback id>"
 ```
 
 `ocs` exists to reach *past* the configured default, so it has to stay strictly
-above whichever tier holds it. It tracks high-fallback, matching OpenCode's
-second-opinion role — and that stays true however the default moves, which is why
-it is pinned to a named tier rather than to "one above the default".
+above whichever tier holds it. It tracks high-fallback however the default moves,
+which is why it is pinned to a named tier rather than to "one above the default".
 
 ## 5. `.airc.d/llmcli.zsh` — the `occli` backend
 
@@ -171,17 +177,22 @@ opencode run -m openrouter/<low id> \
 Cheap and latency-sensitive — this slot wants the low tier regardless of what
 the interactive defaults do.
 
-## 6. `loadout/skills/second-opinion/SKILL.md` — no longer a target
+## 6. `loadout/skills/second-opinion/SKILL.md`
 
-The advisor invocations are deliberately unpinned (`openrouter/<model-id>`
-placeholders): the skill is published to the public collection, so it tells the
-running agent to pick two capable models from different labs instead of carrying
-machine-pinned ids. Do not write concrete ids back into this file — it is a
-publish source and the publish guard cannot catch a model id.
+Default advisor bindings follow high-main for Pi and high-fallback for OpenCode.
+Preserve the user-selected advisor overrides above when proposing tier updates;
+include both advisor models and reasoning levels in the proposal for approval.
+
+Keep the approved model ids and reasoning flags explicit in the published skill:
+Pi uses `--thinking max`, and OpenCode uses `--variant max`. Verify the selected
+OpenCode model exposes a `max` variant with `opencode models openrouter --verbose`.
+These settings apply to every consultation, including `--quick`.
+
+Edit this source and run `loadout sync --global` to update all four harness copies.
 
 ## After writing
 
-1. `loadout sync --global` — required for targets 1 and 2. Needs an
+1. `loadout sync --global` — required for targets 1, 2 and 6. Needs an
    unsandboxed shell (`claude-raw`), since it writes outside `~/wrksp`.
 2. `source ~/.airc` — reloads targets 3–5 in the current shell. Idempotent.
 3. `loadout check --global` — must be clean; the lefthook pre-commit hook runs it.
