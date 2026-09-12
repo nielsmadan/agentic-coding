@@ -125,7 +125,10 @@ seed_granted_state_dirs() {
   local dir
   for dir in "$HOME/.local/state/mouthfeel" \
              "$HOME/Library/pnpm/global" \
-             "$HOME/Library/pnpm/package-manager-store"; do
+             "$HOME/Library/pnpm/package-manager-store" \
+             "$HOME/.gradle/notifications" \
+             "$HOME/.gradle/.tmp" \
+             "$HOME/.gradle/android"; do
     [[ -d "$dir" ]] && continue
     mkdir -p "$dir"
     echo "✓  Created $dir (granted in nono/agent-common.json; nono skips absent paths)"
