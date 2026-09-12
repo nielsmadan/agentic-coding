@@ -49,38 +49,41 @@ Rules for the block:
 If the task touches a **third-party console, dashboard, or API that changes** (cloud
 providers, app stores, SaaS settings pages), look up the current official docs *before*
 producing the plan. Cover the full known flow, including prerequisites, required permissions,
-and whether actions belong to an account, project, or individual app. Use the console
-provider's docs for its UI; an integration tool's guide alone does not establish the
-provider's current navigation. Skip this check only for stable/local tasks with no changing
-external workflow.
+and whether actions belong to an account, project, or individual app. **A plan naming several
+consoles needs a verified navigation source for each** — one vendor's integration guide does
+not license another vendor's clicks, and the part you feel unsure about is not the only part
+that needs checking. Skip this check only for stable/local tasks with no changing external
+workflow.
 
-**Fetching a page verifies only what its contents support.** Before giving the steps:
-- Check each menu path, button, prerequisite, and role claim against the relevant passage or
-  an observed live UI. Ask lookup tools what the documented flow is without assuming an old
-  menu or required role in the question.
-- If a fetch summary cannot confirm the path, that path remains unverified. An example URL
-  or search snippet does not establish a current menu. Inspect the underlying passage when
-  a summary is ambiguous or conflicts with another source; never fill gaps from memory and
-  call them "confirmed."
-- Link the official sources in the intro or beside the steps they support. State which
-  details remain uncertain. If a required navigation step cannot be verified, resolve it
-  from the user's visible screen before sending them through it; independent verified steps
-  may proceed.
+**Fetching a page verifies only what its contents support.** Check each menu path, button,
+prerequisite, and role claim against the relevant passage or an observed live UI, and ask
+lookup tools what the documented flow is without naming the menu or role you expect. A
+summary, example URL, or search snippet does not establish a current menu; inspect the
+underlying passage when one is ambiguous or conflicts with another source. Quote sources by
+the global rule: paste the line, and read a canonical list in full instead of grepping for
+the items you expect to find.
 
-Apply this check to each new phase or branch before adding its instructions. Recheck a
-resumed guide when time has passed and its external flow may have changed. A check of one
-phase does not verify later phases, and the user need not request another lookup.
+**Any path not traceable to a fetched passage is unverified.** Mark it `(unverified)` in the
+plan and the tracker and keep it a pending verification step, never a confident click path.
+Resolve it from the user's visible screen before sending them through it; independent
+verified steps may proceed. Link the official sources beside the steps they support, and say
+which details remain uncertain.
+
+**A contradicted memory invalidates the domain.** A lookup that corrects your memory of one
+part of a product makes every remembered path for that product stale; re-verify each before
+use rather than treating the correction as isolated.
+
+Apply this check to each new phase or branch before adding its instructions — a check of one
+phase does not verify later phases, and the user need not request another lookup. **Re-run it
+for the remaining phases before advancing the tracker if the plan is more than a day old.**
 
 ### Step 2: Do the opening agent actions, then produce the plan
 Decide who can perform each action using the tools, access, and authorization already
-available. Take actions you can complete yourself; leave the user steps that require their
-input, access, or interaction. Respect an explicit request to learn or perform an action
-themselves.
-
-Before presenting the guide, complete and verify every consecutive opening action you can
-take yourself. Briefly report the results above the plan; omit those completed actions from
-its numbering. Start step 1 at the first action requiring the user. If you can finish the
-whole task yourself, do so and report the result without starting a guide.
+available, and respect an explicit request to learn or do something themselves. Before
+presenting the guide, complete and verify every consecutive opening action you can take
+yourself; briefly report the results above the plan and omit them from its numbering. Start
+step 1 at the first action requiring the user's input, access, or interaction. If you can
+finish the whole task yourself, do so and report the result without starting a guide.
 
 For an agent action that depends on earlier user progress, keep its place in both the plan
 and tracker as a handoff: **"Tell me when you reach this step; I'll [specific action]."**
@@ -105,9 +108,6 @@ Before sending, read the plan and tracker as someone unfamiliar with the interfa
 they tell where to go, what to do there, and how to recognize success? Add missing detail
 to both. On later turns, expand an underspecified step within its existing number.
 
-If part of the flow remains unverified after Step 1, include it as a pending verification
-step in the plan and tracker. Do not turn it into a concrete click instruction yet.
-
 ### Step 3: Advance as the user progresses
 When the user signals a step is done ("done", "next", "ok", "✓"), move `▶` to the next step,
 fold the finished one into the `✓ Steps 1–N done` line, and re-print the tracker. Keep any
@@ -129,12 +129,14 @@ Do **not** re-list steps the user already completed (beyond the one-line summary
 point is that they don't scroll — keep the answer tight and the remaining steps below it.
 
 If the user's screen contradicts a step, treat that as evidence against the instructions.
-Immediately recheck the relevant official docs or live UI before giving another route;
-do not merely offer a lookup or repeat the disputed path. Ask what they see if that is
-needed to identify the page. Verify any alternate route, including suggested search bars or
-direct links. Explain the correction and update affected remaining steps while preserving
-completion and numbering. If verification is still inconclusive, say so and keep the step
-stuck. Diagnose permissions or a changed UI only when evidence supports that explanation.
+Recheck the relevant official docs or live UI before giving another route; do not merely
+offer a lookup or repeat the disputed path. Ask what they see if that is needed to identify
+the page. Verify any alternate route, search bars and direct links included. **Never reverse
+a claim from memory** — if you told the user X and now believe the opposite, look it up
+before saying either. Explain the correction and update affected remaining steps while
+preserving completion and numbering. If verification is still inconclusive, say so and keep
+the step stuck. Diagnose permissions or a changed UI only when evidence supports that
+explanation.
 
 ### Step 5: Re-print on every turn
 Regardless of what the user says — a question, a tangent, a "wait, why?" — end the reply with
@@ -153,14 +155,14 @@ advance under Step 3 unless the context indicates they want to stop the guide.
 
 ### Example 1: A fetch does not support the remembered path
 
-User asks how to create a service account for an integration. The fetched setup instructions
-describe creating it in a cloud console and inviting its email through the app provider's
-Users and permissions page. They contain no project-linking step.
+The fetched setup instructions describe creating a service account in a cloud console and
+inviting its email through the app provider's Users and permissions page. They contain no
+project-linking step.
 
-Build the guide from those documented actions, citing the relevant sources. Do not prepend
-a remembered "Setup → API access → Link project" step and say the flow was checked. If the
-docs do not establish the permissions needed to invite users, verify that separately before
-telling the user they must contact an account owner.
+Build the guide from those documented actions and cite them. Do not prepend a remembered
+"Setup → API access → Link project" step, and do not report the flow as checked. If the docs
+do not establish the permissions needed to invite users, verify that separately before
+telling the user to contact an account owner.
 
 ### Example 2: The user's screen contradicts the guide
 

@@ -10,6 +10,8 @@
 
 **When exact text matters** — code, config, a quoted claim — don't trust the extract, which can paraphrase while looking like a quote. Ask instead for short verbatim anchor phrases, then `grep` or `Read` the cached file to pull just those lines into context. `jina-fetch` prints each page's exact cache path and title on stderr; use that path — never "the newest file in the cache directory", which is wrong whenever another fetch is in flight. Repeat questions against the same URL are cache hits, so several targeted passes cost far less than one `--raw` dump.
 
+**Before writing that a source says something, paste the line.** A claim attributed to a document is a quote, not a summary — grep the cached file for it and reproduce the sentence. If you cannot paste it, you do not have it: say what the source does establish instead of rounding it up to what you expected. And when a page carries a canonical list (permissions, prerequisites, ordered steps), read the whole section by range rather than grepping for the items you expect, since a grep built from your expectation can only ever confirm it.
+
 **`NO_RELEVANT_CONTENT` means the page does not address your question.** Treat it as a real answer — a negative result — not as a failed call. Do not re-ask the same page in different words hoping for a hit, and never record an unrelated quote from it as evidence. `jina-fetch` also warns when none of the question's key terms appear on the page.
 
 **Never ask it to count or enumerate** occurrences across a page ("how many tables/sections/matches") — models get this wrong on long documents. `grep -c` the cached file instead.
