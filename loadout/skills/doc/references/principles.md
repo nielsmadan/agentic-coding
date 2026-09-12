@@ -176,7 +176,8 @@ harnesses, several providers, several backends).
 ### Occasional manual tests (`docs/tests/`) — also orthogonal to the profile
 
 Keep procedures and results for test operations run by hand from time to time, including
-performance measurements, under `docs/tests/<name>/`. Routine automated suite runs do not
+performance measurements, under `docs/tests/<name>/`. The gate is whether a later run will
+compare against this one. Routine automated suite runs and ordinary feature QA passes do not
 qualify. [manual-tests.md](manual-tests.md) defines the shared layout and evidence requirements
 used by `doc` and `perf-test`: a maintained `README.md` plus historical `runs/` records.
 One such procedure can warrant this folder at any repo size; accumulated runs do not count

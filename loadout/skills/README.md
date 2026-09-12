@@ -31,7 +31,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/perf-test` | Set up and run performance tests; preserve occasional manual procedures and results in `docs/tests/` |
 | `/plan` | Lightweight middle-tier planning — a read-only Fable subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then Opus implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
-| `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and save evidence and coverage; `--fix` repairs confirmed bugs and retests |
+| `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and report evidence and coverage; `--fix` repairs confirmed bugs and retests |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents; uses blind-spots first when an unresolved decision would change the investigation |
 | `/research-tech` | Research technical/developer topics using parallel agents — libraries, errors, comparisons, capabilities, ecosystem signal; uses blind-spots first when an unresolved decision would change the investigation |
@@ -124,7 +124,8 @@ superseded files as part of the approved plan.
 - `doc --session` after an occasional restore drill or performance experiment
 
 `docs/tests/<name>/README.md` holds the repeatable procedure; `runs/` holds historical results.
-Routine automated suite runs do not get records, even when launched by hand.
+Only operations whose results a later run compares against get records. Routine automated
+suite runs and ordinary feature QA passes do not, even when launched by hand.
 
 ---
 
@@ -220,8 +221,10 @@ Multi-agent review of implementation plans before execution. Spawns parallel age
 ### /qa
 
 Exercise the last developed feature through its real interface. Enumerate paths,
-edge cases, and loading/error/recovery states before running them. Save the
-procedure, coverage matrix, reproducible findings, and evidence in `docs/tests/`.
+edge cases, and loading/error/recovery states before running them. Reports the
+coverage matrix, reproducible findings, and evidence in the conversation; it writes a
+`docs/tests/` record only when asked, or when the run produced measurements or a setup
+a later run would refer back to.
 
 **Arguments:**
 - No arguments - Infer the last developed feature from the conversation and relevant changes

@@ -1,6 +1,6 @@
 ---
 name: doc
-description: "Assess documentation for gaps, staleness, quality, and files outside the defined doc set. Preserve useful knowledge in canonical docs, then remove superseded or unnecessary files. Check changed code when the tree is dirty, otherwise assess the whole repo. Explicit modes: --review, --update, --generate, or --session to capture durable knowledge from a conversation or transcript. Use for doc creation, cleanup, freshness, quality, or saving occasional manual test procedures and results; routine automated suite runs do not need test records."
+description: "Assess documentation for gaps, staleness, quality, and files outside the defined doc set. Preserve useful knowledge in canonical docs, then remove superseded or unnecessary files. Check changed code when the tree is dirty, otherwise assess the whole repo. Explicit modes: --review, --update, --generate, or --session to capture durable knowledge from a conversation or transcript. Use for doc creation, cleanup, freshness, quality, or saving occasional manual test procedures and results whose numbers a later run will compare against; routine suite runs and ordinary QA passes do not need test records."
 argument-hint: "[ (no args = context-aware assess) | --review | --update | --generate <target> | --session [--md <file>]] [--all | --staged | --unpushed]"
 effort: high
 ---
@@ -112,9 +112,10 @@ for an exported transcript. This includes occasional manual test procedures and 
 - `docs/reference/` is **externally anchored**: a source-scoped `--update` skips it, because
   our refactor cannot make it stale. It goes stale when a *dependency version* moves, and a
   verified claim is only re-stamped by re-running its probe.
-- `docs/tests/` is for **occasional manual operations**, including performance tests.
-  Procedures are live; dated `runs/` records and evidence are historical. Apply
-  `references/manual-tests.md`; routine automated suite runs do not belong here.
+- `docs/tests/` is for **occasional manual operations whose results a later run will compare
+  against**, performance tests above all. Procedures are live; dated `runs/` records and
+  evidence are historical. Apply `references/manual-tests.md`; routine automated suite runs
+  and ordinary feature QA passes do not belong here.
 
 ## Assess Mode (default)
 

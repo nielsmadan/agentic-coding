@@ -46,8 +46,9 @@ against the principles in `references/principles.md`, then offers to apply fixes
 - [ ] Class/function names are current; described behavior matches the code
 - [ ] No signatures restated in prose (should reference code instead)
 - [ ] Links to related docs work
-- [ ] `docs/tests/`: only occasional manual operations; procedures have usable commands,
-      prerequisites, inputs, and evaluation criteria
+- [ ] `docs/tests/`: only occasional manual operations whose results a later run compares
+      against; procedures have usable commands, prerequisites, inputs, and evaluation
+      criteria. Flag records of routine suite runs or ordinary feature QA passes for removal
 - [ ] `docs/tests/*/runs/`: observed results and original setup are preserved; missing
       historical details are reported as gaps, not filled from current code or measurements
 - [ ] `docs/reference/`: every verified claim carries a date **and** the version probed;
