@@ -14,7 +14,7 @@ def cache_state: if . == null then ""
   elif .caching_observed != true then "unknown"
   elif .warm != true or (.expires_at != null and .expires_at <= now) then "cold"
   else "warm" end;
-@sh "dir_name=\(.workspace.current_dir // .cwd | split("/") | last) current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
+@sh "current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
 
 E=$'\033'
 sep_str="${E}[2m │ ${E}[0m"
@@ -53,11 +53,15 @@ window() {
   local pct=$1 pace=$2 left=$3 l
   window_out="$(pct_color "$pct")${pct}%${E}[0m"
   window_w=$((${#pct} + 1))
+  # one day's share of the weekly window; spending it during the day is on budget
+  local alw=$((100 / 7)) c
   if [ -n "$pace" ]; then
-    if [ "$pace" -gt 0 ]; then window_out+=" ${E}[32m+${pace}${E}[0m"; window_w=$((window_w + 2 + ${#pace}))
-    elif [ "$pace" -le -10 ]; then window_out+=" ${E}[31m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace}))
-    elif [ "$pace" -lt 0 ]; then window_out+=" ${E}[33m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace}))
-    else window_out+=" ${E}[36m0${E}[0m"; window_w=$((window_w + 2)); fi
+    if [ "$pace" -ge $((-alw)) ]; then c=32
+    elif [ "$pace" -ge $((-2 * alw)) ]; then c=33
+    else c=31; fi
+    if [ "$pace" -gt 0 ]; then window_out+=" ${E}[${c}m+${pace}${E}[0m"; window_w=$((window_w + 2 + ${#pace}))
+    elif [ "$pace" -eq 0 ]; then window_out+=" ${E}[36m0${E}[0m"; window_w=$((window_w + 2))
+    else window_out+=" ${E}[${c}m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace})); fi
   fi
   if [ -n "$left" ]; then
     l=$(fmt_left "$left")
@@ -71,12 +75,10 @@ segs=(); widths=(); prios=()
 add_seg() { prios+=("$1"); widths+=("$2"); segs+=("$3"); }
 
 if [ -n "$AGENT_SANDBOX" ]; then
-  add_seg 100 10 "${E}[32m🔒 sandbox${E}[0m"
+  add_seg 100 2 "${E}[32m🔒${E}[0m"
 else
-  add_seg 100 6 "${E}[31m🥩 raw${E}[0m"
+  add_seg 100 2 "${E}[31m🥩${E}[0m"
 fi
-
-add_seg 90 $((3 + ${#dir_name})) "${E}[34m📁 ${dir_name}${E}[0m"
 
 if [ -f "$current_dir/pubspec.yaml" ]; then
   if grep -q "flutter:" "$current_dir/pubspec.yaml" 2>/dev/null; then
@@ -86,6 +88,7 @@ if [ -f "$current_dir/pubspec.yaml" ]; then
   fi
 fi
 
+model_name=$(printf '%s' "$model_name" | sed -E 's/ *\(.*\)$//; s/^Claude //' | tr '[:upper:]' '[:lower:]' | tr -d ' ')
 model_seg="${E}[33m🤖 ${model_name}${E}[0m"
 model_w=$((3 + ${#model_name}))
 if [ -n "$fast_mode" ]; then
@@ -102,20 +105,22 @@ add_seg 80 $((3 + 10 + 1 + ${#ctx_pct} + 1)) \
   "🧠 $(ctx_bar "$ctx_pct")$(ctx_color "$ctx_pct") ${ctx_pct}%${E}[0m"
 
 if [ -n "$cache_state" ]; then
-  cache_text="cache $cache_state"
+  cache_icon="❔"
   cache_color="${E}[2m"
+  cache_text=""
   if [ "$cache_state" = "warm" ]; then
+    cache_icon="🔥"
     cache_color="${E}[32m"
     if [ -n "$cache_left" ]; then
-      if [ "$cache_left" -lt 60 ]; then cache_time="<1m"
-      else cache_time="~$(fmt_left "$cache_left")"; fi
-      cache_text+=" $cache_time"
+      if [ "$cache_left" -lt 60 ]; then cache_text=" <1m"
+      else cache_text=" ~$(fmt_left "$cache_left")"; fi
       [ "$cache_left" -le 300 ] && cache_color="${E}[33m"
     fi
   elif [ "$cache_state" = "cold" ]; then
+    if [ "$ctx_pct" -ge 50 ]; then cache_icon="🥶"; else cache_icon="🧊"; fi
     cache_color="${E}[33m"
   fi
-  add_seg 75 "${#cache_text}" "${cache_color}${cache_text}${E}[0m"
+  add_seg 75 $((2 + ${#cache_text})) "${cache_color}${cache_icon}${cache_text}${E}[0m"
 fi
 
 if [ -n "$seven_d" ]; then
