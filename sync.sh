@@ -123,7 +123,9 @@ seed_private_profile() {
 # nono/agent-common.json that nothing else creates first.
 seed_granted_state_dirs() {
   local dir
-  for dir in "$HOME/.local/state/mouthfeel"; do
+  for dir in "$HOME/.local/state/mouthfeel" \
+             "$HOME/Library/pnpm/global" \
+             "$HOME/Library/pnpm/package-manager-store"; do
     [[ -d "$dir" ]] && continue
     mkdir -p "$dir"
     echo "✓  Created $dir (granted in nono/agent-common.json; nono skips absent paths)"

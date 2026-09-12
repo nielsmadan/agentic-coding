@@ -47,6 +47,8 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/Library/pnpm/global	profile
+$HOME/Library/pnpm/package-manager-store	profile
 $HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
@@ -104,6 +106,8 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/Library/pnpm/global	profile
+$HOME/Library/pnpm/package-manager-store	profile
 $HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
@@ -162,6 +166,8 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/Library/pnpm/global	profile
+$HOME/Library/pnpm/package-manager-store	profile
 $HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos
@@ -217,6 +223,8 @@ $HOME/Library/Caches	group:user_caches_macos
 $HOME/Library/Developer/CoreSimulator	profile
 $HOME/Library/Developer/Xcode/DerivedData	profile
 $HOME/Library/Logs	group:user_caches_macos
+$HOME/Library/pnpm/global	profile
+$HOME/Library/pnpm/package-manager-store	profile
 $HOME/development/flutter/bin/cache	profile
 $HOME/go/pkg/mod	profile
 /dev	group:system_read_macos

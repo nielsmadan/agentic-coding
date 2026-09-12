@@ -29,6 +29,8 @@
       "$HOME/.gradle/wrapper",
       "$HOME/.m2/repository",
       "$HOME/.yarn/berry",
+      "$HOME/Library/pnpm/global",
+      "$HOME/Library/pnpm/package-manager-store",
       "$HOME/.cocoapods",
       "$HOME/Library/Developer/Xcode/DerivedData",
       "$HOME/Library/Developer/CoreSimulator",
