@@ -17,7 +17,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
-| `/doc` | Documentation: assess state and run the right action (default, no args — surveys gaps/staleness/quality and routes), or explicit review/update/generate/session (--review, --update, --generate, --session) |
+| `/doc` | Documentation: assess gaps/staleness/quality/cleanup, preserve useful knowledge and remove extra files; or explicit review/update/generate/session (--review, --update, --generate, --session) |
 | `/evaluate-tech` | Structured adoption decision for a library, tool, or hosted service — uses blind-spots when consequential choices remain open, triages hard vs. soft constraints, enumerates 5-8 candidates, then scores each against one rubric with maintenance health as a mandatory gate |
 | `/explain` | Generate project explanation docs in `docs/explain/`, or explain a diff in the conversation (`--diff`, `--architecture`, `--flows`, `--syntax`, `--system`, `--infra`, `--test`, `--all`, `--staged`, optional topic filter) |
 | `/guide` | Walk through a multi-step UI/console task (e.g. cloud permission setup), re-printing a live step tracker at the bottom of every reply so you never scroll up |
@@ -103,10 +103,12 @@ Add debug logging statements to trace code execution. Supports any language (JS/
 
 ### /doc
 
-Assess, review, update, and generate documentation, or capture durable session knowledge.
+Assess, review, update, generate, and prune documentation, or capture durable session knowledge.
+Cleanup extracts useful knowledge into the defined doc set, repairs links, and removes the
+superseded files as part of the approved plan.
 
 **Arguments:**
-- No arguments - Assess gaps, staleness, and quality; propose an action plan
+- No arguments - Assess gaps, staleness, quality, and cleanup; propose an action plan
 - `--review` - Check existing docs against standards
 - `--update` - Sync affected living docs to code
 - `--generate <target>` - Create docs for specified code

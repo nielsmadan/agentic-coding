@@ -17,7 +17,9 @@ against the principles in `references/principles.md`, then offers to apply fixes
 
 ## Workflow
 
-1. **Get file list** based on scope.
+1. **Get file list** based on scope. Include legacy and extra documentation when checking
+   the retained set in [cleanup.md](cleanup.md); inventory completed scratch for cleanup
+   separately from the living-doc accuracy review.
 2. **Review** (directly if ≤5 files, parallel sub-agents if more), checking each doc
    against its lifecycle — prioritize accuracy/completeness/staleness over prose. Check
    living docs against current code. For `docs/tests/`, use [manual-tests.md](manual-tests.md):
@@ -31,8 +33,9 @@ against the principles in `references/principles.md`, then offers to apply fixes
    to apply — accept multiple selections. Where the tool supports an interactive
    multi-select prompt, use it; otherwise ask the user to reply with the numbers
    (e.g. `1,3,4`), `all`, or `none`.
-5. **Apply** the chosen findings using the `--update` apply logic (in-place edits),
-   then report what changed. `none` → stop without writing. Review never rewrites
+5. **Apply** the chosen findings using the `--update` apply logic for in-place edits and
+   [cleanup.md](cleanup.md) for extraction and removal, then report what changed.
+   `none` → stop without writing. Review never rewrites
    silently — the user always chooses.
 
 ## Checklist
@@ -57,6 +60,8 @@ against the principles in `references/principles.md`, then offers to apply fixes
 
 **Quality:**
 - [ ] No verbatim duplication across files
+- [ ] Every in-scope doc belongs to the retained set and has a distinct purpose;
+      extra files have a concrete extraction/removal finding under [cleanup.md](cleanup.md)
 - [ ] Current-state and why are separated; gotchas documented
 - [ ] Examples are concrete (not generic placeholders)
 
