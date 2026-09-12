@@ -39,6 +39,8 @@ def load_manifest(
 
 
 def available_skills(skills_root: Path) -> list[str]:
+    if not skills_root.is_dir():
+        return []
     return sorted(
         entry.name
         for entry in skills_root.iterdir()
@@ -73,9 +75,49 @@ def manifest_errors(
     return errors
 
 
-def check_manifest() -> list[str]:
-    publish, private, local, _ = load_manifest(MANIFEST_PATH)
-    return manifest_errors(available_skills(SKILLS_ROOT), publish, private, local)
+def skill_sources(
+    publish: list[str], skills_root: Path, overrides_root: Path
+) -> tuple[dict[str, Path], list[str]]:
+    sources = {name: skills_root / name for name in publish}
+    if overrides_root.is_symlink():
+        return sources, ["overrides: symlinked directory refused"]
+    if not overrides_root.exists():
+        return sources, []
+    if not overrides_root.is_dir():
+        return sources, ["overrides: expected a directory"]
+    errors: list[str] = []
+    for override in sorted(overrides_root.iterdir()):
+        name = override.name
+        if override.is_file() and not override.is_symlink() and name not in sources:
+            continue
+        if name not in sources:
+            errors.append(f"overrides/{name}: skill is not listed in a publish group")
+        elif override.is_symlink():
+            errors.append(f"overrides/{name}: symlinked directory refused")
+        elif not override.is_dir():
+            errors.append(f"overrides/{name}: expected a skill directory")
+        elif (override / "SKILL.md").is_symlink():
+            errors.append(f"overrides/{name}: symlinked SKILL.md refused")
+        elif not (override / "SKILL.md").is_file():
+            errors.append(f"overrides/{name}: missing SKILL.md")
+        else:
+            sources[name] = override
+    return sources, errors
+
+
+def check_manifest(
+    *, manifest_path: Path = MANIFEST_PATH, skills_root: Path = SKILLS_ROOT
+) -> list[str]:
+    publish, private, local, _ = load_manifest(manifest_path)
+    sources, override_errors = skill_sources(
+        publish, skills_root, manifest_path.parent / "overrides"
+    )
+    available = set(available_skills(skills_root))
+    available.update(
+        name for name, source in sources.items() if source.parent != skills_root
+    )
+    errors = manifest_errors(sorted(available), publish, private, local)
+    return errors + override_errors
 
 
 # `/Users/nielsmadan`, not `/Users/` — the risk is identity leaking, not the
@@ -530,16 +572,22 @@ def source_errors(
     """Scan source skill files for personal strings only — markers and private
     references are legal in source."""
     publish, _, _, _ = load_manifest(manifest_path)
-    errors: list[str] = []
-    for name in sorted(publish):
-        if not (skills_root / name).is_dir():
+    sources, errors = skill_sources(
+        publish, skills_root, manifest_path.parent / "overrides"
+    )
+    if errors:
+        return errors
+    for name, source in sorted(sources.items()):
+        if not source.is_dir():
             errors.append(f"{name}: no such skill directory")
             continue
-        for path in sorted((skills_root / name).rglob("*")):
+        for path in sorted(source.rglob("*")):
             if not path.is_file():
                 continue
             content = path.read_text(encoding="utf-8", errors="ignore")
-            relative = path.relative_to(skills_root)
+            relative = path.relative_to(source.parent)
+            if source.parent != skills_root:
+                relative = Path("overrides") / relative
             for match in PERSONAL.finditer(content):
                 line = _line_of(content, match.start())
                 errors.append(
@@ -557,12 +605,25 @@ def build(
 ) -> tuple[list[str], list[str]]:
     """Render everything into `out`. Returns (errors, warnings)."""
     publish, private, local, groups = load_manifest(manifest_path)
-    errors = manifest_errors(available_skills(skills_root), publish, private, local)
+    sources, override_errors = skill_sources(
+        publish, skills_root, manifest_path.parent / "overrides"
+    )
+    available = set(available_skills(skills_root))
+    available.update(
+        name for name, source in sources.items() if source.parent != skills_root
+    )
+    errors = manifest_errors(sorted(available), publish, private, local)
+    errors.extend(override_errors)
     unpublished = private + local
     if errors:
         return errors, []
     discover_skills, render_skill = loader()
-    skills = discover_skills(skills_root)
+    skills = [
+        skill
+        for root in sorted({source.parent for source in sources.values()})
+        for skill in discover_skills(root)
+        if sources.get(skill.name) == skill.document.parent
+    ]
     try:
         render_tree(out, publish, skills, render_skill)
     except ValueError as error:

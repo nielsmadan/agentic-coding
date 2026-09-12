@@ -297,7 +297,8 @@ Deleting rather than replacing is the choice that matters: one document to maint
 two, and no contest over who writes the key last.
 
 **`publish/` generates the public skills collection.** `publish/sync.py` renders the
-`publish`-classified skills from `loadout/skills/` into
+`publish`-classified skills from `loadout/skills/`, preferring complete skill
+directories in `publish/overrides/<name>/` when present, into
 [nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin
 marketplace and `npx skills` collection; a workflow in that repo runs it hourly.
 `publish/skills.toml` classifies every skill into a README group under `[groups]` (published), into `private` (in the repo but unpublished), or into `local` (gitignored — never pushed, this repo being public), fail-closed:
@@ -308,7 +309,11 @@ script path (`python3 publish/sync.py`), never `python3 -m publish.sync`: `-m` p
 the repo root on `sys.path`, where the `loadout/` config directory shadows the
 installed `loadout` package. The `loadout` package is a `uv tool` install, not
 importable from system Python — only `--out` (render) needs it; the checks and the
-tests (`python3 -m unittest publish.test_sync`) run without it.
+tests (`python3 -m unittest publish.test_sync`) run without it. Source checks scan
+the selected public variant. Overrides must name a published skill and contain
+`SKILL.md`; invalid overrides fail rather than falling back. Supporting files come
+entirely from the selected directory. See
+[`publish/overrides/README.md`](publish/overrides/README.md) for the workflow.
 
 **Codex validates none of this.** `model_reasoning_effort = "bogus"` is accepted silently and
 reported as the session's effort; a wrong value fails server-side at first use. The published

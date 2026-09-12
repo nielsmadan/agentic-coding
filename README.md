@@ -96,6 +96,17 @@ Claude, Codex, OpenCode, and Pi.
   skill with arguments and examples. There's also a summary table in
   [`AGENTS.md`](AGENTS.md#skills).
 
+### Public variants
+
+To publish a different version of a skill, copy its complete directory from
+`loadout/skills/<name>/` to `publish/overrides/<name>/` and edit that copy. The
+publisher uses the override when present; local loadout sync continues to use
+`loadout/skills/`. Skills without overrides publish their usual version.
+
+The existing workflow publishes these changes after they reach `agentic-coding`;
+keep editing the source here. See
+[`publish/overrides/README.md`](publish/overrides/README.md) for setup and checks.
+
 ## Permissions
 
 All four agents' shell-command and MCP permissions are **generated** from
