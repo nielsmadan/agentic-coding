@@ -137,6 +137,59 @@ seed_granted_state_dirs() {
   done
 }
 
+# The sandbox denies login.keychain-db, and that is where Xcode keeps the WWDR
+# intermediates — without them an Apple Development cert cannot build a chain and
+# codesign fails with errSecInternalComponent. Copy them into the granted signing
+# keychain, and re-apply the partition list so securityd authorises codesign
+# instead of falling through to a SecurityAgent prompt no sandbox can answer.
+sync_agent_signing_keychain() {
+  local kc="$HOME/Library/Keychains/agent-signing.keychain-db"
+  [[ -f "$kc" ]] || return 0
+
+  local tmp imported=0
+  tmp="$(mktemp -d)"
+  security find-certificate -a -c "Apple Worldwide Developer Relations" -p \
+    "$HOME/Library/Keychains/login.keychain-db" 2>/dev/null \
+    | awk -v d="$tmp" '/BEGIN/{n++} n{print > (d "/src" n ".pem")}'
+  security find-certificate -a -c "Apple Worldwide Developer Relations" -p "$kc" 2>/dev/null \
+    | awk -v d="$tmp" '/BEGIN/{n++} n{print > (d "/have" n ".pem")}'
+
+  local have="" f fp
+  for f in "$tmp"/have*.pem; do
+    [[ -e "$f" ]] || continue
+    have+="$(openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null) "
+  done
+  for f in "$tmp"/src*.pem; do
+    [[ -e "$f" ]] || continue
+    openssl x509 -in "$f" -noout -checkend 0 >/dev/null 2>&1 || continue
+    fp="$(openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null)"
+    [[ -n "$fp" && "$have" == *"$fp"* ]] && continue
+    security import "$f" -k "$kc" -T /usr/bin/codesign >/dev/null 2>&1 && imported=$((imported+1))
+  done
+  rm -rf "$tmp"
+  [[ $imported -gt 0 ]] && echo "✓  Imported $imported WWDR intermediate(s) into agent-signing.keychain-db"
+
+  if security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$kc" >/dev/null 2>&1; then
+    :
+  else
+    echo "!  Could not set the partition list on agent-signing.keychain-db (is it password-protected?)."
+    echo "   Sandboxed codesign will prompt-and-fail until you run:"
+    echo "   security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k <password> \"$kc\""
+  fi
+
+  # This keychain is reachable from every sandbox, so it carries device-build
+  # certificates only. A Distribution or Developer ID key here could sign software
+  # that ships off this machine.
+  local shippable
+  shippable="$(security find-certificate -a "$kc" 2>/dev/null \
+    | grep -cE '"labl".*(Apple Distribution|Developer ID)' || true)"
+  if [[ "${shippable:-0}" -gt 0 ]]; then
+    echo "!  $shippable Distribution/Developer ID certificate(s) in agent-signing.keychain-db."
+    echo "   Sandboxed agents can sign with these. Remove unless deliberate:"
+    echo "   security delete-identity -Z <sha1> \"$kc\""
+  fi
+}
+
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
 # (a symlink holds no data); a real file/dir where a link belongs → back it up
 # (never rm -rf unattended), then link.
@@ -300,6 +353,7 @@ sync_codex_superpowers
 echo ""
 seed_private_profile
 seed_granted_state_dirs
+sync_agent_signing_keychain
 
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"
