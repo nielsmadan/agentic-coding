@@ -96,8 +96,9 @@ def countdown(seconds):
 
 
 def window_segment(label, bucket, now, show_reset=False):
+    prominent = label == "7d"
     if not isinstance(bucket, dict) or not number(bucket.get("usedPercent")):
-        return color(f"{label} ?", "2")
+        return color(f"{label} ?", "1;97" if prominent else "2")
     used = bucket["usedPercent"]
     remaining = None
     if isinstance(bucket.get("windowEnd"), str):
@@ -106,11 +107,11 @@ def window_segment(label, bucket, now, show_reset=False):
         except (TypeError, ValueError):
             pass
     if remaining is not None and remaining <= 0:
-        return color(f"{label} ?", "2")
+        return color(f"{label} ?", "1;97" if prominent else "2")
     code = 31 if used >= 80 else 33 if used >= 50 else 32
-    text = color(f"{label} {used:g}%", code)
+    text = color(f"{label} {used:g}%", f"1;{code + 60}" if prominent else code)
     if show_reset and remaining is not None:
-        text += color(f" {countdown(remaining)}", 37)
+        text += color(f" {countdown(remaining)}", "1;97" if prominent else 37)
     return text
 
 
