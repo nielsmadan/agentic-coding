@@ -65,3 +65,13 @@ session. `swift test` on a `Package.swift` target has no such problem.
 something the user's *own* unsandboxed tools would later trust. Do not propose a grant for these:
 name the blocker, hand the user the command to run themselves, and carry on with the rest. The
 `nono-sandbox` skill lists each one with its command; the reasoning is in `~/ac/docs/security-model.md`.
+
+**`uvx` needs its directories redirected, not granted.** uv writes to
+`~/.local/share/uv/tools`, which is not granted, so `uvx <tool>` fails with `Operation not
+permitted` on a `.lock` file there. Do not ask for a grant: that directory holds executables the
+user's *own* unsandboxed `uv` would later run, the same reason install trees elsewhere are
+read-only. Point uv at a writable directory in the workspace instead — measured working:
+
+```sh
+env UV_TOOL_DIR="$WORKDIR/.uv/tools" UV_CACHE_DIR="$WORKDIR/.uv/cache" uvx --from <pkg> <cmd>
+```
