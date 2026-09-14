@@ -9,6 +9,12 @@
   "hooks": {
     "showHookOutput": false
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.factory/statusline.sh",
+    "padding": 0,
+    "maxRows": 3
+  },
   "sessionDefaultSettings": {
     "autonomyLevel": "high"
   }
