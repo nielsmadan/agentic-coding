@@ -46,6 +46,9 @@ echo ""
 # --- Reconcile (regenerate, symlink, link skills) ---
 "$SCRIPT_DIR/sync.sh" "--$PROFILE"
 
+# --- Git hooks ---
+lefthook install || true
+
 # --- One-time interactive bootstrap ---
 # MCP servers are written by loadout from loadout/mcp.toml.
 

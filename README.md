@@ -25,6 +25,7 @@ cd ~/ac
 - render instructions, permissions, MCP definitions, settings, hooks, plugins,
   skills, defaults, and module config into each harness's live paths
 - install the remaining static symlinks
+- install this repository's own Git hooks
 - register missing Claude MCP servers and local plugin marketplaces
 - optionally add `source ~/.airc` to your `~/.zshrc`
 
