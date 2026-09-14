@@ -79,6 +79,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/nono/codex-local.json:$HOME/.config/nono/profiles/codex-local.json"
   "$SCRIPT_DIR/nono/opencode-local.json:$HOME/.config/nono/profiles/opencode-local.json"
   "$SCRIPT_DIR/nono/pi-local.json:$HOME/.config/nono/profiles/pi-local.json"
+  "$SCRIPT_DIR/nono/droid-local.json:$HOME/.config/nono/profiles/droid-local.json"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
   # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs
@@ -128,7 +129,8 @@ seed_granted_state_dirs() {
              "$HOME/Library/pnpm/package-manager-store" \
              "$HOME/.gradle/notifications" \
              "$HOME/.gradle/.tmp" \
-             "$HOME/.gradle/android"; do
+             "$HOME/.gradle/android" \
+             "$HOME/.tart"; do
     [[ -d "$dir" ]] && continue
     mkdir -p "$dir"
     echo "✓  Created $dir (granted in nono/agent-common.json; nono skips absent paths)"

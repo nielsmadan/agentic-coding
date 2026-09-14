@@ -1,0 +1,44 @@
+{
+  "extends": [
+    "default",
+    "agent-common",
+    "agent-private"
+  ],
+  "meta": {
+    "name": "droid-local",
+    "description": "Factory droid — no nolabs-ai pack exists, so this is written from scratch"
+  },
+  "groups": {
+    "include": [
+      {
+        "name": "user_caches_macos",
+        "when": "macos"
+      },
+      "node_runtime",
+      "rust_runtime",
+      "python_runtime",
+      "git_config",
+      "unlink_protection"
+    ]
+  },
+  "security": {
+    "signal_mode": "isolated",
+    "capability_elevation": false
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/.factory"
+    ],
+    "read": [
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
+    ]
+  },
+  "network": {
+    "block": false
+  },
+  "workdir": {
+    "access": "readwrite"
+  },
+  "interactive": true
+}

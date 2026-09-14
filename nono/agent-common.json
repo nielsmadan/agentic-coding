@@ -37,6 +37,7 @@
       "$HOME/.cocoapods",
       "$HOME/Library/Developer/Xcode/DerivedData",
       "$HOME/Library/Developer/CoreSimulator",
+      "$HOME/.tart",
       "$HOME/.config/cadet",
       "$HOME/.gc",
       "$HOME/.local/share/ringleader",
@@ -124,6 +125,7 @@
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
     "(allow mach-register (global-name-prefix \"com.google.Chrome.\"))",
     "(allow iokit-open)",
-    "(allow file-issue-extension (extension-class \"com.apple.app-sandbox.read\" \"com.apple.app-sandbox.read-write\"))"
+    "(allow file-issue-extension (extension-class \"com.apple.app-sandbox.read\" \"com.apple.app-sandbox.read-write\"))",
+    "(allow generic-issue-extension (extension-class-prefix \"com.apple.virtualization.extension.\"))"
   ]
 }
