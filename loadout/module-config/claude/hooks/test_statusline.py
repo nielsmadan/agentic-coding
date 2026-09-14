@@ -53,12 +53,12 @@ def calculate_fields(at: datetime) -> dict[str, str]:
 
 
 class StatuslineUsageTest(unittest.TestCase):
-    def test_pace_advances_at_five_am_local_time(self) -> None:
+    def test_daily_allowance_advances_at_five_am_local_time(self) -> None:
         before = calculate_fields(datetime(2026, 8, 24, 4, 59, tzinfo=TIMEZONE))
         after = calculate_fields(datetime(2026, 8, 24, 5, 0, tzinfo=TIMEZONE))
 
-        self.assertEqual(before["seven_pace"], "-7")
-        self.assertEqual(after["seven_pace"], "8")
+        self.assertEqual(before["seven_today"], "8")
+        self.assertEqual(after["seven_today"], "22")
 
     def test_reset_countdown_remains_exact(self) -> None:
         at = datetime(2026, 8, 24, 9, 20, tzinfo=TIMEZONE)

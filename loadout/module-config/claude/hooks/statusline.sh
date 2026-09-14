@@ -4,17 +4,17 @@ input=$(cat)
 eval "$(printf '%s' "$input" | jq -r '
 def used: if . == null or .used_percentage == null then "" else (.used_percentage | round) end;
 def workday: ((. - (5 * 3600)) | strflocaltime("%Y-%m-%d") | . + "T00:00:00Z" | fromdateiso8601);
-def pace: if . == null or .used_percentage == null or .resets_at == null then ""
+def today_left: if . == null or .used_percentage == null or .resets_at == null then ""
   else (((((now | workday) - ((.resets_at - 604800) | workday)) / 86400) | floor) + 1
         | if . < 1 then 1 elif . > 7 then 7 else . end) as $day
-    | ((($day - 1) * 100 / 7) - .used_percentage | round) end;
+    | (($day * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
   else ((.resets_at - now) | if . < 0 then 0 else . end | floor) end;
 def cache_state: if . == null then ""
   elif .caching_observed != true then "unknown"
   elif .warm != true or (.expires_at != null and .expires_at <= now) then "cold"
   else "warm" end;
-@sh "current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_pace=\(.rate_limits.seven_day | pace) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
+@sh "current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_today=\(.rate_limits.seven_day | today_left) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
 
 E=$'\033'
 sep_str="${E}[2m │ ${E}[0m"
@@ -50,18 +50,18 @@ fmt_left() {
 }
 
 window() {
-  local pct=$1 pace=$2 left=$3 l
+  local pct=$1 today=$2 left=$3 l
   window_out="$(pct_color "$pct")${pct}%${E}[0m"
   window_w=$((${#pct} + 1))
-  # one day's share of the weekly window; spending it during the day is on budget
+  # what is left of today's share of the weekly window
   local alw=$((100 / 7)) c
-  if [ -n "$pace" ]; then
-    if [ "$pace" -ge $((-alw)) ]; then c=32
-    elif [ "$pace" -ge $((-2 * alw)) ]; then c=33
+  if [ -n "$today" ]; then
+    if [ "$today" -ge 0 ]; then c=32
+    elif [ "$today" -ge $((-alw)) ]; then c=33
     else c=31; fi
-    if [ "$pace" -gt 0 ]; then window_out+=" ${E}[${c}m+${pace}${E}[0m"; window_w=$((window_w + 2 + ${#pace}))
-    elif [ "$pace" -eq 0 ]; then window_out+=" ${E}[36m0${E}[0m"; window_w=$((window_w + 2))
-    else window_out+=" ${E}[${c}m${pace}${E}[0m"; window_w=$((window_w + 1 + ${#pace})); fi
+    if [ "$today" -gt 0 ]; then window_out+=" ${E}[${c}m+${today}${E}[0m"; window_w=$((window_w + 2 + ${#today}))
+    elif [ "$today" -eq 0 ]; then window_out+=" ${E}[36m0${E}[0m"; window_w=$((window_w + 2))
+    else window_out+=" ${E}[${c}m${today}${E}[0m"; window_w=$((window_w + 1 + ${#today})); fi
   fi
   if [ -n "$left" ]; then
     l=$(fmt_left "$left")
@@ -124,7 +124,7 @@ if [ -n "$cache_state" ]; then
 fi
 
 if [ -n "$seven_d" ]; then
-  window "$seven_d" "$seven_pace" "$seven_left"
+  window "$seven_d" "$seven_today" "$seven_left"
   add_seg 70 $((3 + window_w)) "⏳ ${window_out}"
 fi
 
