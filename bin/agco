@@ -4,9 +4,9 @@
 Usage:
     agco
 
-Checks Claude Code, Codex, OpenCode and Pi session stores for sessions whose
-recorded cwd is exactly the current directory, and prints the name of the agent
-holding the newest one on stdout, plus a human-readable note on stderr.
+Checks Claude Code, Codex, droid, OpenCode and Pi session stores for sessions
+whose recorded cwd is exactly the current directory, and prints the name of the
+agent holding the newest one on stdout, plus a human-readable note on stderr.
 
 Pi sessions print as ``pi:<provider>`` (``pi:openai-codex``, ``pi:openrouter``)
 so the caller can resume on the provider that session was actually served by.
@@ -49,6 +49,7 @@ CLCOF = load_clcof()
 class Roots:
     claude_projects: Path
     codex_sessions: Path
+    droid_sessions: Path
     opencode_db: Path
     pi_sessions: Path
 
@@ -59,9 +60,13 @@ class Roots:
         claude_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR", home / ".claude"))
         codex_dir = Path(os.environ.get("CODEX_HOME", home / ".codex"))
         pi_dir = Path(os.environ.get("PI_CODING_AGENT_DIR", home / ".pi" / "agent"))
+        # droid has no dir override, only a HOME one: factoryDir is always
+        # <home>/.factory.
+        droid_home = Path(os.environ.get("FACTORY_HOME_OVERRIDE", home))
         return cls(
             claude_projects=claude_dir / "projects",
             codex_sessions=codex_dir / "sessions",
+            droid_sessions=droid_home / ".factory" / "sessions",
             opencode_db=xdg_data / "opencode" / "opencode.db",
             pi_sessions=Path(
                 os.environ.get("PI_CODING_AGENT_SESSION_DIR", pi_dir / "sessions")
@@ -129,6 +134,13 @@ def pi_cwd(record: dict) -> str | None:
     return cwd if isinstance(cwd, str) else None
 
 
+def droid_cwd(record: dict) -> str | None:
+    if record.get("type") != "session_start":
+        return None
+    cwd = record.get("cwd")
+    return cwd if isinstance(cwd, str) else None
+
+
 def last_provider(path: Path) -> str | None:
     provider = None
     try:
@@ -174,6 +186,10 @@ def pi_latest(cwd: str, roots: Roots) -> float | None:
     return newest_jsonl(roots.pi_sessions, cwd, pi_cwd)
 
 
+def droid_latest(cwd: str, roots: Roots) -> float | None:
+    return newest_jsonl(roots.droid_sessions, cwd, droid_cwd)
+
+
 def opencode_latest(cwd: str, roots: Roots) -> float | None:
     if not roots.opencode_db.is_file():
         return None
@@ -197,6 +213,7 @@ def opencode_latest(cwd: str, roots: Roots) -> float | None:
 FINDERS = {
     "claude": claude_latest,
     "codex": codex_latest,
+    "droid": droid_latest,
     "opencode": opencode_latest,
     "pi": pi_latest,
 }
@@ -229,7 +246,8 @@ def most_recent_agent(cwd: str, roots: Roots) -> tuple[str, float] | None:
 
 def main() -> int:
     cwd = str(Path.cwd().resolve())
-    recent = most_recent_agent(cwd, Roots.from_environment())
+    roots = Roots.from_environment()
+    recent = most_recent_agent(cwd, roots)
     if recent is None:
         print(f"agco: no agent session found for {cwd}", file=sys.stderr)
         return 1

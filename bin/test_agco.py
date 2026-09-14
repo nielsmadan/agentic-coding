@@ -26,6 +26,7 @@ class AgcoTests(unittest.TestCase):
         self.roots = agco.Roots(
             claude_projects=root / "claude" / "projects",
             codex_sessions=root / "codex" / "sessions",
+            droid_sessions=root / "factory" / "sessions",
             opencode_db=root / "opencode" / "opencode.db",
             pi_sessions=root / "pi" / "sessions",
         )
@@ -49,6 +50,12 @@ class AgcoTests(unittest.TestCase):
         record = {"type": "session_meta", "payload": {"id": name, "cwd": cwd}}
         return self.write_jsonl(
             self.roots.codex_sessions / "2026" / "08" / name, [record], mtime
+        )
+
+    def write_droid(self, cwd: str, name: str, mtime: float) -> Path:
+        record = {"type": "session_start", "id": name, "cwd": cwd}
+        return self.write_jsonl(
+            self.roots.droid_sessions / "slug" / name, [record], mtime
         )
 
     def write_pi(
@@ -88,6 +95,12 @@ class AgcoTests(unittest.TestCase):
         self.write_codex(self.cwd, "older.jsonl", 1000)
         self.assertEqual(agco.codex_latest(self.cwd, self.roots), 1000)
         self.assertIsNone(agco.codex_latest("/nowhere", self.roots))
+
+    def test_droid_ignores_other_directories(self) -> None:
+        self.write_droid(self.other, "newer.jsonl", 9000)
+        self.write_droid(self.cwd, "older.jsonl", 1000)
+        self.assertEqual(agco.droid_latest(self.cwd, self.roots), 1000)
+        self.assertIsNone(agco.droid_latest("/nowhere", self.roots))
 
     def test_pi_takes_newest_matching_session(self) -> None:
         self.write_pi(self.cwd, "old.jsonl", 1000)
@@ -159,6 +172,22 @@ class AgcoTests(unittest.TestCase):
         self.write_pi(self.cwd, "c.jsonl", 2000)
         self.write_opencode(self.cwd, "s1", 2_500_000)
         self.assertEqual(agco.most_recent_agent(self.cwd, self.roots), ("codex", 3000))
+
+    def test_droid_can_win(self) -> None:
+        self.write_claude(self.cwd, "a.jsonl", 1000)
+        self.write_codex(self.cwd, "b.jsonl", 3000)
+        self.write_droid(self.cwd, "c.jsonl", 6000)
+        self.assertEqual(agco.most_recent_agent(self.cwd, self.roots), ("droid", 6000))
+
+    def test_droid_root_follows_the_home_override(self) -> None:
+        os.environ["FACTORY_HOME_OVERRIDE"] = "/tmp/fake-home"
+        try:
+            roots = agco.Roots.from_environment()
+        finally:
+            del os.environ["FACTORY_HOME_OVERRIDE"]
+        self.assertEqual(
+            roots.droid_sessions, Path("/tmp/fake-home/.factory/sessions")
+        )
 
     def test_opencode_can_win(self) -> None:
         self.write_claude(self.cwd, "a.jsonl", 1000)

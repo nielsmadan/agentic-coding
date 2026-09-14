@@ -76,7 +76,8 @@
       "$HOME/.yarn",
       "$HOME/.config/yarn",
       "$HOME/.docker/contexts",
-      "$HOME/.local/share/claude"
+      "$HOME/.local/share/claude",
+      "$HOME/.factory/sessions"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",

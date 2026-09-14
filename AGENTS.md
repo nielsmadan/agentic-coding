@@ -413,7 +413,10 @@ Put machine-specific grants there, not in `agent-common.json`.
 `nono/agent-common.json` holds everything the five share: `~/wrksp` read+write, read on `~/ac`
 (the agents' own config lives there behind symlinks), mise installs, the colima docker socket, the
 agent-browser socket directory, and the Chrome-for-testing Seatbelt rules. Change a shared grant
-there, not six times over. The per-agent files hold only what one agent needs:
+there, not six times over. It also carries every agent's session store, because `agco` reads all
+five to decide which one to resume — `~/.factory/sessions` is there read-only, so a droid session
+is visible to `agco` from any sandbox while the rest of droid's state tree stays droid's alone.
+The per-agent files hold only what one agent needs:
 
 | profile | extra grant | why |
 |---|---|---|

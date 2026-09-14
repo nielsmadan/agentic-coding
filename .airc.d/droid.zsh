@@ -8,3 +8,5 @@
 # rule-based autonomy layer, so nono is the outer boundary rather than the only
 # one.
 droid() { AGENT_HARNESS=droid _agent_sandboxed droid-local droid "$@"; }
+
+alias drco="droid resume --last"

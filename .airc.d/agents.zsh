@@ -9,6 +9,7 @@ agco() {
   case $agent in
     claude)   claude --continue "$@" ;;
     codex)    codex resume --last "$@" ;;
+    droid)    droid resume --last "$@" ;;
     opencode) opencode --continue "$@" ;;
     pi:openai-codex) pix --continue "$@" ;;
     pi|pi:*)  pi --continue "$@" ;;
