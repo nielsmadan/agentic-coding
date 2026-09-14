@@ -36,7 +36,11 @@ SwiftLint has **no** SwiftUI property-wrapper or ownership rules, so all of §4 
 
 **3. Xcode runtime diagnostics** catch some SwiftUI misuse at runtime (off-main-thread `ObservedObject`/`StateObject` mutation, cross-actor `Binding` access, `StateObject` accessed without being installed on a view). These are runtime issues, not review findings. Note they reportedly have **no `@Observable` equivalent** — so migrating to `@Observable` loses that safety net, which makes §4 review *more* important, not less.
 
-**One-time tooling recommendation (not a per-diff finding).** If the project has no SwiftLint config, omits the safety opt-ins (`force_unwrapping`, `implicitly_unwrapped_optional`, `unowned_variable_capture`), or isn't on Swift 6 language mode / `-strict-concurrency=complete`, say so **once** at the top. That single recommendation solves the whole mechanical class better than eyeballing diffs. Then move on.
+**The baseline read is a silencer, not a finding.** Read the config so you don't report what a rule already covers. *Recommending* a lint or language-mode change is a project-level action — see §P — and belongs in an `--all` audit, not a diff review.
+
+## What this skill checks
+
+**Swift design decisions are made once; the ways they get violated recur with every change.** So the default review looks only at what the diff introduces — a new struct whose fields are correlated, a new `!` on external data, a new `Task` with no owner, a new `@State` holding a passed-in object. Whole-module properties (is SwiftLint configured, is the target on Swift 6 mode, is the `public` surface coherent) belong to **§P**, which runs at `--all` and nowhere else.
 
 ## Usage
 
@@ -57,7 +61,7 @@ SwiftLint has **no** SwiftUI property-wrapper or ownership rules, so all of §4 
 | `--staged` | Staged changes | `git diff --cached --name-only` |
 | `--unpushed` | Files changed across unpushed commits | `git diff --name-only $(git rev-list HEAD --not --remotes \| tail -1)^..HEAD` |
 | `--changed` | Unstaged changes | `git diff --name-only` |
-| `--all` | Full codebase | Glob `*.swift`, parallel agents |
+| `--all` | Full codebase + **§P project-level checks** | Glob `*.swift`, parallel agents |
 | `--multi` | Add external opinions | Combines with any scope above; invokes `second-opinion --quick` |
 
 `--unpushed` derives its range from `git rev-list HEAD --not --remotes` (oldest unpushed commit's parent → HEAD). If nothing is unpushed, or there is no remote/upstream (or the range walks back to the root commit) so it can't be determined reliably, stop and ask the user to pick another scope. Restrict the resolved file list to `.swift` before reviewing.
@@ -72,7 +76,7 @@ SwiftLint has **no** SwiftUI property-wrapper or ownership rules, so all of §4 
    - **`NonisolatedNonsendingByDefault`** (SE-0461) — changes where `nonisolated async` functions run.
    - **`.swiftlint.yml`** — which rules actually run.
    - Mixed-mode workspaces are common (a package on v6, the app target on v5). If genuinely ambiguous, review concurrency as if strict checking is **off** (more findings) and say so in the Baseline line.
-4. **Review each file** against the categories below. Load the matching reference file when the code touches that area.
+4. **Review each file** against the categories below — against what the diff introduces. Add **§P only at `--all`**. Load the matching reference file when the code touches that area.
 5. **Parallelize** if scope has >5 files: one sub-agent per category, merge and dedupe.
 6. **External opinions** (if `--multi`): invoke `second-opinion --quick` with this prompt:
 
@@ -163,7 +167,19 @@ State your reasoning. "Force-unwrap hides that `configURL` is modeled as `String
 
 `~Copyable`, `borrowing`/`consuming` (Swift 5.9+) are genuinely niche — file handles, locks, once-only operations. One question at most: *does this represent a resource that must not be duplicated?* Treat unexplained `borrowing`/`consuming` on ordinary copyable code as noise; SE-0377 notes adding or removing them "does not have any source-breaking effects," so they're performance annotations, not contracts. No authoritative review guidance exists for macros — don't invent any.
 
+## P. Project-level checks — `--all` only
+
+Whole-module properties. They change rarely, so raising them on a diff review buries the findings that matter. **Never report these outside an `--all` audit.**
+
+- **Toolchain configuration.** No `.swiftlint.yml`; the safety opt-ins missing (`force_unwrapping`, `implicitly_unwrapped_optional`, `unowned_variable_capture`); the target not on Swift 6 language mode or `-strict-concurrency=complete`. One recommendation covers the whole mechanical class better than eyeballing diffs ever will.
+- **Public surface coherence.** In a package (`Package.swift`), sweep what is `public` versus what needs to be: `public` surface that leaks internal types, `public` where `internal` was the intent, mutable `public var` that should be `private(set)`, and missing `@frozen`/`@inlinable` decisions on a library that has made an ABI commitment. Adding a case to a `public enum` a client switches over is a source break — worth one whole-module pass, not a per-diff nag.
+- **Naming against the API Design Guidelines**, as a sweep rather than a style hunt: mutating/non-mutating pairs (`sort()`/`sorted()`, `union`/`formUnion`), factory methods beginning with `make`, non-mutating methods reading as noun phrases. Flag only where it genuinely misleads — and remember there is **no "don't prefix with `get`" rule**.
+- **`@retroactive` conformances across the module** — two modules conforming the same external type conflict at runtime, which only a whole-module view surfaces.
+- **Test posture** — whether `sleep`-based synchronization, real clock, network or home-directory access appear across the suite. Do not demand migration off XCTest; it is not deprecated and still has no equivalent for UI automation or performance testing.
+
 ## Do NOT flag these
+
+- **Anything in §P, on a diff review.** Lint configuration, language mode, `public` surface and naming sweeps are module properties; this diff did not change them.
 
 Common reviewer instincts that are wrong or unsupported. See `references/memory-and-performance.md` §7 for sources.
 
@@ -191,7 +207,7 @@ Common reviewer instincts that are wrong or unsupported. See `references/memory-
 ## Swift Review: {scope}
 
 ### Baseline
-{Language mode / default isolation / strict concurrency; SwiftLint config and which safety opt-ins are on. State any assumption you had to make. Omit if everything is in place.}
+{Language mode / default isolation / strict concurrency, and any assumption you had to make — these change how the code *reads*, so state them whenever they were ambiguous. **At `--all` only:** the §P results, including the toolchain recommendation. On a diff review, omit this block if the isolation picture was unambiguous.}
 
 ### Critical (crash / data race / corruption reachable)
 - {file}:{line} — {category}: {description}
