@@ -1,5 +1,8 @@
 {
   "logoAnimation": "off",
   "includeCoAuthoredByDroid": false,
-  "awaitingInputSound": "off"
+  "awaitingInputSound": "off",
+  "sessionDefaultSettings": {
+    "autonomyLevel": "high"
+  }
 }
