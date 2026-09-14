@@ -47,9 +47,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
-| `/review-swift` | Swift judgment-level review a linter and the compiler can't do — state modeling, optional/error/Codable modeling, concurrency isolation intent, SwiftUI identity/lifetime/dependencies, ARC ownership, escape hatches hiding a modeling problem. Non-overlapping with SwiftLint / Swift 6 strict concurrency. Auto-invoked by `code-review` on Swift projects |
 | `/review-todo` | Turns a completed review into a persistent workflow: proposes the complete ordered plan for approval, then implements accepted findings and commits them in logical chunks |
-| `/review-typescript` | TypeScript judgment-level review a linter can't do — type modeling, inference-vs-annotation, casts/`any` hiding a modeling problem. Deliberately non-overlapping with typescript-eslint. Auto-invoked by `code-review` on TS projects |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
 | `/squash-commits` | Squash unpushed commits into clean higher-level feat/fix/chore commits per the commit policy (`--conservative`, optional base ref) |
