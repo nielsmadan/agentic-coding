@@ -1,7 +1,14 @@
 {
   "logoAnimation": "off",
   "includeCoAuthoredByDroid": false,
+  "completionSound": "off",
   "awaitingInputSound": "off",
+  "enableCompletionBell": false,
+  "subagentSounds": "off",
+  "reauthBannerShownTui": true,
+  "hooks": {
+    "showHookOutput": false
+  },
   "sessionDefaultSettings": {
     "autonomyLevel": "high"
   }
