@@ -13,7 +13,7 @@
     "type": "command",
     "command": "~/.factory/statusline.sh",
     "padding": 0,
-    "maxRows": 3
+    "maxRows": 1
   },
   "sessionDefaultSettings": {
     "autonomyLevel": "high"

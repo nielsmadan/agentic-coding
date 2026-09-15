@@ -109,7 +109,8 @@ def window_segment(label, bucket, now, show_reset=False):
     if remaining is not None and remaining <= 0:
         return color(f"{label} ?", "1;97" if prominent else "2")
     code = 31 if used >= 80 else 33 if used >= 50 else 32
-    text = color(f"{label} {used:g}%", f"1;{code + 60}" if prominent else code)
+    bright = "255;128;128" if used >= 80 else "255;224;128" if used >= 50 else "128;255;128"
+    text = color(f"{label} {used:g}%", f"1;38;2;{bright}" if prominent else code)
     if show_reset and remaining is not None:
         text += color(f" {countdown(remaining)}", "1;97" if prominent else 37)
     return text
@@ -119,9 +120,12 @@ def usage_segments(session, limits, now):
     standard = (limits or {}).get("standard") or {}
     if not isinstance(standard, dict):
         standard = {}
-    segments = [(100, window_segment("7d", standard.get("weekly"), now, True))]
+    segments = []
     if standard:
         segments.append((90, window_segment("5h", standard.get("fiveHour"), now)))
+    segments.append((100, window_segment("7d", standard.get("weekly"), now, True)))
+    if standard:
+        segments.append((85, window_segment("30d", standard.get("monthly"), now)))
     usage = session.get("inclusiveTokenUsage") or session.get("tokenUsage") or {}
     if not isinstance(usage, dict):
         usage = {}
@@ -132,8 +136,6 @@ def usage_segments(session, limits, now):
     if all(number(value) for value in prompt_counts) and sum(prompt_counts) > 0:
         cached = 100 * prompt_counts[2] / sum(prompt_counts)
         segments.append((70, color(f"♻ {cached:.0f}%", 36)))
-    if standard:
-        segments.append((30, window_segment("30d", standard.get("monthly"), now)))
     return segments
 
 
@@ -152,6 +154,40 @@ def fit_usage(segments, width):
         lowest = min(range(len(segments)), key=lambda index: segments[index][0])
         segments = segments[:lowest] + segments[lowest + 1:]
     return segments[0][1]
+
+
+def truncate(text, width):
+    if display_width(text) <= width:
+        return text
+    result = ""
+    position = 0
+    while position < len(text):
+        escape = ANSI.match(text, position)
+        if escape:
+            result += escape.group()
+            position = escape.end()
+            continue
+        if display_width(result + text[position]) > width - 1:
+            break
+        result += text[position]
+        position += 1
+    return result + "…" + RESET
+
+
+def render_line(payload, segments, width, renderer):
+    width = max(1, width - 2)
+    usage = fit_usage(segments, max(1, width // 2))
+    available = width - display_width(usage) - 2
+    if available < 2:
+        return truncate(usage, width)
+    rendered = subprocess.run(
+        [str(renderer)], input=json.dumps(payload), capture_output=True, text=True,
+        env={**os.environ, "COLUMNS": str(available + 2), "STATUSLINE_MAX_LINES": "1"},
+        timeout=2, check=True,
+    )
+    left = truncate(rendered.stdout.rstrip(), available)
+    padding = width - display_width(left) - display_width(usage)
+    return left + " " * padding + usage
 
 
 def terminal_width():
@@ -174,12 +210,7 @@ def main():
     payload["effort"] = {"level": (payload.get("model") or {}).get("reasoning_effort", "")}
     width = terminal_width()
     renderer = Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))) / "hooks/statusline.sh"
-    rendered = subprocess.run(
-        [str(renderer)], input=json.dumps(payload), capture_output=True, text=True,
-        env={**os.environ, "COLUMNS": str(width)}, timeout=2, check=True,
-    )
-    print(rendered.stdout.rstrip())
-    print(fit_usage(usage_segments(session, limits, now), max(1, width - 2)), end=RESET)
+    print(render_line(payload, usage_segments(session, limits, now), width, renderer), end=RESET)
 
 
 if __name__ == "__main__":

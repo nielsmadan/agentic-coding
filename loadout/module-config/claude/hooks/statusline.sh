@@ -129,7 +129,7 @@ if [ -n "$seven_d" ]; then
 fi
 
 # greedy left-to-right pack into at most $max_lines rows; sets line_of[] and lines_used
-max_lines=2
+max_lines=${STATUSLINE_MAX_LINES:-2}
 pack() {
   local avail=$1 i w cur=0 line=0
   lines_used=1

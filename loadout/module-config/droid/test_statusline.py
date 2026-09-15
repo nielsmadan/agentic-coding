@@ -53,7 +53,7 @@ class UsageTest(unittest.TestCase):
     def test_standard_windows_keep_server_percentages_and_weekly_reset(self):
         result = [plain(text) for _, text in statusline.usage_segments({}, LIMITS, NOW)]
 
-        self.assertEqual(result, ["7d 15% 6d14h", "5h 96%", "30d 4%"])
+        self.assertEqual(result, ["5h 96%", "7d 15% 6d14h", "30d 4%"])
 
     def test_missing_and_expired_windows_are_unknown(self):
         for bucket in (None, {}, {"usedPercent": 15, "windowEnd": "2026-09-14T09:40:00Z"}):
@@ -71,15 +71,57 @@ class UsageTest(unittest.TestCase):
 
         result = statusline.fit_usage(segments, 25)
 
-        self.assertEqual(plain(result), "7d 15% 6d14h │ 5h 96%")
+        self.assertEqual(plain(result), "5h 96% │ 7d 15% 6d14h")
         self.assertLessEqual(statusline.display_width(result), 25)
+        self.assertEqual(plain(statusline.fit_usage(segments, 30)), "5h 96% │ 7d 15% 6d14h │ 30d 4%")
         self.assertEqual(plain(statusline.fit_usage(segments, 16)), "7d 15% 6d14h")
 
     def test_missing_session_file_does_not_prevent_account_usage(self):
         with tempfile.TemporaryDirectory() as directory:
             session = statusline.read_json(Path(directory) / "missing.settings.json")
 
-        self.assertEqual(plain(statusline.usage_segments(session, LIMITS, NOW)[0][1]), "7d 15% 6d14h")
+        self.assertEqual(
+            [plain(text) for _, text in statusline.usage_segments(session, LIMITS, NOW)],
+            ["5h 96%", "7d 15% 6d14h", "30d 4%"],
+        )
+
+
+class LayoutTest(unittest.TestCase):
+    def test_usage_is_right_aligned_on_one_row(self):
+        renderer = Path(__file__).parents[1] / "claude/hooks/statusline.sh"
+        payload = {
+            "cwd": "/tmp",
+            "model": {"display_name": "Claude Opus 4.6"},
+            "context_window": {"used_percentage": 25},
+            "effort": {"level": "high"},
+        }
+        session = {"tokenUsage": {"factoryCredits": 2500, "inputTokens": 100, "cacheReadTokens": 300}}
+        segments = statusline.usage_segments(session, LIMITS, NOW)
+
+        for width in (40, 80, 120):
+            with self.subTest(width=width), patch.dict("os.environ", {"AGENT_SANDBOX": "1"}):
+                result = statusline.render_line(payload, segments, width, renderer)
+
+                self.assertEqual(len(result.splitlines()), 1)
+                self.assertEqual(statusline.display_width(result), width - 2)
+                self.assertTrue(plain(result).startswith("🔒"))
+                if width == 120:
+                    self.assertIn("🤖 opus4.6", plain(result))
+                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% 6d14h │ 30d 4% │ 🪙 2.5K cr │ ♻ 75%"))
+                elif width == 80:
+                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% 6d14h │ 30d 4%"))
+                else:
+                    self.assertTrue(plain(result).endswith("7d 15% 6d14h"))
+
+    def test_tiny_widths_still_fit_one_row(self):
+        segments = statusline.usage_segments({}, LIMITS, NOW)
+
+        for width in (3, 8, 14):
+            with self.subTest(width=width):
+                result = statusline.render_line({}, segments, width, Path("unused"))
+
+                self.assertEqual(len(result.splitlines()), 1)
+                self.assertLessEqual(statusline.display_width(result), width - 2)
 
 
 class LimitsCacheTest(unittest.TestCase):
