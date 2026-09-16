@@ -190,6 +190,26 @@ sync_agent_signing_keychain() {
   fi
 }
 
+# ~/.npmrc is NOT granted, and must not exist: it sits in nono's deny_credentials
+# group, and yarn 1 opens it on every invocation, resolving the path through
+# os.homedir() so no env var redirects it. Absent, the open returns ENOENT and yarn
+# proceeds; present — even empty — it returns EPERM and every commit in a repo whose
+# pre-commit hook runs yarn fails. `npm login` without --userconfig recreates it.
+warn_if_npmrc_exists() {
+  local rc="$HOME/.npmrc"
+  [[ -e "$rc" ]] || return 0
+  echo "!  $rc exists. It is denied to every sandboxed agent, so yarn fails with"
+  echo "   EPERM and commits break in repos whose pre-commit hook runs yarn."
+  if grep -qiE "_authToken|_password|_auth[[:space:]]*=" "$rc" 2>/dev/null; then
+    echo "   It holds a credential — keep it out of the sandbox's reach:"
+    echo "     npm login --userconfig \"$HOME/.npmrc-publish\"   # publish with the same flag"
+    echo "   then remove $rc"
+  else
+    echo "   It holds no credential; an empty file still trips the deny. Remove it:"
+    echo "     rm \"$rc\""
+  fi
+}
+
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
 # (a symlink holds no data); a real file/dir where a link belongs → back it up
 # (never rm -rf unattended), then link.
@@ -354,6 +374,7 @@ echo ""
 seed_private_profile
 seed_granted_state_dirs
 sync_agent_signing_keychain
+warn_if_npmrc_exists
 
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"
