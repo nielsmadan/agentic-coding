@@ -27,6 +27,12 @@ Refs expire when app state changes. Use refs from the latest snapshot or settled
 fresh `snapshot -i` when the diff lacks the next target or the UI has not settled. See
 `agent-device help workflow` for typing, scrolling, gestures, waits, assertions, and alerts.
 
+Let device commands finish inside the host tool when possible; avoid one-second
+polls that each need a model turn. Combine screenshot capture and image reading in
+one orchestration when supported. Batch familiar routes with selectors and expected-state
+guards, stopping at states that need inspection. For feature QA, use the `qa` skill
+and its native adapter for coverage, evidence, and context management.
+
 ### Setup
 
 The `mobile`, `flutter`, and `react-native` templates select this shared guidance and the
