@@ -95,10 +95,17 @@ def countdown(seconds):
     return f"{minutes}m"
 
 
+def daily_budget(used, resets_at, now):
+    today = datetime.fromtimestamp(now - 5 * 3600).date()
+    start = datetime.fromtimestamp(resets_at - 7 * 86400 - 5 * 3600).date()
+    day = min(7, max(1, (today - start).days + 1))
+    balance = day * 100 / 7 - used
+    return int(math.copysign(math.floor(abs(balance) + 0.5), balance))
+
+
 def window_segment(label, bucket, now, show_reset=False):
-    prominent = label == "7d"
     if not isinstance(bucket, dict) or not number(bucket.get("usedPercent")):
-        return color(f"{label} ?", "1;97" if prominent else "2")
+        return color(f"{label} ?", "2")
     used = bucket["usedPercent"]
     remaining = None
     if isinstance(bucket.get("windowEnd"), str):
@@ -107,12 +114,15 @@ def window_segment(label, bucket, now, show_reset=False):
         except (TypeError, ValueError):
             pass
     if remaining is not None and remaining <= 0:
-        return color(f"{label} ?", "1;97" if prominent else "2")
-    code = 31 if used >= 80 else 33 if used >= 50 else 32
-    bright = "255;128;128" if used >= 80 else "255;224;128" if used >= 50 else "128;255;128"
-    text = color(f"{label} {used:g}%", f"1;38;2;{bright}" if prominent else code)
+        return color(f"{label} ?", "2")
+    text = color(f"{label} {used:g}%", 0)
+    if label == "7d" and remaining is not None:
+        budget = daily_budget(used, now + remaining, now)
+        code = 32 if budget > 0 else 36 if budget == 0 else 33 if budget >= -14 else 31
+        signed = f"{budget:+d}" if budget else "0"
+        text += " " + color(f"{signed}%", code)
     if show_reset and remaining is not None:
-        text += color(f" {countdown(remaining)}", "1;97" if prominent else 37)
+        text += color(f" {countdown(remaining)}", 37)
     return text
 
 

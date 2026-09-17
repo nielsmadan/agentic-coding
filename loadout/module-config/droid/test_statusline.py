@@ -1,10 +1,13 @@
 import io
 import json
+import os
 import tempfile
+import time
 import unittest
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import statusline
 
@@ -53,7 +56,7 @@ class UsageTest(unittest.TestCase):
     def test_standard_windows_keep_server_percentages_and_weekly_reset(self):
         result = [plain(text) for _, text in statusline.usage_segments({}, LIMITS, NOW)]
 
-        self.assertEqual(result, ["5h 96%", "7d 15% 6d14h", "30d 4%"])
+        self.assertEqual(result, ["5h 96%", "7d 15% -1% 6d14h", "30d 4%"])
 
     def test_missing_and_expired_windows_are_unknown(self):
         for bucket in (None, {}, {"usedPercent": 15, "windowEnd": "2026-09-14T09:40:00Z"}):
@@ -65,16 +68,35 @@ class UsageTest(unittest.TestCase):
 
         self.assertEqual(plain(statusline.window_segment("7d", bucket, NOW, True)), "7d 0%")
 
+    def test_weekly_budget_uses_claude_colors(self):
+        for used, budget, code in ((0, "+14", 32), (14, "0", 36), (28, "-14", 33), (29, "-15", 31)):
+            with self.subTest(used=used):
+                bucket = {"usedPercent": used, "windowEnd": "2026-09-21T09:40:00Z"}
+
+                result = statusline.window_segment("7d", bucket, NOW, True)
+
+                self.assertEqual(result, f"\033[0m7d {used}%\033[0m \033[{code}m{budget}%\033[0m\033[37m 6d14h\033[0m")
+
+    def test_other_windows_use_plain_usage_colors(self):
+        for label in ("5h", "30d"):
+            with self.subTest(label=label):
+                self.assertEqual(statusline.window_segment(label, {"usedPercent": 96}, NOW), f"\033[0m{label} 96%\033[0m")
+
+    def test_invalid_reset_keeps_usage_readable(self):
+        bucket = {"usedPercent": 15, "windowEnd": "invalid"}
+
+        self.assertEqual(plain(statusline.window_segment("7d", bucket, NOW, True)), "7d 15%")
+
     def test_narrow_layout_retains_weekly_and_shorter_limit_first(self):
         session = {"tokenUsage": {"factoryCredits": 2500, "inputTokens": 100, "cacheReadTokens": 300}}
         segments = statusline.usage_segments(session, LIMITS, NOW)
 
         result = statusline.fit_usage(segments, 25)
 
-        self.assertEqual(plain(result), "5h 96% │ 7d 15% 6d14h")
+        self.assertEqual(plain(result), "5h 96% │ 7d 15% -1% 6d14h")
         self.assertLessEqual(statusline.display_width(result), 25)
-        self.assertEqual(plain(statusline.fit_usage(segments, 30)), "5h 96% │ 7d 15% 6d14h │ 30d 4%")
-        self.assertEqual(plain(statusline.fit_usage(segments, 16)), "7d 15% 6d14h")
+        self.assertEqual(plain(statusline.fit_usage(segments, 34)), "5h 96% │ 7d 15% -1% 6d14h │ 30d 4%")
+        self.assertEqual(plain(statusline.fit_usage(segments, 16)), "7d 15% -1% 6d14h")
 
     def test_missing_session_file_does_not_prevent_account_usage(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -82,8 +104,41 @@ class UsageTest(unittest.TestCase):
 
         self.assertEqual(
             [plain(text) for _, text in statusline.usage_segments(session, LIMITS, NOW)],
-            ["5h 96%", "7d 15% 6d14h", "30d 4%"],
+            ["5h 96%", "7d 15% -1% 6d14h", "30d 4%"],
         )
+
+
+class DailyBudgetTest(unittest.TestCase):
+    def setUp(self):
+        previous = os.environ.get("TZ")
+        os.environ["TZ"] = "Europe/Berlin"
+        time.tzset()
+
+        def restore_timezone():
+            if previous is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = previous
+            time.tzset()
+
+        self.addCleanup(restore_timezone)
+
+    def test_daily_allowance_advances_at_five_am(self):
+        timezone = ZoneInfo("Europe/Berlin")
+        reset = datetime(2026, 8, 29, 10, tzinfo=timezone).timestamp()
+        before = datetime(2026, 8, 24, 4, 59, tzinfo=timezone).timestamp()
+        after = datetime(2026, 8, 24, 5, 0, tzinfo=timezone).timestamp()
+
+        self.assertEqual(statusline.daily_budget(21, reset, before), 8)
+        self.assertEqual(statusline.daily_budget(21, reset, after), 22)
+
+    def test_budget_is_bounded_to_the_seven_day_window(self):
+        self.assertEqual(statusline.daily_budget(0, NOW + 8 * 86400, NOW), 14)
+        self.assertEqual(statusline.daily_budget(0, NOW - 86400, NOW), 100)
+
+    def test_half_percent_rounding_matches_claude(self):
+        self.assertEqual(statusline.daily_budget(98.5, NOW + 3600, NOW), 2)
+        self.assertEqual(statusline.daily_budget(101.5, NOW + 3600, NOW), -2)
 
 
 class LayoutTest(unittest.TestCase):
@@ -107,11 +162,11 @@ class LayoutTest(unittest.TestCase):
                 self.assertTrue(plain(result).startswith("🔒"))
                 if width == 120:
                     self.assertIn("🤖 opus4.6", plain(result))
-                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% 6d14h │ 30d 4% │ 🪙 2.5K cr │ ♻ 75%"))
+                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% -1% 6d14h │ 30d 4% │ 🪙 2.5K cr │ ♻ 75%"))
                 elif width == 80:
-                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% 6d14h │ 30d 4%"))
+                    self.assertTrue(plain(result).endswith("5h 96% │ 7d 15% -1% 6d14h │ 30d 4%"))
                 else:
-                    self.assertTrue(plain(result).endswith("7d 15% 6d14h"))
+                    self.assertTrue(plain(result).endswith("7d 15% -1% 6d14h"))
 
     def test_tiny_widths_still_fit_one_row(self):
         segments = statusline.usage_segments({}, LIMITS, NOW)
