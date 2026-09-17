@@ -19,12 +19,6 @@ def cache_state: if . == null then ""
 E=$'\033'
 sep_str="${E}[2m │ ${E}[0m"
 
-pct_color() {
-  if [ "$1" -ge 80 ]; then printf '\033[31m'
-  elif [ "$1" -ge 50 ]; then printf '\033[33m'
-  else printf '\033[32m'; fi
-}
-
 ctx_color() {
   if [ "$1" -ge 90 ]; then printf '\033[38;5;167m'
   elif [ "$1" -ge 70 ]; then printf '\033[38;5;173m'
@@ -51,7 +45,7 @@ fmt_left() {
 
 window() {
   local pct=$1 today=$2 left=$3 l
-  window_out="$(pct_color "$pct")${pct}%${E}[0m"
+  window_out="${pct}%"
   window_w=$((${#pct} + 1))
   # what is left of today's share of the weekly window
   local alw=$((100 / 7)) c
