@@ -1,0 +1,11 @@
+extends = "autonomous"
+
+[all]
+substitute = { sandbox = "sandbox.native" }
+
+[claude]
+plugins = ["claude", "unsandboxed"]
+substitute = { sandbox = "sandbox.native" }
+
+[pi]
+plugins = ["pi", "unsandboxed"]

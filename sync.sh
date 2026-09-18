@@ -14,7 +14,7 @@
 #   - make installed Codex Superpowers skills explicit-invocation only
 #   - relink the Codex/Pi skill subset and Pi permission policy
 #
-# Usage: ./sync.sh [--autonomous | --normal]
+# Usage: ./sync.sh [--profile NAME | --autonomous | --normal]
 #   With no flag it uses the profile recorded in loadout's machine config,
 #   defaulting to "default". An explicit flag overrides AND is persisted there.
 
@@ -37,8 +37,20 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --autonomous) EXPLICIT_PROFILE="autonomous" ;;
     --normal)     EXPLICIT_PROFILE="default" ;;
+    --profile)
+      if [[ $# -lt 2 || ! "$2" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo "--profile requires a profile name" >&2
+        exit 1
+      fi
+      EXPLICIT_PROFILE="$2"
+      if [[ "$EXPLICIT_PROFILE" != default && ! -f "$SCRIPT_DIR/$EXPLICIT_PROFILE.toml" ]]; then
+        echo "Unknown profile: $EXPLICIT_PROFILE" >&2
+        exit 1
+      fi
+      shift
+      ;;
     -h|--help)
-      echo "Usage: $0 [--autonomous | --normal]"
+      echo "Usage: $0 [--profile NAME | --autonomous | --normal]"
       echo "  Reconciles machine config with the repo. Uses the profile in"
       echo "  $MACHINE_CONFIG when no flag is given (default: default)."
       exit 0
@@ -64,6 +76,9 @@ PROFILE="${PROFILE:-default}"
 LOCAL_MARKETPLACES=(
   "mouthfeel:$HOME/wrksp/oss/mouthfeel/dist/claude"
 )
+if [[ "$PROFILE" == unsandboxed ]]; then
+  LOCAL_MARKETPLACES=()
+fi
 
 # --- Symlinks: "source:destination" ---
 # Only files this repo still stages. Everything loadout generates is written
@@ -302,11 +317,13 @@ generate_loadout() {
   if loadout sync --global; then
     echo "✓  Instructions and permission config up to date"
   else
-    echo "⚠️  loadout sync failed — this machine's existing config is unchanged"
+    echo "⚠️  loadout sync failed — reconciliation stopped" >&2
+    return 1
   fi
 }
 
 sync_claude_plugins() {
+  [[ ${#LOCAL_MARKETPLACES[@]} -gt 0 ]] || return 0
   echo ""
   echo "Registering local Claude plugin marketplaces..."
 
@@ -371,14 +388,19 @@ echo ""
 
 sync_codex_superpowers
 echo ""
-seed_private_profile
-seed_granted_state_dirs
-sync_agent_signing_keychain
-warn_if_npmrc_exists
+if [[ "$PROFILE" != unsandboxed ]]; then
+  seed_private_profile
+  seed_granted_state_dirs
+  sync_agent_signing_keychain
+  warn_if_npmrc_exists
+fi
 
 for entry in "${SYMLINKS[@]}"; do
   source="${entry%%:*}"
   dest="${entry##*:}"
+  if [[ "$PROFILE" == unsandboxed && "$source" == "$SCRIPT_DIR/nono/"* ]]; then
+    continue
+  fi
   create_symlink "$source" "$dest"
 done
 echo ""

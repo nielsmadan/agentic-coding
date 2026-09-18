@@ -47,8 +47,18 @@
 # opencode have no raw variant and are unaffected.
 AGENT_RAW_DIRS=("$HOME/ac" "$HOME/rc")
 
+_agent_unsandboxed_profile() {
+  [[ -n $AGENT_FORCE_SANDBOX || -n $AGENT_REQUIRE_SANDBOX ]] && return 1
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}/loadout/config.toml"
+  [[ -f "$config" ]] || return 1
+  python3 -c 'import sys, tomllib
+with open(sys.argv[1], "rb") as handle:
+    config = tomllib.load(handle)
+sys.exit(config.get("profile") != "unsandboxed")' "$config"
+}
+
 _agent_raw_dir() {
-  [[ -n $AGENT_FORCE_SANDBOX ]] && return 1
+  [[ -n $AGENT_FORCE_SANDBOX || -n $AGENT_REQUIRE_SANDBOX ]] && return 1
   local dir here=${PWD:A}
   for dir in "${AGENT_RAW_DIRS[@]}"; do
     dir=${dir:A}
@@ -62,7 +72,9 @@ _agent_sandboxed() {
   local -a nono_options=()
   [[ $profile == (claude|opencode)-local ]] && nono_options+=(--silent)
   shift 2
-  if command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
+  if _agent_unsandboxed_profile; then
+    sops-exec "$cmd" "$@"
+  elif command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
     PATH="$HOME/ac/bin/sandbox-shims:$HOME/ac/bin:$PATH" \
     AGENT_SANDBOX=1 \
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \

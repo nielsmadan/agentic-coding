@@ -33,6 +33,13 @@ Use `./install.sh --autonomous` to install the broader **autonomous-dev profile*
 (permits `git push` and other unattended ops — for machines running headless
 agent tasks). Plain `./install.sh` installs the normal profile.
 
+Use `./sync.sh --profile unsandboxed` on a machine that should inherit the
+autonomous profile without nono or Mouthfeel plugins. Agent launchers read the
+selected profile and skip nono, including `clor`; Codex uses its native sandbox
+and approval settings. `AGENT_FORCE_SANDBOX` or `AGENT_REQUIRE_SANDBOX` still
+requests nono. Run `source ~/.airc` once after pulling the launcher changes.
+Switch back with `./sync.sh --autonomous` or `./sync.sh --normal`.
+
 Machine prerequisites (`python3`, the agent CLIs, `npx`/`uvx`/`dart` for some
 MCP servers) are **not** auto-installed — set those up separately.
 

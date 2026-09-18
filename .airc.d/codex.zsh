@@ -9,6 +9,10 @@
 # stays on-request there — with no nono and no Seatbelt, the prompt is the only
 # guard left, whereas the sandboxed path drops it because nono is the boundary.
 codex() {
+  if _agent_unsandboxed_profile; then
+    AGENT_HARNESS=codex sops-exec codex "$@"
+    return
+  fi
   if _agent_raw_dir; then
     print -u2 -r -- "codex: unsandboxed (${PWD:A})"
     codex-raw "$@"
