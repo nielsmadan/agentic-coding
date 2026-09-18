@@ -54,7 +54,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
 | `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-native.toml`, `web.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
-| `bin/` | Standalone CLI scripts on PATH (`ccmove`, `ccname`, `clcof`) |
+| `bin/` | Standalone CLI scripts on PATH (`ccmove`, `clcof`) |
 | `docs/` | Repo notes |
 
 ## The four agents

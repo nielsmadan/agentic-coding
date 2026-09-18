@@ -28,9 +28,6 @@ clcof-raw() {
   claude-raw --continue --fork-session --name "$name" "$@"
 }
 
-_ccone() { claude -p "$*"; }
-alias ccone="noglob _ccone"
-
 # Claude Code against OpenRouter. No sops-exec fallback on purpose: falling
 # through to a bare `claude` would silently bill the subscription instead.
 # The tier aliases are remapped cheap->strong so /model haiku|sonnet|opus
