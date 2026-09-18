@@ -1,127 +1,134 @@
 ---
 name: macos-vm
-description: Use the shared local macOS VM (tart) to test that an app downloads, installs and integrates, or to try a dev tool or agent plugin in a clean macOS. Use before running `tart pull` or `tart clone ghcr.io/...` — a base image is already downloaded on this machine and pulling another costs ~25 GB and an hour.
+description: Provision and control a local Tart macOS VM for clean-install, release, integration, or developer-tool testing. Use for "test in the VM", "Tart", guest clipboard/input problems, or before pulling a macOS image. Reuse an existing local base; keep application-specific assertions in the project's test procedure.
 effort: low
 ---
 
-# macOS VM (tart)
+# macOS VM (Tart)
 
-A macOS base image is **already downloaded** on this machine. Clone it; never pull your own.
+## Instructions
 
-## Never pull
+### 1. Choose the test state
+
+Read the project's `docs/tests/` procedure for artifacts, setup, expected results, and cleanup
+ownership. This skill owns VM transport and interaction; the project owns fixtures, product
+UI selectors, and assertions.
 
 ```sh
 tart list
+sysctl -n kern.memorystatus_vm_pressure_level
 ```
 
-The `OCI` row is the shared base image (~25 GB, in `~/.tart`). Cloning it is **free** — measured
-at 0 MB for a 29 GB VM, because APFS clones copy-on-write and only diverge as they are written
-to. **Never run `tart pull` or `tart clone ghcr.io/...`** unless the user explicitly asks for a
-new image.
+Reuse an existing local base. Do not pull an image unless requested; an OCI name absent from
+`tart list` may download tens of GB. Run one guest at a time, at memory pressure `1` (normal);
+wait at `2` or `4`. APFS clones initially share disk blocks but grow with writes.
 
-## Check memory before booting
+Distinguish a clean base from a prepared, authenticated guest. For repeat tests, shut down the
+prepared guest before cloning it; retain the original and its login. Record this difference
+instead of calling the clone a fresh install. Credentials remain private in the VM.
 
-RAM is the constraint, not disk. Guests are configured for 8 GB.
+### 2. Clone and boot
+
+Set `base` to the exact existing name from `tart list`; choose a new disposable `vm` name.
+Set `shared` to an absolute staging directory in the workspace.
 
 ```sh
-sysctl -n kern.memorystatus_vm_pressure_level    # 1 = normal, 2 = warn, 4 = critical
+env TART_NO_AUTO_PRUNE=1 tart clone "$base" "$vm"
+tart set "$vm" --memory 8192
+tart run --capture-system-keys --dir="shared:$shared:ro" "$vm"
 ```
 
-At level 2 or above, say so and stop — a VM started under pressure gets OOM-killed and can take
-the user's own processes with it. One guest at a time. `tart set <vm> --memory 4096` lowers the
-allocation.
+Keep `tart run` attached in a long-lived terminal/tool session. Use another invocation for
+commands. Visible mode helps with authentication and permission dialogs. Leave clipboard
+sharing enabled: do not pass `--no-clipboard` when the user needs to paste a login link into
+the guest browser. `--capture-system-keys` routes shortcuts to the focused guest window.
 
-## Drive the guest with `tart exec`, not SSH
+Add `--dir="evidence:$evidence"` as a separate writable share when exporting screenshots.
+Shares mount under `/Volumes/My Shared Files/<name>`. Stage executables on a read-only share;
+copy applications into the guest before running them.
 
-The base image ships `tart-guest-agent`, so `tart exec` runs commands directly as `admin`. It
-needs no password, no key and no `expect`:
+### 3. Establish guest command access
 
 ```sh
-tart exec <vm> /bin/sh -c 'sw_vers -productVersion'
+tart exec "$vm" /bin/sh -c 'sw_vers; printf "%s\n" "$HOME"'
 ```
 
-Prefer it over SSH always. SSH into the guest is password-only (`admin`/`admin`), `~/.ssh/config`
-is a permanently-restricted path so ssh needs `-F /dev/null`, and **`scp` is blocked by nono
-outright** — driving it through `expect` is fragile and wasted an hour of a previous session.
-
-## Move files with `--dir`
-
-Share a host directory at boot; it appears in the guest under `/Volumes/My Shared Files/`:
+Allow boot time and put a bounded timeout around this readiness probe. The prepared Cirrus
+image includes a guest agent; vanilla images may not. Prefer `tart exec` over SSH or `scp`:
+it needs no SSH credentials and supports stdin with `-i`. Quote guest shell expressions so
+the guest, rather than the host, expands `$HOME`.
 
 ```sh
-tart run --no-graphics --dir=shared:/abs/host/dir <vm> &
-tart ip --wait 150 <vm>
-tart exec <vm> /bin/sh -c 'echo hi > "/Volumes/My Shared Files/shared/out.txt"'
+tart exec -i "$vm" /usr/bin/osascript - <<'APPLESCRIPT'
+tell application "System Events" to get name of every application process
+APPLESCRIPT
 ```
 
-Read-write in both directions, verified. This is how files leave the guest, since `scp` is
-blocked.
+### 4. Use the most direct working interface
 
-## Screenshots: two routes
+1. Use guest CLI commands for installation, files, processes, and diagnostics.
+2. Use an application's API for structured input and observations. For iTerm2, use
+   [the terminal helper](references/interaction.md#iterm2-terminal-input).
+3. Use guest AppleScript/System Events for native UI and keys when permissions allow it;
+   see [native UI control](references/interaction.md#native-ui-control).
+4. Use visible guest interaction or [VNC](references/interaction.md#vnc-fallback) when
+   Accessibility/Automation is unavailable, or for permission dialogs.
 
-`screencapture` through `tart exec` returns the **real desktop** — the base image pre-bakes the
-TCC Screen Recording grant, so no provisioning is needed:
+System Events is not universally broken: it timed out in a stock guest, but UI reads and
+keyboard input worked in the prepared macOS 15.7.7 guest on 2026-09-18 with Tart 2.37.0.
+Do not rewrite TCC databases or disable SIP. Grant needed permissions through the guest's
+normal macOS UI, then repeat the actual operation.
+
+### 5. Capture evidence and clean up
+
+Read state through the product's interface as well as backend diagnostics. A delivered event
+does not prove that the visible UI changed. Screenshots must exclude login pages, codes,
+credentials, and unrelated windows. Inspect them locally before retaining them.
 
 ```sh
-tart exec <vm> /bin/sh -c 'screencapture -x "/Volumes/My Shared Files/shared/desktop.png"'
+tart exec "$vm" /usr/sbin/screencapture -x "/Volumes/My Shared Files/evidence/desktop.png"
 ```
 
-Verified: 2048x1536, a live Sequoia session auto-logged-in as `admin`. A missing grant would give
-an all-black frame of a few KB instead — check the file size.
+Screen Recording permission varies by image. A black frame is a failed observation, not an
+empty desktop. Use a file share to keep large image payloads off the command transport.
 
-## Input: use VNC, never osascript
+Sanitize guest names, home paths, and session identifiers before exporting evidence. Preserve
+identity relationships with consistent placeholders and meaningful terminal-ID prefixes.
+Never retain cookies, login links, VNC passwords, or account screenshots in the repo.
 
-**In-guest synthetic input does not work and cannot be made to work without reprovisioning.**
-`osascript` driving System Events fails `-1712 AppleEvent timed out` then `-609 Connection is
-invalid` (no Accessibility grant), and `cliclick` is not installed. Do not go down that road.
-
-**Drive the guest over VNC instead.** Input arrives as virtual HID events from the hypervisor
-rather than as synthetic events posted inside the guest, so macOS's Accessibility gate never
-applies — no TCC writes, no SIP disabling, guest stays stock:
+Quit test processes, then shut down only the disposable guest:
 
 ```sh
-tart run --vnc-experimental --no-graphics <vm> &
-# the log prints: VNC server is running at vnc://:<password>@127.0.0.1:<port>
+tart exec "$vm" /usr/bin/sudo -n /sbin/shutdown -h now
+tart list
+tart delete "$vm"
 ```
 
-Then drive it with `vncdotool`. `~/.local/share/uv/tools` is not granted, so redirect uv's
-directories into the workspace rather than asking for a grant:
+Shutdown may disconnect `tart exec` and return nonzero; confirm `stopped` in `tart list` before
+deleting. If graceful shutdown is unavailable, use `tart stop` on that exact disposable guest.
+Do not delete the base or prepared source. Restore any original guest to its prior running or
+stopped state. Do not discard an authenticated guest as the first troubleshooting step.
 
-```sh
-env UV_TOOL_DIR="$PWD/uvtools" UV_CACHE_DIR="$PWD/uvcache" \
-  uvx --from vncdotool vncdo -s "127.0.0.1::<port>" -p "<password>" \
-  move 61 23 pause 1 click 1 pause 2 capture shot.png
-```
+## Examples
 
-Verified from inside the sandbox: `capture` returns the framebuffer, `move`+`click` opened the
-Apple menu, and `key esc` closed it again.
+- **Clean installer test:** clone a local base, boot with a read-only artifact share, install
+  the signed release, let the user authenticate, then follow the project's checks.
+- **Existing-install upgrade:** stop the prepared guest, clone it, stage the version fixture,
+  run the product installer, compare state, and delete only the test clone.
+- **CLI inside iTerm2:** list sessions with `scripts/iterm.py`, explicitly select the target
+  ID, submit text, then read the screen. Keep product-specific assertions in the repo.
 
-One rough edge: the command-key modifier. `super-space` and `lsuper-space` do **not** trigger
-Spotlight — plain keys and clicks are reliable, the cmd modifier spelling still needs working
-out. Prefer clicking menus over keyboard shortcuts until it is.
+## Troubleshooting
 
-Present in the guest: `curl`, `hdiutil`, `open`, `osascript`, Safari, `brew`.
-Absent: `cliclick`, `displayplacer`, `ffmpeg`.
-
-So a download/install/integrate test is: script the fetch and install with `curl`/`hdiutil`/`cp`,
-`open` the app, then **verify by screenshot** — falling back to VNC clicks for anything that needs
-a real GUI interaction, such as an installer wizard or a permission dialog.
-
-## Guests are disposable
-
-If a guest gets into a bad state, do not repair it — throw it away. Re-cloning costs 0 bytes and
-no time:
-
-```sh
-tart stop <vm>; tart delete <vm>; tart clone <local-base> <vm>
-```
-
-## Inside the sandbox
-
-All of the above works under nono. `$HOME/.tart` is granted and the Seatbelt rule
-Virtualization.framework needs is in `agent-common.json`. Two denials appear and block nothing:
-`~/Library/HTTPStorages` while pulling, and `~/.ssh/id_*` when ssh tries its default keys.
-Neither should be granted.
-
-A session started before those grants landed will not see them — Seatbelt applies policy at
-process start. Say it needs a restart rather than reporting a denial.
+- **Clipboard does not paste:** inspect the Tart command for `--no-clipboard`. Reboot with
+  sharing enabled if necessary, focus the guest browser, and let the user paste there.
+  Never put a login link into command logs or saved data.
+- **System Events times out or denies access:** inspect guest Automation and Accessibility
+  permissions; use visible input/VNC while resolving them. A transport timeout alone does
+  not establish a macOS permission denial.
+- **iTerm2 API returns 401:** use the helper's explicit AppleScript cookie/key handshake;
+  verify Enable Python API and the guest approval prompt. Do not print the cookie/key.
+- **Guest command channel fails:** check `tart list` and the desktop. Preserve evidence and
+  distinguish transport failure from application failure. Avoid large inline captures.
+- **Virtualization or filesystem denial:** apply `nono-sandbox` diagnostics to the failing
+  operation. A footer probe is not proof; do not change grants or try SSH as a bypass.
