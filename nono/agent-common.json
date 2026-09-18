@@ -89,7 +89,10 @@
       "$HOME/.flutter",
       "$HOME/.yarnrc",
       "$HOME/.docker/config.json",
-      "$HOME/Library/Keychains/agent-signing.keychain-db"
+      "$HOME/Library/Keychains/agent-signing.keychain-db",
+      "$HOME/.android/adbkey",
+      "$HOME/.android/adbkey.pub",
+      "$HOME/.android/adb_known_hosts.pb"
     ],
     "deny": [
       "$HOME/.dolt/creds"
