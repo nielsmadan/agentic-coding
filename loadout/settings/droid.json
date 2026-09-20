@@ -16,6 +16,7 @@
     "maxRows": 1
   },
   "sessionDefaultSettings": {
+    "model": "auto",
     "autonomyLevel": "high"
   }
 }
