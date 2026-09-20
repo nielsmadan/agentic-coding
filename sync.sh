@@ -103,6 +103,9 @@ SYMLINKS=(
   # wrappers call, so it must resolve without ~/.airc having been sourced.
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
   "$SCRIPT_DIR/bin/sops-exec:$HOME/.local/bin/sops-exec"
+  # pratfall. The advisor-* and cmdgen-* profiles back /second-opinion and the
+  # llmcli.zsh command generators.
+  "$SCRIPT_DIR/pratfall/config.toml:$HOME/.config/pratfall/config.toml"
 )
 
 # Destinations loadout now writes directly, which earlier versions of this
@@ -223,6 +226,19 @@ warn_if_npmrc_exists() {
     echo "   It holds no credential; an empty file still trips the deny. Remove it:"
     echo "     rm \"$rc\""
   fi
+}
+
+# Pratfall profiles are consumed by /second-opinion and llmcli.zsh. A config
+# error there surfaces as an opaque per-invocation failure much later, so
+# validate it here rather than at first use. prat itself is optional: the public
+# variant of /second-opinion calls the agent CLIs directly.
+validate_pratfall_config() {
+  if ! command -v prat >/dev/null 2>&1; then
+    echo "!  prat not on PATH. /second-opinion and ccli/cxcli/occli need it:"
+    echo "     https://github.com/nielsmadan/pratfall"
+    return 0
+  fi
+  prat --config "$SCRIPT_DIR/pratfall/config.toml" config validate
 }
 
 # Non-interactive symlink: correct link → skip; wrong link → silently relink
@@ -403,6 +419,9 @@ for entry in "${SYMLINKS[@]}"; do
   fi
   create_symlink "$source" "$dest"
 done
+echo ""
+
+validate_pratfall_config
 echo ""
 
 sync_claude_plugins

@@ -1,7 +1,7 @@
 ---
 name: second-opinion
 description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from the agent CLIs you are not running (Claude, Codex, Pi, OpenCode).
-compatibility: Requires pratfall (`prat`) 0.9.1 or newer on PATH plus at least one of claude, codex, pi or opencode besides the one you are running as. Pi and OpenCode advisors need an OpenRouter key.
+compatibility: Requires at least one of claude, codex, pi or opencode on PATH besides the one you are running as. Pi and OpenCode advisors need an OpenRouter key.
 argument-hint: '[--quick] [--timeout=300] [--words=500] <question or context>'
 effort: high
 ---
@@ -31,14 +31,12 @@ Get input from three independent advisors on the current problem or question. Co
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
 - The advisor CLIs must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. All advisors run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s).
-- **Every advisor runs through [pratfall](https://github.com/nielsmadan/pratfall) (`prat`).** It normalizes the prompt file, timeout and output across the four CLIs, so this skill does not repeat each one's flags. `prat` execs the real binary off PATH, so no `command` prefix is needed.
-- **Still close stdin with `</dev/null` on every advisor command.** prat prepends redirected stdin to the `-f` prompt, so an open-but-silent stdin makes it block *before launching the agent* — and `--timeout` does not fire there, so the call hangs until the Bash tool kills it. Measured: the same command answers in ~13s with `</dev/null` and hangs indefinitely without it.
-- **The read-only guards are not in this file.** They live in the `advisor-*` profiles in `~/.config/pratfall/config.toml` (`native_args`, `tools`), because a flag the skill has to retype is a flag the skill can drop. Read that file before changing an advisor, and never invoke a bare `prat cc` / `prat cx` / `prat pi` / `prat oc` here — `prat cx` in particular renders a plain `codex exec` with **no** sandbox.
-- **If the Claude advisor reports `Not logged in · Please run /login`, prefix that one command with `sops-exec`.** `prat` execs the real binary, and Claude Code does not pass its own credential down to subprocesses, so a nested `claude` finds nothing. The other three inherit theirs from the session environment and need no prefix. This only bites when `/second-opinion` runs *from* a Claude Code session — where the Claude advisor is skipped anyway.
-- **The advisor's identity is the model, not the CLI.** The Pi and OpenCode profiles pin models from two different labs, so their opinions stay independent of each other.
-- **Pi** warns `Model "…" not found for provider "openrouter". Using custom model id.` when the model is newer than its cached catalog, then works normally — that warning is not a failure.
-- **OpenCode** bills through OpenRouter, so its profile pins an `openrouter/`-prefixed model (`opencode/*` is OpenCode Zen, which has no payment method and errors out). The profile's `--agent plan` is not enough on its own — plan mode can still delegate, which is why the command below also sets `OPENCODE_CONFIG_CONTENT`. prat profiles have no `env` field, so that one stays inline.
+- **The advisors are meant to read the code** — that's the point. All advisors run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s). Always close stdin with `</dev/null` on advisor commands.
+- **Claude** runs non-interactively in print mode (`claude -p`). Give it the read-only built-ins (`--tools "Read,Grep,Glob"`) so it can explore but not edit, and `--disable-slash-commands` so it can't recurse into skills.
+- **Codex** blocks on "Reading additional input from stdin..." unless stdin is closed (`</dev/null`), and prompts for confirmation outside a git repo unless given `--skip-git-repo-check`.
+- **The advisor's identity is the model, not the CLI.** Pi and OpenCode use the explicit models in the commands below, from two different labs, so their opinions stay independent of each other.
+- **Pi** needs `-p` for non-interactive mode and `--no-session` so the consultation does not land in the session list. Restrict it with `--tools read,grep,find,ls`; the allowlist excludes write and delegation tools. A model newer than Pi's cached catalog warns `Model "…" not found for provider "openrouter". Using custom model id.` and then works normally — that warning is not a failure.
+- **OpenCode** bills through OpenRouter — models must use the `openrouter/` prefix (`opencode/*` is OpenCode Zen, which has no payment method and errors out). Use `--agent plan` with the per-run task denial below. Plan mode alone can delegate to other agents.
 - **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token.
 
 ## How It Works
@@ -89,45 +87,43 @@ If you need more context to give a confident answer, say so clearly.
 
 ### Step 2: Query Advisors (in parallel)
 
-Run the advisor commands in parallel — skipping the CLI you are running as. Each
-names a `prat` profile that already carries that advisor's model, reasoning level
-and read-only guards, and reads the prompt with `-f .second-opinion.md`. All
-advisors read the files the prompt points them at, typically answering in
-~15–25s; allow longer for a question that spans many files.
+Run the advisor commands in parallel — skipping the CLI you are running as — using
+`{timeout}` as the Bash timeout. Each inlines the prompt via `$(cat .second-opinion.md)`
+and closes stdin with `</dev/null`. All advisors run read-only and read the files the
+prompt points them at, typically answering in ~15–25s; allow longer for a question that
+spans many files.
 
-Pass `--timeout {timeout}` so prat enforces the deadline itself and reports which
-advisor ran out, and give the Bash tool a slightly longer timeout so prat is the
-one that trips first. `--timeout` covers the agent run, **not** prat's stdin read,
-so it is not a backstop for a missing `</dev/null`.
+Prefix the advisor commands with the `command` builtin where shown: in some shells
+they are wrapper functions that depend on an interactive-shell variable not present
+in the agent's environment; `command` bypasses the wrapper and runs the real binary,
+which authenticates via its own on-disk credentials. If a bare binary instead exits
+not-logged-in, its credential comes from the wrapper — drop the prefix for that one.
 
-**Claude:**
+**Claude:** read-only built-ins, no slash commands, print mode. Leave `claude`
+unprefixed — do **not** put `command` in front of it:
 ```bash
-prat advisor-claude --timeout {timeout} -f .second-opinion.md </dev/null
+claude --tools "Read,Grep,Glob" --disable-slash-commands --no-session-persistence -p "$(cat .second-opinion.md)" </dev/null
 ```
 
-**Codex:**
+**Codex:** read-only sandbox with both agent backends disabled; `--skip-git-repo-check` permits use outside a git repo:
 ```bash
-prat advisor-codex --timeout {timeout} -f .second-opinion.md </dev/null
+command codex exec -s read-only --skip-git-repo-check --disable multi_agent --disable multi_agent_v2 -c agents.enabled=false "$(cat .second-opinion.md)" </dev/null
 ```
 
-**Pi:**
+Use the Pi and OpenCode model ids and `max` reasoning settings below exactly,
+including in `--quick` mode. Change them only when the user explicitly requests it.
+If a selected model or reasoning level is unavailable, report that advisor as
+unavailable and continue with the others.
+
+**Pi:** `--tools` is the read-only guard (no `edit`/`write`/`bash`). Pi has no `-m` short flag — it is `--model`:
 ```bash
-prat advisor-pi --timeout {timeout} -f .second-opinion.md </dev/null
+command pi -p --no-session --tools read,grep,find,ls --model openrouter/z-ai/glm-5.3 --thinking max "$(cat .second-opinion.md)" </dev/null
 ```
 
-**OpenCode:** the inline config denies plan mode's task tool and applies only to this process:
+**OpenCode:** use plan mode and deny its task tool for this consultation. The inline config applies only to this process:
 ```bash
-OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode --timeout {timeout} -f .second-opinion.md </dev/null
+OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' command opencode run --agent plan -m openrouter/moonshotai/kimi-k3 --variant max "$(cat .second-opinion.md)" </dev/null
 ```
-
-Use the profiles as configured, including in `--quick` mode. Change an advisor's
-model or reasoning level only when the user explicitly requests it, and change it
-in `~/.config/pratfall/config.toml` rather than by adding a `--model` / `--effort`
-flag here. If a selected model or reasoning level is unavailable, report that
-advisor as unavailable and continue with the others.
-
-If `prat` is missing, say so and stop rather than falling back to raw CLI
-invocations — the read-only guards live in its profiles.
 
 ### Step 3: Evaluate Confidence
 
@@ -194,10 +190,7 @@ rm .second-opinion.md
 
 ## Timeouts
 
-Pass the `{timeout}` value (default 300s) to each advisor as `prat --timeout`,
-and set the Bash tool's own timeout a little higher so prat trips first and can
-name the advisor that ran out. `[defaults] timeout` in the prat config is the
-fallback when `--timeout` is omitted.
+Use the `{timeout}` value (default 300s) for each advisor's Bash timeout.
 
 ## Error Handling
 

@@ -51,6 +51,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `loadout.toml` | Manifest selecting and composing those fragments for each harness |
 | `codex/` | Pins installed Superpowers skills to explicit invocation |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
+| `pratfall/` | [pratfall](https://github.com/nielsmadan/pratfall) profiles for the `/second-opinion` advisors and the `ccli`/`cxcli`/`occli` command generators, installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
 | `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-native.toml`, `web.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |

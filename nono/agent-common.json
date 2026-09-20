@@ -86,6 +86,7 @@
       "$HOME/.local/state/gh/device-id",
       "$HOME/.config/loadout",
       "$HOME/.config/splashdown/config.toml",
+      "$HOME/.config/pratfall/config.toml",
       "$HOME/.flutter",
       "$HOME/.yarnrc",
       "$HOME/.docker/config.json",

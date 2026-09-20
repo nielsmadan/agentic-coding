@@ -23,6 +23,8 @@ This repository contains shared configuration for agentic coding tools. It inclu
     allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
     `~/.pi/agent/AGENTS.md` (the shared `global/AGENTS.md`) and auto-discovers skills from
     `~/.agents/skills/`, so those need no pi-specific files.
+- `pratfall/` - Profiles for [pratfall](https://github.com/nielsmadan/pratfall) (`prat`), the one-shot agent-CLI runner (see Pratfall below)
+  - `config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles
 - `permissions/` - Single source of truth for agent shell-command and MCP permissions
   - `permissions.toml` - the source; edit this
   - `sync.py` - retained entry point only; the global renderers moved to `loadout` (see Permissions below)
@@ -325,6 +327,72 @@ reports back.
 The loadout side is pinned by `test_a_removed_key_is_stripped_from_the_destination` and
 friends; `$remove` is documented in loadout's README.
 
+## Pratfall
+
+[pratfall](https://github.com/nielsmadan/pratfall) (`prat`) runs one-shot agent
+CLIs behind short aliases and named profiles. Two things here use it:
+`/second-opinion` and the `ccli` / `cxcli` / `occli` command generators in
+`.airc.d/llmcli.zsh`. Both name a profile from `pratfall/config.toml`
+(`advisor-*` and `cmdgen-*`) rather than spelling out per-CLI flags.
+
+**The point is that the guards live in the profile, not in the caller.** prat
+does **not** sandbox Codex for you — `prat cx` renders a plain `codex exec` with
+no `--sandbox`. `/second-opinion`'s read-only guarantee is `native_args` and
+`tools` on `advisor-codex`, `advisor-claude` and `advisor-pi`, which is exactly
+why the skill must never fall back to a bare `prat cx`.
+
+**prat reserves some native flags.** Passing one after `--` is refused with
+`this option is controlled by prat`. Measured: claude's
+`--no-session-persistence`. Claude's `--system-prompt` and
+`--disable-slash-commands`, codex's `--sandbox`, `--skip-git-repo-check`,
+`--disable` and `--profile`, pi's `--no-session` and opencode's `--agent` all
+pass through.
+
+**Codex's `-c` / `--config` is reserved per key, not as an option** — as of prat
+0.9.1, which is therefore the floor for `pratfall/config.toml`. prat sets
+`developer_instructions`, `model_reasoning_effort`, `service_tier` and `model`,
+and rejects an override of one of those (or a dotted descendant) only while the
+public option that sets it is active; every other key passes through. So
+`advisor-codex` carries `-c agents.enabled=false` directly. That guard is not
+redundant with the two `--disable` flags, which set `features.<name>`: the base
+`~/.codex/config.toml` sets `[agents] max_concurrent_threads_per_session = 8`.
+
+Before 0.9.1 the whole option was reserved and the key had to travel in a Codex
+config profile instead. That is gone, and good riddance — Codex accepts an
+unknown `--profile` name silently, so a typo failed *open* and dropped the guard
+with no error, whereas a bad `-c` key now fails loudly at `prat config validate`.
+
+**prat has no `env` field in profiles.** OpenCode's per-run task denial
+(`OPENCODE_CONFIG_CONTENT=…`) therefore stays inline in the caller.
+
+**prat execs the real binary off PATH**, so it bypasses the `claude` / `codex` /
+`pi` / `opencode` zsh wrappers in `.airc.d/05-sandbox.zsh` — no nono, no
+sops-exec. Inside an agent session that is right, and it is what the old
+`command codex exec` prefix did by hand; nesting nono would hit
+`forbidden-sandbox-reinit`. In an *interactive* shell it is not, which is why
+`llmcli.zsh` calls `sops-exec prat …`: `occli` needs `OPENROUTER_API_KEY`. Those
+three run unsandboxed as a result, so their profiles disable tools where the
+backend supports it. For the same reason, do **not** point
+`[agents.NAME].command` at a sandbox wrapper — that config is global and would
+nest nono for every caller, agent sessions included.
+
+**Codex on a ChatGPT account rejects the mini models.** Both `gpt-5.4-mini` and
+`gpt-5.4-codex-mini` return `400 … not supported when using Codex with a ChatGPT
+account`; `cmdgen-codex` pins `gpt-5.6-luna` instead.
+
+Model ids in these profiles are targets of the `agent-models` skill — see
+`.claude/skills/agent-models/references/targets.md`, entries 5 and 6.
+
+**Permissions need no entry.** `loadout/permissions.toml` has `[shell] default =
+"allow"` with an empty `allow` list, so `prat` runs unprompted on all four
+agents.
+
+**`/second-opinion` has a public variant that does not use prat.** The published
+collection cannot assume `prat` is installed, so
+`publish/overrides/second-opinion/` carries a copy that calls the CLIs directly.
+The two must be fixed together — see Public skill variants in
+[`publish/overrides/README.md`](publish/overrides/README.md).
+
 ## Local Claude Plugins
 
 A plugin developed locally (`mouthfeel`, at `~/wrksp/oss/mouthfeel`) is wired up in **two halves with two owners**, and they must agree:
@@ -445,6 +513,7 @@ The per-agent files hold only what one agent needs:
 - **Tart VMs need a Seatbelt rule as well as a grant, and no tart flag substitutes.** `$HOME/.tart` is granted read+write (seeded by `sync.sh`, since nono skips absent paths), but a grant alone only reaches `tart list` and `tart create`. `tart run` dies instantly with `VZErrorDomain Code=1 "Failed to issue audio output sandbox extension."` — Virtualization.framework issues a sandbox extension per virtual device, which is the system-service class again, so no path grant reaches it. `--no-audio` does not help (VZ requests the extension whatever the VM config says) and `--suspendable` is macOS-guest-only. The rule is taken from Apple's own `/System/Library/Sandbox/Profiles/frameworks.sb`: `(allow generic-issue-extension (extension-class-prefix "com.apple.virtualization.extension."))`. **The filter is `extension-class-prefix`** — the obvious `(extension-class (prefix "…"))` is rejected with `unexpected sbpl-filter argument`, and listing classes literally means discovering them one failed boot at a time (`audio-output`, then `io-surface`, …); scoping by prefix covers every virtual device, so a macOS guest needs no further rule. Without the `.tart` grant the diagnosis is doubly misleading: `tart list` reports `Input/output error` (EIO, not EPERM) and nono's footer says `No path denials were observed`. Verified end to end under `claude-local`: a headless Linux VM creates, boots and deletes, and `ghcr.io/cirruslabs/macos-sequoia-base` (25 GB compressed) pulls, clones, boots headless, reports an address via `tart ip --wait`, and answers SSH — macOS 15.7.7, arm64. Apple's second rule, `iokit-open-user-client` for `AppleSMCClient`, proved unnecessary: the broad `(allow iokit-open)` already in this profile is enough. Two benign denials appear and block nothing — `~/Library/HTTPStorages` while pulling, and `~/.ssh/id_*` when ssh tries its default keys before falling back to password auth. The real limit is RAM, not the sandbox: a running macOS guest was killed by the system under memory pressure. `--dir` host sharing and `tart exec` (through the image's bundled `tart-guest-agent`) both work, and `screencapture` returns a real desktop because the base image pre-bakes the TCC Screen Recording grant — in-guest synthetic input does not (System Events fails `-1712` then `-609` without an Accessibility grant) — but `tart run --vnc-experimental` drives the guest as virtual HID from the hypervisor, which no TCC gate applies to, so clicks and keys work with the guest left stock. The usable workflow is the `macos-vm` template skill; `scp` is blocked by nono, so files move through `--dir`.
 - **Sandboxed codesign needs two things that are not grants.** `codesign --sign <identity>` inside the sandbox failed every time with `errSecInternalComponent` while succeeding every time outside it (measured 8/8 vs 0/12), and nono reported `No path denials were observed` — `claude-local` additionally lists `mach-lookup` under `diagnostics.suppress_system_services`, so nothing surfaces. Two independent causes stack. First, **the current WWDR intermediates live only in `login.keychain-db`**, which stays denied: `System.keychain` carries just the G1 that expired 2023-02-07, so every Apple Development cert fails to build a chain and `security find-identity -v -p codesigning` reports only those identities whose CA is already in a system keychain — measured at the time, **1 of 9** (that one a Developer ID cert, whose CA is in `SystemRootCertificates.keychain`). Second, even with the chain fixed, securityd logs `ACL partition mismatch: client apple:` and then `displaying keychain prompt for /usr/bin/codesign` — a SecurityAgent prompt no sandboxed process can answer, which is the same prompt that appears unsandboxed and that "Always Allow" never silences, because the partition list rather than the trusted-app list is what mismatches. `sync.sh`'s `sync_agent_signing_keychain` fixes both against `agent-signing.keychain-db`: it copies the unexpired WWDR intermediates across and re-applies `set-key-partition-list -S apple-tool:,apple:,codesign:`. **Both need re-running after any certificate renewal**, since a freshly imported key carries neither. The login keychain is untouched and stays denied; to stop the prompts there too, the user runs the same `set-key-partition-list` against it with their login password (unscoped; `-l` matches a key's *friendly name*, which for an Apple Development key is `Apple Development: <name> (<organisation>)` and not the certificate's CN, so scoping by the CN or by a project name silently matches nothing and reports `The specified item could not be found in the keychain`). Verified end to end: `agent-device prepare ios-runner` builds and starts the XCTest runner on a physical iPhone from inside `claude-local`.
 - **A sandboxed `adb` server aborts without `~/.android/adbkey`.** Whether adb works inside the sandbox depended on whether a server was already running, which made it look intermittent: an adb *client* only talks to `localhost:5037`, so with the user's own unsandboxed server up it lists every device, but with no server running the sandboxed client forks one and that server dies — `Failed to open /Users/nielsmadan/.android/adbkey: Operation not permitted`, then `Failed to generate new key`, `Failed to load (or generate) user key` and `Check failed: key`. adb treats no-key-and-cannot-make-one as fatal. Granting `adbkey` alone produces a worse symptom: the daemon starts and reports **zero devices**, because discovery and connection are separate — `adb mdns services` finds the `_adb-tls-connect._tcp` endpoints from inside the sandbox unaided, but the TLS connect to an already-paired device needs `adb_known_hosts.pb`. Granted **read-only**: `adbkey`, `adbkey.pub`, `adb_known_hosts.pb`. Nothing needs write, and no directory grant is needed, so `debug.keystore`, `avd/` and `cache/` stay denied. Verified end to end with a fresh daemon under `claude-local`: the wireless Pixel attaches and `adb shell getprop ro.product.model` answers. `adbkey` is a real credential — it authorises ADB on any device already accepted — but the practical boundary barely moves, since any sandboxed process already reaches every device through port 5037 whenever the user's own server is up. Read-only `adb_known_hosts.pb` means a sandboxed daemon cannot record a **newly** paired device; pair from an unsandboxed shell first.
+- **`prat` needs a read grant on its config, or `/second-opinion` breaks in every sandboxed repo.** `$HOME/.config/pratfall/config.toml` is in `agent-common.json`'s `read_file` list. Without it a sandboxed advisor dies before launching the agent, and nono's footer names the path. The file holds model ids and flags, no credentials. `sops-exec` is a different matter and stays denied: `~/.config/sops/secrets.yaml` is unreadable inside the sandbox by design, so `sops-exec prat …` cannot work there — a sandboxed session inherits its secrets from the outer `sops-exec` in `_agent_sandboxed` instead.
 - **Benign denials are normal.** opencode probes `/Users`, `~/.config` and friends looking for config as it walks up from the workdir. Reported at exit and not worth granting.
 - **The claude and codex packs write into generated files.** The claude pack `json_merge`s `enabledPlugins` into `~/.claude/settings.json`, which is why `nono@nolabs-ai` is in `loadout/settings/claude.json`. The codex pack appends a `toml_block` to `~/.codex/config.toml`; despite its `position: "top"` it lands at the end of the file, where its top-level `developer_instructions` key gets absorbed into the last table (`[mcp_servers.jina]`) so it is not even top-level when nono writes it. loadout **removes** it rather than replacing it, via `$remove` in `loadout/defaults/codex.json`: the pack's version tells Codex to treat any `Operation not permitted` as a nono boundary and to offer `nono run --allow` / `nono profile promote`, which produced four false denial reports in a day, and the corrected guidance now lives in `loadout/instructions/sandbox.md` where every harness gets it. A `nono update` restores the pack's copy; the next `./sync.sh` strips it again, so this self-heals. **After a `nono update`, run `./sync.sh`.**
 

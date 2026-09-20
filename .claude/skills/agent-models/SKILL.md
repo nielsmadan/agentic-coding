@@ -143,7 +143,12 @@ Preserve unrelated content in every file: pi's `openai-codex/*` entries, the
 loadout sync --global     # required for opencode; needs an unsandboxed shell
 source ~/.airc            # reloads clor / ocs / occli
 loadout check --global    # must be clean — the pre-commit hook runs it
+prat --config pratfall/config.toml config validate
 ```
+
+`pratfall/config.toml` is symlinked to `~/.config/pratfall/config.toml`, so it
+needs no sync — but a malformed profile only surfaces at the next `/second-opinion`
+or `occli`, hence the validate.
 
 `loadout sync` writes outside `~/wrksp`, so it needs `claude-raw` or a shell the
 sandbox does not cover. If it fails on a grant, report it — do not relocate files.
@@ -152,14 +157,16 @@ Then confirm what landed:
 
 ```bash
 grep -n "MODEL=\|CLOR_MODEL:-" .airc.d/claude.zsh   # 4 model slots + the start alias
-grep -n "openrouter/" .airc.d/opencode.zsh .airc.d/llmcli.zsh loadout/skills/second-opinion/SKILL.md
+grep -n "openrouter/" .airc.d/opencode.zsh pratfall/config.toml publish/overrides/second-opinion/SKILL.md
 python3 -c "import json;d=json.load(open('loadout/settings/pi.json'));print(d['defaultModel'],d['defaultThinkingLevel'],d['enabledModels'])"
 ```
 
 Confirm the start alias resolves to the default tier — that is the one edit with
 no model id in it, so a stale value survives every id-based check.
-Confirm the second-opinion commands match the approved advisor models and reasoning
-levels, preserving the user-selected overrides in `references/targets.md`.
+Confirm the `advisor-*` profiles match the approved advisor models and reasoning
+levels, preserving the user-selected overrides in `references/targets.md`. The
+local `/second-opinion` skill names no model, but the public override in
+`publish/overrides/` does — check both stayed in step.
 
 Report the diff summary and leave the commit to the user.
 

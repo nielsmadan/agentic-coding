@@ -44,11 +44,11 @@ high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Lun
 | 3 | `.airc.d/claude.zsh` | `clor` → `ANTHROPIC_DEFAULT_OPUS_MODEL` | high-main |
 | 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | **default** |
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
-| 5 | `.airc.d/llmcli.zsh` | `occli` backend | low |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | Pi advisor `--model` | high-main |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | Pi advisor `--thinking` | max |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | OpenCode advisor `-m` | Kimi K3 (user override) |
-| 6 | `loadout/skills/second-opinion/SKILL.md` | OpenCode advisor `--variant` | max |
+| 5 | `pratfall/config.toml` | `cmdgen-opencode` → `model` | low |
+| 6 | `pratfall/config.toml` | `advisor-pi` → `model` | high-main |
+| 6 | `pratfall/config.toml` | `advisor-pi` → `effort` | max |
+| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3 (user override) |
+| 6 | `pratfall/config.toml` | `advisor-opencode` → `effort` | max |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.
@@ -166,29 +166,43 @@ alias ocs="opencode -m openrouter/<high-fallback id>"
 above whichever tier holds it. It tracks high-fallback however the default moves,
 which is why it is pinned to a named tier rather than to "one above the default".
 
-## 5. `.airc.d/llmcli.zsh` — the `occli` backend
+## 5. `pratfall/config.toml` — the `cmdgen-opencode` profile
 
-One-shot shell-command generation, inside the `_llmcli_run` case statement:
+One-shot shell-command generation, behind the `occli` alias in
+`.airc.d/llmcli.zsh`:
 
-```zsh
-opencode run -m openrouter/<low id> \
+```toml
+[profiles.cmdgen-opencode]
+model = "openrouter/<low id>"
 ```
 
 Cheap and latency-sensitive — this slot wants the low tier regardless of what
 the interactive defaults do.
 
-## 6. `loadout/skills/second-opinion/SKILL.md`
+Its two siblings are **not** targets. `cmdgen-claude` pins `haiku` on the
+subscription, and `cmdgen-codex` pins a Codex-ladder model; neither is
+OpenRouter, which is all this ranking covers. `cmdgen-codex` additionally cannot
+take a `-mini`: Codex on a ChatGPT account rejects those with a 400.
 
-Default advisor bindings follow high-main for Pi and high-fallback for OpenCode.
-Preserve the user-selected advisor overrides above when proposing tier updates;
-include both advisor models and reasoning levels in the proposal for approval.
+## 6. `pratfall/config.toml` — the `advisor-pi` and `advisor-opencode` profiles
 
-Keep the approved model ids and reasoning flags explicit in the published skill:
-Pi uses `--thinking max`, and OpenCode uses `--variant max`. Verify the selected
-OpenCode model exposes a `max` variant with `opencode models openrouter --verbose`.
-These settings apply to every consultation, including `--quick`.
+The `/second-opinion` advisors. Default bindings follow high-main for Pi and
+high-fallback for OpenCode. Preserve the user-selected advisor overrides above
+when proposing tier updates; include both advisor models and reasoning levels in
+the proposal for approval.
 
-Edit this source and run `loadout sync --global` to update all four harness copies.
+Both take prat's normalized `effort`, which renders as Pi's `--thinking` and
+OpenCode's `--variant`. Verify the selected OpenCode model exposes a `max`
+variant with `opencode models openrouter --verbose`. These settings apply to
+every consultation, including `--quick`.
+
+`loadout/skills/second-opinion/SKILL.md` no longer names a model — it invokes
+these profiles — so it needs no edit and no `loadout sync`. The file is
+symlinked to `~/.config/pratfall/config.toml`, so a change takes effect at once.
+
+`publish/overrides/second-opinion/SKILL.md` is the public variant and **is** a
+target: it calls the CLIs directly and carries its own copies of both model ids
+and reasoning flags. Update it in the same pass, or the published skill drifts.
 
 ## After writing
 
