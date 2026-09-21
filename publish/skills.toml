@@ -17,8 +17,8 @@ local = ["time-reconstruct"]
 [groups]
 "Code review" = [
     "code-review", "review-architecture", "review-cleancode", "review-comments",
-    "review-history", "review-interfaces", "review-library-use", "review-perf",
-    "review-security", "review-todo",
+    "review-functional", "review-history", "review-interfaces", "review-library-use",
+    "review-perf", "review-security", "review-todo",
     "second-opinion",
 ]
 "Planning & research" = [

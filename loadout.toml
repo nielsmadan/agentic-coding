@@ -12,7 +12,8 @@ path = "loadout"
 [all]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
-    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
 ]
 
 [claude]
@@ -21,7 +22,8 @@ hooks = ["claude", "hooklinesinker-claude"]
 plugins = ["claude"]
 instructions = [
     "intro-claude", "web-fetching", "video-content", "browser-automation",
-    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
 ]
 
 [codex]
@@ -29,7 +31,8 @@ defaults = "codex"
 hooks = ["hooklinesinker-codex"]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
-    "secrets", "sandbox", "agent-dispatch", "git-policy", "git-commit-policy", "working-style",
+    "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
     "codex-proactivity",
 ]
 

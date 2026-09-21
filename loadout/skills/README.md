@@ -39,6 +39,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-comments` | Review comments for necessity, accuracy, duplication, clarity, and concision (--all, --staged, --changed) |
+| `/review-functional` | Pragmatic functional review — effects at the edges, no hidden shared state, no mutation of a caller's data, determinism (--staged, --all). Excludes currying, recursion and monads by design |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
 | `/review-library-use` | Reviews code against the repo's `library-use` conventions — stale/renamed APIs, deprecated patterns, missing required setup a general reviewer misses. Auto-invoked by `code-review` when a `library-use` reference exists |
@@ -298,6 +299,21 @@ Review comments in full-file context. Finds repeated rationale, stale or vague e
 - Default: `--staged --changed` combined
 
 **Example:** `/review-comments --staged`
+
+---
+
+### /review-functional
+
+Review code against pragmatic functional principles: effects pushed to the edges, no hidden shared state, no mutation of a caller's data, deterministic functions, declarative transforms. Deliberately non-dogmatic — currying, point-free style, recursion and monads are out of scope and never reported as findings.
+
+**Arguments:**
+- `--staged` - Git staged files
+- `--unpushed` - Files changed across all unpushed commits
+- `--changed` - Git unstaged changes
+- `--all` - Entire codebase (uses parallel agents)
+- Default: files from the current conversation context
+
+**Example:** `/review-functional --staged`
 
 ---
 
