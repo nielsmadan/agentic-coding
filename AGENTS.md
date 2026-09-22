@@ -8,43 +8,37 @@ This repository contains shared configuration for agentic coding tools. It inclu
 
 ## Structure
 
-- `claude/` - Claude Code specific configuration
-  - `settings.json`, `settings.autonomous.json` - **generated in full** (see Permissions below)
-  - the hand-maintained half of the two files above lives in `loadout/settings/` (see Permissions below); **edit those, not the generated `settings.json`**
-  - `mcp-permissions.json` - **generated** `PermissionRequest` hook policy
-  - `CLAUDE.md`, `CLAUDE.autonomous.md` - global Claude guidance (**generated** — see Global Instructions below)
-  - `skills/` - Custom skills in `<skill-name>/SKILL.md` format (a few are **generated** — see Multi-Harness Skills below)
-  - `hooks/` - Shell scripts triggered by events (e.g., notification when waiting for input)
-- `codex/` - OpenAI Codex CLI configuration
-  - `rules/` - Permission rules (**generated** — see Permissions below)
-  - `sync_superpowers.py` - pins installed Superpowers skills to explicit invocation
-- `pi/` - Pi (`pi-coding-agent`) configuration
-  - `settings.json` - symlinked to `~/.pi/agent/settings.json`; holds the `enabledModels`
-    allowlist that scopes the model picker (see Pi below). Pi reads global instructions from
-    `~/.pi/agent/AGENTS.md` (the shared `global/AGENTS.md`) and auto-discovers skills from
-    `~/.agents/skills/`, so those need no pi-specific files.
-- `pratfall/` - Profiles for [pratfall](https://github.com/nielsmadan/pratfall) (`prat`), the one-shot agent-CLI runner (see Pratfall below)
-  - `config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles
-- `permissions/` - Single source of truth for agent shell-command and MCP permissions
-  - `permissions.toml` - the source; edit this
-  - `sync.py` - retained entry point only; the global renderers moved to `loadout` (see Permissions below)
-- `mcp/` - Single source of truth for **global** MCP server definitions (see MCP Servers below)
-  - `servers.toml` - the source; edit this
-  - `sync.py` - regenerates every agent's MCP config from the source
-- `skills/` - Single source of truth for skills whose text differs per harness
-  - `<name>.template.md` - the shared skill body with `{{PLACEHOLDER}}` slots; edit this
-  - `sync.py` - renders each harness's `SKILL.md` from the template (see Multi-Harness Skills below)
-- `loadout.toml` - the manifest: declares every generated file, its renderer, and its base. **The authority on what is generated** — if a path appears as an `output` here, never hand-edit it.
-- `global/` - Single source of truth for each agent's **global** (machine-wide) instructions
-  - `fragments/` - shared prose sections (browser automation, secrets, git policy, ...); edit these
-  - `AGENTS.md` - **generated** shared file for every non-Claude agent (symlinked to `~/.codex/AGENTS.md` + `~/.pi/agent/AGENTS.md`); see Global Instructions below
-- `loadout/templates/<type>.toml` - Project-type manifests selecting shared parts from
-  `templates/instructions/`, `templates/permissions/`, `templates/mcp/`, and
-  `templates/skills/` (see Project Templates below)
+Everything loadout renders from lives under `loadout/`; the rest of the repo is the shell
+environment and the tools around it.
+
+- `loadout.toml` - the manifest: names which slices each harness composes and in what order. Destinations come from loadout's agent preset, so no machine path appears here.
+- `loadout/` - every source loadout renders from
+  - `permissions.toml` - shell and MCP permission rules for all agents (see Permissions)
+  - `mcp.toml` - which MCP servers exist machine-wide (see MCP Servers)
+  - `instructions/` - shared prose fragments for each agent's **global** guidance; edit these (see Global Instructions)
+  - `skills/` - global skills, rendered to all four harnesses (see Skills)
+  - `templates/` - project-type manifests and the shared parts they select (see Project Templates)
+  - `settings/` - the hand-maintained half of each harness's settings: `claude.json`, `claude-afk.json`, `droid.json`, `opencode.json`, `pi.json`
+  - `hooks/` - hook *wiring* per harness (`claude.json`, `hooklinesinker-claude.json`, `hooklinesinker-codex.json`)
+  - `plugins/` - plugin enablement per harness (`claude.json`, `pi.json`, `unsandboxed.json`)
+  - `module-config/<harness>/` - files copied to the harness's own config dir; the hook scripts themselves live in `loadout/module-config/claude/hooks/`
+  - `defaults/` - `codex.json` (model defaults) and its generated `codex.owned` record
+- `nono/` - sandbox profiles, symlinked to `~/.config/nono/profiles/` (see Sandbox)
+- `codex/sync_superpowers.py` - pins installed Superpowers skills to explicit invocation
+- `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall)
+- `publish/` - renders the public skills collection (see below)
+- `docs/` - deeper reference, notably [`security-model.md`](docs/security-model.md)
 - `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order
   - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
 - `bin/` - standalone CLI scripts on PATH (e.g. `ccmove`, `clcof`); add new ones here rather than as zsh functions. `.airc.d/00-path.zsh` covers interactive shells only — a script that must also run under launchd needs an explicit `~/.local/bin` symlink in `sync.sh`'s `SYMLINKS` (as `jina-fetch` and `sops-exec` have)
+
+**Almost nothing is staged in this repo any more.** loadout writes each generated file straight
+to the path its agent reads — `~/.claude/settings.json`, `~/.claude/CLAUDE.md`,
+`~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest — so a file you are
+looking for is usually at its destination, not here. The one generated file that does land in the
+repo is `loadout/defaults/codex.owned`. Separately, `nono/*.json` and `pratfall/config.toml` are
+hand-maintained sources reached through symlinks, so those are live config you edit in place.
 
 ## Shell Config
 
@@ -176,7 +170,7 @@ One source of truth, two harnesses, still scoped to this repo — `~/.codex/skil
 appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 - **`agent-models`** — picks the low / mid / high-main / high-fallback OpenRouter
-  models and writes them into every file that pins a model id (`pi/settings.json`,
+  models and writes them into every file that pins a model id (`loadout/settings/pi.json`,
   `loadout/settings/opencode.json`, `clor` in `.airc.d/claude.zsh`, the `ocs`
   alias, the `occli` backend, and the two `second-opinion` advisors). Ranks
   candidates from Artificial Analysis by agentic index vs cost per task; never
@@ -193,7 +187,7 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`loadout/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` is the authority on which files those are; every path appearing there as an `output` or a `destination` is generated. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. One exception lands here: `loadout/defaults/codex.owned`, the record of which keys loadout manages in `config.toml` rather than a config file itself.
+**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` names the slices, not the destinations — those come from loadout's agent preset, so `loadout explain <fragment>` or `loadout check --global` is what tells you where something lands. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. One exception lands here: `loadout/defaults/codex.owned`, the record of which keys loadout manages in `config.toml` rather than a config file itself.
 
 **Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
 
@@ -202,7 +196,7 @@ Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, 
 | `loadout/permissions.toml` | any shell or MCP rule, on every agent | all seven permission files |
 | `loadout/settings/claude.json` | hooks, statusLine, model, env, `permissions.defaultMode` — for **both** profiles | `~/.claude/settings.json` |
 | `loadout/settings/claude-afk.json` | the default profile's `env.CLAUDE_AFK_TIMEOUT_MS` only | `~/.claude/settings.json` under the default profile |
-| `loadout/bases/opencode.base.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
+| `loadout/settings/opencode.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
 
 `~/.claude/settings.json` in particular is generated **in full** — it looks hand-maintained and is not. Putting a hook there instead of in `loadout/settings/claude.json` loses the edit at the next sync. Claude Code writing to it itself no longer gets silently merged either: `loadout sync` stops and prints the added lines so you can move them into the base.
 
@@ -395,21 +389,21 @@ The two must be fixed together — see Public skill variants in
 
 ## Local Claude Plugins
 
-A plugin developed locally (`mouthfeel`, at `~/wrksp/oss/mouthfeel`) is wired up in **two halves with two owners**, and they must agree:
+A plugin developed locally (`mouthfeel`, at `~/wrksp/all/mouthfeel`) is wired up in **two halves with two owners**, and they must agree:
 
-- **Enablement** — `enabledPlugins` in `loadout/settings/claude.json`, rendered into the generated `~/.claude/settings.json`. Without an entry there, `claude plugin enable` writes the key at runtime and the next `loadout sync` discards it, silently disabling the plugin.
-- **Marketplace registration** — `sync.sh`'s `sync_claude_plugins`, driven by the `LOCAL_MARKETPLACES` array. `~/.claude/plugins/known_marketplaces.json` is an install registry Claude rewrites itself (install paths, timestamps), so loadout deliberately does not render it — the same constraint as `.claude.json` for MCP servers. Add-only: if the built path moves, `claude plugin marketplace remove <name>` and re-run.
+- **Enablement** — `loadout/plugins/claude.json`, rendered into the generated `~/.claude/settings.json`. Without an entry there, `claude plugin enable` writes the key at runtime and the next `loadout sync` discards it, silently disabling the plugin. `loadout/plugins/unsandboxed.json` sets it to `null`, which is how that profile drops the plugin.
+- **Marketplace registration** — `sync.sh`'s `sync_claude_plugins`, driven by the `LOCAL_MARKETPLACES` array, which names the *built* plugin directory rather than the repo root. A stale entry there fails silently: the registration step simply finds nothing to register. `~/.claude/plugins/known_marketplaces.json` is an install registry Claude rewrites itself (install paths, timestamps), so loadout deliberately does not render it — the same constraint as `.claude.json` for MCP servers. Add-only: if the built path moves, `claude plugin marketplace remove <name>` and re-run.
 
-**`enabledPlugins` lives in the settings base only because this repo declares no `plugins` slice.** loadout has one, and it assigns `enabledPlugins` unconditionally; composition is residual-first, so the moment `loadout.toml` gains `[claude] plugins = [...]` the slice wins and the settings-base copy is overwritten with no message. If you declare one, move the entry into a plugins fragment at the same time.
+**`enabledPlugins` used to live in the settings base, and must not go back there.** The plugins slice assigns the key unconditionally, and composition is residual-first — so with `plugins = ["claude"]` declared in `loadout.toml`, a copy left in `loadout/settings/claude.json` is overwritten with no message.
 
 Reload after a source change is `npm run dev:claude` in the plugin repo: it stamps a fresh version into `dist/claude/mouthfeel/.claude-plugin/plugin.json`, then runs `claude plugin update` and `claude plugin enable`. The version stamp is what stops Claude serving the cached copy. Nothing sandbox-specific is needed — `~/wrksp` and `~/.claude/plugins` are both granted.
 
 ## Hooks
 
-Event-triggered shell scripts live in `claude/hooks/` and are wired in under the `hooks` key of **`loadout/settings/claude.json`** — not `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
+Hook **scripts** live in `loadout/module-config/claude/hooks/`; their **wiring** is a separate slice, `loadout/hooks/claude.json`. Neither belongs in `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
 
 - **Make it executable (`chmod 755`).** A non-executable hook is silently skipped — the event fires as if no hook existed. Git preserves mode `100755` once set.
-- **Both profiles get it automatically.** They compose the same `loadout/settings/claude.json` fragment — `claude` for autonomous, `claude` + `claude-afk` for default — so a hook added there reaches both. The overlay exists only for `env.CLAUDE_AFK_TIMEOUT_MS`, which is default-only. Run `loadout sync` afterwards.
+- **Both profiles get it automatically.** `loadout.toml` gives Claude `hooks = ["claude", "hooklinesinker-claude"]` under either profile, so a hook added to the wiring reaches both. The settings overlay that does differ is `claude-afk`, and it carries only `env.CLAUDE_AFK_TIMEOUT_MS`. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
 ## GitHub tokens
@@ -521,15 +515,17 @@ The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides 
 
 ## Global Instructions
 
-Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`global/fragments/`**. `loadout` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
+Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`loadout/instructions/`**. `loadout` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check`) rejects any drift:
-- `claude/CLAUDE.md` and `claude/CLAUDE.autonomous.md` → symlinked to `~/.claude/CLAUDE.md`
-- `global/AGENTS.md` → symlinked to `~/.codex/AGENTS.md` (Codex) and `~/.pi/agent/AGENTS.md` (Pi)
+- `~/.claude/CLAUDE.md` (Claude; the autonomous profile writes the same path)
+- `~/.codex/AGENTS.md`, `~/.pi/agent/AGENTS.md`, `~/.config/opencode/AGENTS.md`, `~/.factory/AGENTS.md` — the shared document every non-Claude agent gets
 
-**Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one `global/AGENTS.md` — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md` and Pi from `~/.pi/agent/AGENTS.md`; the destinations differ but point at the same source.)
+All five are written directly to those paths; none is staged here or symlinked.
 
-To change global guidance: edit a fragment in `global/fragments/`, then run `loadout sync` (also run automatically by `./sync.sh` and `install.sh`). Each target names its fragments explicitly in `loadout.toml`'s `order` list, so the differences that exist are visible in one place — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment. Adding a fragment file does nothing until a target lists it by name; `loadout explain <fragment>` reports which targets use one.
+**Only Claude gets its own file.** It needs the `CLAUDE.md` filename, the Jina Web Fetching section, and the autonomous git-policy variant. Every other agent shares one composed document — the content is identical, so there's no reason to branch per-agent until one actually needs something different. (Codex reads global instructions from `~/.codex/AGENTS.md` and Pi from `~/.pi/agent/AGENTS.md`; the destinations differ but point at the same source.)
+
+To change global guidance: edit a fragment in `loadout/instructions/`, then run `loadout sync` (also run automatically by `./sync.sh` and `install.sh`). Each target names its fragments explicitly in its `instructions` list in `loadout.toml`, so the differences that exist are visible in one place — e.g. `web-fetching` (the Jina MCP) is Claude-only because only Claude has that MCP configured; the autonomous profile swaps in the `git-policy.autonomous` fragment. Adding a fragment file does nothing until a target lists it by name; `loadout explain <fragment>` reports which targets use one.
 
 **Why a generator, not native `@imports`:** only Claude Code expands in-file `@path` imports; Codex, OpenCode and Pi have none. A generator is the only DRY approach that works uniformly across every agent.
 
@@ -541,7 +537,7 @@ Pi (`@earendil-works/pi-coding-agent`, installed via mise) is wired up like the 
 harnesses, but through Pi's own mechanisms rather than the generated permission/global pipelines:
 
 - **Global instructions** — Pi loads `~/.pi/agent/AGENTS.md`, symlinked to the shared
-  `global/AGENTS.md` (same file as Codex).
+  the same composed document Codex gets.
 - **Skills** — Pi auto-discovers `~/.agents/skills/` (and `~/.pi/agent/skills/`) by default. That
   first directory is already populated by `install_codex_skills`, so Pi gets the same curated skill
   subset as Codex with no pi-specific config. Skills surface as `/skill:<name>` and via
@@ -560,18 +556,17 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   **Pi caches its resolved server list in `~/.pi/agent/mcp-cache.json` and editing `mcp.json`
   does not invalidate it** — a server added to `servers.toml` stays invisible to Pi until that
   cache is deleted.
-- **Model picker** — `pi/settings.json` (symlinked to `~/.pi/agent/settings.json`) sets
-  `enabledModels`, a glob allowlist (`provider/id`, minimatch, same format as Pi's `--models` flag)
-  that scopes the `/model` default view and Ctrl+P cycling. It does **not** delete models from the
-  "show all" tab. To change which models are offered, edit the `enabledModels` array. **Do not** edit
-  `~/.pi/agent/models-store.json` — that is a fetched catalog cache Pi overwrites on `pi update`.
-  Current scope: the GPT-5.6 Codex ladder (`gpt-5.6-luna`/`-terra`/`-sol`, default `-terra`) plus a
-  curated openrouter spread (`z-ai/glm-5.2`, `minimax/minimax-m2.5`, `deepseek/deepseek-v4-flash`,
-  `qwen/qwen3-coder-next`, `qwen/qwen3-coder:free`).
+- **Model picker** — `loadout/settings/pi.json` sets `enabledModels`, a glob allowlist
+  (`provider/id`, minimatch, same format as Pi's `--models` flag) that scopes the `/model` default
+  view and Ctrl+P cycling. It does **not** delete models from the "show all" tab. To change which
+  models are offered, edit that array; read it there rather than trusting a list quoted here, since
+  the `agent-models` skill rewrites it. **Do not** edit `~/.pi/agent/models-store.json` — that is a
+  fetched catalog cache Pi overwrites on `pi update`.
 
-Unlike the other harnesses' settings files, `pi/settings.json` is runtime-mutable: Pi writes
-`lastChangelogVersion` (on upgrades) and any `/settings` / `/model` changes back through the symlink
-into the repo file, so expect the occasional small diff to commit or discard.
+**`~/.pi/agent/settings.json` is generated, not symlinked** — that changed when pi settings moved
+into loadout. Pi still writes `lastChangelogVersion` and any `/settings` / `/model` change back into
+it at runtime, but those writes now land in a generated file and the next `loadout sync` discards
+them. A `/model` change you want to keep belongs in `loadout/settings/pi.json`.
 
 ## Project Templates
 
