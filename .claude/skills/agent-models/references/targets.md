@@ -24,9 +24,11 @@ and low keeps only the terse one-shot slots (`occli`, the haiku rung). Whichever
 tier wins, everything above it must be reached deliberately: `clor`'s opus alias
 and `ocs`.
 
-**This cycle:** low = GPT-5.6 Luna, mid = GLM-5.3-Flash, high-main = GLM-5.3,
-high-fallback = Qwen3.8 2.4T A95B — and **mid holds the default**, because Luna is
-11.3 agentic points weaker *and* dearer per input token ($0.20/M vs $0.15/M).
+**This cycle:** low = GPT-6 Luna, mid = MiMo-V2.6-Pro, high-main = GPT-6 Sol
+(max, user-selected past the cost cliff), high-fallback = Muse Spark 1.3 (max) —
+and **mid holds the default**. Luna is cheaper per session but 9 index points
+weaker; MiMo's $0.0036/M cache reads keep a typical session under the previous
+default's cost.
 
 **User-selected advisors:** Pi uses GLM-5.3 at `max`; OpenCode uses Kimi K3 at
 `max`. OpenCode's advisor selection overrides its high-fallback tier binding.
@@ -61,7 +63,7 @@ is exactly where a terse-but-pricier low tier loses on both capability and cost.
   but they are page-extraction models chosen by a separate harness
   (`benchmark/bench-models.py`, written up in `benchmark/extract-model.md`) on
   criteria this ranking does not measure: extraction latency, faithfulness to the
-  page, and provider count as 429 insurance. Agentic index is irrelevant to that
+  page, and provider count as 429 insurance. Intelligence index is irrelevant to that
   job. Leave both alone and re-run that benchmark instead.
 
 ---
@@ -77,9 +79,10 @@ slice (which supplies `packages`).
 "defaultModel": "<low id>",
 "defaultThinkingLevel": "<low effort>",
 "enabledModels": [
-  "openai-codex/gpt-5.6-luna",
+  "openai-codex/gpt-6-astra",
+  "openai-codex/gpt-6-luna",
   "openai-codex/gpt-5.6-terra",
-  "openai-codex/gpt-5.6-sol",
+  "openai-codex/gpt-6-sol",
   "openrouter/<low id>",
   "openrouter/<mid id>",
   "openrouter/<high-main id>",

@@ -3,7 +3,7 @@
 opencode() { AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "$@"; }
 
 alias oc="opencode"
-alias ocs="opencode -m openrouter/qwen/qwen3.8-2.4t-a95b"
+alias ocs="opencode -m openrouter/meta/muse-spark-1.3"
 alias occo="opencode --continue"
 alias occof="opencode --continue --fork"
 
