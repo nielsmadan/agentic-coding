@@ -1,6 +1,6 @@
 ---
 name: agent-models
-description: Pick and apply the low / mid / high-main / high-fallback OpenRouter coding models for pi, OpenCode, the clor Claude-Code-on-OpenRouter wrapper. Ranks candidates from Artificial Analysis by agentic index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", or asks what pi/opencode/clor are currently running.
+description: Pick and apply the low / mid / high-main / high-fallback OpenRouter coding models for pi, OpenCode, the clor Claude-Code-on-OpenRouter wrapper. Ranks candidates from Artificial Analysis by Intelligence Index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", or asks what pi/opencode/clor are currently running.
 ---
 
 # Agent Models
@@ -14,8 +14,11 @@ Standing constraints, not preferences:
 - **Prefer alternative labs.** OpenAI, Anthropic and Google are eligible but only
   win a tier when clearly ahead of the best alternative; the point of these
   harnesses is to get a read on non-frontier-lab models.
-- **Rank on agentic index vs cost per task**, the two axes of the chart at
-  `artificialanalysis.ai/models?intelligence=agentic-index`.
+- **Rank on Intelligence Index vs cost per Intelligence Index task**, the two
+  axes of the chart of that name on `artificialanalysis.ai`. This replaced the
+  Agentic Index in September 2026, when AA stopped publishing it per model. The
+  Coding Agent Index (`/agents/coding-agents`) was considered and passed over: it
+  covers ~19 harness+model pairs, so most candidates are missing from it.
 
 ## Instructions
 
@@ -25,9 +28,12 @@ Standing constraints, not preferences:
 python3 .claude/skills/agent-models/scripts/rank_models.py
 ```
 
-It fetches the Artificial Analysis models page, parses the full per-model
-dataset out of the RSC payload the page server-renders, resolves each model to
-an exact OpenRouter id, and prints a table plus the cost/agentic Pareto frontier.
+It fetches `/leaderboards/models` (every model) and `/models` (a richer record —
+effort, token counts — for a featured subset of ~26), parses both out of the RSC
+payload each page server-renders, joins them on `slug`, resolves each model to an
+exact OpenRouter id, and prints a table plus the cost/intelligence Pareto
+frontier. Leaderboard-only records carry effort only in their name, which the
+script parses (`GPT-6 Sol (low)`).
 Add `--no-cache` to bypass the 6h fetch cache, `--all` to show excluded models,
 `--json` for machine-readable output.
 
@@ -38,7 +44,7 @@ Read the `Frontier` and `Cost cliffs` sections — that is where the tiers are.
 
 ### Step 2: Choose four models
 
-Work off the frontier, cheapest first. Marginal cost per agentic point is the
+Work off the frontier, cheapest first. Marginal cost per index point is the
 signal: a segment that buys many points cheaply is inside a tier, a segment that
 buys almost nothing for a lot of money is the cliff between tiers.
 
@@ -46,8 +52,8 @@ buys almost nothing for a lot of money is the cliff between tiers.
 |------|------|
 | **low** | Cheapest frontier point worth running at all. Its natural home is the terse one-shot slots (`occli`, the haiku rung) — it only earns the default as well if it is *also* cheapest per input token. |
 | **mid** | The next frontier point up. Usually the best value on the board, and usually the right default. |
-| **high-main** | Highest agentic index *before* the first cost cliff. Buying past a cliff is the mistake this ranking exists to prevent. |
-| **high-fallback** | Best model from a **different creator** at comparable capability — within ~6 agentic points of high-main, at similar cost. A second opinion from the same lab is not a second opinion. |
+| **high-main** | Highest intelligence index *before* the first cost cliff. Buying past a cliff is the mistake this ranking exists to prevent. |
+| **high-fallback** | Best model from a **different creator** at comparable capability — within ~6 index points of high-main, at similar cost. A second opinion from the same lab is not a second opinion. |
 
 **Prefer the frontier points themselves.** When the frontier has three points
 below the cliff, that *is* the ladder — take them in order rather than reaching
@@ -71,9 +77,9 @@ Four checks. Each one has caught a real bad pick; run all four.
    more than high-main is not a step up, it is a dominated pick — re-pick it, or
    collapse the tier into high-main and say so.
 2. **No dominated pick wins a tier.** If a candidate is behind another on *both*
-   agentic index and cost, it cannot take a tier on intelligence index alone.
-   (This is exactly how GPT-5.6 Sol nearly took mid at $0.953 while GLM-5.3 sat
-   above it on agentic *and* below it on price.)
+   index and cost, it cannot take a tier on any other merit. (Under the old
+   Agentic Index, GPT-5.6 Sol nearly took mid at $0.953 while GLM-5.3 sat above
+   it on the index *and* below it on price.)
 3. **Check input price and tokens/task, not just `$/task`.** `$/task` is a
    benchmark blend. Real agentic sessions re-send their whole context every turn,
    so the bill tracks `price_in` far more closely than `$/task` — a terse model
@@ -85,7 +91,8 @@ Four checks. Each one has caught a real bad pick; run all four.
 ### Getting tokens per task
 
 The printed table has no token columns, and `--json` does not carry them either.
-They are on the raw AA record, so pull them with the script's own parser:
+They exist only on the `/models` records (~26 featured models) — leaderboard-only
+models have none. Pull them with the script's own parser:
 
 ```python
 import importlib.util
@@ -116,7 +123,7 @@ records per-turn `usage.cost`, so the replay can be checked to the cent.
 
 ### Step 3: Present the proposal, and stop
 
-Show a table: tier, model name, creator, agentic index, cost per task, effort,
+Show a table: tier, model name, creator, intelligence index, cost per task, effort,
 and exact OpenRouter id. Say in one line per tier why it won, and name the
 runner-up so an override is a one-word reply.
 
@@ -179,13 +186,13 @@ User says: "refresh the model tiers"
 1. Run `rank_models.py`. Frontier comes back
    `GPT-5.6 Luna ($0.049, 46.9) → GLM-5.3-Flash ($0.087, 58.2) →
    GLM-5.3 ($0.683, 59.1) → Claude Opus 5 ($2.337, 59.2)`, with a cliff flagged
-   after GLM-5.3 at $23.23 per extra agentic point.
+   after GLM-5.3 at $23.23 per extra index point.
 2. Three frontier points sit below the cliff, so they *are* the ladder: low =
    GPT-5.6 Luna (max), mid = GLM-5.3-Flash (max), high-main = GLM-5.3 (max).
    Luna is a frontier lab but takes low cleanly — the best alternative near its
-   price is MiniMax-M3 at 36.1 agentic for $0.139, so Luna is 10.8 points
+   price is MiniMax-M3 at 36.1 for $0.139, so Luna is 10.8 points
    stronger *and* 2.8x cheaper. high-fallback = Qwen3.8 2.4T A95B — different
-   lab, 57.1 agentic at $0.807, beating Kimi K3 on both axes.
+   lab, 57.1 at $0.807, beating Kimi K3 on both axes.
 3. Run the four sanity checks. Costs rise across the ladder ✓, no pick is
    dominated ✓. But check 3 fires: Luna costs **more per input token** than mid
    ($0.20/M vs $0.15/M) and only wins `$/task` on terseness (136k tokens/task vs
@@ -211,10 +218,12 @@ ranking or edit anything — this is a question, not an instruction to re-pick.
 ### `rank_models.py` returns few or no models
 
 **Cause:** Artificial Analysis changed its payload shape, so the brace-matched
-`"agenticIndex"` records no longer parse.
+records no longer parse. This has happened before: in September 2026 AA dropped
+`agenticIndex` from every page, and the script returned zero models.
 **Solution:** Re-run with `--no-cache` first — a truncated cached fetch looks the
 same. If still empty, inspect the cached HTML under `$TMPDIR/agent-models/` for
-`self.__next_f` and `agenticIndex`. Report that the parser needs updating rather
+`self.__next_f`, `intelligenceIndexIsEstimated` (the leaderboard record key) and
+`intelligenceIndexOutputTokensPerTask` (the `/models` record key). Report that the parser needs updating rather
 than falling back to reading the rendered chart, which has no numbers in it.
 
 ### A model is excluded as "no OpenRouter id"

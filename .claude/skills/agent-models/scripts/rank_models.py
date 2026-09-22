@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Rank Artificial Analysis models by agentic index vs cost per task and resolve
-OpenRouter ids, so a low / mid / high-main / high-fallback trio can be chosen.
+"""Rank Artificial Analysis models by Intelligence Index vs cost per Intelligence
+Index task and resolve OpenRouter ids, so a low / mid / high-main / high-fallback
+trio can be chosen.
 
-The /models page server-renders a full per-model dataset into its RSC payload
-(self.__next_f). That payload — not the rendered chart — is the data source.
+/leaderboards/models server-renders every model into its RSC payload
+(self.__next_f); /models carries a richer record (effort, token counts) for a
+featured subset. Those payloads — not the rendered charts — are the data source.
 """
 
 import argparse
@@ -14,7 +16,8 @@ import sys
 import time
 import urllib.request
 
-AA_URL = "https://artificialanalysis.ai/models"
+AA_URL = "https://artificialanalysis.ai/leaderboards/models"
+AA_DETAIL_URL = "https://artificialanalysis.ai/models"
 OR_URL = "https://openrouter.ai/api/v1/models"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
@@ -100,11 +103,9 @@ def enclosing_object(s, pos):
     return None
 
 
-def aa_models(no_cache=False):
-    payload = rsc_payload(fetch(AA_URL, "aa-models.html", no_cache))
-    seen = set()
-    out = []
-    for m in re.finditer(r'"agenticIndex"', payload):
+def records(payload, key):
+    out = {}
+    for m in re.finditer(f'"{key}"', payload):
         blob = enclosing_object(payload, m.start())
         if not blob:
             continue
@@ -112,11 +113,17 @@ def aa_models(no_cache=False):
             rec = json.loads(blob)
         except ValueError:
             continue
-        if rec.get("id") in seen:
-            continue
-        seen.add(rec.get("id"))
-        out.append(rec)
+        if rec.get("slug"):
+            out.setdefault(rec["slug"], rec)
     return out
+
+
+def aa_models(no_cache=False):
+    board = records(rsc_payload(fetch(AA_URL, "aa-leaderboard.html", no_cache)),
+                    "intelligenceIndexIsEstimated")
+    detail = records(rsc_payload(fetch(AA_DETAIL_URL, "aa-models.html", no_cache)),
+                     "intelligenceIndexOutputTokensPerTask")
+    return [{**rec, **detail.get(slug, {})} for slug, rec in board.items()]
 
 
 def norm(s):
@@ -180,20 +187,34 @@ def resolve(rec, idx):
 
 
 def cost_per_task(rec):
-    v = (rec.get("intelligenceIndexCostPerTask") or {}).get("cost") or {}
-    return v.get("total")
+    v = rec.get("intelligenceIndexCostPerTask")
+    if isinstance(v, dict):
+        return (v.get("cost") or {}).get("total")
+    return v
+
+
+EFFORT_RE = re.compile(r"\b(minimal|low|medium|high|xhigh|max)\b", re.I)
+
+
+def effort_of(rec):
+    slug = (rec.get("effort") or {}).get("slug")
+    if slug:
+        return slug
+    # Leaderboard-only records carry effort in the name: "GPT-6 Sol (low)",
+    # "Claude Opus 5 (Adaptive Reasoning, Max Effort)".
+    paren = re.search(r"\(([^)]*)\)\s*$", rec.get("name") or "")
+    hit = EFFORT_RE.search(paren.group(1)) if paren else None
+    return hit.group(1).lower() if hit else None
 
 
 def flatten(rec, idx):
     creator = rec.get("creator") or {}
-    effort = rec.get("effort") or {}
     return {
         "name": rec.get("name"),
         "release": (rec.get("release") or {}).get("name"),
-        "creator": creator.get("slug"),
-        "creator_name": creator.get("name"),
-        "effort": effort.get("slug"),
-        "agentic": rec.get("agenticIndex"),
+        "creator": creator.get("slug") or norm(rec.get("modelCreatorName")),
+        "creator_name": creator.get("name") or rec.get("modelCreatorName"),
+        "effort": effort_of(rec),
         "intelligence": rec.get("intelligenceIndex"),
         "cost_per_task": cost_per_task(rec),
         "price_in": rec.get("price1mInputTokens"),
@@ -215,19 +236,19 @@ def eligible(m):
         why.append("deprecated")
     if not m["openrouter_id"]:
         why.append("no OpenRouter id")
-    if not m["agentic"] or not m["cost_per_task"]:
-        why.append("missing agentic index or cost")
+    if not m["intelligence"] or not m["cost_per_task"]:
+        why.append("missing intelligence index or cost")
     return why
 
 
 def pareto(models):
-    """Frontier on (cost per task ascending, agentic index strictly increasing)."""
+    """Frontier on (cost per task ascending, intelligence index strictly increasing)."""
     front = []
     best = -1.0
     for m in sorted(models, key=lambda x: x["cost_per_task"]):
-        if m["agentic"] > best:
+        if m["intelligence"] > best:
             front.append(m)
-            best = m["agentic"]
+            best = m["intelligence"]
     return front
 
 
@@ -235,13 +256,17 @@ def marginals(front):
     out = []
     for a, b in zip(front, front[1:]):
         dc = b["cost_per_task"] - a["cost_per_task"]
-        da = b["agentic"] - a["agentic"]
+        da = b["intelligence"] - a["intelligence"]
         out.append((a, b, dc / da if da else float("inf")))
     return out
 
 
+def num(v, width, places):
+    return f"{v:{width}.{places}f}" if v is not None else f"{'-':>{width}}"
+
+
 def fmt_table(models, front_ids):
-    hdr = (f"{'model':38} {'creator':12} {'eff':5} {'agent':>6} {'intel':>6} "
+    hdr = (f"{'model':38} {'creator':12} {'eff':5} {'intel':>6} "
            f"{'$/task':>7} {'in$':>6} {'out$':>6} {'ctx':>7}  openrouter id")
     lines = [hdr, "-" * len(hdr)]
     for m in models:
@@ -249,8 +274,8 @@ def fmt_table(models, front_ids):
         ctx = m["context"] or 0
         lines.append(
             f"{mark}{str(m['name'])[:36]:37} {str(m['creator'])[:11]:12} "
-            f"{str(m['effort'] or '-')[:5]:5} {m['agentic']:6.1f} "
-            f"{(m['intelligence'] or 0):6.1f} {m['cost_per_task']:7.3f} "
+            f"{str(m['effort'] or '-')[:5]:5} "
+            f"{num(m['intelligence'], 6, 1)} {num(m['cost_per_task'], 7, 3)} "
             f"{(m['price_in'] or 0):6.2f} {(m['price_out'] or 0):6.2f} "
             f"{ctx // 1000:6d}k  {m['openrouter_id']}")
     return "\n".join(lines)
@@ -276,7 +301,7 @@ def main():
             excluded.append(m)
         else:
             ok.append(m)
-    ok.sort(key=lambda m: -m["agentic"])
+    ok.sort(key=lambda m: -m["intelligence"])
 
     front = pareto(ok)
     front_ids = {id(m) for m in front}
@@ -287,7 +312,7 @@ def main():
             "candidates": ok,
             "excluded": excluded,
             "frontier": [m["name"] for m in front],
-            "frontier_marginal_cost_per_agentic_point": [
+            "frontier_marginal_cost_per_intelligence_point": [
                 {"from": a["name"], "to": b["name"], "usd_per_point": r}
                 for a, b, r in marg],
             "big_labs": sorted(BIG_LABS),
@@ -296,13 +321,13 @@ def main():
         return
 
     print(f"{len(ok)} selectable models  ({len(excluded)} excluded)")
-    print("* = on the cost/agentic Pareto frontier\n")
+    print("* = on the cost/intelligence Pareto frontier\n")
     print(fmt_table(ok if not args.all else ok + excluded, front_ids))
 
-    print("\nFrontier, cheapest first — marginal cost per agentic index point:")
+    print("\nFrontier, cheapest first — marginal cost per intelligence index point:")
     for a, b, rate in marg:
         print(f"  {a['name'][:34]:35} -> {b['name'][:34]:35} "
-              f"+{b['agentic'] - a['agentic']:5.1f} pts for "
+              f"+{b['intelligence'] - a['intelligence']:5.1f} pts for "
               f"+${b['cost_per_task'] - a['cost_per_task']:.3f}  = ${rate:8.3f}/pt")
     if marg:
         rates = sorted(r for *_, r in marg)
@@ -314,9 +339,11 @@ def main():
                 print(f"  after {a['name']}: {b['name']} costs ${r:.2f} per extra point")
 
     if excluded and not args.all:
-        print("\nExcluded:")
+        unscored = [m for m in excluded if not m["intelligence"] or not m["cost_per_task"]]
+        print(f"\nExcluded ({len(unscored)} more have no index score or cost per task):")
         for m in excluded:
-            print(f"  {str(m['name'])[:44]:45} {', '.join(m['excluded_because'])}")
+            if m not in unscored:
+                print(f"  {str(m['name'])[:44]:45} {', '.join(m['excluded_because'])}")
 
 
 if __name__ == "__main__":
