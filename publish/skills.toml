@@ -23,8 +23,8 @@ local = ["time-reconstruct"]
 ]
 "Planning & research" = [
     "blind-spots", "evaluate-tech", "ideation", "longshot",
-    "plan", "research-general", "research-tech", "review-plan",
-    "review-product",
+    "plan", "release-review", "research-general", "research-tech",
+    "review-plan", "review-product",
 ]
 "Testing & debugging" = [
     "debug-log", "hard-fix", "perf-test", "pre-existing",

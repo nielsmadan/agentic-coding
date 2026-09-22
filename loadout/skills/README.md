@@ -33,6 +33,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and report evidence and coverage; `--fix` repairs confirmed bugs and retests |
 | `/read-docs` | Search internal project documentation (proactive) |
+| `/release-review` | Whole-product pre-release review programme — product map and target flows, cross-cutting conventions, then command by command with the user, one scenario-framed item at a time, into an on-disk changes ledger; hands ready batches to parallel implementer sessions, then sequences code review, docs, QA and release, and harvests it all into `docs/`. Resumable |
 | `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents; uses blind-spots first when an unresolved decision would change the investigation |
 | `/research-tech` | Research technical/developer topics using parallel agents — libraries, errors, comparisons, capabilities, ecosystem signal; uses blind-spots first when an unresolved decision would change the investigation |
 | `/resolve-conflicts` | Git merge conflict resolution |
