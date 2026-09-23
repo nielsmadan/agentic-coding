@@ -208,6 +208,20 @@ sync_agent_signing_keychain() {
   fi
 }
 
+# Only login.keychain-db is unlocked at login, so after every reboot the signing
+# keychain is locked and the first sandboxed codesign raises an unlock dialog no
+# sandbox can answer — surfacing as an unrelated-looking CodeSign failure. A
+# RunAtLoad agent unlocks it (empty password) at each login.
+sync_agent_signing_unlock() {
+  [[ -f "$HOME/Library/Keychains/agent-signing.keychain-db" ]] || return 0
+  local label="com.nielsmadan.unlock-agent-signing-keychain"
+  local dest="$HOME/Library/LaunchAgents/$label.plist"
+  create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
+  if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
+    launchctl bootstrap "gui/$(id -u)" "$dest" && echo "✓  Loaded $label"
+  fi
+}
+
 # ~/.npmrc is NOT granted, and must not exist: it sits in nono's deny_credentials
 # group, and yarn 1 opens it on every invocation, resolving the path through
 # os.homedir() so no env var redirects it. Absent, the open returns ENOENT and yarn
@@ -408,6 +422,7 @@ if [[ "$PROFILE" != unsandboxed ]]; then
   seed_private_profile
   seed_granted_state_dirs
   sync_agent_signing_keychain
+  sync_agent_signing_unlock
   warn_if_npmrc_exists
 fi
 

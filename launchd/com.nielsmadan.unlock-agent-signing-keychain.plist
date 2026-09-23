@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.nielsmadan.unlock-agent-signing-keychain</string>
+
+    <!-- Only login.keychain-db is unlocked at login; a locked agent-signing keychain raises a dialog no sandboxed codesign can answer. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>kc="$HOME/Library/Keychains/agent-signing.keychain-db"; [ -f "$kc" ] || exit 0; exec /usr/bin/security unlock-keychain -p "" "$kc"</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
