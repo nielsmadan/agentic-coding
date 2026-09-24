@@ -14,6 +14,27 @@ start a separate packager with an agent-selected port. When a command needs this
 assigned port, read `RCT_METRO_PORT` from `splashdown.env` and use that value for Metro,
 device launches, reloads, and log tooling.
 
+Check whether `splash run` starts Metro in the installed version (`docs/user/devices.md` in
+splashdown). If it does not, start Metro yourself on the assigned port, in the background with
+its output in a log file, before `splash run`. When calling `run-ios` / `run-android` directly,
+pass `--no-packager`: otherwise the CLI opens its own packager through LaunchServices, which
+fails inside the sandbox with `_LSOpenURLsWithCompletionHandler() failed with error -54`. On
+Android, `adb reverse tcp:$RCT_METRO_PORT tcp:$RCT_METRO_PORT` after every connect, plus any
+backend port the app calls.
+
+### Build once, then reload
+
+A native build, re-sign and reinstall takes minutes; a Metro reload takes seconds. When only
+JavaScript changed and a build of this checkout is already installed, reload through Metro
+(`agent-device metro reload --metro-port $RCT_METRO_PORT`, which otherwise falls back to 8081,
+or relaunch the app) instead of rebuilding. Rebuild when native
+code, native dependencies, `ios/` / `android/`, or values compiled into the build
+(react-native-config `.env` values) changed.
+
+Run CocoaPods through the project's Gemfile, `cd ios && bundle exec pod install`, never a global
+`pod`. A version mismatch between the two rewrites `Podfile.lock` and churns
+`project.pbxproj`.
+
 ### Streaming Metro logs (`rn-logs`)
 
 Use [`rn-logs`](https://github.com/okwasniewski/react-native-logs-cli) (npm package

@@ -41,6 +41,11 @@ their absence is not evidence that nothing was denied. Codex and Pi show both.
    under `~/Library/Keychains` is honored at runtime while `nono why` still reports
    `DENIED / filesystem_deny`. If `nono why` says denied but the command works, believe the
    command.
+
+   **A denied directory says nothing about the files granted inside it.** `~/.android` reports
+   `path_not_granted` while `adbkey`, `adbkey.pub` and `adb_known_hosts.pb` inside it are granted,
+   and `ls` or a glob over the directory fails either way. Ask about the exact file the failing
+   command opens, not its parent.
 2. *Something under nono starting its own sandbox.* Nono blocks sandbox re-initialization for
    anything running under the profile — usually a process the agent spawned, not the agent
    itself. The giveaway is `sandbox-exec: sandbox_apply: Operation not permitted`,
@@ -63,7 +68,9 @@ session. `swift test` on a `Package.swift` target has no such problem.
 (credentials; codesign against the granted `agent-signing.keychain-db` instead), `~/.ssh`, and
 `~/.local/state/mise/trusted-configs` among them. Each blocks
 something the user's *own* unsandboxed tools would later trust. Do not propose a grant for these:
-name the blocker, hand the user the command to run themselves, and carry on with the rest. The
+name the blocker, hand the user the command to run themselves, and carry on with the rest.
+Tell them to run it in their own terminal: a `!` command typed into this session runs inside the
+same sandbox and hits the same denial. The
 `nono-sandbox` skill lists each one with its command; the reasoning is in `~/ac/docs/security-model.md`.
 
 **`uvx` needs its directories redirected, not granted.** uv writes to

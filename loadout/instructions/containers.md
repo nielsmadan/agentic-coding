@@ -23,9 +23,10 @@ none of that can help. Report it and hand the fix over.
 VM mounting all of `$HOME`. An agent able to write there could mount the whole home directory into
 a container and walk straight out of the sandbox. Ask the user instead, in one line:
 
-> Docker isn't reachable — the Colima VM is down. Run `! colima start` and I'll retry.
+> Docker isn't reachable — the Colima VM is down. Run `colima start` in your own terminal and I'll retry.
 
-The `!` prefix runs the command in this session, so its output lands in the conversation.
+Not `! colima start`: the `!` prefix runs the command inside this session's sandbox, where it fails
+on the same `~/.colima` denial.
 
 **Do not run `colima status` or `colima list` from a sandbox to confirm the diagnosis.** Both need
 `~/.colima`, and `colima status` fails there with `cannot make required directory: mkdir
