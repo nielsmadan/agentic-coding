@@ -13,7 +13,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/blind-spots` | Surface consequential decisions a plan, design, or research brief left silently assumed — read existing context, then ask in dependency order with recommendations. Returns a settled brief to a calling workflow without adding a closing confirmation; unknown facts remain research tasks |
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 8 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
+| `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -66,6 +66,7 @@ Clean up comments automatically, then review code with optional multi-model feed
 **Arguments:**
 - `<target>` - File, directory, or PR to review
 - `--quick` - One integrated review pass with no independent scorer-agent round; cannot combine with aspect flags or `--multi`
+- `--functional` - Review functional principles only; included in the default comprehensive fan-out
 - `--multi` - Also get a review from Codex
 
 **Examples:** `/code-review --quick`, `/code-review src/api/ --multi`
