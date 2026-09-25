@@ -406,6 +406,15 @@ sync_codex_superpowers() {
   python3 "$script"
 }
 
+# `nono update` appends the codex pack's developer_instructions block at the end of
+# ~/.codex/config.toml, where it lands inside the last table and Codex refuses the
+# whole file. On its next update nono also deletes everything between its markers,
+# including settings Codex wrote there. Remove the markers and that one key.
+strip_nono_codex_block() {
+  command -v python3 &>/dev/null || return 0
+  python3 "$SCRIPT_DIR/codex/strip_nono_block.py"
+}
+
 # --- Reconcile ---
 echo "Syncing agentic coding config... (${PROFILE} profile)"
 echo ""
@@ -417,6 +426,7 @@ generate_loadout
 echo ""
 
 sync_codex_superpowers
+strip_nono_codex_block
 echo ""
 if [[ "$PROFILE" != unsandboxed ]]; then
   seed_private_profile

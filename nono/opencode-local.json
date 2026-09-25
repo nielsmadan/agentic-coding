@@ -114,7 +114,7 @@
     "allow_localhost": true
   },
   "allow_launch_services": true,
-  "undo": {
+  "rollback": {
     "exclude_patterns": [
       "node_modules",
       ".next",
@@ -125,6 +125,5 @@
     "exclude_globs": [
       "*.tmp.[0-9]*.[0-9]*"
     ]
-  },
-  "interactive": true
+  }
 }
