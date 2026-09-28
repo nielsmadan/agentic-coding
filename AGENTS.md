@@ -454,6 +454,12 @@ which wraps the real binary in `nono run -p <agent>-local` *inside* `sops-exec`.
 `~/wrksp` by definition. They announce the switch on stderr; `AGENT_FORCE_SANDBOX=1` overrides
 it. `pi` and `opencode` have no raw variant and always sandbox.
 
+**Update agents with `bin/agents-update`, from your own terminal.** claude, pi and droid install
+into paths the sandbox grants read-only, so their built-in updaters fail inside it (droid reports
+only `Update to <version> was skipped.`). The script calls each updater by path, bypassing the
+sandboxed wrappers, and updates pi through `mise upgrade` because mise owns that install. It
+refuses to run when `AGENT_SANDBOX` is set.
+
 **`~/rc/.zshrc` must not define these four functions.** It sources `~/.airc` first, so a wrapper
 there silently overrides the sandboxed one and the sandbox quietly stops applying. It owns the
 `nvim` / `mvim` / `neovide` wrappers, which call `bin/sops-exec` off PATH behind a `command -v`

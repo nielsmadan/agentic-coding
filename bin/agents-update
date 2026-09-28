@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Update every agent CLI in one go, from an unsandboxed shell.
+
+Sandboxed agents cannot replace their own binaries: claude, pi and droid install
+into paths the sandbox grants read-only, so their built-in updaters fail or report
+"skipped". This runs each updater directly, bypassing the sandboxed zsh wrappers.
+
+    agents-update                 # update all installed agents
+    agents-update pi droid        # only these
+    agents-update --dry-run       # print the commands without running them
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+
+PI_PACKAGE = "npm:@earendil-works/pi-coding-agent"
+
+
+@dataclass(frozen=True)
+class Agent:
+    name: str
+    version: tuple[str, ...]
+    update: tuple[str, ...]
+
+
+def agents(home: Path) -> tuple[Agent, ...]:
+    local_bin = home / ".local" / "bin"
+    pi = ("mise", "exec", PI_PACKAGE, "--", "pi")
+    return (
+        Agent("claude", (str(local_bin / "claude"), "--version"), (str(local_bin / "claude"), "update")),
+        Agent("codex", (str(local_bin / "codex"), "--version"), (str(local_bin / "codex"), "update")),
+        Agent(
+            "opencode",
+            (str(home / ".opencode" / "bin" / "opencode"), "--version"),
+            (str(home / ".opencode" / "bin" / "opencode"), "upgrade"),
+        ),
+        Agent("pi", (*pi, "--version"), ("mise", "upgrade", PI_PACKAGE)),
+        Agent("droid", (str(local_bin / "droid"), "--version"), (str(local_bin / "droid"), "update")),
+    )
+
+
+def select(available: tuple[Agent, ...], names: list[str]) -> tuple[Agent, ...]:
+    known = {agent.name for agent in available}
+    unknown = [name for name in names if name not in known]
+    if unknown:
+        raise ValueError(f"unknown agent(s): {', '.join(unknown)} (known: {', '.join(sorted(known))})")
+    return tuple(agent for agent in available if not names or agent.name in names)
+
+
+def installed(agent: Agent) -> bool:
+    executable = agent.version[0]
+    return Path(executable).exists() if "/" in executable else shutil.which(executable) is not None
+
+
+def sandbox_refusal(environ: dict[str, str]) -> str | None:
+    if environ.get("AGENT_SANDBOX"):
+        return (
+            "agents-update: running inside the agent sandbox, where these installs are read-only.\n"
+            "  Run it from your own terminal."
+        )
+    return None
+
+
+def version(agent: Agent) -> str:
+    result = subprocess.run(agent.version, capture_output=True, text=True, timeout=60)
+    lines = (result.stdout or result.stderr).strip().splitlines()
+    return lines[-1].strip() if result.returncode == 0 and lines else "?"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Update every agent CLI from an unsandboxed shell.")
+    parser.add_argument("names", nargs="*", help="agents to update (default: all installed)")
+    parser.add_argument("--dry-run", action="store_true", help="print the commands without running them")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    refusal = sandbox_refusal(dict(os.environ))
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 78
+    try:
+        chosen = select(agents(Path.home()), args.names)
+    except ValueError as error:
+        print(f"agents-update: {error}", file=sys.stderr)
+        return 64
+
+    summary: list[str] = []
+    failed = False
+    for agent in chosen:
+        if not installed(agent):
+            summary.append(f"  {agent.name:<9} not installed")
+            continue
+        if args.dry_run:
+            print(" ".join(agent.update))
+            continue
+        before = version(agent)
+        print(f"\n=== {agent.name} ({before})", flush=True)
+        rc = subprocess.call(agent.update)
+        after = version(agent)
+        failed = failed or rc != 0
+        status = "FAILED" if rc != 0 else ("updated" if after != before else "up to date")
+        summary.append(f"  {agent.name:<9} {status:<10} {before} -> {after}")
+
+    if summary:
+        print("\n" + "\n".join(summary))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
