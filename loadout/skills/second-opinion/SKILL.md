@@ -31,7 +31,7 @@ Get input from three independent advisors on the current problem or question. Co
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
 - The advisor CLIs must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. All advisors run in *read-only* mode so they can read/explore the repo but cannot modify it. Point them at the relevant files in the prompt; reading them stays fast (~15–25s).
+- **The advisors are meant to read the code** — that's the point. Claude, Pi and OpenCode run with read-only tool sets, so they can read/explore the repo but cannot modify it. Codex has no read-only mode that works inside the nono sandbox, so it runs without one and nono is its boundary; the prompt still tells it not to modify files. Point them at the relevant files in the prompt; reading them stays fast (~15–25s).
 - **Every advisor runs through [pratfall](https://github.com/nielsmadan/pratfall) (`prat`).** It normalizes the prompt file, timeout and output across the four CLIs, so this skill does not repeat each one's flags. `prat` execs the real binary off PATH, so no `command` prefix is needed.
 - **Still close stdin with `</dev/null` on every advisor command.** prat prepends redirected stdin to the `-f` prompt, so an open-but-silent stdin makes it block *before launching the agent* — and `--timeout` does not fire there, so the call hangs until the Bash tool kills it. Measured: the same command answers in ~13s with `</dev/null` and hangs indefinitely without it.
 - **The read-only guards are not in this file.** They live in the `advisor-*` profiles in `~/.config/pratfall/config.toml` (`native_args`, `tools`), because a flag the skill has to retype is a flag the skill can drop. Read that file before changing an advisor, and never invoke a bare `prat cc` / `prat cx` / `prat pi` / `prat oc` here — `prat cx` in particular renders a plain `codex exec` with **no** sandbox.
@@ -215,7 +215,7 @@ fallback when `--timeout` is omitted.
 | Output files | None | rounds/, synthesis.md |
 | Purpose | Quick check | Deep analysis |
 | Speed | ~1-3 min | 5-30 min |
-| Read-only | Yes (enforced) | Configurable |
+| Read-only | Enforced for Claude, Pi, OpenCode; Codex by prompt, inside nono | Configurable |
 
 ## Examples
 

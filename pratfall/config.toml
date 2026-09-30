@@ -4,9 +4,9 @@
 # every invocation. Two groups live here:
 #
 #   advisor-*  the /second-opinion consultation agents. Their read-only guards
-#              are native_args rather than skill text, so the skill cannot omit
-#              one by accident. Codex in particular is NOT read-only by default
-#              under prat: `prat cx` renders plain `codex exec`.
+#              are native_args and tools rather than skill text, so the skill
+#              cannot omit one by accident. Codex is the exception: it has no
+#              read-only mode that works inside nono (see advisor-codex).
 #   cmdgen-*   the ccli/cxcli/occli shell-command generators in
 #              .airc.d/llmcli.zsh.
 #
@@ -33,10 +33,15 @@ native_args = ["--disable-slash-commands"]
 # features.<name>, while the base ~/.codex/config.toml sets [agents]
 # max_concurrent_threads_per_session = 8. Needs prat >= 0.9.1, which reserves
 # only the -c keys it sets itself rather than the whole option.
+#
+# danger-full-access, because /second-opinion runs inside nono sessions, and
+# nono refuses the Seatbelt sandbox Codex starts for read-only and workspace-write
+# (the base config's sandbox_mode) — every shell command, reads included, fails.
+# nono is the boundary; this profile is not read-only in an unsandboxed session.
 [profiles.advisor-codex]
 agent = "codex"
 native_args = [
-  "--sandbox", "read-only",
+  "--sandbox", "danger-full-access",
   "--skip-git-repo-check",
   "--disable", "multi_agent",
   "--disable", "multi_agent_v2",

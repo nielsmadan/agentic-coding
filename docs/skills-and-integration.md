@@ -265,8 +265,18 @@ CLIs behind short aliases and named profiles. Two things here use it:
 **The point is that the guards live in the profile, not in the caller.** prat
 does **not** sandbox Codex for you — `prat cx` renders a plain `codex exec` with
 no `--sandbox`. `/second-opinion`'s read-only guarantee is `native_args` and
-`tools` on `advisor-codex`, `advisor-claude` and `advisor-pi`, which is exactly
-why the skill must never fall back to a bare `prat cx`.
+`tools` on `advisor-claude` and `advisor-pi`, which is exactly why the skill must
+never fall back to a bare `prat cx`.
+
+**`advisor-codex` runs with `--sandbox danger-full-access`, on purpose.** Codex
+reads files through shell commands, and both `read-only` and the base config's
+`workspace-write` wrap each command in Codex's own Seatbelt sandbox, which nono
+refuses to start inside a sandboxed session — so every command, `cat` included,
+failed and Codex answered without reading anything. `/second-opinion` only runs
+from nono sessions, so nono is Codex's boundary there. In an unsandboxed session
+this profile can write anywhere; do not run the skill from one. Measured with a
+planted-word repo: every advisor, called from each of the four sandbox profiles,
+read the files and left the repo unchanged.
 
 **prat reserves some native flags.** Passing one after `--` is refused with
 `this option is controlled by prat`. Measured: claude's
