@@ -224,15 +224,20 @@ is the skill's own and needs no further dispatch approval; do not widen it.
    failures, means you open the log and read it properly** — that is not optional,
    and it is where the tokens belong. What you must never do is grep the log for the
    outcome you expect. Failures get fixed, never labelled pre-existing.
-5. **Commit** the task's work, per the project's commit convention.
-6. **Ping.** One line (see below), then straight into the next task.
+5. **Commit** the task's work, per the project's commit convention, with the task's
+   box in the plan ticked — resuming after compaction starts at the first unticked
+   one. Work found along the way that the definition of done needs becomes a new
+   plan task with a ruling saying why; anything it does not need is a deferred
+   question.
+6. **Ping.** One line (see below), in the same message as the next task's dispatch.
+   Never end a turn on a ping — an ended turn is a stopped run.
 
 **Parallel tasks** only when the plan marks them independent *and* they live in
 different worktrees — max 3 at once, still one implementer each.
 
 **Whatever you cannot run** (a GUI test host, a credentialed deploy, a sandbox-blocked
 suite) is compile-verified as far as possible, recorded, and carried to the handoff's
-"only you can do" list. It is not a reason to stop.
+"Blocked on you" section. It is not a reason to stop.
 
 ### Model per role
 
@@ -293,15 +298,15 @@ Remove `$RUN` at the same time.
 
 Then one report. Template in `references/prompts.md`. It must contain:
 
+- **Blocked on you** — first, because it is what the user reads first: each blocked
+  check with the exact command to run; the squash proposal, as the concrete
+  before/after commit list awaiting a yes (never rewrite history without one;
+  delegate to `squash-commits` once approved); and the deferred questions worth an
+  answer before the next round of work. The rest stay in the ledger.
 - **What exists, where** — a repo / path / branch / commit-count table.
 - **Where the plan went** — which docs received what, and that the plan was deleted.
-- **Only you can do** — each blocked check with the exact command to run.
 - **Rulings** — the ledger, grouped scope vs. design, each as
   decision — why — cost if wrong.
-- **Deferred questions** — everything collected but not urgent enough to break the
-  contract.
-- **Squash proposal** — the concrete before/after commit list, awaiting a yes.
-  Never rewrite history without one (delegate to `squash-commits` once approved).
 - **Nothing was pushed** — and which checkouts were left untouched.
 
 ## Default workflow
