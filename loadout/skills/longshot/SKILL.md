@@ -1,6 +1,6 @@
 ---
 name: longshot
-description: Run a long autonomous build session from a brief — interview the user with `blind-spots`, prepare the plan, and wait for explicit final approval to start implementation. Only then decide later ambiguities as recorded rulings and execute without check-ins. Per task a fresh implementer subagent, an independent spec+quality reviewer, a fix loop, then a whole-branch review, the plan harvested into the repo's docs and deleted, and a handoff report with rulings, deferred questions and a squash proposal. Use when the user says "longshot", "work on this independently", "run with this", "ask me everything up front then go", "I'll be away", or hands over a multi-hour feature or package to build end to end. Do NOT use for a single small change — use `plan` for that.
+description: Run a long autonomous build session from a brief — interview the user with `blind-spots`, prepare the plan and review it with `review-plan`, and wait for explicit final approval to start implementation. Only then decide later ambiguities as recorded rulings and execute without check-ins. Per task a fresh implementer subagent, an independent spec+quality reviewer, a fix loop, then a whole-branch review, the plan harvested into the repo's docs and deleted, and a handoff report with rulings, deferred questions and a squash proposal. Use when the user says "longshot", "work on this independently", "run with this", "ask me everything up front then go", "I'll be away", or hands over a multi-hour feature or package to build end to end. Do NOT use for a single small change — use `plan` for that.
 argument-hint: '[--plan FILE] [--no-worktree] [--repos a,b] (brief, or blank to take it from the conversation)'
 effort: high
 ---
@@ -127,10 +127,9 @@ prose — writing them here does the implementation twice, on the most expensive
   longer true. Fold factual drift into the draft and bring it to the plan format;
   ask about consequential choices the drift exposes before seeking start approval.
 - **No plan doc** → draft one now. Use only `plan`'s read-only planning step for the
-  exploration on a moderate scope, then recast its output into the plan format; for a
-  large one run `review-plan` (multi-agent) over the draft and fold the findings in.
-  Keep the draft in the conversation or planner output until approval; save it
-  afterwards to `docs/plans/<YYYY-MM-DD>-<slug>.md`.
+  exploration, then recast its output into the plan format. Keep the draft in the
+  conversation or planner output until approval; save it afterwards to
+  `docs/plans/<YYYY-MM-DD>-<slug>.md`.
 
 **Review your own draft before the gate**, whether you wrote it or found it on disk:
 
@@ -146,6 +145,12 @@ prose — writing them here does the implementation twice, on the most expensive
 
 Fix these inline; no second pass. A consequential choice the review exposes goes back
 to Phase 1.
+
+**Then run `review-plan` over the result — always**, whether you drafted the plan or
+found it on disk, and whatever its size. Your self-review catches what the author can
+see; an autonomous run has no later check-in to catch the rest. Fold the findings into
+the plan; a finding that forks the design goes back to Phase 1. Present any finding
+you rejected, with the reason, at the final gate.
 
 Longshot owns the final start gate; nested planning and review workflows must stay
 read-only and return here without implementing. Any new consequential decision
@@ -331,7 +336,7 @@ integration surfaces (3 `Explore` agents) → answer the killed-sessions questio
 a recommendation, then `blind-spots`: round 1 asks the questions answerable now
 (repo boundary, protocol scope, what "integrate" means, …), round 2 the
 two that only became questions once protocol scope was settled → validate the plan
-against the repo → present the final plan and contract → wait for start approval →
+against the repo → `review-plan` over it → present the final plan and contract → wait for start approval →
 announce implementation starting → worktree per consumer repo → 6 tasks through
 the loop with pings → whole-branch review + contract-coherence pass + fix wave → handoff.
 
