@@ -22,6 +22,20 @@ version = 1
 [defaults]
 timeout = 300
 
+# prat launches agents off PATH, so it never sees the zsh wrappers that inject
+# the SOPS secrets; sops-exec is the same injection as a real executable.
+[agents.claude]
+command = ["sops-exec", "claude"]
+
+[agents.codex]
+command = ["sops-exec", "codex"]
+
+[agents.opencode]
+command = ["sops-exec", "opencode"]
+
+[agents.pi]
+command = ["sops-exec", "pi"]
+
 # --- /second-opinion advisors ---------------------------------------------
 
 [profiles.advisor-claude]
