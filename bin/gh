@@ -26,13 +26,36 @@ SELF = Path(__file__).resolve()
 REMOTE = re.compile(r"github\.com[:/]([^/]+)/")
 
 
-def real_gh() -> str:
-    for entry in os.environ.get("PATH", "").split(os.pathsep):
+DEPTH_VAR = "AC_GH_WRAPPER_DEPTH"
+MAX_DEPTH = 5
+
+
+def gh_from_mise(mise: Path) -> str | None:
+    # Sandboxes cannot read the global mise config, so the shim finds no active
+    # gh there and falls back to the next gh on PATH, which is this wrapper.
+    for args in (["which", "gh"], ["which", "--tool", "gh@latest", "gh"]):
+        result = subprocess.run([str(mise), *args], capture_output=True, text=True)
+        path = Path(result.stdout.strip())
+        if result.returncode == 0 and path.is_file() and path.resolve() != SELF:
+            return str(path)
+    return None
+
+
+def real_gh(search_path: str) -> str | None:
+    for entry in search_path.split(os.pathsep):
         candidate = Path(entry) / "gh"
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            if candidate.resolve() != SELF:
-                return str(candidate)
-    sys.exit("gh: the real gh is not on PATH")
+        if not (candidate.is_file() and os.access(candidate, os.X_OK)):
+            continue
+        resolved = candidate.resolve()
+        if resolved == SELF:
+            continue
+        if resolved.name == "mise":
+            found = gh_from_mise(resolved)
+            if found:
+                return found
+            continue
+        return str(candidate)
+    return None
 
 
 SLUG = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
@@ -85,6 +108,9 @@ def owner_from_cwd() -> str | None:
 
 
 def main() -> int:
+    depth = int(os.environ.get(DEPTH_VAR, "0") or 0)
+    if depth >= MAX_DEPTH:
+        sys.exit(f"gh: wrapper re-entered {depth} times; refusing to loop")
     argv = sys.argv[1:]
     owner = owner_from_args(argv) or owner_from_cwd()
 
@@ -95,7 +121,11 @@ def main() -> int:
         if token:
             environment["GH_TOKEN"] = token
 
-    os.execve(real_gh(), ["gh"] + argv, environment)
+    target = real_gh(os.environ.get("PATH", ""))
+    if not target:
+        sys.exit("gh: the real gh is not on PATH")
+    environment[DEPTH_VAR] = str(depth + 1)
+    os.execve(target, ["gh"] + argv, environment)
 
 
 if __name__ == "__main__":
