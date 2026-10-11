@@ -32,9 +32,9 @@ from typing import Callable, NoReturn, TypeVar
 DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
 FALLBACK_MODEL = "deepseek/deepseek-v4-flash"
 DEFAULT_PROMPT = "Summarize this page."
-# External contract: also specified in global/fragments/web-fetching.md and read
-# by benchmark/bench-models.py. Changing the value changes documented agent
-# behavior in files that cannot import it.
+# External contract: also specified in loadout/instructions/web-fetching*.md and
+# the check-agent-logs skill, and read by benchmark/bench-models.py. Changing the
+# value changes documented agent behavior in files that cannot import it.
 NO_RELEVANT = "NO_RELEVANT_CONTENT"
 SYSTEM_PROMPT_BASE = (
     "You extract information from documents. Answer ONLY from the documents.\n"
@@ -117,7 +117,7 @@ def die(msg: str) -> NoReturn:
 
 
 def warn(msg: str) -> None:
-    print(f"jina-fetch: {msg}", file=sys.stderr)
+    print(f"{os.path.basename(sys.argv[0])}: {msg}", file=sys.stderr)
 
 
 def require_key(name: str) -> str:
