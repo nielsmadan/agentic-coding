@@ -6,6 +6,7 @@
   "enableCompletionBell": false,
   "subagentSounds": "off",
   "reauthBannerShownTui": true,
+  "hasSeenMissionOnboarding": true,
   "hooks": {
     "showHookOutput": false
   },
