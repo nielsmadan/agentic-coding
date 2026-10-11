@@ -1,10 +1,10 @@
 // hooklinesinker-generated protocol=1
 import { spawn } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve as resolvePath } from "node:path";
 
-const HOOKLINESINKER_BIN: string = "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker";
+const HOOKLINESINKER_BIN: string = join(homedir(), ".local/share/hooklinesinker/bin/hooklinesinker");
 
 const HOOK_TIMEOUT_MS = 2000;
 const MAX_PENDING_HOOKS = 32;

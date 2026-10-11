@@ -3,7 +3,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event Interrupt",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event Interrupt",
           "timeout": 3,
           "type": "command"
         }
@@ -14,7 +14,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PermissionRequest",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PermissionRequest",
           "timeout": 5,
           "type": "command"
         }
@@ -25,7 +25,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PostCompact",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PostCompact",
           "timeout": 5,
           "type": "command"
         }
@@ -36,7 +36,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PostToolUse",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PostToolUse",
           "timeout": 5,
           "type": "command"
         }
@@ -47,7 +47,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PreCompact",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PreCompact",
           "timeout": 5,
           "type": "command"
         }
@@ -58,7 +58,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PreToolUse",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event PreToolUse",
           "timeout": 5,
           "type": "command"
         }
@@ -69,7 +69,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SessionEnd",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SessionEnd",
           "timeout": 3,
           "type": "command"
         }
@@ -80,7 +80,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SessionStart",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SessionStart",
           "timeout": 5,
           "type": "command"
         }
@@ -91,7 +91,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event Stop",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event Stop",
           "timeout": 5,
           "type": "command"
         }
@@ -102,7 +102,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStart",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStart",
           "timeout": 5,
           "type": "command"
         }
@@ -113,7 +113,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStop",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStop",
           "timeout": 5,
           "type": "command"
         }
@@ -124,7 +124,7 @@
     {
       "hooks": [
         {
-          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event UserPromptSubmit",
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event UserPromptSubmit",
           "timeout": 5,
           "type": "command"
         }

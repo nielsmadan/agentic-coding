@@ -13,7 +13,7 @@
       "source": "npm:@narumitw/pi-statusline"
     },
     "nono": {
-      "source": "/Users/nielsmadan/.config/nono/packages/nolabs-ai/pi"
+      "source": "~/.config/nono/packages/nolabs-ai/pi"
     },
     "mouthfeel": {
       "source": "dev-packages/mouthfeel"

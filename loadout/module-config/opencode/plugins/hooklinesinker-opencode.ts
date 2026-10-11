@@ -1,7 +1,9 @@
 // hooklinesinker-generated protocol=1
 import { spawn } from "node:child_process";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
-const HOOKLINESINKER_BIN: string = "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker";
+const HOOKLINESINKER_BIN: string = join(homedir(), ".local/share/hooklinesinker/bin/hooklinesinker");
 
 const TRACKED_EVENTS = new Set([
   "session.created",
