@@ -3,9 +3,11 @@ extends = "autonomous"
 [all]
 substitute = { sandbox = "sandbox.native" }
 
+# A child's `substitute` map replaces the parent's whole map, so the autonomous
+# swaps are restated here alongside the sandbox one.
 [claude]
 plugins = ["claude", "unsandboxed"]
-substitute = { sandbox = "sandbox.native" }
+substitute = { sandbox = "sandbox.native", agent-dispatch = "agent-dispatch.autonomous", git-policy = "git-policy.autonomous" }
 
 [pi]
 plugins = ["pi", "unsandboxed"]
