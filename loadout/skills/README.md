@@ -40,6 +40,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-comments` | Review comments for necessity, accuracy, duplication, clarity, and concision (--all, --staged, --changed) |
+| `/review-defensive` | Defensive-programming review — catch-all `else`/`default` that absorbs new enum/API values, unknown external values, swallowed errors, missing timeouts and bounds, over-defense (--staged, --all) |
 | `/review-functional` | Pragmatic functional review — effects at the edges, no hidden shared state, no mutation of a caller's data, determinism (--staged, --all). Excludes currying, recursion and monads by design |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
@@ -67,6 +68,7 @@ Clean up comments automatically, then review code with optional multi-model feed
 - `<target>` - File, directory, or PR to review
 - `--quick` - One integrated review pass with no independent scorer-agent round; cannot combine with aspect flags or `--multi`
 - `--functional` - Review functional principles only; included in the default comprehensive fan-out
+- `--defensive` - Review defensive-programming gaps only; included in the default comprehensive fan-out
 - `--multi` - Also get a review from Codex
 
 **Examples:** `/code-review --quick`, `/code-review src/api/ --multi`
@@ -301,6 +303,21 @@ Review comments in full-file context. Finds repeated rationale, stale or vague e
 - Default: `--staged --changed` combined
 
 **Example:** `/review-comments --staged`
+
+---
+
+### /review-defensive
+
+Review code for assumptions that hold today and fail silently tomorrow. The headline check is closed-world branching: an `if/else` or `switch/default` whose last branch handles one known case by elimination, so the next value an API or enum adds silently takes it. Also covers unknown values from external data, swallowed errors and masking defaults, assertions on impossible states, timeouts and bounds, and defensive checks that hide bugs.
+
+**Arguments:**
+- `--staged` - Git staged files
+- `--unpushed` - Files changed across all unpushed commits
+- `--changed` - Git unstaged changes
+- `--all` - Entire codebase (uses parallel agents)
+- Default: files from the current conversation context
+
+**Example:** `/review-defensive --staged`
 
 ---
 
