@@ -34,6 +34,11 @@ class AgentChromiumTests(unittest.TestCase):
         self.assertIn("--remote-debugging-address=127.0.0.1", argv)
         self.assertEqual(argv[-1], "https://www.reddit.com/login/")
 
+    def test_launch_argv_opens_a_trackable_page_when_no_url_is_given(self):
+        argv = ac.launch_argv("/bin/chromium", Path("/p"), 9333, None)
+
+        self.assertEqual(argv[-1], "about:blank")
+
     def test_pick_target_matches_url_or_title_among_pages_only(self):
         self.assertEqual(ac.pick_target(TARGETS, "reddit")["id"], "p2")
         self.assertEqual(ac.pick_target(TARGETS, "HUMANITY")["id"], "p2")

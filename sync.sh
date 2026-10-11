@@ -102,6 +102,7 @@ SYMLINKS=(
   # wrappers call, so it must resolve without ~/.airc having been sourced.
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
   "$SCRIPT_DIR/bin/sops-exec:$HOME/.local/bin/sops-exec"
+  "$SCRIPT_DIR/bin/agent-chromium:$HOME/.local/bin/agent-chromium"
   # pratfall. The advisor-* and cmdgen-* profiles back /second-opinion and the
   # llmcli.zsh command generators.
   "$SCRIPT_DIR/pratfall/config.toml:$HOME/.config/pratfall/config.toml"
@@ -214,6 +215,17 @@ sync_agent_signing_keychain() {
 sync_agent_signing_unlock() {
   [[ -f "$HOME/Library/Keychains/agent-signing.keychain-db" ]] || return 0
   local label="com.nielsmadan.unlock-agent-signing-keychain"
+  local dest="$HOME/Library/LaunchAgents/$label.plist"
+  create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
+  if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
+    launchctl bootstrap "gui/$(id -u)" "$dest" && echo "✓  Loaded $label"
+  fi
+}
+
+# Machines that run unattended jobs need the agent browser up without anyone at the
+# screen, so it starts at each login. Interactive machines start it on demand.
+sync_agent_chromium_autostart() {
+  local label="com.nielsmadan.agent-chromium"
   local dest="$HOME/Library/LaunchAgents/$label.plist"
   create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
   if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
@@ -458,6 +470,9 @@ for entry in "${SYMLINKS[@]}"; do
   create_symlink "$source" "$dest"
 done
 echo ""
+if [[ "$PROFILE" != default ]]; then
+  sync_agent_chromium_autostart
+fi
 
 validate_pratfall_config
 echo ""

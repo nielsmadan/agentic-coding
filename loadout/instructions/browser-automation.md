@@ -33,12 +33,13 @@ agent-chromium close <tab-id>                     # close a kept tab
 **Attach `agent-browser` only to click or type**, and warn the user in the same message that the window will come forward. Attach, never launch:
 
 ```sh
-agent-browser --cdp 9222 --session <task-name> --pin-tab tab new <url>
+agent-browser --cdp 9222 --session <task-name> --pin-tab open <url>      # first command
 agent-browser --cdp 9222 --session <task-name> --pin-tab snapshot -i -c
-agent-browser --cdp 9222 --session <task-name> --pin-tab tab close   # when done
+agent-browser --cdp 9222 --session <task-name> --pin-tab tab close       # when done
+agent-browser --session <task-name> close                                # detach
 ```
 
-`--pin-tab` gives each session its own tab, so parallel agents do not steer each other's pages. Open with `tab new`, not `open`: once the bound tab is closed, the session stays pinned to it and `open` fails with `tab_gone`. `agent-browser --session <name> close` detaches and leaves the browser running; never `close --all`, `agent-chromium stop`, or kill it — the user may be mid-login in it. Never pass `--profile ~/.agent-chromium`: two instances cannot share a profile, and the sandbox cannot write it.
+`--pin-tab` gives each session its own tab, so parallel agents do not steer each other's pages. Use a fresh `<task-name>` for every task, and make `open` its first command: a pinned session creates its tab on attach, and `open` navigates that tab, while `tab new` adds a second one and leaves the first behind as a stray `about:blank` (vercel-labs/agent-browser#1986, unfixed as of 0.39.0). `open` again to move to another page. Once the bound tab is closed the session stays pinned to it and fails with `tab_gone`, which is why a session name is never reused. `agent-browser --session <name> close` detaches and leaves the browser running; never `close --all`, `agent-chromium stop`, or kill it — the user may be mid-login in it. Never pass `--profile ~/.agent-chromium`: two instances cannot share a profile, and the sandbox cannot write it.
 
 **It is the user's real account.** Read only: do not post, comment, vote, message, follow, subscribe, accept terms or change settings unless the user asked for that specific action. Keep a human pace — a handful of pages, not a crawl — since a flagged account is the user's loss.
 
@@ -52,6 +53,18 @@ agent-browser --cdp 9222 --session <task-name> --pin-tab tab close   # when done
 - **Hard block** ("blocked by network security", "access denied") that survives the user's login: stop retrying, report it, and fall back to `jina-fetch --proxy` or another source.
 
 After the user confirms, read the page again (a fresh `read` without `--keep`) and continue, then close the kept tab with `agent-chromium close <tab-id>`; `--keep` prints the id. `close` matches a tab id, URL or title and never raises the window, so close only tabs you opened.
+
+**When the user is not at this machine's screen** (they reached it over SSH, or it is a headless box), the agent browser window is out of their reach, so add to the ask how to get there. CDP listens on loopback only, so they tunnel it from their own machine and drive the tab from local Chrome's remote inspector:
+
+1. `ssh -N -L 9222:127.0.0.1:9222 <this-host>` (if their local 9222 is taken, forward `9223:127.0.0.1:9222` and use `localhost:9223` below)
+2. In local Chrome, open `chrome://inspect/#devices`, under **Configure…** add `localhost:9222`, then click **inspect** under the tab named in the ask. The DevTools window shows a live, clickable view of that tab.
+
+**When no one is in the conversation** — a scheduled job (`RUN_SESSION_ID` is set) or a `-p` run — there is nobody to hand a page to, so never stop and wait. Keep the same ladder: direct fetch, `jina-fetch`, `jina-fetch --proxy`, and only then the agent browser, starting it with `agent-chromium start` if `status` says it is down. When the browser in turn needs a human:
+
+- Do not use `--keep`; leave no tab open.
+- Challenge, login wall or missing account: if `~/notes/ai/runtime/notify.sh` exists, send one alert so the user can fix it for next time: `bash ~/notes/ai/runtime/notify.sh "🔔 ACTION: agent browser needs a <site> login/challenge — <url> (<job or task>)"`. Send it once per site per run, not once per page.
+- Hard block: no alert; it is not something a login fixes.
+- Either way, continue with whatever other sources you have, and name the blocked URL and the reason in your final result rather than presenting partial coverage as complete.
 
 **Getting the content out cheaply.** Never screenshot to read text, and never dump `snapshot` to read a page: on a Reddit thread `snapshot -i -c` was 62k chars against 17k for the page text. In order of preference:
 

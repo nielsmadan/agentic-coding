@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.nielsmadan.agent-chromium</string>
+
+    <!-- `start` is a no-op when the browser is already up, and exits once it answers. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>exec "$HOME/.local/bin/agent-chromium" start</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- The browser outlives the job; launchd must not reap it when `start` exits. -->
+    <key>AbandonProcessGroup</key>
+    <true/>
+</dict>
+</plist>
