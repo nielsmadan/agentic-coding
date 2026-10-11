@@ -44,5 +44,16 @@
         }
       ]
     }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "~/ac/bin/agent-sandbox-status",
+          "timeout": 5
+        }
+      ]
+    }
   ]
 }

@@ -28,7 +28,7 @@ instructions = [
 
 [codex]
 defaults = "codex"
-hooks = ["hooklinesinker-codex"]
+hooks = ["codex", "hooklinesinker-codex"]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
     "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",

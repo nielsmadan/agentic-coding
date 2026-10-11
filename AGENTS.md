@@ -90,6 +90,12 @@ which wraps the real binary in `nono run -p <agent>-local` *inside* `sops-exec`.
 `~/wrksp` by definition. They announce the switch on stderr; `AGENT_FORCE_SANDBOX=1` overrides
 it. `pi` and `opencode` have no raw variant and always sandbox.
 
+**Every session is told which mode it is in.** The sandboxed branch exports `AGENT_SANDBOX=1` and
+`AGENT_SANDBOX_PROFILE`; `bin/agent-sandbox-status` turns them into a one-paragraph note, which
+reaches the model through a `SessionStart` hook for Claude and Codex (`loadout/hooks/`)
+and a `sandbox-status` plugin for OpenCode and Pi (`loadout/module-config/`). The global
+instructions defer to that note, so keep them free of claims that hold in only one mode.
+
 **Update agents with `bin/agents-update`, from your own terminal.** claude, pi and droid install
 into paths the sandbox grants read-only, so their built-in updaters fail inside it (droid reports
 only `Update to <version> was skipped.`). The script calls each updater by path, bypassing the

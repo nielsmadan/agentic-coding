@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Tell an agent session, at its start, whether it runs inside the nono sandbox."""
+
+from __future__ import annotations
+
+import os
+import sys
+from collections.abc import Mapping
+
+SANDBOXED = (
+    "Sandbox status: this session runs INSIDE the nono sandbox (profile `{profile}`). "
+    "The Sandbox section of your instructions applies as written: writes are limited to "
+    "~/wrksp and the profile's grants. Anything that must write elsewhere, such as "
+    "`colima start`, `loadout sync` or `agents-update`, is for the user to run in their "
+    "own terminal, not as a `!` command, which runs inside this same sandbox."
+)
+
+UNSANDBOXED = (
+    "Sandbox status: this session is NOT running under nono. "
+    "The nono limits in your instructions do not apply to it: you can write outside "
+    "~/wrksp and run commands such as `colima start` or `loadout sync` yourself, subject "
+    "to this agent's own approval and sandbox settings. Do not decline work, or hand it "
+    "to the user, on the grounds that the sandbox blocks it. The rules on secrets, git "
+    "and paths denied on purpose (the login keychain, ~/.ssh) still apply."
+)
+
+
+def status_note(env: Mapping[str, str]) -> str:
+    if env.get("AGENT_SANDBOX") == "1":
+        return SANDBOXED.format(profile=env.get("AGENT_SANDBOX_PROFILE") or "unknown")
+    return UNSANDBOXED
+
+
+def main() -> int:
+    print(status_note(os.environ))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

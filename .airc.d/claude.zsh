@@ -36,8 +36,10 @@ clor() {
   local start="${CLOR_MODEL:-sonnet}"
   local effort="${CLOR_EFFORT:-high}"
   local -a launch=(nono run -p claude-local -- claude)
+  local sandbox_env="AGENT_SANDBOX=1 AGENT_SANDBOX_PROFILE=claude-local"
   if _agent_unsandboxed_profile; then
     launch=(claude)
+    sandbox_env=
   fi
   sops exec-env "$SOPS_SECRETS" \
 "ANTHROPIC_BASE_URL=https://openrouter.ai/api \
@@ -53,5 +55,6 @@ CLAUDE_CODE_EFFORT_LEVEL=$(printf '%q' "$effort") \
 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
 AGENT_HARNESS=claude \
 DOCKER_HOST=unix://$HOME/.colima/default/docker.sock \
+$sandbox_env \
 $(printf '%q ' "${launch[@]}") --model $(printf '%q' "$start") --permission-mode acceptEdits $(printf '%q ' "$@")"
 }

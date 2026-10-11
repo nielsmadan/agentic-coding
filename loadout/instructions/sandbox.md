@@ -1,7 +1,13 @@
 ## Sandbox
 
-Every agent CLI runs inside a [nono](https://github.com/nolabs-ai/nono) Seatbelt sandbox.
-`~/wrksp` is read+write; most of the rest of `$HOME` is not.
+Agent CLIs run either inside a [nono](https://github.com/nolabs-ai/nono) Seatbelt sandbox or
+raw: `claude` and `codex` launch raw inside `~/ac` and `~/rc`, and `claude-raw` / `codex-raw`
+anywhere. **A "Sandbox status" note at session start says which one this session is** — go by
+it, not by assumption. Without it, `nono why --self` prints `NOT SANDBOXED` outside the sandbox.
+Instructions that distinguish a sandboxed from an unsandboxed session mean exactly this.
+
+Inside the sandbox, `~/wrksp` is read+write; most of the rest of `$HOME` is not. The rest of this
+section is about sandboxed sessions; a raw session has none of these limits.
 
 **nono's exit diagnostic prints only when the command exits non-zero**, and is not proof of
 anything on its own. `Sandbox denial: N path(s) blocked.` lists each path and a `Fix flags:`
