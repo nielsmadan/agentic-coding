@@ -49,6 +49,8 @@ ask = []
 allow = [
   "jina/*",
   "context7/*",
+  # The always-on assistant bot writes tracker records headlessly; an `ask` here would stall it.
+  "airtable/*",
 ]
 
 deny = []
