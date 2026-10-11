@@ -145,12 +145,33 @@ class Cdp:
         self.sock.close()
 
 
-LOADED = 'document.readyState === "complete" && location.href !== "about:blank"'
+READINESS = "[document.readyState, location.href, document.title]"
+CHALLENGE_TITLES = ("just a moment", "checking your browser", "attention required",
+                    "verify you are human", "prove your humanity")
 
 
 def evaluate(cdp: Cdp, session: str, expression: str) -> dict:
     return cdp.call("Runtime.evaluate", {"expression": expression, "awaitPromise": True,
                                          "returnByValue": True}, session)
+
+
+def page_state(ready: str, href: str, title: str) -> str:
+    if ready != "complete" or href == "about:blank":
+        return "loading"
+    if title.strip().lower().startswith(CHALLENGE_TITLES):
+        return "challenge"
+    return "ready"
+
+
+def poll_page(cdp: Cdp, session: str) -> tuple[str, str]:
+    try:
+        ready, href, title = evaluate(cdp, session, READINESS)["result"]["value"]
+    except RuntimeError as err:
+        # Mid-navigation the page briefly has no execution context to evaluate in.
+        if "execution context" in str(err):
+            return "loading", ""
+        raise
+    return page_state(ready, href, title), title
 
 
 def render(value) -> str:
@@ -170,12 +191,17 @@ def cmd_read(opts) -> int:
         session = cdp.call("Target.attachToTarget",
                            {"targetId": target, "flatten": True})["sessionId"]
         deadline = time.monotonic() + opts.timeout
-        while not evaluate(cdp, session, LOADED)["result"].get("value"):
+        state, title = poll_page(cdp, session)
+        while state != "ready":
             if time.monotonic() > deadline:
-                print(f"agent-chromium: page did not finish loading in {opts.timeout:g}s",
+                print(f"agent-chromium: still on a challenge page ({title!r}) after "
+                      f"{opts.timeout:g}s; it needs a human: re-run with --keep, then "
+                      f"`agent-chromium show <site>`" if state == "challenge" else
+                      f"agent-chromium: page did not finish loading in {opts.timeout:g}s",
                       file=sys.stderr)
                 return 1
             time.sleep(0.5)
+            state, title = poll_page(cdp, session)
         result = evaluate(cdp, session, opts.expression)
         if "exceptionDetails" in result:
             details = result["exceptionDetails"]

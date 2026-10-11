@@ -72,8 +72,10 @@ def server_frame(payload: bytes, opcode: int = 0x1, fin: bool = True) -> bytes:
 
 
 class FakeCdp:
-    def __init__(self, value="page text", exception=None):
+    def __init__(self, value="page text", exception=None, navigating=0, titles=("Recipe",)):
         self.calls = []
+        self.navigating = navigating
+        self.titles = list(titles)
         self.value = value
         self.exception = exception
         self.closed = False
@@ -85,8 +87,12 @@ class FakeCdp:
         if method == "Target.attachToTarget":
             return {"sessionId": "S1"}
         if method == "Runtime.evaluate":
-            if params["expression"] == ac.LOADED:
-                return {"result": {"value": True}}
+            if params["expression"] == ac.READINESS:
+                if self.navigating:
+                    self.navigating -= 1
+                    raise RuntimeError("Runtime.evaluate: Cannot find default execution context")
+                title = self.titles.pop(0) if len(self.titles) > 1 else self.titles[0]
+                return {"result": {"value": ["complete", "https://www.seriouseats.com/x", title]}}
             if self.exception:
                 return {"result": {}, "exceptionDetails": {"exception": {"description": self.exception}}}
             return {"result": {"value": self.value}}
@@ -139,6 +145,13 @@ class CdpWireTests(unittest.TestCase):
 
 
 class ReadTests(unittest.TestCase):
+    def test_page_state_separates_loading_challenge_and_ready(self):
+        self.assertEqual(ac.page_state("loading", "https://a.com/", "A"), "loading")
+        self.assertEqual(ac.page_state("complete", "about:blank", ""), "loading")
+        self.assertEqual(ac.page_state("complete", "https://a.com/", "Just a moment..."), "challenge")
+        self.assertEqual(ac.page_state("complete", "https://a.com/", " Verify you are human"), "challenge")
+        self.assertEqual(ac.page_state("complete", "https://a.com/", "Shanghai Noodles"), "ready")
+
     def run_read(self, cdp, **kw):
         out, err = io.StringIO(), io.StringIO()
         with mock.patch.object(ac, "is_up", return_value=True), \
@@ -158,6 +171,36 @@ class ReadTests(unittest.TestCase):
                                         {"url": "https://www.seriouseats.com/x", "background": True}))
         self.assertEqual(cdp.calls[-1], ("Target.closeTarget", {"targetId": "T1"}))
         self.assertTrue(cdp.closed)
+
+    def test_read_waits_out_a_missing_execution_context_during_navigation(self):
+        cdp = FakeCdp(navigating=2)
+        with mock.patch.object(ac.time, "sleep"):
+            code, out, _ = self.run_read(cdp)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(out, "page text\n")
+        self.assertEqual(cdp.methods()[-1], "Target.closeTarget")
+
+    def test_read_waits_until_an_auto_clearing_challenge_resolves(self):
+        cdp = FakeCdp(titles=("Just a moment...", "Just a moment...", "Recipe"))
+        with mock.patch.object(ac.time, "sleep"):
+            code, out, _ = self.run_read(cdp)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(out, "page text\n")
+        polls = [p for m, p in cdp.calls if m == "Runtime.evaluate" and p["expression"] == ac.READINESS]
+        self.assertEqual(len(polls), 3)
+
+    def test_read_reports_a_challenge_that_never_clears_and_closes_tab(self):
+        cdp = FakeCdp(titles=("Prove your humanity",))
+        with mock.patch.object(ac.time, "sleep"), \
+                mock.patch.object(ac.time, "monotonic", side_effect=[0, 0, 10]):
+            code, out, err = self.run_read(cdp, timeout=5)
+
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("still on a challenge page ('Prove your humanity')", err)
+        self.assertEqual(cdp.methods()[-1], "Target.closeTarget")
 
     def test_read_prints_non_string_values_as_json(self):
         code, out, _ = self.run_read(FakeCdp(value=["a", "ü"]))
