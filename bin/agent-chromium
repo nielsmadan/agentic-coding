@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
+import socket
+import struct
 import subprocess
 import sys
 import time
@@ -55,7 +58,8 @@ def pick_target(targets: list[dict], match: str | None) -> dict | None:
         return pages[0] if pages else None
     needle = match.lower()
     return next((t for t in pages
-                 if needle in t.get("url", "").lower() or needle in t.get("title", "").lower()),
+                 if t.get("id", "").lower() == needle
+                 or needle in t.get("url", "").lower() or needle in t.get("title", "").lower()),
                 None)
 
 
@@ -63,6 +67,130 @@ def browser_pids(binary: str, profile: Path) -> list[int]:
     out = subprocess.run(["pgrep", "-f", "--", f"^{binary} --user-data-dir={profile} "],
                          capture_output=True, text=True).stdout
     return [int(p) for p in out.split()]
+
+
+def ws_frame(payload: bytes, mask: bytes, opcode: int = 0x1) -> bytes:
+    n = len(payload)
+    if n < 126:
+        head = struct.pack("!BB", 0x80 | opcode, 0x80 | n)
+    elif n < 1 << 16:
+        head = struct.pack("!BBH", 0x80 | opcode, 0x80 | 126, n)
+    else:
+        head = struct.pack("!BBQ", 0x80 | opcode, 0x80 | 127, n)
+    return head + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+
+
+def read_exact(rfile, n: int) -> bytes:
+    data = rfile.read(n)
+    if len(data) < n:
+        raise ConnectionError("CDP connection closed mid-frame")
+    return data
+
+
+def read_frame(rfile) -> tuple[bool, int, bytes]:
+    b1, b2 = read_exact(rfile, 2)
+    n = b2 & 0x7F
+    if n == 126:
+        (n,) = struct.unpack("!H", read_exact(rfile, 2))
+    elif n == 127:
+        (n,) = struct.unpack("!Q", read_exact(rfile, 8))
+    return bool(b1 & 0x80), b1 & 0x0F, read_exact(rfile, n)
+
+
+# A bare WebSocket client keeps this script stdlib-only.
+class Cdp:
+    def __init__(self, ws_url: str, timeout: float):
+        url = urllib.parse.urlsplit(ws_url)
+        self.sock = socket.create_connection((url.hostname, url.port), timeout=timeout)
+        key = base64.b64encode(os.urandom(16)).decode()
+        self.sock.sendall((f"GET {url.path} HTTP/1.1\r\nHost: {url.netloc}\r\n"
+                           "Upgrade: websocket\r\nConnection: Upgrade\r\n"
+                           f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n").encode())
+        self.rfile = self.sock.makefile("rb")
+        status = self.rfile.readline()
+        if b" 101 " not in status:
+            raise ConnectionError(f"CDP handshake refused: {status.decode(errors='replace').strip()}")
+        while self.rfile.readline() not in (b"\r\n", b""):
+            pass
+        self.last_id = 0
+
+    def recv(self) -> dict:
+        parts = []
+        while True:
+            fin, opcode, data = read_frame(self.rfile)
+            if opcode == 0x8:
+                raise ConnectionError("CDP closed the connection")
+            if opcode == 0x9:
+                self.sock.sendall(ws_frame(data, os.urandom(4), 0xA))
+                continue
+            if opcode == 0xA:
+                continue
+            parts.append(data)
+            if fin:
+                return json.loads(b"".join(parts))
+
+    def call(self, method: str, params: dict | None = None, session: str | None = None) -> dict:
+        self.last_id += 1
+        msg = {"id": self.last_id, "method": method, "params": params or {},
+               **({"sessionId": session} if session else {})}
+        self.sock.sendall(ws_frame(json.dumps(msg).encode(), os.urandom(4)))
+        while True:
+            reply = self.recv()
+            if reply.get("id") == self.last_id:
+                if "error" in reply:
+                    raise RuntimeError(f"{method}: {reply['error'].get('message')}")
+                return reply.get("result", {})
+
+    def close(self) -> None:
+        self.sock.close()
+
+
+LOADED = 'document.readyState === "complete" && location.href !== "about:blank"'
+
+
+def evaluate(cdp: Cdp, session: str, expression: str) -> dict:
+    return cdp.call("Runtime.evaluate", {"expression": expression, "awaitPromise": True,
+                                         "returnByValue": True}, session)
+
+
+def render(value) -> str:
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+
+
+def cmd_read(opts) -> int:
+    if not is_up(opts.port):
+        print(f"agent-chromium: not running on port {opts.port}", file=sys.stderr)
+        return 1
+    cdp = Cdp(get_json(endpoint(opts.port, "/json/version"))["webSocketDebuggerUrl"],
+              timeout=opts.timeout)
+    # background: true is what keeps macOS from raising the window; agent-browser
+    # activates the tab on open (vercel-labs/agent-browser#1247).
+    target = cdp.call("Target.createTarget", {"url": opts.url, "background": True})["targetId"]
+    try:
+        session = cdp.call("Target.attachToTarget",
+                           {"targetId": target, "flatten": True})["sessionId"]
+        deadline = time.monotonic() + opts.timeout
+        while not evaluate(cdp, session, LOADED)["result"].get("value"):
+            if time.monotonic() > deadline:
+                print(f"agent-chromium: page did not finish loading in {opts.timeout:g}s",
+                      file=sys.stderr)
+                return 1
+            time.sleep(0.5)
+        result = evaluate(cdp, session, opts.expression)
+        if "exceptionDetails" in result:
+            details = result["exceptionDetails"]
+            print(f"agent-chromium: {details.get('exception', {}).get('description') or details.get('text')}",
+                  file=sys.stderr)
+            return 1
+        print(render(result["result"].get("value")))
+        return 0
+    finally:
+        if opts.keep:
+            print(f"agent-chromium: kept tab {target}; `agent-chromium show {target}` raises it, "
+                  f"`agent-chromium close {target}` closes it", file=sys.stderr)
+        else:
+            cdp.call("Target.closeTarget", {"targetId": target})
+        cdp.close()
 
 
 def cmd_start(opts) -> int:
@@ -121,6 +249,21 @@ def cmd_show(opts) -> int:
     return 0
 
 
+def cmd_close(opts) -> int:
+    if not is_up(opts.port):
+        print(f"agent-chromium: not running on port {opts.port}", file=sys.stderr)
+        return 1
+    target = pick_target(get_json(endpoint(opts.port, "/json/list")), opts.match)
+    if target is None:
+        print(f"agent-chromium: no tab matches {opts.match!r}", file=sys.stderr)
+        return 1
+    urllib.request.urlopen(
+        endpoint(opts.port, f"/json/close/{urllib.parse.quote(target['id'])}"), timeout=2
+    ).close()
+    print(f"closed {target.get('title', '')}  {target.get('url', '')}")
+    return 0
+
+
 def cmd_stop(opts) -> int:
     pids = browser_pids(BINARY, PROFILE)
     if not pids:
@@ -144,14 +287,26 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="exit 0 and list open tabs if running")
     show = sub.add_parser("show", help="bring a tab (matched by URL or title) to the front")
     show.add_argument("match", nargs="?", help="substring of the tab's URL or title")
+    read = sub.add_parser("read", help="load a page in a background tab, print a JS expression's "
+                                       "value, close the tab; never raises the window")
+    read.add_argument("url")
+    read.add_argument("expression", nargs="?", default="document.body.innerText",
+                      help="evaluated in the page; promises are awaited, strings print raw, "
+                           "anything else as JSON (default: document.body.innerText)")
+    read.add_argument("--timeout", type=float, default=30, help="seconds to wait for the load")
+    read.add_argument("--keep", action="store_true",
+                      help="leave the tab open, e.g. to hand a challenge page to the user")
+    close = sub.add_parser("close", help="close one tab (matched by id, URL or title) "
+                                         "without raising the window")
+    close.add_argument("match", help="tab id, or substring of the tab's URL or title")
     sub.add_parser("stop", help="quit it (logins persist in the profile)")
     return p
 
 
 def main() -> int:
     opts = build_parser().parse_args()
-    return {"start": cmd_start, "status": cmd_status,
-            "show": cmd_show, "stop": cmd_stop}[opts.cmd](opts)
+    return {"start": cmd_start, "status": cmd_status, "show": cmd_show,
+            "read": cmd_read, "close": cmd_close, "stop": cmd_stop}[opts.cmd](opts)
 
 
 if __name__ == "__main__":

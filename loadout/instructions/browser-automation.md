@@ -21,35 +21,45 @@ The session is **stateful and persists across invocations** until `close`, so ea
 
 **Check it first**: `agent-chromium status` exits 0 and lists open tabs when it is up. If it is down, an unsandboxed session runs `agent-chromium start`; a sandboxed one cannot (it exits 78), so ask the user to run `agent-chromium start` in their own terminal — not as a `!` command, which runs inside the same sandbox.
 
-**Attach, never launch**:
+**Read with `agent-chromium read`; it never steals focus.** Any `agent-browser` command over `--cdp` raises the agent browser's window and takes keyboard focus from whatever the user is typing in (it activates the tab on open and switch; upstream issue vercel-labs/agent-browser#1247, unfixed as of 0.39.0). `read` opens the page in a background tab, waits for the load, prints one JavaScript expression's value, and closes the tab. Verified 2026-10-10: the frontmost app never changed across repeated reads.
 
 ```sh
-agent-browser --cdp 9222 --session <task-name> --pin-tab open <url>
-agent-browser --cdp 9222 --session <task-name> --pin-tab get text body
+agent-chromium read <url>                          # the page's text (document.body.innerText)
+agent-chromium read <url> '<js expression>'        # promises are awaited; strings print raw, anything else as JSON
+agent-chromium read <url> '<expr>' --keep          # leave the tab open, e.g. to hand a challenge to the user
+agent-chromium close <tab-id>                     # close a kept tab
+```
+
+**Attach `agent-browser` only to click or type**, and warn the user in the same message that the window will come forward. Attach, never launch:
+
+```sh
+agent-browser --cdp 9222 --session <task-name> --pin-tab tab new <url>
+agent-browser --cdp 9222 --session <task-name> --pin-tab snapshot -i -c
 agent-browser --cdp 9222 --session <task-name> --pin-tab tab close   # when done
 ```
 
-`--pin-tab` gives each session its own tab, so parallel agents do not steer each other's pages. `agent-browser --session <name> close` detaches and leaves the browser running; never `close --all`, `agent-chromium stop`, or kill it — the user may be mid-login in it. Never pass `--profile ~/.agent-chromium`: two instances cannot share a profile, and the sandbox cannot write it.
+`--pin-tab` gives each session its own tab, so parallel agents do not steer each other's pages. Open with `tab new`, not `open`: once the bound tab is closed, the session stays pinned to it and `open` fails with `tab_gone`. `agent-browser --session <name> close` detaches and leaves the browser running; never `close --all`, `agent-chromium stop`, or kill it — the user may be mid-login in it. Never pass `--profile ~/.agent-chromium`: two instances cannot share a profile, and the sandbox cannot write it.
 
 **It is the user's real account.** Read only: do not post, comment, vote, message, follow, subscribe, accept terms or change settings unless the user asked for that specific action. Keep a human pace — a handful of pages, not a crawl — since a flagged account is the user's loss.
 
-**When a page wants a human** — a challenge ("Just a moment…", "Prove your humanity", "Verify you are human"), a login form, or a sign-up wall — stop and hand it to the user; never attempt a CAPTCHA, type a password, or fill a sign-up form yourself. Run `agent-chromium show <site>` to bring that tab forward (from a sandbox it switches the tab but cannot raise the window), then ask in one line, naming the site and tab title:
+**When a page wants a human** — a challenge ("Just a moment…", "Prove your humanity", "Verify you are human"), a login form, or a sign-up wall — stop and hand it to the user; never attempt a CAPTCHA, type a password, or fill a sign-up form yourself. Re-run the `read` with `--keep` (or keep your `agent-browser` tab), then run `agent-chromium show <site>` to bring that tab forward (from a sandbox it switches the tab but cannot raise the window), then ask in one line, naming the site and tab title:
 
 - **Challenge**: "The agent browser has a <site> check open (tab "<title>") — solve it and tell me when done."
 - **Login wall** on a site the user plausibly has an account on: "<site> needs a login — log in in the agent browser window and tell me."
 - **Account required** and the user likely has none: ask whether they want to create one; say what the content is and offer the alternative (a proxy fetch, a different source) in the same message.
 - **Hard block** ("blocked by network security", "access denied") that survives the user's login: stop retrying, report it, and fall back to `jina-fetch --proxy` or another source.
 
-After the user confirms, reload once and continue.
+After the user confirms, read the page again (a fresh `read` without `--keep`) and continue, then close the kept tab with `agent-chromium close <tab-id>`; `--keep` prints the id. `close` matches a tab id, URL or title and never raises the window, so close only tabs you opened.
 
 **Getting the content out cheaply.** Never screenshot to read text, and never dump `snapshot` to read a page: on a Reddit thread `snapshot -i -c` was 62k chars against 17k for the page text. In order of preference:
 
-1. **The site's own JSON**, fetched from inside the page so the login cookies apply, filtered down to the fields you need in the same `eval`. Reddit serves any URL as JSON with `.json` appended:
-   `agent-browser --cdp 9222 --session s --pin-tab eval 'fetch(location.pathname.replace(/\/$/,"")+".json?limit=20").then(r=>r.json()).then(j=>JSON.stringify(j[1].data.children.map(c=>[c.data.score,c.data.body?.slice(0,300)])))'`
-2. **A targeted element**: `get text <selector>` (or a ref from `snapshot -i`) when you know where the answer sits.
+1. **The site's own JSON**, fetched from inside the page so the login cookies apply, filtered down to the fields you need in the same expression. Reddit serves any URL as JSON with `.json` appended:
+   `agent-chromium read <thread-url> 'fetch(location.pathname.replace(/\/$/,"")+".json?limit=20").then(r=>r.json()).then(j=>j[1].data.children.map(c=>[c.data.score,c.data.body?.slice(0,300)]))'`
+   Recipe pages carry their ingredients and steps verbatim as Recipe JSON-LD in `<script type="application/ld+json">`; read that rather than the page text when exact quantities matter.
+2. **A targeted element**: `agent-chromium read <url> 'document.querySelector("<selector>").innerText'` when you know where the answer sits.
 3. **A question about a long page**: pipe the text through `distill`, which answers from the whole page and keeps it out of your context:
-   `agent-browser --cdp 9222 --session s --pin-tab get text body | tee "$TMPDIR/<name>.txt" | distill "<specific question>; quote the decisive sentences verbatim"`
+   `agent-chromium read <url> | tee "$TMPDIR/<name>.txt" | distill "<specific question>; quote the decisive sentences verbatim"`
    The `jina-fetch` rules apply: `NO_RELEVANT_CONTENT` is a real negative, never ask it to count, and `grep` the saved copy before quoting. Delete the copy when done.
 4. **`snapshot -i -c`** only to find refs for clicking or typing, and **screenshots** only when the question is visual or you need to show the user something.
 
-`distill` sends the text to OpenRouter. Never pipe private logged-in pages through it — inbox, messages, account or billing pages, anything with the user's personal data. Read those with a targeted `get text` or `eval` instead.
+`distill` sends the text to OpenRouter. Never pipe private logged-in pages through it — inbox, messages, account or billing pages, anything with the user's personal data. Read those with a targeted `agent-chromium read` expression instead.
