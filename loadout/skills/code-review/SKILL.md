@@ -364,7 +364,7 @@ Runs one integrated read-only reviewer against staged changes (or unstaged chang
 **Focused single-aspect review:**
 > /code-review --architecture
 
-Runs only the architecture & patterns agent. Use this when you already know which concern you care about and don't want to wait on the other 8 agents or sift through their output. Flags are additive — combine them (e.g. `--security --performance`) to run a handful of aspects without running them all.
+Runs only the architecture & patterns agent. Use this when you already know which concern you care about and don't want to wait on the other 9 agents or sift through their output. Flags are additive — combine them (e.g. `--security --performance`) to run a handful of aspects without running them all.
 
 **Whole-repo review:**
 > /code-review --all
