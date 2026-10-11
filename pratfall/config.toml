@@ -45,7 +45,7 @@ native_args = ["--disable-slash-commands"]
 
 # agents.enabled=false is not redundant with the two --disable flags: those set
 # features.<name>, while the base ~/.codex/config.toml sets [agents]
-# max_concurrent_threads_per_session = 8. Needs prat >= 0.9.1, which reserves
+# max_concurrent_threads_per_session = 16. Needs prat >= 0.9.1, which reserves
 # only the -c keys it sets itself rather than the whole option.
 #
 # danger-full-access, because /second-opinion runs inside nono sessions, and

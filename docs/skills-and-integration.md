@@ -13,7 +13,7 @@ What follows is the part that is *not* discoverable from the skill list itself.
 
 ### Extending code-review per language / per project
 
-`code-review` first runs `review-comments --fix` as an unscored cleanup preflight. The review then layers four tiers of checks:
+`code-review` first runs `review-comments --fix` and `review-tidy --fix` as an unscored cleanup preflight. The review then layers four tiers of checks:
 
 1. **10 language-agnostic aspects** — the default comprehensive set (logic, architecture, security, …); explicit aspect flags select a subset.
 2. **Language reviews** — global skills named `review-<language>` in `loadout/skills/`. Auto-invoked when `code-review` detects that language in the scoped files. Add a new language by creating `review-<language>/SKILL.md` and adding a row to the detection registry in `code-review`'s Step 3b.5.
@@ -292,7 +292,7 @@ and rejects an override of one of those (or a dotted descendant) only while the
 public option that sets it is active; every other key passes through. So
 `advisor-codex` carries `-c agents.enabled=false` directly. That guard is not
 redundant with the two `--disable` flags, which set `features.<name>`: the base
-`~/.codex/config.toml` sets `[agents] max_concurrent_threads_per_session = 8`.
+`~/.codex/config.toml` sets `[agents] max_concurrent_threads_per_session = 16`.
 
 Before 0.9.1 the whole option was reserved and the key had to travel in a Codex
 config profile instead. That is gone, and good riddance — Codex accepts an

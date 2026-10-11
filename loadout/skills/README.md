@@ -13,7 +13,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/blind-spots` | Surface consequential decisions a plan, design, or research brief left silently assumed — read existing context, then ask in dependency order with recommendations. Returns a settled brief to a calling workflow without adding a closing confirmation; unknown facts remain research tasks |
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Cleans comments automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
+| `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 10 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -50,6 +50,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
+| `/review-tidy` | Fix the mechanical loose ends a change leaves behind — docs naming renamed or removed symbols, orphaned private code, stale test names, formatter and lint autofixes (--staged, --all, --fix). Runs as a `code-review` preflight |
 | `/review-todo` | Turns a completed review into a persistent workflow: proposes the complete ordered plan for approval, then implements accepted findings and commits them in logical chunks |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
@@ -62,7 +63,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 ### /code-review
 
-Clean up comments automatically, then review code with optional multi-model feedback. Comment cleanup is reported separately instead of being scored as a review finding.
+Clean up comments and mechanical loose ends automatically (`review-comments --fix`, then `review-tidy --fix`), then review code with optional multi-model feedback. The cleanup is reported separately instead of being scored as a review finding. Mechanical findings from the reviewers themselves are applied too and listed under "Applied automatically".
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
@@ -385,6 +386,23 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 - `--all` - Entire codebase
 
 **Example:** `/review-security --all`
+
+---
+
+### /review-tidy
+
+Fix what a change left stale: docs, examples, config and help text that name a symbol, flag or path the diff renamed or removed; unexported code the diff orphaned; test names that name a renamed symbol; and the project's own formatter and lint autofixes. Fixes only what has one right answer and changes no behaviour; everything else is reported for a decision. `code-review` runs it with `--fix` after `review-comments`.
+
+**Arguments:**
+- `--staged` - Git staged files
+- `--unpushed` - Files changed across all unpushed commits
+- `--changed` - Git unstaged changes
+- `--all` - Entire codebase (orphans, doc paths and formatter only; no diff to compare)
+- `<target...>` - One or more files or directories
+- `--fix` - Apply every mechanical fix without prompting
+- Default: `--staged --changed` combined
+
+**Example:** `/review-tidy --staged --fix`
 
 ---
 

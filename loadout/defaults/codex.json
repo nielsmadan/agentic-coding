@@ -4,7 +4,7 @@
   "approval_policy": "on-request",
   "approvals_reviewer": "auto_review",
   "agents": {
-    "max_concurrent_threads_per_session": 8
+    "max_concurrent_threads_per_session": 16
   },
   "skills": {
     "max_context_tokens": 10000
