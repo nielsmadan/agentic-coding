@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""Run the dedicated, hand-logged-in Chromium that agents drive over CDP."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+PROFILE = Path.home() / ".agent-chromium"
+PORT = int(os.environ.get("AGENT_CHROMIUM_PORT", "9222"))
+BINARY = "/Applications/Chromium.app/Contents/MacOS/Chromium"
+EX_CONFIG = 78
+
+
+def endpoint(port: int, path: str) -> str:
+    return f"http://127.0.0.1:{port}{path}"
+
+
+def get_json(url: str, timeout: float = 2.0):
+    with urllib.request.urlopen(url, timeout=timeout) as resp:
+        return json.load(resp)
+
+
+def is_up(port: int) -> bool:
+    try:
+        get_json(endpoint(port, "/json/version"))
+        return True
+    except (urllib.error.URLError, OSError, ValueError):
+        return False
+
+
+def launch_argv(binary: str, profile: Path, port: int, url: str | None) -> list[str]:
+    return [
+        binary,
+        f"--user-data-dir={profile}",
+        f"--remote-debugging-port={port}",
+        "--remote-debugging-address=127.0.0.1",
+        "--no-first-run",
+        "--no-default-browser-check",
+        *([url] if url else []),
+    ]
+
+
+def pick_target(targets: list[dict], match: str | None) -> dict | None:
+    pages = [t for t in targets if t.get("type") == "page"]
+    if not match:
+        return pages[0] if pages else None
+    needle = match.lower()
+    return next((t for t in pages
+                 if needle in t.get("url", "").lower() or needle in t.get("title", "").lower()),
+                None)
+
+
+def browser_pids(binary: str, profile: Path) -> list[int]:
+    out = subprocess.run(["pgrep", "-f", "--", f"^{binary} --user-data-dir={profile} "],
+                         capture_output=True, text=True).stdout
+    return [int(p) for p in out.split()]
+
+
+def cmd_start(opts) -> int:
+    if is_up(opts.port):
+        print(endpoint(opts.port, ""))
+        return 0
+    if os.environ.get("AGENT_SANDBOX"):
+        print("agent-chromium: not running, and it cannot start inside the sandbox; "
+              "ask the user to run `agent-chromium start` in their own terminal",
+              file=sys.stderr)
+        return EX_CONFIG
+    PROFILE.mkdir(exist_ok=True)
+    subprocess.Popen(launch_argv(BINARY, PROFILE, opts.port, opts.url),
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        if is_up(opts.port):
+            print(endpoint(opts.port, ""))
+            return 0
+        time.sleep(0.5)
+    print(f"agent-chromium: started but port {opts.port} never answered", file=sys.stderr)
+    return 1
+
+
+def cmd_status(opts) -> int:
+    if not is_up(opts.port):
+        print(f"agent-chromium: not running on port {opts.port}", file=sys.stderr)
+        return 1
+    pages = [t for t in get_json(endpoint(opts.port, "/json/list")) if t.get("type") == "page"]
+    print(endpoint(opts.port, ""))
+    for t in pages:
+        print(f"  {t.get('title', '')[:70]}  {t.get('url', '')}")
+    return 0
+
+
+def cmd_show(opts) -> int:
+    if not is_up(opts.port):
+        print(f"agent-chromium: not running on port {opts.port}", file=sys.stderr)
+        return 1
+    target = pick_target(get_json(endpoint(opts.port, "/json/list")), opts.match)
+    if target is None:
+        print(f"agent-chromium: no tab matches {opts.match!r}", file=sys.stderr)
+        return 1
+    urllib.request.urlopen(
+        endpoint(opts.port, f"/json/activate/{urllib.parse.quote(target['id'])}"), timeout=2
+    ).close()
+    # System Events is unreachable from the sandbox; there the tab switch is all we get.
+    pids = browser_pids(BINARY, PROFILE)
+    if pids and not os.environ.get("AGENT_SANDBOX"):
+        subprocess.run(["osascript", "-e",
+                        'tell application "System Events" to set frontmost of '
+                        f"(first process whose unix id is {pids[0]}) to true"],
+                       capture_output=True)
+    print(f"{target.get('title', '')}  {target.get('url', '')}")
+    return 0
+
+
+def cmd_stop(opts) -> int:
+    pids = browser_pids(BINARY, PROFILE)
+    if not pids:
+        print("agent-chromium: not running", file=sys.stderr)
+        return 0
+    subprocess.run(["kill", *map(str, pids)], check=False)
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="agent-chromium",
+        description=f"Dedicated Chromium (profile {PROFILE}) that agents attach to with "
+                    f"`agent-browser --cdp {PORT}`. The user logs into sites in its window.",
+    )
+    p.add_argument("--port", type=int, default=PORT,
+                   help=f"CDP port (default: $AGENT_CHROMIUM_PORT, else {PORT})")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    start = sub.add_parser("start", help="launch it if not running; print the CDP endpoint")
+    start.add_argument("url", nargs="?", help="page to open on launch")
+    sub.add_parser("status", help="exit 0 and list open tabs if running")
+    show = sub.add_parser("show", help="bring a tab (matched by URL or title) to the front")
+    show.add_argument("match", nargs="?", help="substring of the tab's URL or title")
+    sub.add_parser("stop", help="quit it (logins persist in the profile)")
+    return p
+
+
+def main() -> int:
+    opts = build_parser().parse_args()
+    return {"start": cmd_start, "status": cmd_status,
+            "show": cmd_show, "stop": cmd_stop}[opts.cmd](opts)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
