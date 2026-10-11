@@ -25,12 +25,13 @@ from typing import Callable, NoReturn, TypeVar
 # retired for answering off-topic questions with real quotes from the page --
 # 7 failures in 23 trials, measured in production under the pre-sentinel prompt
 # and an unset temperature, not reproducible from the recorded benchmark rows.
-# The default is served by only 2 providers, so an upstream 429 is a live
-# failure mode; that is why FALLBACK_MODEL exists. The fallback spreads across
-# 21 providers and scores 6/6 on complex extraction to the default's 5/6, at
-# within ~10% of the price either way -- cheaper on two suites of the three.
+# An upstream 429 on the default is a live failure mode; that is why
+# FALLBACK_MODEL exists. It stays on Gemini for speed: on 2026-10-10 it scored
+# 14/15 at the default's wall time and ~2.5x its price. Every Gemini model is
+# served by the same two Google providers, so it covers a per-model rate limit,
+# not a Google outage.
 DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
-FALLBACK_MODEL = "deepseek/deepseek-v4-flash"
+FALLBACK_MODEL = "google/gemini-3.1-flash-lite"
 DEFAULT_PROMPT = "Summarize this page."
 # External contract: also specified in loadout/instructions/web-fetching*.md and
 # the check-agent-logs skill, and read by benchmark/bench-models.py. Changing the

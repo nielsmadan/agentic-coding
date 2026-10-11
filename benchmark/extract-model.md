@@ -3,10 +3,12 @@
 Agent instructions for rerunning the extraction-model benchmark. Results go in
 `extract-model-result.csv` (append a new `run_date`, do not overwrite prior runs).
 
-Current pick: `google/gemini-2.5-flash-lite`, with `deepseek/deepseek-v4-flash` as the
-429/5xx fallback. `deepseek` is the only model to score 15/15 across the three suites and is
-marginally cheaper, but it is ~8× slower, which is the deciding factor for a tool that runs
-mid-turn.
+Current pick: `google/gemini-2.5-flash-lite`, with `google/gemini-3.1-flash-lite` as the
+429/5xx fallback. `deepseek-v4-flash` is the only model to score 15/15 across the three suites
+and is marginally cheaper, but it is ~8× slower, which is the deciding factor for a tool that
+runs mid-turn; it was the fallback until 2026-10-10, when the fallback moved to Gemini for
+speed. All Gemini models share the same two Google providers, so the fallback covers a
+per-model rate limit rather than a Google-wide outage.
 
 **`extract-model-result.csv` holds only the final five-model cohort.** An earlier wide sweep
 of 18 candidates was dropped once it had served its purpose, so the anecdotes below that name
