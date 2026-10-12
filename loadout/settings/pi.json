@@ -1,5 +1,8 @@
 {
   "theme": "dark",
+  "defaultTools": [
+    "+codemode"
+  ],
   "defaultProvider": "openrouter",
   "defaultModel": "xiaomi/mimo-v2.6-pro",
   "defaultThinkingLevel": "max",

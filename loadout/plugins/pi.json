@@ -1,8 +1,5 @@
 {
   "plugins": {
-    "pi-mcp-adapter": {
-      "source": "npm:pi-mcp-adapter"
-    },
     "pi-subagents": {
       "source": "npm:pi-subagents"
     },

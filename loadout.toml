@@ -45,7 +45,13 @@ settings = "opencode"
 [pi]
 settings = "pi"
 plugins = ["pi"]
+mcp = false
 # pi-permission-system was removed from pi/settings.json (5648342), so nothing
 # reads the config loadout was writing. The renderer stays a loadout capability
 # for anyone still running the extension; this machine just has no use for it.
 permissions = false
+
+# Native Pi accepts the standard MCP format, including ${VAR} auth headers.
+[permissions.pi-native-mcp]
+render = "claude-project-servers"
+destinations = ["${PI_CODING_AGENT_DIR:-~/.pi/agent}/mcp.json"]

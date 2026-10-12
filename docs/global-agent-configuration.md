@@ -34,13 +34,13 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
   the boundary and an approval prompt would add friction without adding containment. **A `pi-raw`
   variant would need this revisited.**
 - **MCP servers** — `~/.pi/agent/mcp.json` holds real `mcpServers` definitions, rendered
-  directly from `loadout/mcp.toml` (no longer symlinked from this repo). HTTP auth uses `bearerTokenEnv` (the
-  variable NAME), so no token is written. It previously imported Claude's registry
-  (`{"imports": ["claude-code"]}`), which made Pi's MCP depend on Claude being installed and
-  registered — and on `~/.claude.json`, the one file loadout cannot write.
-  **Pi caches its resolved server list in `~/.pi/agent/mcp-cache.json` and editing `mcp.json`
-  does not invalidate it** — a server added to `servers.toml` stays invisible to Pi until that
-  cache is deleted.
+  directly from `loadout/mcp.toml` for Pi's native MCP support. HTTP auth uses an Authorization
+  header containing `Bearer ${VAR}`, so no token is written. The `pi-native-mcp` target in
+  `loadout.toml` selects the compatible standard renderer. Run `pi mcp list` to check connections
+  and `/reload` after changing the configuration in an existing session.
+- **Codemode** — `loadout/settings/pi.json` adds `+codemode` to `defaultTools`, keeping regular
+  tools available alongside JavaScript tool orchestration. Native MCP tools use codemode exposure
+  by default; `pi-mcp-adapter` is not loaded.
 - **Model picker** — `loadout/settings/pi.json` sets `enabledModels`, a glob allowlist
   (`provider/id`, minimatch, same format as Pi's `--models` flag) that scopes the `/model` default
   view and Ctrl+P cycling. It does **not** delete models from the "show all" tab. To change which

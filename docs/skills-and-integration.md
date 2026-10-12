@@ -162,9 +162,13 @@ loadout renders both, and for Codex it renders them **together**: definitions an
 - `$CLAUDE_CONFIG_DIR/.claude.json` (the `mcpServers` key only; the ~100 keys beside it are Claude's own runtime state and are left untouched)
 - `~/.codex/config.toml` (`[mcp_servers.*]`, written directly; loadout owns that key and leaves the rest of the file alone)
 - `~/.config/opencode/opencode.json` (the `mcp` key only)
-- `~/.pi/agent/mcp.json` (`mcpServers`, the shape `pi-mcp-adapter`'s `ServerEntry` takes — written directly, no longer symlinked from this repo)
+- `~/.pi/agent/mcp.json` (`mcpServers`, read by Pi's native MCP support)
 
-A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex, `bearerTokenEnv` for Pi), and loadout refuses a server whose keys it does not recognise rather than silently rendering one that connects unauthenticated.
+A `transport = "http"` entry takes `url` plus an optional `auth_env_var`; `transport = "stdio"` takes `command`, optional `args`, and an optional `[<name>.env]` table. **Only ever record the env var's NAME** — each harness has its own interpolation syntax (`${VAR}` for Claude and Pi, `{env:VAR}` for OpenCode, `bearer_token_env_var` for Codex), and loadout refuses a server whose keys it does not recognise rather than silently rendering one that connects unauthenticated.
+
+Pi's native MCP uses Authorization headers. `loadout.toml` disables the adapter-oriented Pi
+MCP preset and selects `claude-project-servers` for Pi's destination, which emits the compatible
+standard format. This keeps server definitions shared without changing other harnesses.
 
 **Claude Code was the exception until 2026-09-05.** `$CLAUDE_CONFIG_DIR/.claude.json` is its
 only user-scope MCP store and is runtime state (session history, project entries, caches), so it
