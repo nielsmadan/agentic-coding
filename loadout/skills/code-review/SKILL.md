@@ -48,7 +48,7 @@ Flag parsing, scope resolution, and the preflight cleanup (Steps 1–3b.6) need 
 
 The default mode is comprehensive: run all selected perspectives independently, then independently score and triage their findings.
 
-Every mode first runs `review-comments --fix` and then `review-tidy --fix` over the resolved scope. The cleanup is a preflight edit, not a review perspective: its results are reported separately and are never confidence-scored or promoted into Critical/Should Fix findings.
+Every mode first runs `review-tidy --fix` over the resolved scope; it coordinates comment cleanup through `review-comments` and then mechanical cleanup, with formatting last. The cleanup is a preflight edit, not a review perspective: its results are reported separately and are never confidence-scored or promoted into Critical/Should Fix findings.
 
 `--quick` is an explicit low-latency preset for routine small changes. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--rereview` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
 
@@ -195,13 +195,13 @@ Announce what got auto-included. In comprehensive mode, use messages such as `De
 ### 3b.6. Preflight cleanup
 
 ::: claude codex opencode
-Before launching any review agent, invoke `review-comments --fix` and then `review-tidy --fix`, each exactly once, against the resolved scope. Run them in that order, not in parallel: both edit files, and `review-tidy` runs the formatter last.
+Before launching any review agent, invoke `review-tidy --fix` exactly once against the resolved scope. It owns the `review-comments` invocation and runs formatting after all cleanup edits; do not invoke comment cleanup separately.
 :::
 ::: pi
-Before launching any review agent, run the `review-comments` cleanup and then the `review-tidy` cleanup, each exactly once, against the resolved scope — **in this session, not as a subagent**. pi has no Skill tool, so read each `SKILL.md` and apply it directly. Cleanup edits files, which the read-only `reviewer` agent cannot do. And note the shape of the error if you try: `agent:` names an agent, never a skill, so `{ agent: "review-comments" }` fails the workflow with `Unknown agent: review-comments`.
+Before launching any review agent, run `review-tidy --fix` exactly once against the resolved scope — **in this session, not as a subagent**. pi has no Skill tool, so read its `SKILL.md` and apply it directly, including its nested `review-comments` instructions. Do not invoke comment cleanup separately. Cleanup edits files, which the read-only `reviewer` agent cannot do; `agent:` names an agent, never a skill.
 :::
 
-| Resolved scope | Arguments for both skills |
+| Resolved scope | Arguments for review-tidy |
 |---|---|
 | `staged` | `--staged --fix` |
 | `unpushed` | `--unpushed --fix` |
@@ -210,7 +210,7 @@ Before launching any review agent, run the `review-comments` cleanup and then th
 | local path target | `<target> --fix` |
 | other target, such as a PR | `<resolved local source file list> --fix` |
 
-Treat their output as a preflight cleanup summary, not as review findings. Report how many comments were removed or rewritten and what `review-tidy` fixed, and list the items either one left for a decision, but do not send those items through confidence scoring or severity triage. Continue immediately when they find nothing.
+Treat its combined output as a preflight cleanup summary, not as review findings. Report how many comments were removed or rewritten and what mechanical fixes were applied, and list the deferred items, but do not send those items through confidence scoring or severity triage. Continue immediately when they find nothing.
 
 If a non-file target has no writable local source files, skip the cleanup and state that it requires a local checkout; do not turn that limitation into a review finding.
 
@@ -362,7 +362,7 @@ Without `--rereview`, Step 6 ends the run after fixes are applied — the user m
 **Clean up, then review the default scope with all 10 agents:**
 > /code-review
 
-Runs `review-comments --fix` and `review-tidy --fix`, then 10 parallel review agents (bug/logic, architecture, security, performance, historical context, test quality, interface design, clean code, functional principles, defensive programming) against staged changes (or unstaged changes if nothing is staged). The cleanup is summarized separately; review findings are prioritized by severity.
+Runs `review-tidy --fix` (including comment cleanup), then 10 parallel review agents (bug/logic, architecture, security, performance, historical context, test quality, interface design, clean code, functional principles, defensive programming) against staged changes (or unstaged changes if nothing is staged). The cleanup is summarized separately; review findings are prioritized by severity.
 
 **Quick review of a routine small change:**
 > /code-review --quick

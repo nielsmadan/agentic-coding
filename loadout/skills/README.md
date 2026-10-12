@@ -50,7 +50,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
-| `/review-tidy` | Fix the mechanical loose ends a change leaves behind — docs naming renamed or removed symbols, orphaned private code, stale test names, formatter and lint autofixes (--staged, --all, --fix). Runs as a `code-review` preflight |
+| `/review-tidy` | Coordinate comment cleanup through `review-comments` and fix the mechanical loose ends a change leaves behind — docs naming renamed or removed symbols, orphaned private code, stale test names, formatter and lint autofixes (--staged, --all, --fix). Runs as a `code-review` preflight |
 | `/review-todo` | Turns a completed review into a persistent workflow: proposes the complete ordered plan for approval, then implements accepted findings and commits them in logical chunks |
 | `/second-opinion` | Get a second opinion |
 | `/skill-creator` | Guide for creating skills |
@@ -63,7 +63,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 ### /code-review
 
-Clean up comments and mechanical loose ends automatically (`review-comments --fix`, then `review-tidy --fix`), then review code with optional multi-model feedback. The cleanup is reported separately instead of being scored as a review finding. Mechanical findings from the reviewers themselves are applied too and listed under "Applied automatically".
+Clean up comments and mechanical loose ends automatically (via `review-tidy --fix`, which invokes `review-comments --fix` and formats last), then review code with optional multi-model feedback. The cleanup is reported separately instead of being scored as a review finding. Mechanical findings from the reviewers themselves are applied too and listed under "Applied automatically".
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
@@ -391,15 +391,15 @@ Security audit for vulnerabilities, secrets, and unsafe patterns. Checks OWASP T
 
 ### /review-tidy
 
-Fix what a change left stale: docs, examples, config and help text that name a symbol, flag or path the diff renamed or removed; unexported code the diff orphaned; test names that name a renamed symbol; and the project's own formatter and lint autofixes. Fixes only what has one right answer and changes no behaviour; everything else is reported for a decision. `code-review` runs it with `--fix` after `review-comments`.
+Fix what a change left stale: docs, examples, config and help text that name a symbol, flag or path the diff renamed or removed; unexported code the diff orphaned; test names that name a renamed symbol; and the project's own formatter and lint autofixes. First invokes `review-comments` for comment cleanup, then applies mechanical fixes with one right answer and no behaviour change; other findings are reported for a decision. Formatting runs once after all cleanup edits. `code-review` invokes this skill with `--fix`.
 
 **Arguments:**
 - `--staged` - Git staged files
 - `--unpushed` - Files changed across all unpushed commits
 - `--changed` - Git unstaged changes
-- `--all` - Entire codebase (orphans, doc paths and formatter only; no diff to compare)
+- `--all` - Entire codebase (comments, orphans, doc paths and formatter; no diff to compare)
 - `<target...>` - One or more files or directories
-- `--fix` - Apply every mechanical fix without prompting
+- `--fix` - Apply safe comment cleanup and every mechanical fix without prompting
 - Default: `--staged --changed` combined
 
 **Example:** `/review-tidy --staged --fix`

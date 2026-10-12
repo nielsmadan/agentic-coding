@@ -13,7 +13,7 @@ What follows is the part that is *not* discoverable from the skill list itself.
 
 ### Extending code-review per language / per project
 
-`code-review` first runs `review-comments --fix` and `review-tidy --fix` as an unscored cleanup preflight. The review then layers four tiers of checks:
+`code-review` first runs `review-tidy --fix` as an unscored cleanup preflight. `review-tidy` invokes `review-comments --fix`, applies mechanical fixes, and runs formatting last. All three skills remain separately callable. The review then layers four tiers of checks:
 
 1. **10 language-agnostic aspects** — the default comprehensive set (logic, architecture, security, …); explicit aspect flags select a subset.
 2. **Language reviews** — global skills named `review-<language>` in `loadout/skills/`. Auto-invoked when `code-review` detects that language in the scoped files. Add a new language by creating `review-<language>/SKILL.md` and adding a row to the detection registry in `code-review`'s Step 3b.5.
