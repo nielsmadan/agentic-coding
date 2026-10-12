@@ -4,7 +4,6 @@ opencode() { AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "$@
 
 alias oc="opencode"
 alias ocs="opencode -m openrouter/meta/muse-spark-1.3"
-alias occo="opencode --continue"
 alias occof="opencode --continue --fork"
 
 # OpenCode scans ~/.claude/skills and .claude/skills as well as its own, and

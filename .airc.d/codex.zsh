@@ -22,7 +22,6 @@ codex() {
 }
 codex-raw() { AGENT_HARNESS=codex sops-exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
 
-alias cxco="codex resume --last"
 alias cxcof="codex fork --last"
 
 alias cxco-raw="codex-raw resume --last"

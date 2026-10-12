@@ -13,7 +13,6 @@ claude() {
 # that must write outside ~/wrksp.
 claude-raw() { AGENT_HARNESS=claude sops-exec claude "$@"; }
 
-alias clco="claude --continue"
 alias clco-raw="claude-raw --continue"
 
 clcof() {

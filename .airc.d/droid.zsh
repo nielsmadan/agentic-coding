@@ -9,8 +9,6 @@
 # one.
 droid() { AGENT_HARNESS=droid _agent_sandboxed droid-local droid "$@"; }
 
-alias drco="droid resume --last"
-
 # Keep the router-decision logs in ~/.factory/logs indefinitely. Droid prunes on
 # whichever of these binds first and has no unlimited sentinel, so the caps are
 # set past any reachable value instead; the defaults (30 days, 1 GiB) drop about
