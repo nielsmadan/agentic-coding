@@ -80,6 +80,8 @@ Ends with a selectable fix-scope prompt (Critical only / Critical + Should Fix /
 
 ### /review-todo
 
+Explicit invocation only, intended for large reviews spanning multiple areas. Ordinary requests to fix review findings do not activate it or create a state file.
+
 Turns the most recent completed review into `.review-todo.md`, inspects every finding, and immediately presents the complete proposed disposition and ordered implementation plan. Decisions, implementation approaches, verification, and commit results stay in the file so the workflow can resume after context loss.
 
 No implementation starts until you approve the whole current plan. Requested changes are folded into the state file and the complete revised plan is presented again. After approval, accepted fixes are verified and committed in the fewest self-contained chunks; the temporary state file is never committed and is removed after successful completion.
