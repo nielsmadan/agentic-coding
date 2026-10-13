@@ -1,0 +1,12 @@
+#!/bin/zsh
+# rl execs agents off PATH, which skips the sandboxing wrappers in .airc.d/. A
+# launch that owns the terminal is a resume and goes through the wrapper; rl's
+# own model calls capture stdout and get the real binary.
+name=${0:t}
+path=(${path:#${0:h}})
+if [[ -t 1 && -z $AGENT_SANDBOX ]]; then
+  source ~/.airc
+  $name "$@"
+else
+  exec $name "$@"
+fi
