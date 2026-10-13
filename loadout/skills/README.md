@@ -32,6 +32,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/plan` | Lightweight middle-tier planning — a read-only Opus subagent drafts a concrete plan (approach, file manifest, ordered steps, risks, open questions), you approve at one go-ahead gate, then the main session implements in auto mode. Never enters plan mode (dodges the plan-mode permission prompts). `--review` runs multi-agent `review-plan` before the gate |
 | `/pre-existing` | Force a rigorous investigation of "pre-existing" test/lint/type/CI failures instead of dismissing them |
 | `/qa` | QA the last developed feature or a specified target: enumerate paths and edge/error/loading states, exercise the real browser/device/CLI/plugin/API, and report evidence and coverage; `--fix` repairs confirmed bugs and retests |
+| `/qa-tour` | Prepare the last developed feature or a specified target, then use guide for a short walkthrough the user clicks through; covers the main workflow without exhaustive QA |
 | `/read-docs` | Search internal project documentation (proactive) |
 | `/release-review` | Whole-product pre-release review programme — product map and target flows, cross-cutting conventions, then command by command with the user, one scenario-framed item at a time, into an on-disk changes ledger; hands ready batches to parallel implementer sessions, then sequences code review, docs, QA and release, and harvests it all into `docs/`. Resumable |
 | `/research-general` | Research a non-technical topic online (academic, news, primary sources, consumer, fact-checks) using parallel agents; uses blind-spots first when an unresolved decision would change the investigation |
@@ -242,6 +243,21 @@ a later run would refer back to.
 - `/qa password reset, including expired links`
 - `/qa the export command`
 - `/qa plugin resume behavior --fix`
+
+---
+
+### /qa-tour
+
+Prepare the correct build and sample data, open the feature's starting screen, then
+use `/guide` to walk you through the main workflow. You perform the feature actions;
+the agent handles setup, observes progress, and helps when something differs.
+Skips exhaustive edge cases and forced loading/error states.
+
+**Arguments:**
+- No arguments - Infer the last developed feature
+- `[target or scope]` - Select a feature, URL, app, or consumer workflow
+
+**Examples:** `/qa-tour`, `/qa-tour saved filters`, `/qa-tour profile editing on iOS`
 
 ---
 
