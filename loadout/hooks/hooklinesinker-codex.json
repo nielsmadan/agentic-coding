@@ -98,6 +98,28 @@
       ]
     }
   ],
+  "SubagentStart": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStart",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SubagentStop": [
+    {
+      "hooks": [
+        {
+          "command": "/Users/nielsmadan/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent codex --event SubagentStop",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
   "UserPromptSubmit": [
     {
       "hooks": [
