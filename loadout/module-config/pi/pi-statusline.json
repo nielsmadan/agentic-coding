@@ -6,8 +6,10 @@
 	"segments": [
 		"provider",
 		"model",
+		"thinking",
 		"cwd",
-		"context"
+		"context",
+		"cache"
 	],
 	"segmentText": {
 		"brand": {
