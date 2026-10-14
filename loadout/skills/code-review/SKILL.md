@@ -50,7 +50,7 @@ The default mode is comprehensive: run all selected perspectives independently, 
 
 Every mode first runs `review-tidy --fix` over the resolved scope; it coordinates comment cleanup through `review-comments` and then mechanical cleanup, with formatting last. The cleanup is a preflight edit, not a review perspective: its results are reported separately and are never confidence-scored or promoted into Critical/Should Fix findings.
 
-`--quick` is an explicit low-latency preset for routine small changes. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--rereview` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
+`--quick` runs one thorough integrated review at full reasoning effort, saving time through fewer agents and no separate scoring round. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--rereview` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
 
 `--quick` composes with a target, one scope flag, or `--rereview`. It cannot be combined with aspect flags or `--multi`; abort with `--quick is a complete review preset; remove the aspect flags or --multi.`
 
@@ -221,24 +221,26 @@ Keep the file list resolved in Step 3b even if cleanup edits change git status. 
 #### Quick mode (`--quick`)
 
 ::: claude codex opencode
-Do not load `references/agents.md`. Launch exactly **one read-only review agent** and give it the resolved scope or target. Use the harness's fast read-only profile or lower per-agent reasoning effort when available. It must not delegate to sub-skills or dispatch more agents.
+Do not load `references/agents.md`. Launch exactly **one read-only review agent** and give it the resolved scope or target. Use the same model and reasoning effort as a comprehensive reviewer; do not select a faster profile or lower effort for quick mode. It must not delegate to sub-skills or dispatch more agents.
 :::
 ::: pi
 Do not load `references/agents.md`. Launch exactly **one** child via `subagent` using the builtin **`reviewer`** agent, and give it the brief below plus the resolved file list. `reviewer` grants only `read, grep, find, ls` — no bash, no edit, no nested dispatch — so it is read-only by construction. Because it has no bash it cannot resolve a scope itself: pass the concrete file list, not `--staged`.
 :::
 
-Give the reviewer this integrated brief:
+For every harness, retain full review reasoning effort. Give the reviewer this integrated brief:
 
-- Read the applicable `AGENTS.md` / `CLAUDE.md` files, the scoped diff or files, relevant callers/consumers, and related tests.
-- Review correctness, edge cases, error handling, regressions, catch-all `else`/`default` branches that would silently absorb a newly added enum or API value, missing or weak tests, security red flags, and interface compatibility. Flag obvious performance hazards only when directly supported by the changed path.
+- Read the applicable `AGENTS.md` / `CLAUDE.md` files and the scoped diff or files. For each changed behavior, trace the path from its callers through the implementation and dependencies to its observable result, including failure paths. Read surrounding code and related tests to check the contracts at each boundary; do not stop at the diff hunks. For a whole-file or whole-repo target, trace the main behaviors in scope.
+- Review correctness, edge cases, error handling, regressions, catch-all `else`/`default` branches that would silently absorb a newly added enum or API value, missing or weak tests, security red flags, and interface compatibility. Check performance hazards supported by the traced paths. Also check design and maintainability: module responsibilities, coupling, duplication, interface clarity, hidden shared state, and mutation of caller-owned data. Tie each concern to concrete code and its consequences.
 - If Step 3b.5 detected language, project, or library-use guidance, read those matching `SKILL.md` files as review references and apply their checks directly. Do not invoke them as skills.
+- Before accepting or dismissing a suspected issue, trace a concrete triggering input or state, inspect callers and excluding guards, and check whether tests exercise the behavior and assert the relevant result. Use targeted checks when available; run any experiment that writes files in a disposable copy. If the reviewer lacks execution tools, request a specific check from the parent, which must resolve it before final filtering or report the remaining uncertainty.
 - Return only actionable findings supported by a concrete code path. For each finding, include severity (`Critical`, `Should Fix`, or `Nice to Have`), `file:line`, what is wrong, why it matters, a concise fix, self-confidence from 0–100, likelihood (`routine`, `plausible`, `rare`, or `theoretical`), and blast radius (`low`, `medium`, or `high`). For `rare` or `theoretical`, name the reachability reason and cite any excluding guard.
-- Self-filter aggressively: omit findings below 80 confidence and omit `rare`/`theoretical` findings with low or medium blast radius. Keep rare high-blast-radius findings and tag them with the short reachability reason. Confidence means the claim is true; a true finding that matters little is `Nice to Have`, not low-confidence.
+- After verification, omit findings below 80 confidence and omit `rare`/`theoretical` findings with low or medium blast radius. Keep rare high-blast-radius findings and tag them with the short reachability reason. Confidence means the claim is true; a true finding that matters little is `Nice to Have`, not low-confidence.
 - Tag a finding `autofix` only when its fix has one right answer, changes no behaviour, and stays local: a doc line naming a symbol or flag the diff renamed, an import the diff orphaned, a test name that no longer matches.
-- Do not edit any file, even temporarily.
-- Return `No actionable findings.` if nothing survives.
+- Do not edit the shared checkout, even temporarily; keep any experiment writes in a disposable copy.
+- Always return a short coverage statement naming the behaviors traced, callers/dependencies and tests examined, and checks actually run. State any unexamined scope, checks not run, and material unresolved uncertainties; distinguish these from confirmed findings. Do not infer safety from missing evidence.
+- Return `No actionable findings.` if nothing survives, followed by the coverage statement and any limitations.
 
-After the agent returns, apply its `autofix` findings yourself after checking each still meets that test, and list them under `Applied automatically`; a finding that fails the test goes to its severity section instead. Deduplicate the rest and render the surviving items under `Critical Issues (Must Fix)`, `Improvements (Should Fix)`, and `Suggestions (Nice to Have)`, omitting empty sections. Explain what is wrong, why it matters, and how to fix it. Do not show self-confidence metadata and do not launch scorer agents. Then continue to Step 6.
+After the agent returns, resolve any requested verification checks before final filtering, without launching more reviewers or scorers. Apply its `autofix` findings yourself after checking each still meets that test, and list them under `Applied automatically`; a finding that fails the test goes to its severity section instead. Deduplicate the rest and render the surviving items under `Critical Issues (Must Fix)`, `Improvements (Should Fix)`, and `Suggestions (Nice to Have)`, omitting empty sections. Explain what is wrong, why it matters, and how to fix it. Include the coverage statement and material limitations even when there are no findings. Do not show self-confidence metadata and do not launch scorer agents. Then continue to Step 6.
 
 #### Comprehensive mode
 
@@ -367,7 +369,7 @@ Runs `review-tidy --fix` (including comment cleanup), then 10 parallel review ag
 **Quick review of a routine small change:**
 > /code-review --quick
 
-Runs one integrated read-only reviewer against staged changes (or unstaged changes if nothing is staged). It applies detected language, project, and library-use guidance directly, self-filters to well-supported actionable findings, and skips the independent scorer-agent round.
+Runs one integrated read-only reviewer against staged changes (or unstaged changes if nothing is staged). It uses full reasoning effort, traces behavior through callers, dependencies, and tests, and checks design alongside correctness. It applies detected language, project, and library-use guidance directly, verifies suspected issues before filtering, and reports coverage and unresolved uncertainties. It skips the independent scorer-agent round.
 
 **Focused single-aspect review:**
 > /code-review --architecture
