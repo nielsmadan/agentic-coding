@@ -212,10 +212,10 @@ generated and committed. Edit the fragment, never the record; `loadout check --g
 record that disagrees with it. See loadout's
 [ADR 0017](https://github.com/nielsmadan/loadout/blob/main/docs/decisions/0017-ownership-may-be-declared-instead-of-derived.md).
 
-**Nothing reserializes `~/.codex/config.toml`, and that is the design.** Both loadout's surgery and
-this repo's `codex/sync_superpowers.py` work line-wise, using `tomllib` only to validate the result. The
+**Nothing reserializes `~/.codex/config.toml`, and that is the design.** Loadout's surgery works
+line-wise, using `tomllib` only to validate the result. The
 comments, the nono block and the project tables survive because no code path touches those bytes,
-not because a writer preserved them. Do not "improve" either into a parse-mutate-serialize round
+not because a writer preserved them. Do not "improve" this into a parse-mutate-serialize round
 trip: that trades untouched for preserved-if-the-library-is-careful, and adds a dependency to a
 script `install.sh` runs on a fresh machine.
 

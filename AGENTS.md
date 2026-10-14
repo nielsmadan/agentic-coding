@@ -25,7 +25,6 @@ environment and the tools around it.
   - `defaults/` - `codex.json` (model defaults) and its generated `codex.owned` record
 - `nono/` - sandbox profiles, symlinked to `~/.config/nono/profiles/` (see Sandbox)
 - `launchd/` - LaunchAgents that `sync.sh` symlinks into `~/Library/LaunchAgents/` and loads
-- `codex/sync_superpowers.py` - pins installed Superpowers skills to explicit invocation
 - `codex/strip_nono_block.py` - removes the nono codex pack's block from `~/.codex/config.toml`
 - `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall)
 - `publish/` - renders the public skills collection (see below)

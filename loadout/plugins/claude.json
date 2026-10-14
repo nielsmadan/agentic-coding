@@ -12,9 +12,6 @@
     "telegram": {
       "marketplace": "claude-plugins-official"
     },
-    "superpowers": {
-      "marketplace": "claude-plugins-official"
-    },
     "nono": {
       "marketplace": "nolabs-ai"
     },

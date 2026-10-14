@@ -11,7 +11,6 @@
 #     agents read (loadout owns those; nothing is staged in this repo first)
 #   - apply the remaining symlinks (skip-if-correct; back up a real file, never
 #     clobber) for the files other generators still stage here
-#   - make installed Codex Superpowers skills explicit-invocation only
 #   - relink the Codex/Pi skill subset and Pi permission policy
 #
 # Usage: ./sync.sh [--profile NAME | --autonomous | --normal]
@@ -390,22 +389,6 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
   done
 }
 
-sync_codex_superpowers() {
-  local script="$SCRIPT_DIR/codex/sync_superpowers.py"
-
-  if [[ ! -f "$script" ]]; then
-    echo "⚠️  Codex Superpowers sync not found: $script (skipping)"
-    return
-  fi
-  if ! command -v python3 &>/dev/null; then
-    echo "⚠️  python3 not found — skipping Codex Superpowers policy sync"
-    return
-  fi
-
-  echo "Making Codex Superpowers skills explicit-invocation only..."
-  python3 "$script"
-}
-
 # `nono update` appends the codex pack's developer_instructions block at the end of
 # ~/.codex/config.toml, where it lands inside the last table and Codex refuses the
 # whole file. On its next update nono also deletes everything between its markers,
@@ -425,7 +408,6 @@ echo ""
 generate_loadout
 echo ""
 
-sync_codex_superpowers
 strip_nono_codex_block
 echo ""
 if [[ "$PROFILE" != unsandboxed ]]; then

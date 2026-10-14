@@ -6,15 +6,6 @@
     "pi-plan-mode": {
       "source": "npm:@narumitw/pi-plan-mode"
     },
-    "superpowers": {
-      "source": "git:github.com/obra/superpowers",
-      "pi": {
-        "extensions": [],
-        "skills": [
-          "!using-superpowers"
-        ]
-      }
-    },
     "pi-lsp": {
       "source": "npm:@narumitw/pi-lsp"
     },
