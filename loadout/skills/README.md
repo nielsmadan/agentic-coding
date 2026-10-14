@@ -13,7 +13,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/blind-spots` | Surface consequential decisions a plan, design, or research brief left silently assumed — read existing context, then ask in dependency order with recommendations. Returns a settled brief to a calling workflow without adding a closing confirmation; unknown facts remain research tasks |
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 10 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
+| `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -41,7 +41,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-comments` | Review comments for necessity, accuracy, duplication, clarity, and concision (--all, --staged, --changed) |
-| `/review-defensive` | Defensive-programming review — catch-all `else`/`default` that absorbs new enum/API values, unknown external values, swallowed errors, missing timeouts and bounds, over-defense (--staged, --all) |
+| `/review-correctness` | Correctness review — logic, state transitions, races, exhaustiveness, unknown external values, error handling, deadlines, cancellation, and retry safety (--staged, --all) |
 | `/review-functional` | Pragmatic functional review — effects at the edges, no hidden shared state, no mutation of a caller's data, determinism (--staged, --all). Excludes currying, recursion and monads by design |
 | `/review-history` | Analyze git history and past issue logs |
 | `/review-interfaces` | Interface design review for functions, classes, components (--staged, --all) |
@@ -332,18 +332,18 @@ Review comments in full-file context. Finds repeated rationale, stale or vague e
 
 ---
 
-### /review-defensive
+### /review-correctness
 
-Review code for assumptions that hold today and fail silently tomorrow. The headline check is closed-world branching: an `if/else` or `switch/default` whose last branch handles one known case by elimination, so the next value an API or enum adds silently takes it. Also covers unknown values from external data, swallowed errors and masking defaults, assertions on impossible states, timeouts and bounds, and defensive checks that hide bugs.
+Review normal behavior and state transitions, then failure paths and changing assumptions. Covers ordinary bugs, races, exhaustiveness, external unknowns, misleading defaults, deadlines, cancellation, and retry safety. `code-review --correctness` selects this reviewer; `--logic` and `--defensive` are aliases selecting the same reviewer once.
 
 **Arguments:**
 - `--staged` - Git staged files
 - `--unpushed` - Files changed across all unpushed commits
 - `--changed` - Git unstaged changes
-- `--all` - Entire codebase (uses parallel agents)
-- Default: files from the current conversation context
+- `--all` - Entire codebase
+- Explicit file or directory target, otherwise files from the current conversation context
 
-**Example:** `/review-defensive --staged`
+**Example:** `/review-correctness --staged`
 
 ---
 
