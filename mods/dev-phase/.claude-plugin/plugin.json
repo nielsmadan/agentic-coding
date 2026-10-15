@@ -1,0 +1,6 @@
+{
+  "name": "dev-phase",
+  "version": "0.1.0",
+  "description": "Shows the session's development phase above the prompt",
+  "types": "./types/index.d.ts"
+}

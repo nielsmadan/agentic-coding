@@ -345,6 +345,8 @@ A plugin developed locally (`mouthfeel`, at `~/wrksp/all/mouthfeel`) is wired up
 
 Reload after a source change is `npm run dev:claude` in the plugin repo: it stamps a fresh version into `dist/claude/mouthfeel/.claude-plugin/plugin.json`, then runs `claude plugin update` and `claude plugin enable`. The version stamp is what stops Claude serving the cached copy. Nothing sandbox-specific is needed — `~/wrksp` and `~/.claude/plugins` are both granted.
 
+**Mods** (`mods/<name>/`, a hooks module with no marketplace or version) take neither half. `sync.sh`'s `sync_claude_mods` copies each to `~/.claude/mods/<name>`, and `CLAUDE_CODE_PLUGIN_DIRS` in `loadout/settings/claude.json` loads that copy in every Claude session (several paths are separated by `:`). Sessions watch the copy, not the repo, so an edit reaches them on the next `./sync.sh` rather than on save; to try one first, `claude --plugin-dir mods/<name>` hot-reloads from the working copy. Claude Code writes its type declarations into `.claude-plugin/types/` of the folder it loads (gitignored here), and `sync_claude_mods` copies the loaded copy's back, so `tsc -p mods/<name>` works once any interactive session has loaded the mod. `claude plugin test mods/<name>` needs no declarations.
+
 ## Hooks
 
 Hook **scripts** live in `loadout/module-config/claude/hooks/`; their **wiring** is a separate slice, `loadout/hooks/claude.json`. Neither belongs in `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:

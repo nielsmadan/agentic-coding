@@ -5,7 +5,8 @@
   "env": {
     "CLAUDE_CODE_DISABLE_MOUSE_CLICKS": "1",
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "16",
-    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2"
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods/dev-phase"
   },
   "attribution": {
     "commit": "",
