@@ -1,14 +1,14 @@
 ---
 name: second-opinion
-description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from the agent CLIs you are not running (Claude, Codex, Pi, OpenCode).
-compatibility: Requires pratfall (`prat`) 0.9.1 or newer on PATH plus at least one of claude, codex, pi or opencode besides the one you are running as. Pi and OpenCode advisors need an OpenRouter key.
+description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from the agent CLIs you are not running (Claude, Codex, Pi, OpenCode, Droid).
+compatibility: Requires pratfall (`prat`) 0.9.1 or newer on PATH plus at least one of claude, codex, pi, opencode or droid besides the one you are running as. Pi and OpenCode advisors need an OpenRouter key.
 argument-hint: '[--quick] [--timeout=300] [--words=500] <question or context>'
 effort: high
 ---
 
 # Second Opinion Command
 
-Get input from three independent advisors on the current problem or question. Consult the advisor CLIs you are *not* — from `claude`, `codex`, `pi` and `opencode`, skip whichever one you are running as, and query the rest. By default, iterates if responses lack confidence.
+Get input from the available independent advisors on the current problem or question. Consult the advisor CLIs you are *not* — from `claude`, `codex`, `pi`, `opencode` and `droid`, skip whichever one you are running as, and query the rest. By default, iterates if responses lack confidence.
 
 ## Usage
 
@@ -31,11 +31,11 @@ Get input from three independent advisors on the current problem or question. Co
 ## Gotchas
 - `.second-opinion.md` is written to the project directory and is NOT gitignored by default. If cleanup is skipped (error, timeout), it can be accidentally committed.
 - The advisor CLIs must be installed. If one is missing or fails, the command continues with the others and that advisor's input is simply absent from the synthesis.
-- **The advisors are meant to read the code** — that's the point. Claude, Pi and OpenCode run with read-only tool sets, so they can read/explore the repo but cannot modify it. Codex has no read-only mode that works inside the nono sandbox, so it runs without one and nono is its boundary; the prompt still tells it not to modify files. Point them at the relevant files in the prompt; reading them stays fast (~15–25s).
-- **Every advisor runs through [pratfall](https://github.com/nielsmadan/pratfall) (`prat`).** It normalizes the prompt file, timeout and output across the four CLIs, so this skill does not repeat each one's flags. `prat` execs the real binary off PATH, so no `command` prefix is needed.
+- **The advisors are meant to read the code** — that's the point. Claude, Pi, OpenCode and Droid run with read-only tool sets, so they can read/explore the repo but cannot modify it. Codex has no read-only mode that works inside the nono sandbox, so it runs without one and nono is its boundary; the prompt still tells it not to modify files. Point them at the relevant files in the prompt; reading them stays fast (~15–25s).
+- **Every advisor runs through [pratfall](https://github.com/nielsmadan/pratfall) (`prat`).** It normalizes the prompt file, timeout and output across the five CLIs, so this skill does not repeat each one's flags. `prat` execs the real binary off PATH, so no `command` prefix is needed.
 - **Still close stdin with `</dev/null` on every advisor command.** prat prepends redirected stdin to the `-f` prompt, so an open-but-silent stdin makes it block *before launching the agent* — and `--timeout` does not fire there, so the call hangs until the Bash tool kills it. Measured: the same command answers in ~13s with `</dev/null` and hangs indefinitely without it.
-- **The read-only guards are not in this file.** They live in the `advisor-*` profiles in `~/.config/pratfall/config.toml` (`native_args`, `tools`), because a flag the skill has to retype is a flag the skill can drop. Read that file before changing an advisor, and never invoke a bare `prat cc` / `prat cx` / `prat pi` / `prat oc` here — `prat cx` in particular renders a plain `codex exec` with **no** sandbox.
-- **If the Claude advisor reports `Not logged in · Please run /login`, prefix that one command with `sops-exec`.** `prat` execs the real binary, and Claude Code does not pass its own credential down to subprocesses, so a nested `claude` finds nothing. The other three inherit theirs from the session environment and need no prefix. This only bites when `/second-opinion` runs *from* a Claude Code session — where the Claude advisor is skipped anyway.
+- **The read-only guards are not in this file.** They live in the `advisor-*` profiles in `~/.config/pratfall/config.toml` (`native_args`, `tools`), because a flag the skill has to retype is a flag the skill can drop. Read that file before changing an advisor, and never invoke a bare `prat cc` / `prat cx` / `prat pi` / `prat oc` / `prat dr` here — `prat cx` in particular renders a plain `codex exec` with **no** sandbox.
+- **If the Claude advisor reports `Not logged in · Please run /login`, prefix that one command with `sops-exec`.** `prat` execs the real binary, and Claude Code does not pass its own credential down to subprocesses, so a nested `claude` finds nothing. The other advisors inherit theirs from the session environment and need no prefix. This only bites when `/second-opinion` runs *from* a Claude Code session — where the Claude advisor is skipped anyway.
 - **The advisor's identity is the model, not the CLI.** The Pi and OpenCode profiles pin models from two different labs, so their opinions stay independent of each other.
 - **Pi** warns `Model "…" not found for provider "openrouter". Using custom model id.` when the model is newer than its cached catalog, then works normally — that warning is not a failure.
 - **OpenCode** bills through OpenRouter, so its profile pins an `openrouter/`-prefixed model (`opencode/*` is OpenCode Zen, which has no payment method and errors out). The profile's `--agent plan` is not enough on its own — plan mode can still delegate, which is why the command below also sets `OPENCODE_CONFIG_CONTENT`. prat profiles have no `env` field, so that one stays inline.
@@ -120,6 +120,11 @@ prat advisor-pi --timeout {timeout} -f .second-opinion.md </dev/null
 OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode --timeout {timeout} -f .second-opinion.md </dev/null
 ```
 
+**Droid:** the profile pins Gemini 4 Argon at high effort and permits only file reading and search:
+```bash
+prat advisor-droid --timeout {timeout} -f .second-opinion.md </dev/null
+```
+
 Use the profiles as configured, including in `--quick` mode. Change an advisor's
 model or reasoning level only when the user explicitly requests it, and change it
 in `~/.config/pratfall/config.toml` rather than by adding a `--model` / `--effort`
@@ -174,9 +179,14 @@ Format the responses for the user:
 ### {advisor 3}
 {advisor_3_response}
 
+### {advisor 4}
+{advisor_4_response}
+
 ### My Take
 {your brief synthesis - where they agree, disagree, and your recommendation}
 ```
+
+Include one heading per responding advisor.
 
 Name each advisor heading after the CLI and the model it ran (e.g. `Codex`, `Pi (<model>)`).
 
@@ -215,7 +225,7 @@ fallback when `--timeout` is omitted.
 | Output files | None | rounds/, synthesis.md |
 | Purpose | Quick check | Deep analysis |
 | Speed | ~1-3 min | 5-30 min |
-| Read-only | Enforced for Claude, Pi, OpenCode; Codex by prompt, inside nono | Configurable |
+| Read-only | Enforced for Claude, Pi, OpenCode, Droid; Codex by prompt, inside nono | Configurable |
 
 ## Examples
 

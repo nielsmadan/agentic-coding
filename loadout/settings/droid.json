@@ -17,7 +17,7 @@
     "maxRows": 1
   },
   "sessionDefaultSettings": {
-    "model": "auto",
+    "model": "gemini-4-argon",
     "autonomyLevel": "high"
   }
 }
