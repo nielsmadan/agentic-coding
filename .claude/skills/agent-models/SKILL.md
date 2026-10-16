@@ -1,12 +1,13 @@
 ---
 name: agent-models
-description: Pick and apply the low / mid / high-main / high-fallback OpenRouter coding models for pi, OpenCode, the clor Claude-Code-on-OpenRouter wrapper. Ranks candidates from Artificial Analysis by Intelligence Index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", or asks what pi/opencode/clor are currently running.
+description: Pick and apply OpenRouter coding models for Pi, OpenCode and clor, plus the shared extraction models for distill and jina-fetch. Ranks candidates from Artificial Analysis by Intelligence Index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", "refresh extraction models", "benchmark distill models", or asks what pi/opencode/clor are currently running.
 ---
 
 # Agent Models
 
 Chooses four OpenRouter models — **low**, **mid**, **high-main**,
-**high-fallback** — and writes them into the six places this repo pins a model id.
+**high-fallback** — plus a measured extraction default and fallback shared by
+`distill` and `jina-fetch`. Coding and extraction are separate decisions.
 
 Standing constraints, not preferences:
 
@@ -22,7 +23,13 @@ Standing constraints, not preferences:
 
 ## Instructions
 
+Use `--coding` to refresh only coding tiers, `--extraction` to benchmark and select
+only extraction models, or no flag to do both. A read-only question runs neither.
+Benchmark artifacts may be written before approval; model configuration may not.
+
 ### Step 1: Rank the candidates
+
+Skip Steps 1 and 2 for `--extraction`.
 
 ```bash
 python3 .claude/skills/agent-models/scripts/rank_models.py
@@ -121,6 +128,28 @@ cost ≈ input_M × price_in  +  cache_read_M × 0.12 × price_in  +  output_M �
 Validate it against the session's own recorded cost before trusting it — pi
 records per-turn `usage.cost`, so the replay can be checked to the cent.
 
+### Step 2b: Benchmark extraction candidates
+
+Skip this step only for `--coding`. Read `docs/tests/extraction-models/README.md` and use the
+small suite through the existing runner. Refresh exact model IDs, prices and
+provider availability from OpenRouter; include `bin/extraction.py`'s default and
+fallback as controls plus at most four candidates. Exclude Grok/xAI. Never choose
+extraction models from the Intelligence Index alone.
+
+```bash
+python3 benchmark/bench-models.py --small benchmark/extraction-candidates.txt benchmark/runs/YYYY-MM-DD-extraction --repeats 3 --workers 3 --budget 5 --timeout 60
+```
+
+Use a fresh output directory for every run. The defaults bound each refresh to
+144 requests and a $5 conservative spend guard; do not expand either without the
+user asking. No automatic fallback runs in the benchmark. Inspect `summary.json`,
+`responses.jsonl`, and `metadata.json`: incomplete runs, API errors, unknown costs,
+and missing provider data remain explicit. Review every quote failure against the
+saved source before calling it fabrication. Reject fabricated quotes and answers
+to the wrong subject; among reliable candidates compare observed latency and cost.
+Prefer an independently served fallback when its speed and quality are acceptable.
+If all candidates pass, report that this small suite did not distinguish quality.
+
 ### Step 3: Present the proposal, and stop
 
 Show a table: tier, model name, creator, intelligence index, cost per task, effort,
@@ -131,20 +160,43 @@ Call out anything surprising — a tier that did not move, a pick that is off th
 frontier, a cliff that shifted, a current model that has dropped out of the
 ranking entirely.
 
+For extraction, show full model names, exact IDs, passed/attempted counts, API
+errors, latency, known cost and unknown-cost count, and provider names. Recommend
+a default and fallback with the limits of the evidence. Link the saved results.
+
 Then show the binding table from `references/targets.md` and **wait for
-confirmation**. Do not write any file before the user approves the four picks
-*and* the bindings.
+confirmation**. Do not change model configuration before the user approves the
+picks and bindings for the requested scope. Approval of a coding ladder does not
+authorize an unmentioned extraction-model change.
 
 ### Step 4: Apply
 
-Read `references/targets.md` and update all six targets. It carries the exact key
+Read `references/targets.md` and update the targets in the approved scope. It carries the exact key
 names, prefix rules (`openrouter/` on some keys, not others), the `[1m]` context
 suffix on `clor`, and which files are loadout sources vs generated.
 
 Preserve unrelated content in every file: pi's `openai-codex/*` entries, the
 `clor` continuation backslashes, `CLOR_MODEL` / `CLOR_EFFORT` overrides.
 
+For extraction, update only `DEFAULT_MODEL` and `FALLBACK_MODEL` in
+`bin/extraction.py`; both CLIs import them. Preserve `--model` overrides and
+`JINA_FETCH_MODEL`. Update the current selection in `docs/tests/extraction-models/README.md`
+with the supporting run link. Do not rerun the paid benchmark just to apply a pick.
+
 ### Step 5: Sync and verify
+
+For extraction changes run:
+
+```bash
+python3 -m unittest discover -s bin -p 'test_extraction.py'
+python3 -m unittest discover -s bin -p 'test_distill.py'
+python3 -m unittest discover -s benchmark -p 'test_extraction_benchmark.py'
+jina-fetch --help
+distill --help
+```
+
+No loadout sync is needed for extraction constants. For coding changes:
+
 
 ```bash
 loadout sync --global     # required for opencode; needs an unsandboxed shell

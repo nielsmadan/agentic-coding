@@ -4,45 +4,40 @@
 from __future__ import annotations
 
 import argparse
-import importlib.machinery
-import importlib.util
 import secrets
 import sys
 from pathlib import Path
 
-# The prompt, model, fallback and fencing are jina-fetch's, imported rather than
-# copied so the benchmarked extraction setup has one definition.
-_JF_PATH = Path(__file__).resolve().with_name("jina-fetch")
-_LOADER = importlib.machinery.SourceFileLoader("jina_fetch", str(_JF_PATH))
-_SPEC = importlib.util.spec_from_loader(_LOADER.name, _LOADER)
-jf = importlib.util.module_from_spec(_SPEC)
-# dataclasses resolves string annotations through sys.modules during exec.
-sys.modules["jina_fetch"] = jf
-_LOADER.exec_module(jf)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import extraction as exlib
 
 # Both extraction models take 1M tokens; dense text runs near 3 chars a token.
 MAX_CHARS = 2_500_000
 
 
-def read_sources(paths: list[str], stdin) -> list[jf.Page]:
+def read_sources(paths: list[str], stdin) -> list[exlib.Page]:
     if not paths:
         if stdin.isatty():
-            raise jf.ToolError("no input: pipe text in or name files after the question")
+            raise exlib.ToolError(
+                "no input: pipe text in or name files after the question"
+            )
         text = stdin.buffer.read().decode("utf-8", errors="replace")
-        return [jf.Page("stdin", "stdin", text)]
+        return [exlib.Page("stdin", "stdin", text)]
     try:
-        return [jf.Page(p, p, Path(p).read_text(encoding="utf-8", errors="replace"))
-                for p in paths]
+        return [
+            exlib.Page(p, p, Path(p).read_text(encoding="utf-8", errors="replace"))
+            for p in paths
+        ]
     except OSError as e:
-        raise jf.ToolError(str(e))
+        raise exlib.ToolError(str(e))
 
 
-def check_size(sources: list[jf.Page]) -> None:
+def check_size(sources: list[exlib.Page]) -> None:
     total = sum(len(s.doc) for s in sources)
     if not any(s.doc.strip() for s in sources):
-        raise jf.ToolError("input is empty")
+        raise exlib.ToolError("input is empty")
     if total > MAX_CHARS:
-        raise jf.ToolError(
+        raise exlib.ToolError(
             f"input is {total} chars, over the {MAX_CHARS} limit; narrow it first"
         )
 
@@ -51,15 +46,22 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="distill",
         description="Answer a question from text on stdin or in files, using a "
-                    "cheap OpenRouter model, so the text never enters your context.",
+        "cheap OpenRouter model, so the text never enters your context.",
         epilog='Example: some-command | tee "$TMPDIR/out.txt" | distill "what failed?"',
     )
     p.add_argument("question", help="what to extract from the text")
     p.add_argument("files", nargs="*", help="files to read instead of stdin")
-    p.add_argument("--model", default=jf.DEFAULT_MODEL,
-                   help=f"OpenRouter model (default: {jf.DEFAULT_MODEL})")
-    p.add_argument("--timeout", type=int, default=120,
-                   help="request timeout in seconds (default: 120)")
+    p.add_argument(
+        "--model",
+        default=exlib.DEFAULT_MODEL,
+        help=f"OpenRouter model (default: {exlib.DEFAULT_MODEL})",
+    )
+    p.add_argument(
+        "--timeout",
+        type=int,
+        default=120,
+        help="request timeout in seconds (default: 120)",
+    )
     return p
 
 
@@ -68,26 +70,28 @@ def main() -> int:
     try:
         sources = read_sources(opts.files, sys.stdin)
         check_size(sources)
-    except jf.ToolError as e:
-        jf.warn(str(e))
+    except exlib.ToolError as e:
+        exlib.warn(str(e))
         return 1
 
     label = ", ".join(s.url for s in sources)
-    jf.warn(f"{label}: {sum(len(s.doc) for s in sources)} chars")
-    missing = jf.off_topic_terms(opts.question, "\n".join(s.doc for s in sources))
+    exlib.warn(f"{label}: {sum(len(s.doc) for s in sources)} chars")
+    missing = exlib.off_topic_terms(opts.question, "\n".join(s.doc for s in sources))
     if missing:
-        jf.warn(f"warning: none of the question's key terms appear in the input "
-                f"({', '.join(missing[:6])})")
+        exlib.warn(
+            f"warning: none of the question's key terms appear in the input "
+            f"({', '.join(missing[:6])})"
+        )
 
     nonce = secrets.token_hex(8)
-    ex = jf.Extraction(prompt=opts.question, model=opts.model, timeout=opts.timeout)
+    ex = exlib.Extraction(prompt=opts.question, model=opts.model, timeout=opts.timeout)
     try:
-        answer = jf.extract(jf.fence_sources(sources, nonce), ex, nonce)
-    except jf.ToolError as e:
-        jf.warn(f"failed: {e}")
+        answer = exlib.extract(exlib.fence_sources(sources, nonce), ex, nonce)
+    except exlib.ToolError as e:
+        exlib.warn(f"failed: {e}")
         return 1
-    if answer.startswith(jf.NO_RELEVANT):
-        jf.warn("warning: the input does not address the question")
+    if answer.startswith(exlib.NO_RELEVANT):
+        exlib.warn("warning: the input does not address the question")
     print(answer)
     return 0
 

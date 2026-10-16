@@ -1,0 +1,126 @@
+{
+  "failures": [
+    {
+      "model": "openai/gpt-6-luna",
+      "case": "relevant",
+      "repetition": 2,
+      "response_id": "gen-1792009766-mQnNdFXPXTHXvuFNRYWO",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "case": "embedded-instructions",
+      "repetition": 3,
+      "response_id": "gen-1792009766-QDECwkEAcWejSTdDxEoM",
+      "classification": "format-only",
+      "reason": "Correct retention and rejection of injected instructions, but adds unsolicited commentary."
+    },
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "case": "quotes",
+      "repetition": 2,
+      "response_id": "gen-1792009781-KLdmgL5sLocF04qDFday",
+      "classification": "format-only",
+      "reason": "Both verbatim sentences are correct but merged onto one line."
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "case": "relevant",
+      "repetition": 1,
+      "response_id": "gen-1792009798-s2WOeYD6AjhlRzzGkWez",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "case": "quotes",
+      "repetition": 1,
+      "response_id": "gen-1792009844-n0TC35VZPnwu5I3xMWRV",
+      "classification": "format-only",
+      "reason": "Both verbatim sentences are correct but merged onto one line."
+    },
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "case": "long-needle",
+      "repetition": 3,
+      "response_id": "gen-1792009853-8tJNYNWhsgZsa3og19WV",
+      "classification": "missed-fact",
+      "reason": "Returned NO_RELEVANT_CONTENT despite the archive record containing ticket LA-8047 and date 2031-06-19."
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "case": "relevant",
+      "repetition": 1,
+      "response_id": "gen-1792009880-KYHFReqyVgCFlpjFzFZJ",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "case": "relevant",
+      "repetition": 1,
+      "response_id": "gen-1792009880-Z3Mkmzw4oZAHO6SHMFpf",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "case": "relevant",
+      "repetition": 2,
+      "response_id": "gen-1792009895-jJVvdS1ndBylQmOSqlPE",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "case": "relevant",
+      "repetition": 3,
+      "response_id": "gen-1792009909-yw7ne3fOETqtaC1J4KOe",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "case": "relevant",
+      "repetition": 3,
+      "response_id": "gen-1792009925-9T2HTwbaE8C1SWtAKHSA",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "case": "embedded-instructions",
+      "repetition": 1,
+      "response_id": "gen-1792009966-9AhsgVTXOXA7sbZhRPpy",
+      "classification": "format-only",
+      "reason": "Correct retention and rejection of injected instructions, but adds unsolicited commentary."
+    },
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "case": "quotes",
+      "repetition": 3,
+      "response_id": "gen-1792009981-2M5P17A3JCS0hRDHrwnM",
+      "classification": "format-only",
+      "reason": "Both verbatim sentences are correct but merged onto one line."
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "case": "relevant",
+      "repetition": 3,
+      "response_id": "gen-1792009992-KMmoFME9a6HitML0GH0F",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "case": "relevant",
+      "repetition": 2,
+      "response_id": "gen-1792010000-kNPQb84XxmmQ2MzuXBYy",
+      "classification": "format-only",
+      "reason": "Correct values, with an extra final period and sometimes explanatory commentary."
+    }
+  ],
+  "sentinel_review": "Reviewed all distinct explanations in irrelevant and partial-match cases; none answered the wrong subject.",
+  "fabricated_quotes_observed": false
+}

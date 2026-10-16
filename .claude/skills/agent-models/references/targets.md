@@ -59,12 +59,21 @@ is exactly where a terse-but-pricier low tier loses on both capability and cost.
 
 - `loadout/settings/claude.json` — its `model` / `effortLevel` drive real
   Anthropic models on the subscription. The trio is OpenRouter-only.
-- `bin/jina-fetch` — pins `DEFAULT_MODEL` and `FALLBACK_MODEL`, both OpenRouter,
-  but they are page-extraction models chosen by a separate harness
-  (`benchmark/bench-models.py`, written up in `benchmark/extract-model.md`) on
-  criteria this ranking does not measure: extraction latency, faithfulness to the
-  page, and provider count as 429 insurance. Intelligence index is irrelevant to that
-  job. Leave both alone and re-run that benchmark instead.
+### Extraction targets
+
+`bin/extraction.py` owns `DEFAULT_MODEL` and `FALLBACK_MODEL`, as exact OpenRouter
+IDs without an extra provider prefix. Both `bin/jina-fetch` and `bin/distill`
+import this module. `jina-fetch --model` and `JINA_FETCH_MODEL`, and `distill
+--model`, remain per-run overrides. No loadout sync is needed for these constants.
+
+Use `benchmark/bench-models.py --small` and the procedure in
+`docs/tests/extraction-models/README.md`. Update that document's current selection and link
+the supporting run after the user approves the extraction picks. Do not select
+these models from the coding Intelligence Index.
+
+The Droid advisor is separately pinned to `gemini-4-argon`, effort `high`, in
+`pratfall/config.toml`; the public second-opinion override repeats that binding.
+Preserve it unless the user explicitly requests a different advisor model.
 
 ---
 

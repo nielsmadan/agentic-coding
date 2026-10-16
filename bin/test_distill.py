@@ -35,10 +35,13 @@ def run(argv: list[str], stdin: str | bytes = "", answer: str = "the answer"):
         calls.append((fenced, ex))
         return answer
 
-    with mock.patch.object(sys, "argv", ["distill", *argv]), \
-            mock.patch.object(sys, "stdin", FakeStdin(stdin)), \
-            mock.patch.object(distill.jf, "extract", fake_extract), \
-            redirect_stdout(out), redirect_stderr(err):
+    with (
+        mock.patch.object(sys, "argv", ["distill", *argv]),
+        mock.patch.object(sys, "stdin", FakeStdin(stdin)),
+        mock.patch.object(distill.exlib, "extract", fake_extract),
+        redirect_stdout(out),
+        redirect_stderr(err),
+    ):
         code = distill.main()
     return code, out.getvalue(), err.getvalue(), calls
 
@@ -52,7 +55,7 @@ class DistillTests(unittest.TestCase):
         fenced, ex = calls[0]
         self.assertIn("DOCUMENT>>>\nthe build broke on step 3\n", fenced)
         self.assertEqual(ex.prompt, "what broke?")
-        self.assertEqual(ex.model, distill.jf.DEFAULT_MODEL)
+        self.assertEqual(ex.model, distill.exlib.DEFAULT_MODEL)
 
     def test_invalid_utf8_on_stdin_is_replaced_not_fatal(self):
         code, out, _, calls = run(["what broke?"], stdin=b"build \xff broke")
@@ -89,12 +92,14 @@ class DistillTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
     def test_tty_stdin_without_files_is_rejected(self):
-        with self.assertRaisesRegex(distill.jf.ToolError, "no input"):
+        with self.assertRaisesRegex(distill.exlib.ToolError, "no input"):
             distill.read_sources([], FakeStdin("", tty=True))
 
     def test_no_relevant_answer_warns(self):
         code, out, err, _ = run(
-            ["deploy steps"], stdin="deploy notes", answer="NO_RELEVANT_CONTENT\nabout cats"
+            ["deploy steps"],
+            stdin="deploy notes",
+            answer="NO_RELEVANT_CONTENT\nabout cats",
         )
 
         self.assertEqual(code, 0)

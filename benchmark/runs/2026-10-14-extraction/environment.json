@@ -1,0 +1,8 @@
+{
+  "python": "3.14.7 (main, Sep  1 2026, 14:05:28) [Clang 22.1.3 ]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "revision_at_capture": "57a6d712222ab9614f6359139843aeb2e255a954",
+  "build_mode": "Python interpreter; network-bound API calls",
+  "hardware": "Apple M1 Max"
+}

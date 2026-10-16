@@ -1,0 +1,83 @@
+{
+  "complete": true,
+  "budget_stopped": false,
+  "budget_charge_usd": 0.18327938640000002,
+  "models": [
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "calls": 24,
+      "passed": 20,
+      "errors": 0,
+      "median_s": 0.8087501665577292,
+      "max_s": 2.044287082972005,
+      "known_cost_usd": 0.0219489,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "long-needle",
+        "quotes"
+      ]
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 1.0470134584465995,
+      "max_s": 2.552747249836102,
+      "known_cost_usd": 0.05511925,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "calls": 24,
+      "passed": 19,
+      "errors": 0,
+      "median_s": 7.084448624984361,
+      "max_s": 41.53540366701782,
+      "known_cost_usd": 0.0309612892,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "embedded-instructions",
+        "relevant"
+      ]
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 2.1164195211604238,
+      "max_s": 3.2590466670226306,
+      "known_cost_usd": 0.023860125,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "z-ai/glm-5.3-flash",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 1.0602338330354542,
+      "max_s": 5.857661708025262,
+      "known_cost_usd": 0.029911975,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 1.1275566460099071,
+      "max_s": 3.3471021249424666,
+      "known_cost_usd": 0.0214778472,
+      "unknown_cost_calls": 0,
+      "failures": []
+    }
+  ]
+}
