@@ -53,7 +53,6 @@
       "$HOME/.local/state/mouthfeel",
       "$HOME/.local/state/mise/hints",
       "$HOME/.local/state/mise/tracked-configs",
-      "$HOME/.local/state/mise/trusted-configs",
       "$HOME/.local/state/splashdown",
       "$HOME/.local/state/watchman"
     ],
@@ -68,6 +67,7 @@
       "$HOME/.local/share/uv/python",
       "$HOME/.local/share/gem",
       "$HOME/.local/share/mise/installs",
+      "$HOME/.local/state/mise/trusted-configs",
       "$HOME/Library/Android/sdk",
       "$HOME/development/flutter",
       "$HOME/.agents/skills",

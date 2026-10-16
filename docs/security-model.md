@@ -148,7 +148,7 @@ Recorded so they are decisions rather than oversights.
 - **Pi has no approval layer at all.** Its core ships none and the extension was
   removed. Entirely dependent on being sandbox-only.
 - **`mise trust` is deliberately withheld** (`~/.local/state/mise/trusted-configs`
-  is not granted). A trusted `mise.toml` applies its `[env]` — including
+  is read-only, so mise can check trust but not grant it). A trusted `mise.toml` applies its `[env]` — including
   `_.path` — to your interactive shell in that directory, which would be a route
   out of the sandbox. Run `mise trust` yourself when a repo needs it.
 
