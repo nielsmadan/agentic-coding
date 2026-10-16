@@ -10,6 +10,14 @@ Default to zero comments. Never write JSDoc-style `/** … */` blocks, multi-par
 
 A negative assertion earns its place only when the absence *is* the behaviour under test and names a specific thing that would otherwise have happened: `expect(write).not.toHaveBeenCalled()` after a rejected request, or no sidebar in a no-access state. If you cannot name what would have produced the thing, do not assert it is missing.
 
+## Fix Escalation
+
+When fixing a bug or error, count failed fix attempts — a change made, the check re-run, and it still fails:
+- **After 2 failed fixes:** invoke the `second-opinion` skill before trying again.
+- **After 4 failed fixes:** invoke the `hard-fix` skill and follow its escalation workflow.
+
+Do not keep retrying the same approach. Each tier forces a fresh perspective.
+
 ## Verifying Results
 
 **Read the whole result, not the part you filtered for.** When checking a claim, don't pipe the check through `head`, `tail`, or a `grep` for the outcome you expect — a filter that hides the disagreeing half turns a real result into a confirming one. Read the summary line (`FAILED (failures=N, errors=M)`, the exit code, the full failure list) before concluding, and be most careful when the result matches what you predicted.
