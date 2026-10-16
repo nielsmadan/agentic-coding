@@ -1,12 +1,13 @@
-import type { SessionMessage, ThemeKey, ToolUseSummary } from 'claude-code'
-
 import type { DevPhase, DevPhaseRecord, DevPhaseSource, DevTopic } from '../types'
 
-type PhaseInfo = { color: ThemeKey; skills: readonly string[]; guide: string }
+type PhaseInfo = { skills: readonly string[]; guide: string }
+
+export type DigestToolUse = { tool: string; input: Readonly<Record<string, unknown>> }
+
+export type DigestMessage = { role: 'user' | 'assistant'; text: string; toolUses: readonly DigestToolUse[] }
 
 const PHASE_INFO = {
   planning: {
-    color: 'planMode',
     skills: [
       'plan',
       'superpowers:brainstorming',
@@ -19,7 +20,6 @@ const PHASE_INFO = {
     guide: 'brainstorming, designing, or writing or reviewing a plan; no code written for it yet',
   },
   implementation: {
-    color: 'claude',
     skills: [
       'superpowers:executing-plans',
       'superpowers:subagent-driven-development',
@@ -28,32 +28,26 @@ const PHASE_INFO = {
     guide: 'writing or debugging the code for the task',
   },
   'agent QA': {
-    color: 'warning',
     skills: ['qa', 'test', 'run', 'perf-test'],
     guide: "the agent verifying its own work: test suites, QA passes, running the app, perf tests",
   },
   'QA fixes': {
-    color: 'warning',
     skills: [],
     guide: "fixing problems that QA (the agent's or the user's own testing) found",
   },
   'code review': {
-    color: 'suggestion',
     skills: ['code-review', 'simplify', 'security-review', 'superpowers:requesting-code-review'],
     guide: 'reviewing the finished change (code review, simplify, security review)',
   },
   'review fixes': {
-    color: 'suggestion',
     skills: ['review-todo', 'superpowers:receiving-code-review'],
     guide: 'addressing code review findings',
   },
   'manual QA': {
-    color: 'permission',
     skills: [],
     guide: "the agent's work is done and the user needs to try it themselves",
   },
   'wrap-up': {
-    color: 'success',
     skills: ['commit', 'squash-commits', 'doc', 'superpowers:finishing-a-development-branch'],
     guide: 'squashing, committing, updating docs, finishing the branch',
   },
@@ -132,7 +126,17 @@ const CHECK_RUN =
 
 export const isCheckRun = (command: string): boolean => CHECK_RUN.test(command)
 
-export const phaseColor = (phase: DevPhase): ThemeKey => PHASE_INFO[phase].color
+export const isCheckpoint = (command: string): boolean => isGitCommit(command) || isCheckRun(command)
+
+export const IDLE_MS = 30_000
+export const MODEL_TIMEOUT_MS = 20_000
+export const MAX_TOKENS = 60
+
+export const NO_PHASE_LABEL = '● no phase yet'
+
+export const isProvisional = (record: DevPhaseRecord): boolean => record.source === 'edit'
+
+export const featureSuffix = (topic: DevTopic | null): string => (topic === null ? '' : ` · ${topic.name}`)
 
 const STORE_PREFIX = 'session:'
 
@@ -183,6 +187,29 @@ export const retitle = (topic: DevTopic | null | undefined, title: string | unde
   return title === undefined || title === '' || title === topic.titled ? topic.name : undefined
 }
 
+export const nameTopic = (topic: DevTopic | null, name: string | null, at: number): DevTopic | null => {
+  if (name === null) return null
+  if (topic?.name === name) return topic
+  return { ...topic, name, at }
+}
+
+export type DevPhaseState = { record: DevPhaseRecord | null; topic: DevTopic | null }
+
+export const verdictState = (
+  text: string,
+  current: DevPhaseState,
+  at: number,
+  source: DevPhaseSource,
+): DevPhaseState | undefined => {
+  const verdict = parseVerdict(text)
+  if (verdict === undefined) return undefined
+  const feature = parseFeature(text)
+  return {
+    topic: feature === undefined ? current.topic : nameTopic(current.topic, feature, at),
+    record: verdict === null ? null : { phase: verdict, at, source },
+  }
+}
+
 const PHASE_GUIDE = `Phases:
 ${PHASES.map(phase => `- ${phase}: ${PHASE_INFO[phase].guide}`).join('\n')}
 - none: this session is not developing software`
@@ -218,19 +245,34 @@ ${ANSWER_FORMAT}`
 
 const oneLine = (text: string, max: number): string => text.replace(/\s+/g, ' ').trim().slice(0, max)
 
-const describeUse = (use: ToolUseSummary): string => {
+const SECRET_PREFIX = /\b(sk-|ghp_|gho_|ghs_|github_pat_|xox[abpr]-|AKIA)[\w-]+/g
+const SECRET_FIELD = /\b((?:[\w-]*(?:token|key|secret|password|passwd)|bearer)["']?(?:\s*[=:]\s*|\s+)["']?)[^\s"']+/gi
+
+export const redact = (command: string): string =>
+  command.replace(SECRET_PREFIX, '$1***').replace(SECRET_FIELD, '$1***')
+
+const describeUse = (use: DigestToolUse): string => {
   const { skill, command } = use.input
   if (use.tool === 'Skill' && typeof skill === 'string') return `Skill(${skill})`
-  if (use.tool === 'Bash' && typeof command === 'string') return `Bash(${oneLine(command, 60)})`
+  if (use.tool === 'Bash' && typeof command === 'string') return `Bash(${oneLine(redact(command), 60)})`
   return use.tool
 }
 
-export const digest = (messages: readonly SessionMessage[], rows = 40): string => {
+const TOOLS_PER_ROW = 12
+
+const describeUses = (uses: readonly DigestToolUse[]): string => {
+  if (uses.length === 0) return ''
+  const shown = uses.slice(-TOOLS_PER_ROW).map(describeUse)
+  const skipped = uses.length - shown.length
+  return ` [${skipped > 0 ? `+${skipped} more, ` : ''}${shown.join(', ')}]`
+}
+
+export const digest = (messages: readonly DigestMessage[], rows = 40): string => {
   const kept = messages.filter(message => message.text.trim() !== '' || message.toolUses.length > 0).slice(-rows)
   return kept
     .map((message, index) => {
-      const tools = message.toolUses.length > 0 ? ` [${message.toolUses.map(describeUse).join(', ')}]` : ''
-      return `${message.role}: ${oneLine(message.text, index === kept.length - 1 ? 1500 : 300)}${tools}`
+      const text = oneLine(message.text, index === kept.length - 1 ? 1500 : 300)
+      return `${message.role}: ${text}${describeUses(message.toolUses)}`
     })
     .join('\n')
 }

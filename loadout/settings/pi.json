@@ -3,6 +3,9 @@
   "defaultTools": [
     "+codemode"
   ],
+  "extensions": [
+    "mods/dev-phase/pi/index.ts"
+  ],
   "defaultProvider": "openrouter",
   "defaultModel": "xiaomi/mimo-v2.6-pro",
   "defaultThinkingLevel": "max",

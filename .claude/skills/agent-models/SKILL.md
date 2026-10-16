@@ -178,8 +178,9 @@ suffix on `clor`, and which files are loadout sources vs generated.
 Preserve unrelated content in every file: pi's `openai-codex/*` entries, the
 `clor` continuation backslashes, `CLOR_MODEL` / `CLOR_EFFORT` overrides.
 
-For extraction, update only `DEFAULT_MODEL` and `FALLBACK_MODEL` in
-`bin/extraction.py`; both CLIs import them. Preserve `--model` overrides and
+For extraction, update `DEFAULT_MODEL` and `FALLBACK_MODEL` in
+`bin/extraction.py`, which both CLIs import, and the matching `MODELS` pair in
+`mods/dev-phase/pi/extension.ts` (see the extraction targets). Preserve `--model` overrides and
 `JINA_FETCH_MODEL`. Update the current selection in `docs/tests/extraction-models/README.md`
 with the supporting run link. Do not rerun the paid benchmark just to apply a pick.
 
@@ -191,6 +192,7 @@ For extraction changes run:
 python3 -m unittest discover -s bin -p 'test_extraction.py'
 python3 -m unittest discover -s bin -p 'test_distill.py'
 python3 -m unittest discover -s benchmark -p 'test_extraction_benchmark.py'
+claude plugin test mods/dev-phase
 jina-fetch --help
 distill --help
 ```

@@ -9,9 +9,10 @@ import {
   parseVerdict,
   phaseOfSkill,
   provisionalPhase,
+  redact,
   retitle,
   staleKeys,
-} from '../hooks/phase'
+} from '../core/phase'
 
 describe('phaseOfSkill', () => {
   test('maps workflow skills to their phase', () => {
@@ -93,10 +94,24 @@ test('digest lists rows with their tool calls', () => {
     {
       role: 'assistant',
       text: 'Committing.',
-      toolUses: [{ tool_use_id: 't1', tool: 'Bash', input: { command: 'git commit -m "feat: x"' } }],
+      toolUses: [{ tool: 'Bash', input: { command: 'git commit -m "feat: x"' } }],
     },
   ])
   expect(rows).toBe('user: commit it\nassistant: Committing. [Bash(git commit -m "feat: x")]')
+})
+
+test('digest masks secrets in shell commands', () => {
+  expect(redact('export OPENROUTER_API_KEY=sk-or-v1-abc123')).toBe('export OPENROUTER_API_KEY=***')
+  expect(redact('curl -H "Authorization: Bearer ghp_abc123" x')).toBe('curl -H "Authorization: Bearer ***" x')
+  expect(redact('gh auth login --with-token ghp_abc123')).toBe('gh auth login --with-token ***')
+  expect(redact('mysql --password hunter2 db')).toBe('mysql --password *** db')
+})
+
+test('digest lists only the last tool calls of a busy row', () => {
+  const toolUses = Array.from({ length: 15 }, (_, index) => ({ tool: `T${index}`, input: {} }))
+  expect(digest([{ role: 'assistant', text: 'Busy.', toolUses }])).toBe(
+    'assistant: Busy. [+3 more, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]',
+  )
 })
 
 test('digest keeps the last message long enough to hold its hand-off', () => {

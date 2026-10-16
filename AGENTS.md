@@ -28,6 +28,7 @@ environment and the tools around it.
 - `codex/strip_nono_block.py` - removes the nono codex pack's block from `~/.codex/config.toml`
 - `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall)
 - `publish/` - renders the public skills collection (see below)
+- `mods/` - Claude Code mods (hooks modules); one with a `pi/` folder is also a pi extension. `sync.sh` installs both (see [docs/skills-and-integration.md](docs/skills-and-integration.md))
 - `docs/` - deeper reference, notably [`security-model.md`](docs/security-model.md)
 - `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order

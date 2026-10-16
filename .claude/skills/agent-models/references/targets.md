@@ -66,6 +66,11 @@ IDs without an extra provider prefix. Both `bin/jina-fetch` and `bin/distill`
 import this module. `jina-fetch --model` and `JINA_FETCH_MODEL`, and `distill
 --model`, remain per-run overrides. No loadout sync is needed for these constants.
 
+`mods/dev-phase/pi/extension.ts` pins the same pair in `MODELS`, as `['openrouter', '<id>']`
+tuples in the same order, for the pi dev-phase classifier. Its test
+`mods/dev-phase/tests/pi-extension.test.ts` names the default id in the missing-credentials
+notice. A `./sync.sh` copies the change to pi.
+
 Use `benchmark/bench-models.py --small` and the procedure in
 `docs/tests/extraction-models/README.md`. Update that document's current selection and link
 the supporting run after the user approves the extraction picks. Do not select

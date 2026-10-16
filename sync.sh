@@ -389,23 +389,34 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
   done
 }
 
-# Each mods/<name> loads from a copy in ~/.claude/mods (CLAUDE_CODE_PLUGIN_DIRS in the
-# claude settings), so a half-saved edit never reloads in the sessions watching it. The
-# type declarations Claude Code writes into the copy come back for `tsc -p mods/<name>`.
-sync_claude_mods() {
+# Each mods/<name> loads from a copy: ~/.claude/mods (CLAUDE_CODE_PLUGIN_DIRS in the claude
+# settings) and, with a pi/ folder, the pi agent dir's mods/ (`extensions` in
+# loadout/settings/pi.json), so a half-saved edit never reloads in the sessions watching it. The
+# type declarations Claude Code writes into its copy come back for `tsc -p mods/<name>`.
+sync_mods() {
   [[ -d "$SCRIPT_DIR/mods" ]] || return 0
   echo ""
-  echo "Installing Claude Code mods..."
-  local source name dest
+  echo "Installing mods..."
+  local pi_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}" source name dest
   for source in "$SCRIPT_DIR"/mods/*/; do
     name="$(basename "$source")"
     dest="$HOME/.claude/mods/$name"
     mkdir -p "$dest"
-    rsync -a --delete --exclude '.claude-plugin/types/' "$source" "$dest/"
+    rsync -a --delete --delete-excluded --filter 'P .claude-plugin/types/' \
+      --exclude '.claude-plugin/types/' --exclude 'pi/' --exclude 'tests/pi-*' "$source" "$dest/"
     if [[ -d "$dest/.claude-plugin/types" ]]; then
       rsync -a --delete "$dest/.claude-plugin/types/" "${source}.claude-plugin/types/"
     fi
-    echo "✓  $name"
+    if [[ ! -f "${source}pi/index.ts" ]]; then
+      echo "✓  $name (Claude Code)"
+      continue
+    fi
+    dest="$pi_dir/mods/$name"
+    mkdir -p "$dest"
+    rsync -a --delete --delete-excluded \
+      --exclude '.claude-plugin/' --exclude 'hooks/' --exclude 'tests/' --exclude 'tsconfig.json' \
+      "$source" "$dest/"
+    echo "✓  $name (Claude Code, pi)"
   done
 }
 
@@ -452,7 +463,7 @@ validate_pratfall_config
 echo ""
 
 sync_claude_plugins
-sync_claude_mods
+sync_mods
 
 echo ""
 echo "✓  Sync complete (${PROFILE} profile)."

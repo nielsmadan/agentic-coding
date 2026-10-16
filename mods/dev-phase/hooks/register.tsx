@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, ThemeKey } from 'claude-code'
 
 import type { DevPhase, DevPhaseRecord, DevPhaseSource, DevTopic } from '../types'
 import {
@@ -9,18 +9,21 @@ import {
   digest,
   digestPrompt,
   forkPrompt,
-  isCheckRun,
-  isGitCommit,
-  parseFeature,
-  parseVerdict,
-  phaseColor,
+  featureSuffix,
+  IDLE_MS,
+  isCheckpoint,
+  isProvisional,
+  MAX_TOKENS,
+  MODEL_TIMEOUT_MS,
+  NO_PHASE_LABEL,
   phaseOfSkill,
   provisionalPhase,
   retitle,
   staleKeys,
   storeKey,
   topicKey,
-} from './phase'
+  verdictState,
+} from '../core/phase'
 
 type Dollar = EngineInterface
 type Ask = { sessionId: string; generation: number; serial: number }
@@ -41,8 +44,18 @@ type Tracker = {
 const current = atom({ plugin: 'dev-phase', key: 'current' } as const, null)
 const topicAtom = atom({ plugin: 'dev-phase', key: 'topic' } as const, null)
 
+const PHASE_COLOR = {
+  planning: 'planMode',
+  implementation: 'claude',
+  'agent QA': 'warning',
+  'QA fixes': 'warning',
+  'code review': 'suggestion',
+  'review fixes': 'suggestion',
+  'manual QA': 'permission',
+  'wrap-up': 'success',
+} as const satisfies Record<DevPhase, ThemeKey>
+
 const KEPT_SESSIONS = 300
-const IDLE_MS = 30_000
 
 function debug($: Dollar, text: string): void {
   $.ui.log(`dev-phase: ${text}`, { to: 'debug' })
@@ -78,16 +91,6 @@ async function storedTopic($: Dollar, sessionId: string): Promise<DevTopic | und
   return asTopic(await $.store.get(topicKey(sessionId)))
 }
 
-async function nameTopic($: Dollar, sessionId: string, name: string | null): Promise<void> {
-  const known = await storedTopic($, sessionId)
-  if (name === null) {
-    if (known !== undefined) await saveTopic($, sessionId, null)
-    return
-  }
-  if (known?.name === name) return
-  await saveTopic($, sessionId, { ...known, name, at: await $.clock.now() })
-}
-
 async function setPhase($: Dollar, phase: DevPhase, source: DevPhaseSource): Promise<void> {
   await save($, await $.session.id(), { phase, at: await $.clock.now(), source })
 }
@@ -98,12 +101,12 @@ async function prune($: Dollar, sessionId: string): Promise<void> {
 }
 
 async function applyVerdict($: Dollar, tracker: Tracker, ask: Ask, text: string, source: DevPhaseSource): Promise<void> {
-  const verdict = parseVerdict(text)
-  if (verdict === undefined) return debug($, `unparseable verdict: ${text.slice(0, 200)}`)
+  const known = (await storedTopic($, ask.sessionId)) ?? null
+  const next = verdictState(text, { record: null, topic: known }, await $.clock.now(), source)
+  if (next === undefined) return debug($, `unparseable verdict: ${text.slice(0, 200)}`)
   if (ask.generation !== tracker.generation) return
-  const feature = parseFeature(text)
-  if (feature !== undefined) await nameTopic($, ask.sessionId, feature)
-  await save($, ask.sessionId, verdict === null ? null : { phase: verdict, at: await $.clock.now(), source })
+  if (next.topic !== known) await saveTopic($, ask.sessionId, next.topic)
+  await save($, ask.sessionId, next.record)
 }
 
 async function classifyFromLog($: Dollar, tracker: Tracker, ask: Ask): Promise<void> {
@@ -112,9 +115,9 @@ async function classifyFromLog($: Dollar, tracker: Tracker, ask: Ask): Promise<v
   const reply = await $.model.complete({
     model: 'haiku',
     prompt: digestPrompt(rows, (await storedTopic($, ask.sessionId)) ?? null),
-    maxTokens: 60,
+    maxTokens: MAX_TOKENS,
     effort: 'low',
-    timeoutMs: 20_000,
+    timeoutMs: MODEL_TIMEOUT_MS,
   })
   if (reply.isAnswered) return applyVerdict($, tracker, ask, reply.text, 'log')
   debug($, `log classification unanswered: ${reply.reason}`)
@@ -248,7 +251,7 @@ export const register: Register = on => {
 
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const ran = await next(e)
-    if (isGitCommit(e.command) || isCheckRun(e.command)) markDirty(tracker)
+    if (isCheckpoint(e.command)) markDirty(tracker)
     return ran
   })
 
@@ -326,24 +329,24 @@ export const register: Register = on => {
     const feature =
       topic === null ? null : (
         <Text dimColor wrap="truncate-end">
-          {` · ${topic.name}`}
+          {featureSuffix(topic)}
         </Text>
       )
     if (record === null) {
       return (
         <Box width={e.props.bodyColumns}>
-          <Text dimColor>● no phase yet</Text>
+          <Text dimColor>{NO_PHASE_LABEL}</Text>
           {feature}
         </Box>
       )
     }
-    const isProvisional = record.source === 'edit'
+    const isDimmed = isProvisional(record)
     return (
       <Box width={e.props.bodyColumns}>
-        <Text color={phaseColor(record.phase)} dimColor={isProvisional}>
+        <Text color={PHASE_COLOR[record.phase]} dimColor={isDimmed}>
           ●{' '}
         </Text>
-        <Text bold dimColor={isProvisional}>
+        <Text bold dimColor={isDimmed}>
           {record.phase}
         </Text>
         {feature}
