@@ -12,6 +12,17 @@
 
 extends = "default"
 
+# A child's [[source]] list replaces the parent's, so `ac` is restated before
+# the profile-only source, which adds servers and their approvals.
+[[source]]
+name = "ac"
+path = "loadout"
+
+[[source]]
+name = "ac-autonomous"
+path = "loadout/autonomous"
+use = ["mcp", "permissions"]
+
 [claude]
 settings    = ["claude"]
 permissions = []

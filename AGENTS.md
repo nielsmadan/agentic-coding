@@ -15,6 +15,7 @@ environment and the tools around it.
 - `loadout/` - every source loadout renders from
   - `permissions.toml` - shell and MCP permission rules for all agents (see Permissions)
   - `mcp.toml` - which MCP servers exist machine-wide (see MCP Servers)
+  - `autonomous/` - a second source (`mcp.toml`, `permissions.toml`) that only `autonomous.toml`, and so `unsandboxed`, declares
   - `instructions/` - shared prose fragments for each agent's **global** guidance; edit these (see Global Instructions)
   - `skills/` - global skills, rendered to all four harnesses (see Skills)
   - `templates/` - project-type manifests and the shared parts they select (see Project Templates)

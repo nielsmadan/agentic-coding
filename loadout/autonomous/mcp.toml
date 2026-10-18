@@ -1,0 +1,7 @@
+# Servers only the autonomous profile (and unsandboxed, which extends it) gets.
+# Same format as loadout/mcp.toml.
+
+[airtable]
+transport = "stdio"
+command = "npx"
+args = ["-y", "airtable-mcp-server"]

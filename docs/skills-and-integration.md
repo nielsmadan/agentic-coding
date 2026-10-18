@@ -156,6 +156,8 @@ Select the profile with `./install.sh --autonomous` or `./sync.sh --autonomous`,
 
 Which MCP servers **exist** machine-wide comes from a single source of truth: **`loadout/mcp.toml`**. Which of their *tools* may be called is the separate `[mcp]` section of `loadout/permissions.toml` — definitions there, policy here. The two sources name servers independently, so adding one does not grant it any permissions.
 
+**Servers for unattended machines only** go in `loadout/autonomous/mcp.toml`, with their tool approvals in `loadout/autonomous/permissions.toml`. `autonomous.toml` declares that directory as a second `[[source]]` limited to `use = ["mcp", "permissions"]`, and loadout merges every declared source's servers and rules, so `autonomous` and `unsandboxed` get them while a `default` machine never does. A profile's `[[source]]` list replaces its parent's, which is why `autonomous.toml` restates the `ac` source first.
+
 loadout renders both, and for Codex it renders them **together**: definitions and approval policy share the `[mcp_servers.<name>]` table, so one renderer emits both. Two writers would declare that table twice and Codex would refuse to parse its own config.
 
 **Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift:
