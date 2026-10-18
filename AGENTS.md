@@ -26,7 +26,7 @@ environment and the tools around it.
 - `nono/` - sandbox profiles, symlinked to `~/.config/nono/profiles/` (see Sandbox)
 - `launchd/` - LaunchAgents that `sync.sh` symlinks into `~/Library/LaunchAgents/` and loads
 - `codex/strip_nono_block.py` - removes the nono codex pack's block from `~/.codex/config.toml`
-- `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall)
+- `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall). The autonomous and unsandboxed profiles get a rendered copy without `command_prefix` instead, so dispatcher jobs are not wrapped in `sops-exec`; re-run `sync.sh` there after editing it
 - `publish/` - renders the public skills collection (see below)
 - `mods/` - Claude Code mods (hooks modules); one with a `pi/` folder is also a pi extension. `sync.sh` installs both (see [docs/skills-and-integration.md](docs/skills-and-integration.md))
 - `docs/` - deeper reference, notably [`security-model.md`](docs/security-model.md)
