@@ -50,6 +50,15 @@ feature and the outcome the user will reach. Do not build a coverage matrix,
 enumerate every branch, inject failures, or force loading states. Show an error or
 loading behavior only when it is itself the requested feature or the user asks.
 
+Then list the feature's data-driven variants: renderings that differ by what the
+backend or stored state holds rather than by what the user clicks, such as a
+status or type value, empty versus populated, one item versus many, role or plan,
+a flag, or long versus short content. Read the changed rendering code for its
+branches on data. Choose a representative sample covering each visibly distinct
+rendering once, bounded to about five; name what you left out. The user should see
+every chosen variant during the tour, not only whichever one the current data
+happens to produce. State the chosen variants alongside the outcome.
+
 ### 2. Prepare the starting point
 
 Use the project's local/test environment and disposable sample data. Start or
@@ -58,6 +67,14 @@ contains the feature. Track any processes, sessions, or fixtures you create.
 Use existing authentication through the normal project mechanism; leave login or
 permission prompts requiring the user to them. Production mutations and external
 sends require existing explicit authorization.
+
+Set up data for every chosen variant before the handoff. Use the project's own
+mechanism: seed scripts, fixtures, factories, a local admin API, or the app's UI.
+Prefer an arrangement that shows variants together, such as one list row per
+status, or reachable by a short switch, such as separate records or test accounts.
+Do not assume existing data covers them; leftovers from earlier work commonly pin
+the UI to one variant. Observe each variant rendering in the target before
+starting the guide. If a variant cannot be produced locally, say which and why.
 
 Read only the applicable QA adapter for tool setup, target selection, navigation,
 and observation:
@@ -87,7 +104,8 @@ perform them. The agent owns setup and observation; the user owns the walkthroug
 
 Start the guide at the first feature action. Use visible control labels and expected
 results grounded in the current UI and feature requirements. Keep each step small
-and the complete route short. Wait for the user's progress before advancing; do not
+and the complete route short. Give each data variant a step naming the record or
+account to view and what distinguishes its rendering. Wait for the user's progress before advancing; do not
 click ahead or mark steps complete merely because the instructions were sent.
 
 Observe the shared screen between steps when useful, without changing its state.
@@ -106,7 +124,9 @@ If the main path is blocked, say exactly where and retain the user's place.
 Treat requests to change the feature during the tour as part of the ongoing tour.
 Carry out explicitly requested edits, then rebuild or reload as needed and inspect
 the updated interface in the same user-visible target before resuming. Apply the
-same recheck when the user reports making a change themselves. Keep the current
+same recheck when the user reports making a change themselves. Bug fixes, retries,
+and the walkthrough itself can change the data; before resuming, confirm the
+remaining variants still render and re-seed any that no longer do. Keep the current
 step pending during this work; making an edit does not complete the user's action.
 
 Before the next walkthrough instruction, revise every affected current and remaining
@@ -133,6 +153,11 @@ handed-off window, reset the device, or delete the result under the user.
   select both sets of changes, launch the current build, prepare a
   small dataset, and open the list. Use guide to have the user set a filter, save
   it, and select the saved filter. Skip invalid names and failed-save scenarios.
+- **"qa-tour" on an order card that renders differently per status:** seed one
+  order each as pending, shipped, and cancelled, plus a customer with no orders,
+  and confirm all four render. Guide the user through placing an order, then one
+  step per seeded variant. If a fix mid-tour cancels the pending order, re-seed it
+  before resuming.
 - **"qa-tour --staged":** choose behavior from the staged diff only. If nothing
   is staged, report the empty scope and request a target or another scope.
 - **"qa-tour --unpushed":** resolve the unpushed commit range and tour its main
@@ -155,5 +180,7 @@ handed-off window, reset the device, or delete the result under the user.
   user-accessible window/device. Resolve the handoff before giving click instructions.
 - **Wrong build or stale control labels:** check the target against the checkout,
   refresh the UI observation, and update the current guide step before proceeding.
+- **The UI only ever shows one variant:** the data is pinning it. Inspect the
+  records behind the screen, seed the missing variants, and verify each renders.
 - **Setup is blocked:** name the exact missing prerequisite and the next user action
   needed. Preserve prepared state and resume the tour when it is resolved.
