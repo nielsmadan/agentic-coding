@@ -95,6 +95,24 @@ automation session is not a handoff. Navigate through unrelated setup yourself,
 stopping before the first action that demonstrates the feature. Keep the same
 target throughout; do not switch to a separate session to observe the user's clicks.
 
+When reaching the starting point needs something unavailable locally, such as a
+sent email, SMS code, payment, third-party login, or slow background job, first
+use a project-supported route: a local mail catcher, debug menu, deep link, or dev
+flag. Failing that, invoke the `temp` skill ([temp](../temp/SKILL.md)) to make a
+`TEMP:`-marked code change instead of reporting the screen unreachable: route
+straight to the screen, bypass the guard, or stub the step. What the tour
+demonstrates decides where this is allowed:
+
+- **A screen on its own** (its layout, content, or controls): shortcut all the way
+  to it.
+- **A flow:** shortcut only the setup before its first demonstrated action. Every
+  step the user walks through runs unmodified; if one of those steps needs the
+  unavailable dependency, say so rather than stubbing it, since a stubbed step
+  shows the stub, not the feature.
+
+Tell the user what was changed before the handoff, and verify the running build
+picked it up.
+
 ### 3. Hand off to guide
 
 Read and apply [guide](../guide/SKILL.md) for the step tracker, advancement, agent
@@ -143,9 +161,11 @@ it as a walkthrough, not a QA pass or evidence of complete coverage. Write no re
 file unless requested. Follow guide's exit behavior when the user stops early.
 
 Restore temporary settings and remove only owned disposable state when it is no
-longer needed. Leave the demonstrated app and sample result available for the user
-to explore; name any tour-started server/session left running. Do not close the
-handed-off window, reset the device, or delete the result under the user.
+longer needed. Undo the tour's temporary code changes with `temp undo` once the
+user is done with the screen they reach, and say so; never leave them for a commit.
+Leave the demonstrated app and sample result available for the user to explore;
+name any tour-started server/session left running. Do not close the handed-off
+window, reset the device, or delete the result under the user.
 
 ## Examples
 
@@ -158,6 +178,10 @@ handed-off window, reset the device, or delete the result under the user.
   and confirm all four render. Guide the user through placing an order, then one
   step per seeded variant. If a fix mid-tour cancels the pending order, re-seed it
   before resuming.
+- **"qa-tour" on a redesigned "check your inbox" screen that follows a sent
+  email:** with no local mail catcher, temporarily route to the screen and hand it
+  over. If the tour is instead the sign-up flow that sends the email, leave the
+  send unmodified and say it cannot complete locally.
 - **"qa-tour --staged":** choose behavior from the staged diff only. If nothing
   is staged, report the empty scope and request a target or another scope.
 - **"qa-tour --unpushed":** resolve the unpushed commit range and tour its main
