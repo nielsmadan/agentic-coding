@@ -1,11 +1,8 @@
 ## React Native project tooling
 
 Use `templates = ["react-native"]` in `loadout/config.toml`. This template includes shared
-mobile device automation, Metro log tooling, and a project-scoped upgrade skill. For JavaScript
-runtime logs use `rn-logs` below.
-
-For static analysis and tests use the project's own scripts directly (`yarn type-check`,
-`yarn lint`, `yarn test`); for library docs use `/research-tech`.
+mobile device automation, the shared React guidance, Metro log tooling, and a project-scoped
+upgrade skill. For JavaScript runtime logs use `rn-logs` below.
 
 ### Metro ports (`splashdown`)
 

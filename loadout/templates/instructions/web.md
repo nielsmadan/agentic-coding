@@ -1,7 +1,8 @@
 ## Web project tooling
 
 Use `templates = ["web"]` in `loadout/config.toml` to select web instructions,
-permissions, and project-scoped skills. Use the globally installed `agent-browser`
+permissions, and project-scoped skills; `react-web` adds the shared React guidance and
+`/review-react` on top. Use the globally installed `agent-browser`
 CLI to drive Chrome/Chromium via CDP and verify UI work end-to-end.
 
 ### Browser testing (`agent-browser`)

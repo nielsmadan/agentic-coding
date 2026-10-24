@@ -53,7 +53,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `pratfall/` | [pratfall](https://github.com/nielsmadan/pratfall) profiles for the `/second-opinion` advisors and the `ccli`/`cxcli`/`occli` command generators, installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
-| `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-native.toml`, `web.toml`) and shared catalog parts |
+| `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-base.toml`, `react-native.toml`, `react-web.toml`, `web.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `clcof`) |
 | `docs/` | Repo notes |
@@ -162,12 +162,15 @@ Flutter and React Native select the same mobile parts directly:
 |---|---|
 | `mobile` | `agent-device` workflow, setup guidance, and shell permission; also usable alone for native apps |
 | `flutter` | Shared mobile tooling, Dart and simulator MCPs, simulator tool permissions, and `/flutter-upgrade` |
-| `react-native` | Shared mobile tooling, Splashdown-managed Metro ports, `rn-logs` guidance and permission, and `/rn-upgrade` |
+| `react-base` | Shared React guidance and `/review-react`; normally selected through `react-native` or `react-web` |
+| `react-native` | Shared mobile tooling, React base, Splashdown-managed Metro ports, `rn-logs` guidance and permission, and `/rn-upgrade` |
 | `web` | Browser automation, web guidance, design, themes, and SEO skills |
+| `react-web` | Everything in `web` plus React base |
 
-For React Native use `templates = ["react-native"]`. Existing declarations such as
-`["mobile", "flutter"]` still work: shared instruction parts render once. Declared templates
-pick up catalog changes on the next project `loadout sync`.
+For React Native use `templates = ["react-native"]`; for a React web app,
+`templates = ["react-web"]`. Existing declarations such as `["mobile", "flutter"]` still
+work: shared instruction parts render once. Declared templates pick up catalog changes on
+the next project `loadout sync`.
 
 Use `loadout template vendor <name>` to copy a manifest and its referenced parts into a
 project, then `loadout template sync <name>` to update that copy. Updates to shared parts

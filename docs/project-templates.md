@@ -6,7 +6,9 @@
 loadout/templates/
   mobile.toml
   flutter.toml
+  react-base.toml
   react-native.toml
+  react-web.toml
   web.toml
   instructions/<name>.md
   permissions/<name>.toml
@@ -22,9 +24,11 @@ selects. A manifest and legacy directory with the same template name are ambiguo
 
 `mobile.toml` selects shared `agent-device` instructions and shell permission. `flutter.toml`
 selects those same mobile parts plus Flutter instructions, MCP servers and permissions, and
-`/flutter-upgrade`. `react-native.toml` selects the mobile parts plus Metro and `rn-logs`
-guidance, the `rn-logs` permission, and `/rn-upgrade`. `web.toml` selects browser automation
-guidance and permissions plus its four web skills.
+`/flutter-upgrade`. `react-base.toml` selects shared React guidance and `/review-react`.
+`react-native.toml` selects the mobile and React parts plus Metro and `rn-logs` guidance, the
+`rn-logs` permission, and `/rn-upgrade`. `web.toml` selects browser automation guidance and
+permissions plus its four web skills; `react-web.toml` selects those web parts plus the React
+parts.
 
 Keeping them here version-controls the config centrally without making it global: a template
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
@@ -38,8 +42,8 @@ loadout template add flutter     # templates = ["flutter"]
 loadout sync
 ```
 
-React Native projects declare `templates = ["react-native"]`; native mobile projects can use
-`mobile` alone. Framework manifests reference the shared mobile parts directly. Existing
+React Native projects declare `templates = ["react-native"]` and React web projects
+`templates = ["react-web"]`; native mobile projects can use `mobile` alone. Framework manifests reference the shared mobile parts directly. Existing
 declarations such as `["mobile", "flutter"]` still work: shared instructions concatenate
 once in first-reference order.
 

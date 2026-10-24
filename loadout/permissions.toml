@@ -80,6 +80,7 @@ allow = [
   "Skill(review-perf)",
   "Skill(review-security)",
   "Skill(review-typescript)",
+  "Skill(review-react)",
   "Skill(review-project)",
   "Skill(second-opinion)",
   "Skill(skill-creator)",
