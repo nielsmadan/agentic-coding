@@ -7,7 +7,12 @@
 
 # check-notes — vault path and its hand-maintained index.md convention are personal
 # loadout     — companion skill for the loadout tool, not a standalone workflow
-private = ["check-notes", "loadout", "nono-sandbox"]
+# ringleader-* — companion skills vendored from the ringleader package
+private = [
+    "check-notes", "loadout", "nono-sandbox",
+    "ringleader-cleanup", "ringleader-finish", "ringleader-init", "ringleader-overview",
+    "ringleader-publish", "ringleader-triage", "ringleader-usage",
+]
 
 # local skills are gitignored: never published AND never pushed — this repo is
 # public, so private alone still exposes a skill's source. Absent in fresh
