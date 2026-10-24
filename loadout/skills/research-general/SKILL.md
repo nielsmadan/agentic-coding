@@ -1,6 +1,6 @@
 ---
 name: research-general
-description: Research a non-technical topic online (science, history, news, policy, regional/regulatory, consumer purchases, personal decisions, fact-check). The default for research in non-code repos (e.g. a notes vault). For technical/developer topics — libraries, errors, tooling, and even choosing/evaluating dev tools or products — use `research-tech`.
+description: Research a non-technical topic online (science, history, news, policy, regional/regulatory, consumer purchases, personal decisions, fact-check). Use when asked to research, look up, or fact-check a non-technical question; the default for research in non-code repos (e.g. a notes vault). For technical/developer topics — libraries, errors, tooling, and even choosing/evaluating dev tools or products — use `research-tech`.
 argument-hint: <topic, question, or claim to verify>
 effort: medium
 ---
