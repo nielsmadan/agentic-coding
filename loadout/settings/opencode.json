@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/xiaomi/mimo-v2.6-pro",
+  "model": "opencode-go/mimo-v2.6-pro",
   "subagent_depth": 2,
   "agent": {
     "coordinator": {
@@ -20,8 +20,6 @@
   "provider": {
     "openrouter": {
       "models": {
-        "openai/gpt-6-luna": {},
-        "xiaomi/mimo-v2.6-pro": {},
         "openai/gpt-6-sol": {},
         "meta/muse-spark-1.3": {}
       }

@@ -51,15 +51,16 @@ native_args = [
 
 [profiles.advisor-pi]
 agent = "pi"
-model = "openrouter/z-ai/glm-5.3"
-effort = "max"
+model = "opencode-go/glm-5.3"
+effort = "high"
 tools = ["read", "grep", "find", "ls"]
 native_args = ["--no-session"]
 
+# Effort rides on the model as #variant: prat 1.0.0 renders effort as --variant,
+# which OpenCode 2 rejects.
 [profiles.advisor-opencode]
 agent = "opencode"
-model = "openrouter/moonshotai/kimi-k3"
-effort = "max"
+model = "opencode-go/kimi-k3#max"
 native_args = ["--agent", "plan"]
 
 [profiles.advisor-droid]
@@ -92,7 +93,7 @@ native_args = ["--sandbox", "read-only", "--skip-git-repo-check"]
 
 [profiles.cmdgen-opencode]
 agent = "opencode"
-model = "openrouter/openai/gpt-6-luna"
+model = "opencode-go/gpt-6-luna"
 timeout = 60
 native_args = ["--agent", "plan"]
 

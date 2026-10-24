@@ -12,14 +12,16 @@ function sandboxStatus(): Promise<string | undefined> {
   });
 }
 
-export const SandboxStatusPlugin = async () => {
-  const note = await sandboxStatus();
-  return {
-    "experimental.chat.system.transform": async (
-      _input: unknown,
-      output: { system: string[] },
-    ) => {
-      if (note) output.system.push(note);
-    },
-  };
+// The OpenCode 2 loader takes a default export with `id` and `setup`.
+export default {
+  id: "sandbox-status",
+
+  async setup(ctx: any) {
+    const note = await sandboxStatus();
+    if (!note) return;
+    await ctx.session.hook("context", (event: any) => {
+      const system = event.system ?? (event.system = []);
+      system.push({ type: "text", text: note });
+    });
+  },
 };

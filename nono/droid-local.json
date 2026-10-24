@@ -26,9 +26,6 @@
     "capability_elevation": false
   },
   "filesystem": {
-    "allow": [
-      "$HOME/.factory"
-    ],
     "read": [
       "$NONO_PACKAGES",
       "$NONO_CONFIG/profiles"
@@ -39,8 +36,5 @@
   },
   "workdir": {
     "access": "readwrite"
-  },
-  "unsafe_macos_seatbelt_rules": [
-    "(allow process-exec (literal \"/bin/ps\") (with no-sandbox))"
-  ]
+  }
 }

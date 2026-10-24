@@ -1,9 +1,21 @@
 # OpenCode aliases
 # No -raw variant: opencode is never run outside the sandbox.
-opencode() { AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "$@"; }
+# OpenCode 2 otherwise hands tool execution to a shared background server that
+# may live outside this sandbox; --standalone keeps a private one inside it.
+# Only the TUI, run and mini accept it.
+opencode() {
+  local -a args=("$@")
+  case $1 in
+    run|mini) args=("$1" --standalone "${@:2}") ;;
+    -*|'') args=(--standalone "$@") ;;
+    *) [[ -d $1 ]] && args=(--standalone "$@") ;;
+  esac
+  AGENT_HARNESS=opencode _agent_sandboxed opencode-local opencode "${args[@]}"
+}
 
 alias oc="opencode"
-alias ocs="opencode -m openrouter/meta/muse-spark-1.3"
+# The OpenCode 2 TUI has no --model flag.
+alias ocs='OPENCODE_CONFIG_CONTENT='\''{"model":"openrouter/meta/muse-spark-1.3"}'\'' opencode'
 alias occof="opencode --continue --fork"
 
 # OpenCode scans ~/.claude/skills and .claude/skills as well as its own, and

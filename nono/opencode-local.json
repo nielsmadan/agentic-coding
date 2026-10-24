@@ -40,7 +40,6 @@
   },
   "filesystem": {
     "allow": [
-      "$HOME/.opencode",
       "$HOME/.config/opencode",
       "$HOME/.cache/opencode",
       "$HOME/.local/share/opencode",
@@ -50,6 +49,7 @@
       "$TMPDIR"
     ],
     "read": [
+      "$HOME/.opencode",
       "$NONO_PACKAGES",
       "$NONO_CONFIG/profiles",
       "$HOME/.agents"
@@ -104,6 +104,12 @@
   },
   "workdir": {
     "access": "readwrite"
+  },
+  "environment": {
+    "set_vars": {
+      "OPENCODE_DISABLE_PROJECT_CONFIG": "1",
+      "OPENCODE_TEST_HOME": "$WORKDIR"
+    }
   },
   "open_urls": {
     "allow_origins": [

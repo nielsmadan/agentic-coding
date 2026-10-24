@@ -54,7 +54,8 @@
       "$HOME/.local/state/mise/hints",
       "$HOME/.local/state/mise/tracked-configs",
       "$HOME/.local/state/splashdown",
-      "$HOME/.local/state/watchman"
+      "$HOME/.local/state/watchman",
+      "$HOME/.factory"
     ],
     "read": [
       "/AppleInternal",
@@ -76,8 +77,7 @@
       "$HOME/.yarn",
       "$HOME/.config/yarn",
       "$HOME/.docker/contexts",
-      "$HOME/.local/share/claude",
-      "$HOME/.factory/sessions"
+      "$HOME/.local/share/claude"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",
@@ -96,7 +96,8 @@
       "$HOME/.android/adb_known_hosts.pb"
     ],
     "deny": [
-      "$HOME/.dolt/creds"
+      "$HOME/.dolt/creds",
+      "$HOME/.factory/auth.v2.loginkeychain"
     ],
     "bypass_protection": [
       "$HOME/.docker/config.json",
@@ -125,12 +126,18 @@
       0
     ]
   },
+  "environment": {
+    "set_vars": {
+      "FACTORY_DISABLE_KEYRING": "1"
+    }
+  },
   "unsafe_macos_seatbelt_rules": [
     "(allow mach-register (global-name-prefix \"org.chromium.crashpad.\"))",
     "(allow mach-register (global-name-prefix \"com.google.chrome.for.testing.\"))",
     "(allow mach-register (global-name-prefix \"com.google.Chrome.\"))",
     "(allow iokit-open)",
     "(allow file-issue-extension (extension-class \"com.apple.app-sandbox.read\" \"com.apple.app-sandbox.read-write\"))",
-    "(allow generic-issue-extension (extension-class-prefix \"com.apple.virtualization.extension.\"))"
+    "(allow generic-issue-extension (extension-class-prefix \"com.apple.virtualization.extension.\"))",
+    "(allow process-exec (literal \"/bin/ps\") (with no-sandbox))"
   ]
 }

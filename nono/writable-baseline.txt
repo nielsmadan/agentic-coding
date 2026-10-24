@@ -16,6 +16,7 @@ $HOME/.config/opencode	profile
 $HOME/.dart-tool	profile
 $HOME/.dartServer	profile
 $HOME/.dolt	profile
+$HOME/.factory	profile
 $HOME/.gc	profile
 $HOME/.gradle/.tmp	profile
 $HOME/.gradle/android	profile
@@ -79,6 +80,7 @@ $HOME/.config/opencode	profile
 $HOME/.dart-tool	profile
 $HOME/.dartServer	profile
 $HOME/.dolt	profile
+$HOME/.factory	profile
 $HOME/.gc	profile
 $HOME/.gradle/.tmp	profile
 $HOME/.gradle/android	profile
@@ -200,6 +202,7 @@ $HOME/.config/opencode	profile
 $HOME/.dart-tool	profile
 $HOME/.dartServer	profile
 $HOME/.dolt	profile
+$HOME/.factory	profile
 $HOME/.gc	profile
 $HOME/.gradle/.tmp	profile
 $HOME/.gradle/android	profile
@@ -222,7 +225,6 @@ $HOME/.local/state/splashdown	profile
 $HOME/.local/state/watchman	profile
 $HOME/.m2/repository	profile
 $HOME/.npm	profile
-$HOME/.opencode	profile
 $HOME/.pi	profile
 $HOME/.pub-cache/_temp	profile
 $HOME/.pub-cache/active_roots	profile
@@ -262,6 +264,7 @@ $HOME/.config/opencode	profile
 $HOME/.dart-tool	profile
 $HOME/.dartServer	profile
 $HOME/.dolt	profile
+$HOME/.factory	profile
 $HOME/.gc	profile
 $HOME/.gradle/.tmp	profile
 $HOME/.gradle/android	profile

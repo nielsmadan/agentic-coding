@@ -3,9 +3,15 @@
 Every place in this repo that pins an OpenRouter model id. All six must move
 together or the trio drifts apart.
 
-Ids are always OpenRouter ids (`vendor/model`), because every one of these
-paths bills through OpenRouter. `rank_models.py` prints the exact id — never
-hand-guess one. `deepseek/deepseek-v4-pro` is the **0423** build;
+Ranking uses OpenRouter ids (`vendor/model`), and `rank_models.py` prints the
+exact id — never hand-guess one. **OpenCode, the OpenCode prat profiles
+(`advisor-opencode`, `cmdgen-opencode`) and `advisor-pi` bill through the OpenCode
+Go subscription instead** whenever Go carries the model: write those as
+`opencode-go/<go id>`. Pi's own settings (`pi.json`) stay on OpenRouter.
+Go ids are bare (`kimi-k3`, `mimo-v2.6-pro`); `opencode models` lists them once
+`OPENCODE_API_KEY` is set. A model Go lacks (GPT-6 Sol) stays on OpenRouter, and
+so does any Go model sold as "Contributor", which trains on prompts. `clor`
+stays on OpenRouter: Go's Anthropic endpoint serves only a few models. `deepseek/deepseek-v4-pro` is the **0423** build;
 `deepseek/deepseek-v4-pro-0813` is the newer one. Names collide; ids do not.
 
 ## Default tier bindings
@@ -48,9 +54,8 @@ default's cost.
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
 | 5 | `pratfall/config.toml` | `cmdgen-opencode` → `model` | low |
 | 6 | `pratfall/config.toml` | `advisor-pi` → `model` | high-main |
-| 6 | `pratfall/config.toml` | `advisor-pi` → `effort` | max |
-| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3 (user override) |
-| 6 | `pratfall/config.toml` | `advisor-opencode` → `effort` | max |
+| 6 | `pratfall/config.toml` | `advisor-pi` → `effort` | high |
+| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3 (user override), with `#max` |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.
@@ -176,7 +181,7 @@ CLAUDE_CODE_SUBAGENT_MODEL='<default tier id>[1m]'
 ## 4. `.airc.d/opencode.zsh` — the `ocs` alias
 
 ```zsh
-alias ocs="opencode -m openrouter/<high-fallback id>"
+alias ocs='OPENCODE_CONFIG_CONTENT='\''{"model":"openrouter/<high-fallback id>"}'\'' opencode'
 ```
 
 `ocs` exists to reach *past* the configured default, so it has to stay strictly
@@ -208,9 +213,10 @@ high-fallback for OpenCode. Preserve the user-selected advisor overrides above
 when proposing tier updates; include both advisor models and reasoning levels in
 the proposal for approval.
 
-Both take prat's normalized `effort`, which renders as Pi's `--thinking` and
-OpenCode's `--variant`. Verify the selected OpenCode model exposes a `max`
-variant with `opencode models openrouter --verbose`. These settings apply to
+Pi takes prat's normalized `effort`, which renders as `--thinking`. OpenCode
+carries its effort on the model id as `#<variant>` instead, because prat renders
+`effort` as `--variant`, which OpenCode 2 rejects. Verify the selected OpenCode
+model exposes a `max` variant with `opencode models openrouter --verbose`. These settings apply to
 every consultation, including `--quick`.
 
 `loadout/skills/second-opinion/SKILL.md` no longer names a model — it invokes
