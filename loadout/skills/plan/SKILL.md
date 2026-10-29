@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Lightweight planning workflow — delegate read-only planning to an Opus subagent (or adopt a plan already agreed in the conversation), then implement in auto mode after a single go-ahead gate, run QA and one `code-review --multi`, fix findings, repeat QA only after substantial code changes, and update docs. The middle tier between "just do it" (tiny tasks) and `longshot` (multi-hour features). Never enters plan mode, so it sidesteps the plan-mode permission prompts. Use when the user invokes /plan, or wants a plan for a medium-sized task before implementing.
+description: Lightweight planning workflow — plan read-only in-session when already on Opus or stronger, otherwise delegate planning to an Opus subagent (or adopt a plan already agreed in the conversation), then implement in auto mode after a single go-ahead gate, run QA and one `code-review --multi`, fix findings, repeat QA only after substantial code changes, and update docs. The middle tier between "just do it" (tiny tasks) and `longshot` (multi-hour features). Never enters plan mode, so it sidesteps the plan-mode permission prompts. Use when the user invokes /plan, or wants a plan for a medium-sized task before implementing.
 argument-hint: '[--review] <task, or blank to infer from conversation>'
 effort: xhigh
 ---
@@ -19,8 +19,10 @@ Two design choices make it work:
 - **Never enter plan mode / never call `ExitPlanMode`.** Everything runs in the
   session's normal (auto) mode. This is intentional: it avoids plan mode's read-only
   permission prompts entirely, and a subagent's own tool calls never prompt you.
-- **A subagent plans, the main session implements.** A single read-only subagent
-  pinned to Opus does the exploring and drafts the plan; the main session implements it.
+- **The context that explores is the context that implements.** On Opus or a
+  stronger model the main session plans read-only itself, so what it learned while
+  exploring is still there when it implements. Only a weaker session hands planning
+  to a read-only subagent pinned to Opus, at the cost of re-reading the files later.
 
 The argument is the task. If blank, infer the task from the current conversation.
 
@@ -52,19 +54,24 @@ Judge the task's size first.
   middle tier. Say so in one line, offer `longshot` instead, and stop.
 - **Middle** (a few files, a new endpoint/component, a contained refactor): proceed.
 
-### Step 2: Dispatch the planning agent
+### Step 2: Draft the plan
 
 **A plan already in the conversation?** When the argument is blank and the
 conversation already holds a concrete plan for the task — files and ordered steps,
-not just an idea — ask one line before dispatching: "There's a plan above. Use it,
+not just an idea — ask one line before planning: "There's a plan above. Use it,
 or plan from scratch?" Wait for the answer.
 
-- **Use it:** skip the planning agent. Recast that plan into the skeleton below,
+- **Use it:** skip planning. Recast that plan into the skeleton below,
   check read-only that the files and claims it relies on hold in the current repo,
   and add any gap or drift as an open question. Continue at Step 3.
-- **From scratch:** dispatch as below, passing the conversation's plan as context.
+- **From scratch:** plan as below, treating the conversation's plan as context.
 
-Dispatch **one** subagent via the `Agent` tool:
+**Plan in this session when it runs on Opus or a stronger model.** Explore
+**read-only** — read, search and read-only shell only, no edits and **no** mutating
+commands — then draft the skeleton below yourself, under the same directives the
+subagent brief lists. Do not dispatch.
+
+**Otherwise dispatch one subagent** via the `Agent` tool:
 - `subagent_type: Plan` — read-only by construction (no Edit/Write/NotebookEdit).
 - `model: opus`.
 - `effort: xhigh`.
@@ -170,7 +177,7 @@ with an offer to run review or update docs later.
 
 User: "Plan adding a `--json` flag to export."
 
-Actions: one read-only planner drafts the approach → present the plan including
+Actions: the session (or, below Opus, one read-only subagent) drafts the approach → present the plan including
 QA, review, and docs → wait for approval → implement in the main session →
 `qa --fix` → one `code-review --multi` → fix findings and verify → repeat QA only
 if the fixes substantially changed code → update usage docs and examples → report
@@ -189,6 +196,8 @@ the completed work.
 
 - Read-only precision: the `Plan` agent has no Edit/Write/NotebookEdit tools, so it
   cannot modify files — but it retains Bash, so "no mutating commands" is an
-  instruction, not a hard block. Still far safer than plan mode.
+  instruction, not a hard block. In-session planning has no tool restriction at all,
+  so the read-only rule there rests on the instruction alone; the Step 4 gate is what
+  stops implementation from starting early.
 - `--review` runs the full `review-plan` fan-out (including a `second-opinion` codex
   agent and a `research-tech` agent); it costs more, which is why it is opt-in.
