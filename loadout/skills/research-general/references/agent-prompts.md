@@ -4,7 +4,7 @@ Full prompt templates for the research workers selected in Step 4. Apply that st
 
 ## Fetching web content
 
-Follow "Web Search & Fetching" in CLAUDE.md. In short:
+Follow the `web-fetch` skill where it is installed. In short:
 - Short plain pages, government PDFs, `.gov`/`.int` sites: `WebFetch`.
 - Long-form reading (articles, encyclopedia entries, threads), and any page `WebFetch` refuses, truncates or returns as an empty shell: `jina-fetch <url> "<what to extract>"`. It returns only the extract, so the page never enters your context. Pass several URLs before the question to read them in parallel.
 - Reddit: `jina-fetch --proxy`. Jina does not bypass paywalls; expect the same free prefix.

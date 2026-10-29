@@ -11,7 +11,7 @@ path = "loadout"
 # names its own instructions and Codex appends one harness-specific fragment.
 [all]
 instructions = [
-    "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
+    "intro-shared", "web-fetching.shared", "video-content",
     "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
@@ -21,7 +21,7 @@ settings = ["claude", "claude-afk"]
 hooks = ["claude", "hooklinesinker-claude"]
 plugins = ["claude"]
 instructions = [
-    "intro-claude", "web-fetching", "video-content", "browser-automation",
+    "intro-claude", "web-fetching", "video-content",
     "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
@@ -30,7 +30,7 @@ instructions = [
 defaults = "codex"
 hooks = ["codex", "hooklinesinker-codex"]
 instructions = [
-    "intro-shared", "web-fetching.shared", "video-content", "browser-automation",
+    "intro-shared", "web-fetching.shared", "video-content",
     "secrets", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
     "codex-proactivity",

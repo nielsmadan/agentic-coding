@@ -91,7 +91,7 @@ Pick the relevant agents from the table below and launch each batch together as 
 | **Historical** | Topic is historical | `{topic} primary sources` / `archive` / `declassified`. Try news archives. |
 | **Regional** | Country/city/locale-specific (regulations, prices, services) | `{topic} site:{country_TLD}` plus locale-specific authority sites. **Search in the local language** for non-English locales. |
 
-**Fetching**: `WebFetch` for short plain pages, government PDFs, `.gov`/`.int`; `jina-fetch <url> "<what to extract>"` for long-form reading and whenever `WebFetch` fails, since it returns only the extract. Without `jina-fetch` on PATH, use the Jina MCP `read_url` with its `question` parameter, which likewise returns only the matching passages. See "Web Search & Fetching" in CLAUDE.md. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
+**Fetching**: `WebFetch` for short plain pages, government PDFs, `.gov`/`.int`; `jina-fetch <url> "<what to extract>"` for long-form reading and whenever `WebFetch` fails, since it returns only the extract. Without `jina-fetch` on PATH, use the Jina MCP `read_url` with its `question` parameter, which likewise returns only the matching passages. See the `web-fetch` skill where it is installed. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
 
 For full agent prompts including the Regional locale playbook (DE/FR/UK/US/AU), see `references/agent-prompts.md`.
 

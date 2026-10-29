@@ -14,6 +14,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
 | `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
+| `/colima` | Diagnose Docker in the Colima VM — a stopped VM, the sandboxed-session limits, and Colima reporting `Running` over a dead daemon |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
 | `/deslop` | Copy-edit text to strip AI/LLM writing tells (overused words, significance-inflation phrases, scene-setting openers, em-dash overuse, rule-of-three, "it's not X, it's Y"); `--report` to flag without rewriting |
@@ -59,6 +60,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/status` | Report changed files, the last session task and whether it is present or committed, code-review coverage, active task-list progress, open work, and the recommended next task |
 | `/temp` | Make temporary code changes for testing, easily undone with `/temp undo` |
 | `/test` | Tests: assess state and run the right action (default, no args — runs the suite, then routes failures to fix, gaps to generate, smells to review), or explicit review/generate (--review, --generate) |
+| `/web-fetch` | Fetch escalation ladder (`jina-fetch`, `--proxy`, the logged-in `agent-chromium` browser), failure signatures, verbatim quotes from the cached page, and per-host routes (Reddit, Stack Overflow, shops) |
 
 ## Detailed usage
 

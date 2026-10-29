@@ -73,9 +73,10 @@ Declared projects need only `loadout sync`.
 
 Project-only skills live in `loadout/templates/skills/<name>/` and are selected by manifests,
 not in `loadout/skills/`, so they are never rendered globally. Moving a skill between the two
-changes where it renders — but **nothing prunes**: `loadout sync` only writes the paths it
-renders, so the copies already written under `~/.claude/skills/`, `~/.codex/skills/`,
-`~/.config/opencode/skills/` and `~/.pi/agent/skills/` must be deleted by hand.
+changes where it renders, and the next `loadout sync` retires the copies it no longer renders:
+it deletes each file it recorded writing (under `~/.config/loadout/written/`), then the skill
+folder if that leaves it empty. A file loadout did not write keeps its folder, and outputs
+written before that record existed were never tracked, so those still need deleting by hand.
 
 Templates cover config only; machine prerequisites (e.g. `npx`, `uvx`, `dart` for the Flutter
 MCP servers) must be installed separately.

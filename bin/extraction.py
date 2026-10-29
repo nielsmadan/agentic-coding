@@ -21,7 +21,7 @@ import urllib.request
 # not a Google outage.
 DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
 FALLBACK_MODEL = "google/gemini-3.1-flash-lite"
-# External contract: also specified in loadout/instructions/web-fetching*.md and
+# External contract: also specified in loadout/skills/web-fetch/SKILL.md and
 # the check-agent-logs skill, and read by benchmark/bench-models.py. Changing the
 # value changes documented agent behavior in files that cannot import it.
 NO_RELEVANT = "NO_RELEVANT_CONTENT"

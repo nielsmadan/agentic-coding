@@ -225,7 +225,7 @@ script `install.sh` runs on a fresh machine.
 `sync_config.py` merged — `[mcp_servers.*]`, `[plugins.*]`, `[marketplaces.*]`, the model
 defaults — is loadout's, and so is this: `loadout/defaults/codex.json` lists the key under
 `$remove`, which owns it in order to delete it. The guidance it used to hold moved to
-`loadout/instructions/sandbox.md`, where all four harnesses get it rather than Codex alone.
+`loadout/instructions/sandbox.md` and the `nono-sandbox` skill, where all four harnesses get it rather than Codex alone.
 `nono update` puts the block back; the next `loadout sync` strips it, body and all.
 
 Deleting rather than replacing is the choice that matters: one document to maintain instead of

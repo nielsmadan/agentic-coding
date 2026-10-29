@@ -132,7 +132,7 @@ and only this task catches it.
 **Nobody can count.** Every model except `deepseek-v4-flash` failed count-tables (answers of
 10, 3, 2, 2 against a truth of 4; `claude-haiku-4.5` also said 2). Treat that as a property of
 the approach: counting or enumerating occurrences across a long page belongs in `grep -c`, not
-in a prompt. The global web-fetching guidance says so for this reason.
+in a prompt. The `web-fetch` skill says so for this reason.
 
 **Distinguish fabrication from non-compliance when reading an anchors failure.** Both score 0,
 and they mean opposite things. `gpt-oss-120b` invented a quote that appears nowhere on the

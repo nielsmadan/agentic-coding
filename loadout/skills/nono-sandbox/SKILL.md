@@ -53,6 +53,10 @@ Two ways `nono why` still misleads you:
   `DENIED / filesystem_deny`. If it says denied but the command works, believe the command.
 - **It resolves real paths.** A path that does not exist yet reports `path_not_granted` even
   when its parent directory is granted.
+- **A denied directory says nothing about the files granted inside it.** `~/.android` reports
+  `path_not_granted` while `adbkey`, `adbkey.pub` and `adb_known_hosts.pb` inside it are
+  granted, and `ls` or a glob over the directory fails either way. Ask about the exact file the
+  failing command opens, not its parent.
 
 When the verdict contradicts the error, trust an actual read or write inside `nono run` over
 either.
@@ -105,6 +109,18 @@ argv. A tool that spawns `xcodebuild` itself therefore works without doing anyth
 - **A profile change does not reach a running session.** Seatbelt applies the policy at process
   start. If a grant was added after this session began, it is invisible until restart — say so
   rather than asking for it again.
+
+## `uvx`: redirect its directories, do not grant them
+
+uv writes to `~/.local/share/uv/tools`, which is not granted, so `uvx <tool>` fails with
+`Operation not permitted` on a `.lock` file there. Do not ask for a grant: that directory holds
+executables the user's *own* unsandboxed `uv` would later run, the same reason install trees
+elsewhere are read-only. Point uv at a writable directory in the workspace instead — measured
+working:
+
+```sh
+env UV_TOOL_DIR="$WORKDIR/.uv/tools" UV_CACHE_DIR="$WORKDIR/.uv/cache" uvx --from <pkg> <cmd>
+```
 
 ## Denied on purpose — these will not be granted
 

@@ -4,7 +4,7 @@ Full prompt templates for the research workers selected in Step 4. Apply that st
 
 ## Fetching web content
 
-Follow "Web Search & Fetching" in CLAUDE.md. In short:
+Follow the `web-fetch` skill where it is installed. In short:
 - `github.com` (issues, PRs, repo files): use `gh`, not a fetcher.
 - Short plain pages (HTML blogs, RSS feeds, PDFs): `WebFetch`.
 - Long-form reading (docs, articles, threads), and any page `WebFetch` refuses, truncates or returns as an empty shell: `jina-fetch <url> "<what to extract>"`. It returns only the extract, so the page never enters your context. Pass several URLs before the question to read them in parallel.

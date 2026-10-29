@@ -86,7 +86,7 @@ Pick the relevant agents and launch each batch together as runtime capacity allo
 | **Product/Market** | Evaluating/choosing a product, platform, tool, or model; capability lookup ("does X support Y"); pricing/ROI; benchmarks | `{product} {capability} documentation`, `{product} pricing`, `{A} vs {B} {year}`, independent benchmark sites, plus News for launches/deprecations. Confirm capabilities against official product pages/changelogs; weight independent benchmarks and community threads over vendor claims. |
 | **News** | Launches, deprecations, funding/acquisition, "is X still maintained" | WebSearch recent + `{product} news {year}`, then `jina-fetch` top 2-3. |
 
-**Fetching**: `gh` for github.com; `WebFetch` for short plain pages; `jina-fetch <url> "<what to extract>"` for long-form reading and whenever `WebFetch` fails, since it returns only the extract. Without `jina-fetch` on PATH, use the Jina MCP `read_url` with its `question` parameter, which likewise returns only the matching passages. See "Web Search & Fetching" in CLAUDE.md. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
+**Fetching**: `gh` for github.com; `WebFetch` for short plain pages; `jina-fetch <url> "<what to extract>"` for long-form reading and whenever `WebFetch` fails, since it returns only the extract. Without `jina-fetch` on PATH, use the Jina MCP `read_url` with its `question` parameter, which likewise returns only the matching passages. See the `web-fetch` skill where it is installed. `WebSearch`/`WebFetch` are Claude Code's tool names — on another harness, use its equivalent search and fetch tools.
 
 For full agent prompts, see `references/agent-prompts.md`.
 

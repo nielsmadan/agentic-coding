@@ -8,8 +8,9 @@
 # check-notes — vault path and its hand-maintained index.md convention are personal
 # loadout     — companion skill for the loadout tool, not a standalone workflow
 # ringleader-* — companion skills vendored from the ringleader package
+# colima, web-fetch — this machine's tool setup, split out of the global instructions
 private = [
-    "check-notes", "loadout", "nono-sandbox",
+    "check-notes", "colima", "loadout", "nono-sandbox", "web-fetch",
     "ringleader-cleanup", "ringleader-finish", "ringleader-init", "ringleader-overview",
     "ringleader-publish", "ringleader-triage", "ringleader-usage",
 ]
