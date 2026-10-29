@@ -38,7 +38,7 @@ Get input from the available independent advisors on the current problem or ques
 - **If the Claude advisor reports `Not logged in · Please run /login`, prefix that one command with `sops-exec`.** `prat` execs the real binary, and Claude Code does not pass its own credential down to subprocesses, so a nested `claude` finds nothing. The other advisors inherit theirs from the session environment and need no prefix. This only bites when `/second-opinion` runs *from* a Claude Code session — where the Claude advisor is skipped anyway.
 - **The advisor's identity is the model, not the CLI.** The Pi and OpenCode profiles pin models from two different labs, so their opinions stay independent of each other.
 - **Pi** warns `Model "…" not found for provider "opencode-go". Using custom model id.` when the model is newer than its cached catalog, then works normally — that warning is not a failure.
-- **Pi and OpenCode** advisors bill through the OpenCode Go subscription, so both profiles pin `opencode-go/` models (`opencode/*` is OpenCode Zen, which is pay-as-you-go and has no payment method). The profile's `--agent plan` is not enough on its own — plan mode can still delegate, which is why the command below also sets `OPENCODE_CONFIG_CONTENT`. OpenCode 2 cannot start inside a nono sandbox without `OPENCODE_TEST_HOME` and `OPENCODE_DISABLE_PROJECT_CONFIG` (it fails resolving `$HOME`, which no profile grants), so the advisor runs without the project's `AGENTS.md`. prat profiles have no `env` field, so all three stay inline.
+- **Pi and OpenCode** advisors bill through the OpenCode Go subscription, so both profiles pin `opencode-go/` models (`opencode/*` is OpenCode Zen, which is pay-as-you-go and has no payment method). The profile's `--agent plan` is not enough on its own — plan mode can still delegate, which is why the command below also sets `OPENCODE_CONFIG_CONTENT`. prat profiles have no `env` field, so it stays inline.
 - **Headless gotcha:** OpenCode evaluates each part of a compound (`;`/`&&`/`|`) bash command separately and takes the least-permitted verdict; with stdin closed there's no TTY to answer an `ask` prompt, so the whole call is auto-rejected and the run terminates before producing any prose. The classic trigger is a benign `echo ---` separator inside an otherwise-allowed read chain. The prompt template already tells the advisor to avoid chaining; if a run still dies with no output, suspect a chained command hitting an un-allowlisted token.
 
 ## How It Works
@@ -117,7 +117,7 @@ prat advisor-pi --timeout {timeout} -f .second-opinion.md </dev/null
 
 **OpenCode:** the inline config denies plan mode's task tool and applies only to this process:
 ```bash
-OPENCODE_TEST_HOME="$PWD" OPENCODE_DISABLE_PROJECT_CONFIG=1 OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode --timeout {timeout} -f .second-opinion.md </dev/null
+OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode --timeout {timeout} -f .second-opinion.md </dev/null
 ```
 
 **Droid:** the profile pins Gemini 4 Argon at high effort and permits only file reading and search:

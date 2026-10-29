@@ -105,12 +105,6 @@
   "workdir": {
     "access": "readwrite"
   },
-  "environment": {
-    "set_vars": {
-      "OPENCODE_DISABLE_PROJECT_CONFIG": "1",
-      "OPENCODE_TEST_HOME": "$WORKDIR"
-    }
-  },
   "open_urls": {
     "allow_origins": [
       "https://auth.openai.com",
