@@ -115,12 +115,13 @@ preparation.
 rationale from `blind-spots`; do not reopen an approach already settled there.
 Where the settled decisions still leave
 a genuine fork in how the thing is built — the same requirements reachable two or
-three structurally different ways — present those options with their trade-offs, lead
-with your recommendation and the reason, and wait. `blind-spots` establishes what the
-work must do; this establishes the shape it takes, and a plan drafted before it is
-answered bakes in a choice the user never made. Cut each option to what the definition
-of done requires before presenting it. If there is no such fork, say so in one line
-and move on rather than inventing alternatives.
+three structurally different ways, a real fork by `brainstorm`'s test — invoke
+`brainstorm` on it in its embedded mode, passing the settled brief, the definition of
+done and the options you see. It validates each option with an independent critic,
+presents them with your recommendation, and waits for the user's pick. `blind-spots`
+establishes what the work must do; this establishes the shape it takes, and a plan
+drafted before it is answered bakes in a choice the user never made. If there is no
+such fork, say so in one line and move on rather than inventing alternatives.
 
 Then draft or validate the plan itself, in the **plan format** in
 `references/prompts.md`. Every task goes to a fresh subagent that has none of this

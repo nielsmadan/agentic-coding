@@ -89,6 +89,9 @@ so brief it fully. Its prompt MUST contain:
 ```
 ## Approach
 2–3 sentences. Name approach A (recommended) vs B in one line, with why.
+Add "Close call" if A and B both meet the requirements and either differ in
+something expensive to reverse (data model, external interface, new dependency,
+architecture) or cannot be called with confidence.
 
 ## Files to touch
 - path/to/file — what changes and why
@@ -113,7 +116,10 @@ surface unresolved disagreements as open questions for the gate.
 ### Step 4: Present and STOP
 
 Print the plan inline, cleanly formatted, with the **Assumptions & open questions**
-called out so the user can resolve them. Include QA, one final multi-agent code review,
+called out so the user can resolve them. If the Approach is marked "Close call", add
+one line offering to run `brainstorm` on that fork before going ahead. Run it only on
+the user's yes, in its embedded mode, then revise the plan around the chosen approach
+and present it again. Include QA, one final multi-agent code review,
 fixes, conditional post-review QA, verification, documentation updates, and the final commit in the
 plan; the go-ahead covers these finishing steps too, including staging and committing the
 task's work on the current branch. Honor any explicit limit the user gives, such as "don't

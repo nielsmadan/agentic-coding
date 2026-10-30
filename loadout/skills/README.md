@@ -11,6 +11,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | Skill | Purpose |
 |-------|---------|
 | `/blind-spots` | Surface consequential decisions a plan, design, or research brief left silently assumed — read existing context, then ask in dependency order with recommendations. Returns a settled brief to a calling workflow without adding a closing confirmation; unknown facts remain research tasks |
+| `/brainstorm` | Work out how to solve a defined problem — a `blind-spots` interview, 5-8 structurally different approaches cut to the credible few, one independent critic subagent per survivor, then a recommendation with trade-offs; hands off to `plan`/`longshot` only for implementation work (`--debate` adds `second-opinion` advisors). `longshot` embeds it on a real approach fork; `plan` offers it on a close call |
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors) |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
 | `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
