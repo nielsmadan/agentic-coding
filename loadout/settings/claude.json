@@ -13,7 +13,8 @@
     "pr": ""
   },
   "permissions": {
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "additionalDirectories": ["~/wrksp"]
   },
   "model": "opus",
   "statusLine": {

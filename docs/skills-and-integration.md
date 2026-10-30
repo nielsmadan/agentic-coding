@@ -127,7 +127,7 @@ Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, 
 | edit this | to change | which is generated into |
 |---|---|---|
 | `loadout/permissions.toml` | any shell or MCP rule, on every agent | all seven permission files |
-| `loadout/settings/claude.json` | hooks, statusLine, model, env, `permissions.defaultMode` — for **both** profiles | `~/.claude/settings.json` |
+| `loadout/settings/claude.json` | hooks, statusLine, model, env, `permissions.defaultMode` and `permissions.additionalDirectories` — for **both** profiles | `~/.claude/settings.json` |
 | `loadout/settings/claude-afk.json` | the default profile's `env.CLAUDE_AFK_TIMEOUT_MS` only | `~/.claude/settings.json` under the default profile |
 | `loadout/settings/opencode.json` | `model`, `provider`, `$schema` | `~/.config/opencode/opencode.json` |
 
