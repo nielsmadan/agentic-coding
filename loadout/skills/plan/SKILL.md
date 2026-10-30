@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Lightweight planning workflow — plan read-only in-session when already on Opus or stronger, otherwise delegate planning to an Opus subagent (or adopt a plan already agreed in the conversation), then implement in auto mode after a single go-ahead gate, run QA and one `code-review --multi`, fix findings, repeat QA only after substantial code changes, and update docs. The middle tier between "just do it" (tiny tasks) and `longshot` (multi-hour features). Never enters plan mode, so it sidesteps the plan-mode permission prompts. Use when the user invokes /plan, or wants a plan for a medium-sized task before implementing.
+description: Lightweight planning workflow — plan read-only in-session when already on Opus or stronger, otherwise delegate planning to an Opus subagent (or adopt a plan already agreed in the conversation), then implement in auto mode after a single go-ahead gate, run QA and one `code-review --multi`, fix findings, repeat QA only after substantial code changes, update docs, and commit the task's work. The middle tier between "just do it" (tiny tasks) and `longshot` (multi-hour features). Never enters plan mode, so it sidesteps the plan-mode permission prompts. Use when the user invokes /plan, or wants a plan for a medium-sized task before implementing.
 argument-hint: '[--review] <task, or blank to infer from conversation>'
 effort: xhigh
 ---
@@ -114,8 +114,10 @@ surface unresolved disagreements as open questions for the gate.
 
 Print the plan inline, cleanly formatted, with the **Assumptions & open questions**
 called out so the user can resolve them. Include QA, one final multi-agent code review,
-fixes, conditional post-review QA, verification, and documentation updates in the plan; the go-ahead covers
-these finishing steps too.
+fixes, conditional post-review QA, verification, documentation updates, and the final commit in the
+plan; the go-ahead covers these finishing steps too, including staging and committing the
+task's work on the current branch. Honor any explicit limit the user gives, such as "don't
+commit".
 
 **Hard gate:** do NOT begin implementing. Wait for an explicit go-ahead ("go", "yes",
 "proceed", or edits). This stop is load-bearing — in auto mode nothing else prevents
@@ -159,7 +161,7 @@ Scope this pass to affected scenarios and their neighbors, fixing and retesting
 confirmed defects. Formatting, comments, naming-only cleanup, and documentation
 edits do not trigger another QA pass. State whether repeat QA was needed and why.
 
-### Step 8: Update docs and hand off
+### Step 8: Update docs
 
 Run `doc --update` scoped to the completed task. Update the canonical docs for the
 final behavior, interfaces, usage, and constraints; use `doc --generate` where new
@@ -169,9 +171,29 @@ from the plan into the appropriate docs. Do not create a separate plan archive.
 Check the updated examples and links, and run any required documentation checks.
 If documentation work exposes a code defect, return to the fix and verification
 steps before finishing, applying the same substantial-change rule for repeat QA
-without another code review. Report what changed, QA coverage, review findings
-resolved, verification results, docs updated, and any remaining blockers. Do not stop after implementation
-with an offer to run review or update docs later.
+without another code review.
+
+### Step 9: Commit and hand off
+
+Invoke the `commit` skill with no argument, limited to the task's changes: code,
+tests, and docs land together in the fewest self-contained commits, and other
+sessions' work in the checkout stays out. The go-ahead already authorized this; do
+not ask again. Do not commit while a check fails or a blocker remains — leave the
+work uncommitted and say why in the report.
+
+Then report, in this order:
+- **Changed** — the behavior delivered, in a few bullets.
+- **QA** — scenarios covered, defects found and fixed, and whether repeat QA ran and why.
+- **Review findings** — every valid finding, one line each, with its fix or the reason it
+  was rejected; reviewers that failed or timed out.
+- **Verification** — the checks run and their results.
+- **Docs** — the files updated.
+- **Commits** — each hash and subject, or why nothing was committed.
+- **Blockers** — anything still on the user, such as a reinstall.
+
+Do not stop after implementation with an offer to run review, update docs, or
+commit later, and do not open the report with a bare "Implemented." that hides the
+finishing steps.
 
 ## Examples
 
@@ -180,8 +202,8 @@ User: "Plan adding a `--json` flag to export."
 Actions: the session (or, below Opus, one read-only subagent) drafts the approach → present the plan including
 QA, review, and docs → wait for approval → implement in the main session →
 `qa --fix` → one `code-review --multi` → fix findings and verify → repeat QA only
-if the fixes substantially changed code → update usage docs and examples → report
-the completed work.
+if the fixes substantially changed code → update usage docs and examples → `commit`
+→ report changes, QA, each review finding's resolution, checks, docs, and commits.
 
 ## Troubleshooting
 
@@ -191,6 +213,8 @@ the completed work.
   to QA, review, and docs instead of relying on their default git scope.
 - **QA, checks, or a reviewer are unavailable:** report the missing coverage and exact
   blocker; finish independent work without claiming the completion gate passed.
+- **A pre-commit hook fails:** fix what it reports and commit again; follow the
+  `commit` skill's troubleshooting rather than bypassing the hook.
 
 ## Notes
 
