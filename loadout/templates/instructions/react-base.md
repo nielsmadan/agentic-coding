@@ -1,7 +1,7 @@
 ## React project conventions
 
 The `react-native` and `react-web` templates select this shared React guidance and the
-`review-react` skill; `react-base` selects it alone.
+`review-react` and `review-typescript` skills; `react-base` selects them alone.
 
 For static analysis and tests use the project's own scripts directly (`yarn type-check`,
 `yarn lint`, `yarn test`, or the npm/pnpm/bun equivalents the lockfile implies); for library
@@ -24,4 +24,5 @@ docs use `/research-tech`.
 
 `/review-react` covers judgment-level React review (state placement, effects, keys and
 boundaries, render cost, platform pitfalls) and defers to `eslint-plugin-react-hooks` for the
-mechanical rules. `/code-review` includes it automatically on React projects.
+mechanical rules; `/review-typescript` covers type design. `/code-review` includes both
+automatically when they apply.

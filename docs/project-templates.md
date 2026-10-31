@@ -24,7 +24,7 @@ selects. A manifest and legacy directory with the same template name are ambiguo
 
 `mobile.toml` selects shared `agent-device` instructions and shell permission. `flutter.toml`
 selects those same mobile parts plus Flutter instructions, MCP servers and permissions, and
-`/flutter-upgrade`. `react-base.toml` selects shared React guidance and `/review-react`.
+`/flutter-upgrade`. `react-base.toml` selects shared React guidance, `/review-react` and `/review-typescript`.
 `react-native.toml` selects the mobile and React parts plus Metro and `rn-logs` guidance, the
 `rn-logs` permission, and `/rn-upgrade`. `web.toml` selects browser automation guidance and
 permissions plus its four web skills; `react-web.toml` selects those web parts plus the React
@@ -37,7 +37,7 @@ unrelated projects.
 A project opts in:
 
 ```
-loadout init --project --harness claude
+loadout init project --harness claude
 loadout template add flutter     # templates = ["flutter"]
 loadout sync
 ```

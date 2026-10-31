@@ -151,7 +151,7 @@ skills = ["flutter-upgrade"]
 A project opts in by name:
 
 ```sh
-loadout init --project --harness claude
+loadout init project --harness claude
 loadout template add flutter     # templates = ["flutter"]
 loadout sync
 ```
@@ -162,7 +162,7 @@ Flutter and React Native select the same mobile parts directly:
 |---|---|
 | `mobile` | `agent-device` workflow, setup guidance, and shell permission; also usable alone for native apps |
 | `flutter` | Shared mobile tooling, Dart and simulator MCPs, simulator tool permissions, and `/flutter-upgrade` |
-| `react-base` | Shared React guidance and `/review-react`; normally selected through `react-native` or `react-web` |
+| `react-base` | Shared React guidance, `/review-react` and `/review-typescript`; normally selected through `react-native` or `react-web` |
 | `react-native` | Shared mobile tooling, React base, Splashdown-managed Metro ports, `rn-logs` guidance and permission, and `/rn-upgrade` |
 | `web` | Browser automation, web guidance, design, themes, and SEO skills |
 | `react-web` | Everything in `web` plus React base |

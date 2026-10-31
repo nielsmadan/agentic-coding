@@ -62,7 +62,7 @@ xcodebuild … > build.log 2>&1; grep -nE 'error:|errSec|warning: .*sign' build.
 ```sh
 adb devices                                   # confirm the device is attached
 ./gradlew installDebug                        # or: adb install -r <path>.apk
-adb reverse tcp:8081 tcp:8081                 # dev server reachable from the device
+adb reverse tcp:<port> tcp:<port>             # dev server port; React Native: $RCT_METRO_PORT
 adb logcat -T 200 | grep -i <tag>
 ```
 
