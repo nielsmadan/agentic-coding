@@ -6,6 +6,9 @@
   "agents": {
     "max_concurrent_threads_per_session": 16
   },
+  "features": {
+    "shell_snapshot": false
+  },
   "skills": {
     "max_context_tokens": 10000
   },
