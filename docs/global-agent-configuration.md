@@ -2,7 +2,7 @@
 
 Each agent's **global** (machine-wide) natural-language guidance — browser automation, secrets handling, git policy, etc. — is generated from a single source of truth: the fragments in **`loadout/instructions/`**. `loadout` assembles them into each agent's global instruction file, the same generate-and-check pattern used for permissions.
 
-**Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check`) rejects any drift:
+**Never hand-edit these generated files** — `loadout check --global` reports any drift:
 - `~/.claude/CLAUDE.md` (Claude; the autonomous profile writes the same path)
 - `~/.codex/AGENTS.md`, `~/.pi/agent/AGENTS.md`, `~/.config/opencode/AGENTS.md`, `~/.factory/AGENTS.md` — the shared document every non-Claude agent gets
 

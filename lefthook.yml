@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     sync-global:
-      run: loadout check --global
+      run: loadout check --global --staged
     publish-manifest:
       run: python3 publish/sync.py --check-manifest --check-sources
     sandbox-writable:

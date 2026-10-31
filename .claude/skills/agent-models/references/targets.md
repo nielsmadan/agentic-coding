@@ -232,4 +232,4 @@ and reasoning flags. Update it in the same pass, or the published skill drifts.
 1. `loadout sync --global` — required for targets 1, 2 and 6. Needs an
    unsandboxed shell (`claude-raw`), since it writes outside `~/wrksp`.
 2. `source ~/.airc` — reloads targets 3–5 in the current shell. Idempotent.
-3. `loadout check --global` — must be clean; the lefthook pre-commit hook runs it.
+3. `loadout check --global` — must be clean.

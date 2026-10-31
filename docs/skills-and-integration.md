@@ -120,7 +120,7 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 Shell-command and MCP permissions for all four agents (Claude, Codex, OpenCode, Pi) are generated from a single source of truth: **`loadout/permissions.toml`**. The renderers live in **`loadout`** (a separate tool, installed on `PATH`); `loadout.toml` declares which file each one writes.
 
-**Never hand-edit a generated file** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift. `loadout.toml` names the slices, not the destinations — those come from loadout's agent preset, so `loadout explain <fragment>` or `loadout check --global` is what tells you where something lands. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. One exception lands here: `loadout/defaults/codex.owned`, the record of which keys loadout manages in `config.toml` rather than a config file itself.
+**Never hand-edit a generated file** — `loadout sync` refuses to overwrite one, and `loadout check --global` reports the drift. `loadout.toml` names the slices, not the destinations — those come from loadout's agent preset, so `loadout explain <fragment>` or `loadout check --global` is what tells you where something lands. Nearly all of them are now written **straight to the machine path the agent reads** and are not staged in this repo at all — `~/.claude/settings.json`, `~/.codex/rules/permissions.rules`, `~/.codex/config.toml` and the rest. One exception lands here: `loadout/defaults/codex.owned`, the record of which keys loadout manages in `config.toml` rather than a config file itself.
 
 **Some outputs are only half generated.** Where a file also holds hand-maintained settings, that half lives in a **base document** which is an input and is never written:
 
@@ -160,7 +160,7 @@ Which MCP servers **exist** machine-wide comes from a single source of truth: **
 
 loadout renders both, and for Codex it renders them **together**: definitions and approval policy share the `[mcp_servers.<name>]` table, so one renderer emits both. Two writers would declare that table twice and Codex would refuse to parse its own config.
 
-**Never hand-edit these generated files** — a lefthook pre-commit hook (`loadout check --global`) rejects any drift:
+**Never hand-edit these generated files** — `loadout check --global` reports any drift:
 - `$CLAUDE_CONFIG_DIR/.claude.json` (the `mcpServers` key only; the ~100 keys beside it are Claude's own runtime state and are left untouched)
 - `~/.codex/config.toml` (`[mcp_servers.*]`, written directly; loadout owns that key and leaves the rest of the file alone)
 - `~/.config/opencode/opencode.json` (the `mcp` key only)

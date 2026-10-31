@@ -203,7 +203,7 @@ No loadout sync is needed for extraction constants. For coding changes:
 ```bash
 loadout sync --global     # required for opencode; needs an unsandboxed shell
 source ~/.airc            # reloads clor / ocs / occli
-loadout check --global    # must be clean — the pre-commit hook runs it
+loadout check --global    # must be clean
 prat --config pratfall/config.toml config validate
 ```
 
@@ -302,4 +302,4 @@ id verbatim.
 **Cause:** `loadout/settings/opencode.json` is a loadout *source*. The file
 OpenCode reads is `~/.config/opencode/opencode.json`, which is generated.
 **Solution:** Run `loadout sync --global` from an unsandboxed shell. Never edit
-the generated file — `loadout check --global` rejects the drift at commit.
+the generated file — `loadout sync` refuses to overwrite a hand-edited output.
