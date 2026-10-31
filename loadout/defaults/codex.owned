@@ -3,6 +3,7 @@
 agents.max_concurrent_threads_per_session
 approval_policy
 approvals_reviewer
+check_for_update_on_startup
 developer_instructions
 features.shell_snapshot
 model
