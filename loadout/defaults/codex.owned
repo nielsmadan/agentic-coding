@@ -5,6 +5,7 @@ approval_policy
 approvals_reviewer
 check_for_update_on_startup
 developer_instructions
+features.daemon_auto_start
 features.shell_snapshot
 model
 model_reasoning_effort
