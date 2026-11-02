@@ -11,6 +11,17 @@
       "matcher": "*"
     }
   ],
+  "PostModelSwitch": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent claude --event PostModelSwitch",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
   "PostToolUse": [
     {
       "hooks": [
