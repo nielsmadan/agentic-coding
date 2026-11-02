@@ -10,5 +10,6 @@ features.shell_snapshot
 model
 model_reasoning_effort
 skills.max_context_tokens
+tui.auto_recap
 tui.keymap.chat.edit_queued_message
 tui.whimsy

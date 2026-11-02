@@ -16,6 +16,7 @@
   },
   "tui": {
     "whimsy": false,
+    "auto_recap": false,
     "keymap": {
       "chat": {
         "edit_queued_message": "alt-o"
