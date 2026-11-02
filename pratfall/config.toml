@@ -25,8 +25,12 @@ command_prefix = ["sops-exec"]
 
 # --- /second-opinion advisors ---------------------------------------------
 
+# Advisors read code at high effort; the slower ones need up to ~10 minutes on
+# a plan or code review, so each sets timeout = 600.
+
 [profiles.advisor-claude]
 agent = "claude"
+timeout = 600
 tools = ["Read", "Grep", "Glob"]
 native_args = ["--disable-slash-commands"]
 
@@ -41,6 +45,7 @@ native_args = ["--disable-slash-commands"]
 # nono is the boundary; this profile is not read-only in an unsandboxed session.
 [profiles.advisor-codex]
 agent = "codex"
+timeout = 600
 native_args = [
   "--sandbox", "danger-full-access",
   "--skip-git-repo-check",
@@ -51,6 +56,7 @@ native_args = [
 
 [profiles.advisor-pi]
 agent = "pi"
+timeout = 600
 model = "opencode-go/glm-5.3"
 effort = "high"
 tools = ["read", "grep", "find", "ls"]
@@ -58,12 +64,14 @@ native_args = ["--no-session"]
 
 [profiles.advisor-opencode]
 agent = "opencode"
+timeout = 600
 model = "opencode-go/kimi-k3"
 effort = "max"
 native_args = ["--agent", "plan"]
 
 [profiles.advisor-droid]
 agent = "droid"
+timeout = 600
 model = "gemini-4-argon"
 effort = "high"
 tools = ["Read", "Glob", "Grep", "LS"]

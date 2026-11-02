@@ -441,7 +441,7 @@ Claude, Codex, Pi and OpenCode, the three CLIs the session is not running as.
 
 **Arguments:**
 - `--quick` - Single pass, no iteration
-- `--timeout=<seconds>` - Timeout per advisor (default `300`)
+- `--timeout=<seconds>` - Timeout per advisor (default: each advisor profile's `600`)
 - `--words=<n>` - Max words per advisor response (default `500`)
 
 **Example:** `/second-opinion --quick`

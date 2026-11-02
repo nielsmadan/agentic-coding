@@ -2,7 +2,7 @@
 name: second-opinion
 description: Get external AI opinions on a problem or question. Use when you want diverse perspectives from the agent CLIs you are not running (Claude, Codex, Pi, OpenCode, Droid).
 compatibility: Requires pratfall (`prat`) 0.9.1 or newer on PATH plus at least one of claude, codex, pi, opencode or droid besides the one you are running as. Pi and OpenCode advisors need an OpenCode Go key in `OPENCODE_API_KEY`.
-argument-hint: '[--quick] [--timeout=300] [--words=500] <question or context>'
+argument-hint: '[--quick] [--timeout=SECONDS] [--words=500] <question or context>'
 effort: high
 ---
 
@@ -25,7 +25,7 @@ Get input from the available independent advisors on the current problem or ques
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--quick` | off | Single pass, no iteration |
-| `--timeout` | `300` | Timeout per advisor in seconds |
+| `--timeout` | profile (`600`) | Timeout per advisor in seconds; overrides each advisor profile's `timeout` |
 | `--words` | `500` | Max words per advisor response |
 
 ## Gotchas
@@ -93,36 +93,38 @@ Run the advisor commands in parallel — skipping the CLI you are running as. Ea
 names a `prat` profile that already carries that advisor's model, reasoning level
 and read-only guards, and reads the prompt with `-f .second-opinion.md`. All
 advisors read the files the prompt points them at, typically answering in
-~15–25s; allow longer for a question that spans many files.
+1–3 minutes; a plan or code review can take close to 10.
 
-Pass `--timeout {timeout}` so prat enforces the deadline itself and reports which
-advisor ran out, and give the Bash tool a slightly longer timeout so prat is the
-one that trips first. `--timeout` covers the agent run, **not** prat's stdin read,
-so it is not a backstop for a missing `</dev/null`.
+Each advisor profile sets its own deadline (600s), which prat enforces and
+reports by advisor name. Add `--timeout {timeout}` after the profile name only
+when the user passed `--timeout`. Run the advisors in the background and give the
+shell tool a timeout 30s longer than prat's (630000 ms by default) so prat is the
+one that trips first. prat's timeout covers the agent run, **not** prat's stdin
+read, so it is not a backstop for a missing `</dev/null`.
 
 **Claude:**
 ```bash
-prat advisor-claude --timeout {timeout} -f .second-opinion.md </dev/null
+prat advisor-claude -f .second-opinion.md </dev/null
 ```
 
 **Codex:**
 ```bash
-prat advisor-codex --timeout {timeout} -f .second-opinion.md </dev/null
+prat advisor-codex -f .second-opinion.md </dev/null
 ```
 
 **Pi:**
 ```bash
-prat advisor-pi --timeout {timeout} -f .second-opinion.md </dev/null
+prat advisor-pi -f .second-opinion.md </dev/null
 ```
 
 **OpenCode:** the inline config denies plan mode's task tool and applies only to this process:
 ```bash
-OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode --timeout {timeout} -f .second-opinion.md </dev/null
+OPENCODE_CONFIG_CONTENT='{"agent":{"plan":{"permission":{"task":"deny"}}}}' prat advisor-opencode -f .second-opinion.md </dev/null
 ```
 
 **Droid:** the profile pins Gemini 4 Argon at high effort and permits only file reading and search:
 ```bash
-prat advisor-droid --timeout {timeout} -f .second-opinion.md </dev/null
+prat advisor-droid -f .second-opinion.md </dev/null
 ```
 
 Use the profiles as configured, including in `--quick` mode. Change an advisor's
@@ -204,10 +206,10 @@ rm .second-opinion.md
 
 ## Timeouts
 
-Pass the `{timeout}` value (default 300s) to each advisor as `prat --timeout`,
-and set the Bash tool's own timeout a little higher so prat trips first and can
-name the advisor that ran out. `[defaults] timeout` in the prat config is the
-fallback when `--timeout` is omitted.
+Each `advisor-*` profile in `~/.config/pratfall/config.toml` sets `timeout = 600`;
+change it there rather than here. A user-supplied `--timeout` is passed to prat as
+`--timeout {timeout}` and overrides the profile. Set the shell tool's own timeout
+30s above prat's so prat trips first and can name the advisor that ran out.
 
 ## Error Handling
 
@@ -240,4 +242,4 @@ fallback when `--timeout` is omitted.
 ## Troubleshooting
 
 ### Advisor times out or fails to respond
-**Solution:** Increase the timeout with `--timeout=600` or use `--quick` to skip iteration.
+**Solution:** Increase the timeout with `--timeout=900` or use `--quick` to skip iteration.
