@@ -28,6 +28,12 @@ Do not keep retrying the same approach. Each tier forces a fresh perspective.
 
 **Never report git state from memory.** Before saying anything is uncommitted, unpushed, unstaged, or untracked — including in a closing summary — run `git status` (and `git log @{u}..` for unpushed commits) and report what they show. The user commits and pushes outside the session, so state observed earlier in the turn is stale by default.
 
+## Long-Running Commands
+
+**Give every test suite, build, or install a hard deadline.** Wrap it in `timeout <seconds>` at about three times its normal duration, or 15 minutes when you don't know it. A tool-call timeout is not a deadline: a harness may move the command to the background when it expires instead of killing it, and a hung run then holds a core and its memory indefinitely. Exit 124 means it hung — report that and find the stuck part rather than rerunning the same command.
+
+**A background run that has outlived that deadline is hung, not slow.** Don't wait on it for a completion notice that may never come: stop it and treat it as a hang. This holds across a context compaction too — a summary saying a run is still going is not evidence that it is making progress.
+
 ## Preserve User Edits
 
 When a system-reminder shows the user modified a file (especially "the change was intentional"), treat those edits as load-bearing. When you later edit that file for an unrelated reason, do not reword their comments, rename their variables, or reformat lines they chose to format a certain way. If a refactor genuinely requires changing one of their choices, flag it out loud first — never silently revert it inside a larger edit. When in doubt, keep their version.
