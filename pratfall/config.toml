@@ -56,11 +56,10 @@ effort = "high"
 tools = ["read", "grep", "find", "ls"]
 native_args = ["--no-session"]
 
-# Effort rides on the model as #variant: prat 1.0.0 renders effort as --variant,
-# which OpenCode 2 rejects.
 [profiles.advisor-opencode]
 agent = "opencode"
-model = "opencode-go/kimi-k3#max"
+model = "opencode-go/kimi-k3"
+effort = "max"
 native_args = ["--agent", "plan"]
 
 [profiles.advisor-droid]
