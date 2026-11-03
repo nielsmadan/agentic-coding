@@ -10,6 +10,8 @@ When the user asks you to commit, aim for a clean final history rather than maxi
 
 ### Commit Message Format
 
+This format covers my own repos: those whose `origin` is on GitHub under `nielsmadan` or `quantumcraftio`, and those with no remote at all. In any other repo, match the convention its recent history shows instead.
+
 Use only these three types — no others, no scopes:
 
 - **`feat`** — something was added that is noticeable by the user
