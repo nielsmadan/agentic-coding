@@ -1,4 +1,4 @@
-import type { DevPhase, DevPhaseRecord, DevPhaseSource } from '../types'
+import type { DevCheck, DevChecks, DevState } from '../types'
 import {
   digest,
   digestPrompt,
@@ -6,12 +6,16 @@ import {
   isCheckpoint,
   MAX_TOKENS,
   MODEL_TIMEOUT_MS,
-  phaseOfSkill,
-  provisionalPhase,
   retitle,
+  sameChecks,
+  skillEffect,
+  UNCHECKED,
+  unearnedChecks,
+  unknownStale,
   verdictState,
-} from '../core/phase'
-import type { DevPhaseState } from '../core/phase'
+  withCheck,
+  withoutChecks,
+} from '../core/checklist'
 import { bandLine } from './band'
 import type { BandTheme } from './band'
 import {
@@ -70,7 +74,7 @@ export type PiContext<S extends Signal = Signal> = {
 
 export type Pi<S extends Signal = Signal> = {
   on(event: string, handler: (event: never, ctx: PiContext<S>) => unknown): unknown
-  appendEntry(customType: string, data: DevPhaseState): void
+  appendEntry(customType: string, data: DevState): void
   setSessionName(name: string): void
   getSessionName(): string | undefined
   getCommands(): readonly PiCommand[]
@@ -89,7 +93,7 @@ export type PiEvents = {
   agent_settled: { aborted: boolean }
 }
 
-type Ask = { generation: number; serial: number }
+type Ask = { generation: number; serial: number; held: readonly DevCheck[] }
 
 type Reply = { kind: 'answered'; text: string } | { kind: 'failed'; reason: string; isRetryable: boolean } | { kind: 'unavailable' }
 
@@ -104,10 +108,7 @@ const MODELS = [
   ['openrouter', 'google/gemini-3.1-flash-lite'],
 ] as const
 
-const EMPTY: DevPhaseState = { record: null, topic: null }
-
-const withRecord = (current: DevPhaseRecord | null, next: DevPhaseRecord | null): DevPhaseRecord | null =>
-  current !== null && next !== null && current.phase === next.phase && current.source === next.source ? current : next
+const EMPTY: DevState = { checks: UNCHECKED, topic: null }
 
 const replyText = (reply: ModelReply): string =>
   reply.content
@@ -128,7 +129,6 @@ export const createDevPhase =
     let lastTitle: string | undefined
     let skillOf: SkillOf = () => undefined
     let repaint: Repaint | undefined
-    let isSkillTurn = false
     let isDirty = false
     let isClassifying = false
     let hasWarned = false
@@ -136,6 +136,7 @@ export const createDevPhase =
     let generation = 0
     let serial = 0
     let queued: Ask | undefined
+    let turnChecks = new Map<DevCheck, boolean>()
     let idleTimer: unknown
 
     const on = <K extends keyof PiEvents>(
@@ -180,10 +181,9 @@ export const createDevPhase =
       }
     }
 
-    const setPhase = (phase: DevPhase, source: DevPhaseSource): void => {
-      const record = withRecord(state.record, { phase, at: deps.now(), source })
-      if (record === state.record) return
-      state = { ...state, record }
+    const setChecks = (checks: DevChecks): void => {
+      if (sameChecks(state.checks, checks)) return
+      state = { ...state, checks }
       changed()
     }
 
@@ -194,11 +194,11 @@ export const createDevPhase =
 
     const onSkill = (skill: string | undefined): void => {
       if (skill === undefined) return
-      const phase = phaseOfSkill(skill, state.record?.phase)
-      if (phase === undefined) return
-      isSkillTurn = true
-      generation += 1
-      setPhase(phase, 'skill')
+      const { check, isDirtying } = skillEffect(skill)
+      if (isDirtying) markDirty()
+      if (check === undefined) return
+      if (!turnChecks.has(check)) turnChecks.set(check, state.checks[check])
+      setChecks(withCheck(state.checks, check))
     }
 
     const cancelIdle = (): void => {
@@ -235,10 +235,12 @@ export const createDevPhase =
     }
 
     const applyVerdict = (ask: Ask, text: string): void => {
-      const next = verdictState(text, state, deps.now(), 'log')
+      const next = verdictState(text, state, deps.now(), ask.held)
       if (next === undefined) return deps.debug(`unparseable verdict: ${text.slice(0, 200)}`)
+      const unknown = unknownStale(text)
+      if (unknown.length > 0) deps.debug(`unknown stale checks: ${unknown.join(', ')}`)
       if (ask.generation !== generation || isDisposed) return
-      state = { topic: next.topic, record: withRecord(state.record, next.record) }
+      state = { ...state, checks: next.checks, topic: next.topic }
       changed()
       if (ctx?.isIdle() === true) commit()
     }
@@ -249,7 +251,7 @@ export const createDevPhase =
       const entries = context.sessionManager.getBranch().slice(-DIGEST_ENTRIES)
       const rows = digest(toDigestMessages(entries, skillOf))
       if (rows === '') return 'settled'
-      const reply = await askModel(context, digestPrompt(rows, state.topic))
+      const reply = await askModel(context, digestPrompt(state, rows))
       if (isDisposed) return 'settled'
       switch (reply.kind) {
         case 'answered':
@@ -261,7 +263,10 @@ export const createDevPhase =
         case 'unavailable':
           if (!hasWarned) {
             hasWarned = true
-            context.ui.notify(`dev-phase: no credentials for ${MODELS[0].join('/')}; phase labels are off`, 'warning')
+            context.ui.notify(
+              `dev-phase: no credentials for ${MODELS[0].join('/')}; feature names and check resets are off`,
+              'warning',
+            )
           }
           return 'settled'
       }
@@ -291,7 +296,7 @@ export const createDevPhase =
         })
     }
 
-    const hydrate = (branch: readonly PiEntry[], latest: DevPhaseState | undefined): void => {
+    const hydrate = (branch: readonly PiEntry[], latest: DevState | undefined): void => {
       state = latest ?? EMPTY
       saved = latest === undefined ? undefined : JSON.stringify(latest)
       isUnsaved = false
@@ -312,14 +317,14 @@ export const createDevPhase =
         (tui, theme) => {
           repaint = tui
           return {
-            render: width => [deps.truncate(bandLine(theme, state.record, state.topic), width)],
+            render: width => [deps.truncate(bandLine(theme, state.checks), width)],
             invalidate: () => undefined,
           }
         },
         { placement: 'aboveEditor' },
       )
       commit()
-      if (latest === undefined && hasHistory(branch)) runClassification({ generation, serial })
+      if (latest === undefined && hasHistory(branch)) runClassification({ generation, serial, held: [] })
     })
 
     on('session_tree', (e, c) => {
@@ -327,12 +332,12 @@ export const createDevPhase =
       if (!isActive) return
       cancelIdle()
       generation += 1
-      isSkillTurn = false
       isDirty = false
+      turnChecks = new Map()
       const branch = c.sessionManager.getBranch()
       const latest = latestState(branch)
       hydrate(branch, latest)
-      if (latest === undefined && hasHistory(branch)) runClassification({ generation, serial })
+      if (latest === undefined && hasHistory(branch)) runClassification({ generation, serial, held: [] })
     })
 
     on('session_shutdown', () => {
@@ -362,14 +367,9 @@ export const createDevPhase =
           if (!e.isError && typeof path === 'string') onSkill(skillOf(path))
           return
         case 'edit':
-        case 'write': {
-          if (e.isError || typeof path !== 'string') return
-          markDirty()
-          if (isSkillTurn) return
-          const phase = provisionalPhase(state.record?.phase, path)
-          if (phase !== undefined) setPhase(phase, 'edit')
+        case 'write':
+          if (!e.isError && typeof path === 'string') markDirty()
           return
-        }
         case 'bash':
           if (typeof command !== 'string') return
           if (!e.isError) onSkill(skillFromCommand(command, skillOf))
@@ -391,15 +391,17 @@ export const createDevPhase =
     on('agent_settled', e => {
       commit()
       if (!isActive) return
-      if (isSkillTurn) {
-        isSkillTurn = false
-        isDirty = false
+      const ran = turnChecks
+      turnChecks = new Map()
+      if (e.aborted || !lastRunAnswered) {
+        setChecks(withoutChecks(state.checks, unearnedChecks(ran)))
+        commit()
         return
       }
-      const isUnclassified = saved === undefined && state.record === null
-      if (!(isDirty || isUnclassified) || e.aborted || !lastRunAnswered) return
+      const isUnclassified = saved === undefined
+      if (!(isDirty || isUnclassified)) return
       isDirty = false
-      const ask = { generation, serial }
+      const ask = { generation, serial, held: [...ran.keys()] }
       idleTimer = deps.setTimer(() => {
         idleTimer = undefined
         runClassification(ask)

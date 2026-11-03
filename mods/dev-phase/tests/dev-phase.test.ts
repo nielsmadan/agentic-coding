@@ -2,6 +2,8 @@ import type { On, SessionMessage } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
+import { IDLE_MS as IDLE, UNCHECKED as NONE } from '../core/checklist'
+
 const SURFACES = ['terminal', 'desktop'] as const
 
 const BAND = {
@@ -23,18 +25,18 @@ const TURN = { answer: 'Done.', durationMs: 1000, isAborted: false, turnId: 't1'
 
 const START = { cwd: '/w', surface: 'terminal', isInteractive: true } as const
 
-const IDLE = 30_000
-
 const EDIT = { tool: 'Edit', file_path: '/w/a.ts', old_string: 'a', new_string: 'b' } as const
 
-const stored = (phase: string) => ({ phase, at: 1, source: 'skill' })
+const ALL = { 'code-review': true, qa: true, 'qa-tour': true }
+
+const CROSSED = '✗ code-review  ✗ qa  ✗ qa-tour'
 
 type World = {
   store?: Record<string, unknown>
   turns?: number
   messages?: SessionMessage[]
   fork?: (prompt: string) => unknown
-  complete?: (model: string) => unknown
+  complete?: (model: string, prompt: string) => unknown
   toolCall?: () => unknown
   promptTitle?: string
 }
@@ -50,9 +52,11 @@ function engine(on: On, world: World = {}) {
   on('session.turns', () => ({ value: world.turns ?? 0 }))
   on('session.messages', () => ({ value: world.messages ?? [] }))
   on('ui.log', () => ({ value: undefined }))
-  on('model.fork', async ($, e) => ({ value: (await (world.fork ?? (() => answered('PHASE: none')))(e.prompt)) as never }))
+  on('model.fork', async ($, e) => ({
+    value: (await (world.fork ?? (() => answered('FEATURE: none\nSTALE: none')))(e.prompt)) as never,
+  }))
   on('model.complete', async ($, e) => ({
-    value: (await (world.complete ?? (() => answered('PHASE: none')))(e.model)) as never,
+    value: (await (world.complete ?? (() => answered('FEATURE: none\nSTALE: none')))(e.model, e.prompt)) as never,
   }))
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('turn.start', ($, e) => ({ turnId: e.turnId }))
@@ -81,68 +85,174 @@ function gate() {
   return { opened, open }
 }
 
-async function texts($: Engine): Promise<string[]> {
-  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+async function rows($: Engine, surface: (typeof SURFACES)[number] = 'terminal'): Promise<string> {
+  const ui = await $.ui.mount({ ...BAND, surface })
   const found = await ui.findAll({ type: 'Text' })
   await ui.unmount()
-  return found.map(element => element.text)
+  const texts = found.map(element => element.text)
+  return texts
+    .flatMap((text, index) => (index % 2 === 0 ? [`${text}${texts[index + 1] ?? ''}`] : []))
+    .join('  ')
 }
 
-async function expectShown($: Engine, text: string): Promise<void> {
-  for (const surface of SURFACES) {
-    const ui = await $.ui.mount({ ...BAND, surface })
-    const found = await ui.findAll({ type: 'Text' })
-    expect(found.map(element => element.text).join('')).toContain(text)
-    await ui.unmount()
-  }
+async function expectBand($: Engine, band: string): Promise<void> {
+  for (const surface of SURFACES) expect(await rows($, surface)).toBe(band)
 }
 
 async function settle(clock: { advance: (ms: number) => Promise<void> }): Promise<void> {
   await clock.advance(1)
   await clock.advance(1)
 }
-
-test('a fresh session shows that it has no phase yet', async ($, on) => {
+test('a fresh session shows every check crossed on one line', async ($, on) => {
   engine(on)
   await $.session.start(START)
-  await expectShown($, 'no phase yet')
+  await expectBand($, CROSSED)
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const marks = await ui.findAll({ type: 'Text', text: /✗/ })
+  expect(marks.map(element => element.props.color)).toEqual(['error', 'error', 'error'])
+  await ui.unmount()
 })
 
-test('a workflow skill shows its phase', async ($, on) => {
+test('a checklist skill ticks its check in green and keeps it across a resume', async ($, on) => {
   engine(on)
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'qa', text: 'qa' })
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await ui.find({ type: 'Text', text: /✓/ }))?.props.color).toBe('success')
+  await ui.unmount()
+  await $.classic.SessionStart({ source: 'clear', session_id: 'sess-2' })
+  await $.classic.SessionStart({ source: 'resume', session_id: 'sess-1' })
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+})
+
+test('each checklist skill ticks only its own check', async ($, on) => {
+  engine(on)
+  await $.skill.prompt({ skill: 'qa-tour', text: 'tour' })
   await $.skill.prompt({ skill: 'code-review', text: 'review' })
-  await expectShown($, 'code review')
+  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
 })
 
-test('an edit after code review shows review fixes until the model answers', async ($, on) => {
-  const clock = engine(on, {
-    store: { 'session:sess-1': stored('code review') },
-    fork: () => answered('PHASE: code review'),
-  })
+test('a skill a subagent runs ticks nothing and asks nothing', async ($, on) => {
+  const held = gate()
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
+  const clock = engine(on, { fork: fork.reply, toolCall: () => held.opened.then(() => ({ result: {}, text: 'ok' })) })
   await $.session.start(START)
-  await $.tool.call(EDIT)
-  await expectShown($, 'review fixes')
+  const subagentSkill = { tool: 'Skill', skill: 'code-review', agentId: 'sub-1' } as const
+  const call = $.tool.call(subagentSkill)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  held.open()
+  await call
+  await expectBand($, CROSSED)
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
-  await expectShown($, 'code review')
+  expect(fork.prompts).toEqual([])
 })
 
-test('an idle session asks the fork and shows its phase and feature', async ($, on) => {
-  const fork = recorder([answered('PHASE: agent QA\nFEATURE: dev-phase mod')])
-  const clock = engine(on, { fork: fork.reply })
+test('after a subagent finishes a skill, the main agent running it ticks it', async ($, on) => {
+  engine(on)
+  await $.session.start(START)
+  const subagentSkill = { tool: 'Skill', skill: 'plugin:code-review', agentId: 'sub-1' } as const
+  await $.tool.call(subagentSkill)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+})
+
+test('a skill the main agent runs through the Skill tool ticks its check', async ($, on) => {
+  const held = gate()
+  engine(on, { toolCall: () => held.opened.then(() => ({ result: {}, text: 'ok' })) })
+  await $.session.start(START)
+  const mainSkill = { tool: 'Skill', skill: 'qa' } as const
+  const call = $.tool.call(mainSkill)
+  await $.skill.prompt({ skill: 'qa', text: 'qa' })
+  held.open()
+  await call
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+})
+
+test('an interrupted turn takes back the checks its skills newly set', async ($, on) => {
+  engine(on, { store: { 'session:sess-1': { ...NONE, 'code-review': true } } })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await $.skill.prompt({ skill: 'qa', text: 'qa' })
+  await expectBand($, '✓ code-review  ✓ qa  ✗ qa-tour')
+  await $.turn.complete({ ...TURN, reason: 'aborted', isAborted: true })
+  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+})
+
+test("a verdict cannot cross a check its own turn ran, but crosses older ones", async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: code-review, qa')])
+  const clock = engine(on, { store: { 'session:sess-1': { ...NONE, qa: true } }, fork: fork.reply })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await $.tool.call(EDIT)
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
+  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+})
+
+test('an idle session after an edit asks the fork, crosses what went stale and names the feature', async ($, on) => {
+  const fork = recorder([answered('FEATURE: dev-phase mod\nSTALE: qa')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
+  await $.session.start(START)
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await clock.advance(IDLE - 1)
   expect(fork.prompts).toEqual([])
   await clock.advance(1)
-  expect(fork.prompts).toEqual([expect.stringContaining('PHASE: <planning|')])
-  await expectShown($, 'agent QA')
-  await expectShown($, 'dev-phase mod')
+  expect(fork.prompts).toEqual([expect.stringContaining('Set now: code-review, qa, qa-tour.')])
+  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
+  const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-1' })
+  expect(result.sessionTitle).toBe('dev-phase mod')
+})
+
+test('a verdict that nothing went stale keeps every check', async ($, on) => {
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: () => answered('FEATURE: x\nSTALE: none') })
+  await $.session.start(START)
+  await $.tool.call(EDIT)
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+})
+
+test('a planning skill asks the fork after its turn, which can start a new feature', async ($, on) => {
+  const fork = recorder([answered('FEATURE: login bug\nSTALE: code-review, qa, qa-tour')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'plan', text: 'plan the login fix' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
+  await expectBand($, CROSSED)
+  const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-1' })
+  expect(result.sessionTitle).toBe('login bug')
+})
+
+test('a checklist skill turn asks the fork so earlier checks are judged again', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: qa')])
+  const clock = engine(on, { store: { 'session:sess-1': { ...NONE, qa: true } }, fork: fork.reply })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([expect.stringContaining('Set now: code-review, qa.')])
+  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+})
+
+test('a turn with another skill and no edits asks nothing', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
+  const clock = engine(on, { fork: fork.reply })
+  await $.skill.prompt({ skill: 'status', text: 'status' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([])
 })
 
 test('a reply before the idle wait moves the question to the next turn', async ($, on) => {
-  const fork = recorder([answered('PHASE: agent QA')])
-  const clock = engine(on, { fork: fork.reply })
+  const fork = recorder([answered('FEATURE: x\nSTALE: qa')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
+  await $.session.start(START)
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await $.turn.start({ text: 'next', turnId: 't2' })
@@ -151,38 +261,45 @@ test('a reply before the idle wait moves the question to the next turn', async (
   await $.turn.complete({ ...TURN, turnId: 't2' })
   await clock.advance(IDLE)
   expect(fork.prompts).toHaveLength(1)
-  await expectShown($, 'agent QA')
+  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
 })
 
 test('an unanswered fork is asked again after the next turn', async ($, on) => {
-  const fork = recorder([unanswered('api-error'), answered('PHASE: wrap-up')])
-  const clock = engine(on, { store: { 'session:sess-1': stored('code review') }, fork: fork.reply })
+  const fork = recorder([unanswered('api-error'), answered('FEATURE: x\nSTALE: code-review')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
   await $.session.start(START)
   await $.tool.call({ tool: 'Bash', command: 'git commit -m x' })
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
-  await expectShown($, 'code review')
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
   await $.turn.complete({ ...TURN, turnId: 't2' })
   await clock.advance(IDLE)
   expect(fork.prompts).toHaveLength(2)
-  await expectShown($, 'wrap-up')
+  await expectBand($, '✗ code-review  ✓ qa  ✓ qa-tour')
 })
 
-test('with nothing to fork the log is labelled by haiku', async ($, on) => {
+test('with nothing to fork the log is judged by haiku', async ($, on) => {
+  const prompts: string[] = []
   const clock = engine(on, {
-    messages: [{ role: 'user', text: 'commit it', toolUses: [] }],
+    store: { 'session:sess-1': ALL },
+    messages: [{ role: 'user', text: 'now the login bug', toolUses: [] }],
     fork: () => unanswered('nothing-to-fork'),
-    complete: () => answered('PHASE: wrap-up'),
+    complete: (model, prompt) => {
+      prompts.push(prompt)
+      return answered('FEATURE: login bug\nSTALE: code-review, qa, qa-tour')
+    },
   })
+  await $.session.start(START)
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
   await settle(clock)
-  await expectShown($, 'wrap-up')
+  expect(prompts).toEqual([expect.stringContaining('user: now the login bug')])
+  await expectBand($, CROSSED)
 })
 
 test('only answered main-agent turns ask the fork', async ($, on) => {
-  const fork = recorder([answered('PHASE: implementation')])
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
   const clock = engine(on, { fork: fork.reply })
   await $.tool.call(EDIT)
   await $.turn.complete({ ...TURN, agentId: 'sub-1' })
@@ -195,44 +312,111 @@ test('only answered main-agent turns ask the fork', async ($, on) => {
   expect(fork.prompts).toHaveLength(1)
 })
 
-test('a failed edit leaves the phase as it was', async ($, on) => {
-  engine(on, {
-    store: { 'session:sess-1': stored('code review') },
-    toolCall: () => ({ result: {}, text: 'no match', isError: true }),
-  })
-  await $.session.start(START)
-  await $.tool.call(EDIT)
-  await expectShown($, 'code review')
+test('a check run asks the fork, an ordinary shell command does not', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
+  const clock = engine(on, { fork: fork.reply })
+  await $.tool.call({ tool: 'Bash', command: 'ls -la' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([])
+  await $.tool.call({ tool: 'Bash', command: 'npm test' })
+  await $.turn.complete({ ...TURN, turnId: 't2' })
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
 })
 
-test('a verdict that a skill overtook is dropped', async ($, on) => {
-  const held = gate()
+test('a written file asks the fork, a denied edit does not', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
+  let isDenied = true
   const clock = engine(on, {
-    fork: async () => {
-      await held.opened
-      return answered('PHASE: implementation')
-    },
+    fork: fork.reply,
+    toolCall: () => (isDenied ? { deny: 'not allowed' } : { result: {}, text: 'ok' }),
   })
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
-  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  expect(fork.prompts).toEqual([])
+  isDenied = false
+  await $.tool.call({ tool: 'Write', file_path: '/w/b.ts', content: 'x' })
+  await $.turn.complete({ ...TURN, turnId: 't2' })
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
+})
+
+for (const [reason, asks] of [
+  ['aborted', 2],
+  ['empty-reply', 1],
+] as const) {
+  test(`a fork that ends ${reason} is asked ${asks === 2 ? 'again' : 'no more'} after the next turn`, async ($, on) => {
+    const fork = recorder([unanswered(reason), answered('FEATURE: x\nSTALE: none')])
+    const clock = engine(on, { fork: fork.reply })
+    await $.tool.call(EDIT)
+    await $.turn.complete(TURN)
+    await clock.advance(IDLE)
+    await $.turn.complete({ ...TURN, turnId: 't2' })
+    await clock.advance(IDLE)
+    expect(fork.prompts).toHaveLength(asks)
+  })
+}
+
+test('clearing the session drops an unasked edit', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none')])
+  const clock = engine(on, { fork: fork.reply })
+  await $.tool.call(EDIT)
+  await $.turn.complete({ ...TURN, reason: 'aborted', isAborted: true })
+  await $.classic.SessionStart({ source: 'clear', session_id: 'sess-3' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([])
+})
+
+test('a failed edit asks nothing', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: qa')])
+  const clock = engine(on, {
+    store: { 'session:sess-1': ALL },
+    fork: fork.reply,
+    toolCall: () => ({ result: {}, text: 'no match', isError: true }),
+  })
+  await $.session.start(START)
+  await $.tool.call(EDIT)
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([])
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+})
+
+test('a verdict that a checklist skill overtook is dropped', async ($, on) => {
+  const held = gate()
+  const clock = engine(on, {
+    store: { 'session:sess-1': ALL },
+    fork: async () => {
+      await held.opened
+      return answered('FEATURE: x\nSTALE: qa')
+    },
+  })
+  await $.session.start(START)
+  await $.tool.call(EDIT)
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  await $.skill.prompt({ skill: 'qa', text: 'qa' })
   held.open()
   await settle(clock)
-  await expectShown($, 'code review')
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
 })
 
 test('a turn that ends while the fork runs is asked about when it returns', async ($, on) => {
   const gates = [gate(), gate()]
-  const answers = ['PHASE: agent QA', 'PHASE: QA fixes']
+  const answers = ['FEATURE: x\nSTALE: qa', 'FEATURE: x\nSTALE: qa-tour']
   const prompts: string[] = []
   const clock = engine(on, {
+    store: { 'session:sess-1': ALL },
     fork: async prompt => {
       const index = prompts.push(prompt) - 1
       await gates[index]?.opened
       return answered(answers[index] ?? '')
     },
   })
+  await $.session.start(START)
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
@@ -241,70 +425,48 @@ test('a turn that ends while the fork runs is asked about when it returns', asyn
   await clock.advance(IDLE)
   gates[0]?.open()
   await settle(clock)
-  await expectShown($, 'implementation')
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
   gates[1]?.open()
   await settle(clock)
   expect(prompts).toHaveLength(2)
-  await expectShown($, 'QA fixes')
+  await expectBand($, '✓ code-review  ✓ qa  ✗ qa-tour')
 })
 
-test('a skill turn keeps the skill phase and asks no model', async ($, on) => {
-  const fork = recorder([answered('PHASE: implementation')])
-  const clock = engine(on, { fork: fork.reply })
-  await $.skill.prompt({ skill: 'commit', text: 'commit' })
-  await $.tool.call(EDIT)
-  await $.turn.complete(TURN)
-  await clock.advance(IDLE)
-  expect(fork.prompts).toEqual([])
-  await expectShown($, 'wrap-up')
-})
-
-test('a skill a subagent runs leaves the main phase alone', async ($, on) => {
-  const held = gate()
-  engine(on, {
-    store: { 'session:sess-1': stored('implementation') },
-    toolCall: () => held.opened.then(() => ({ result: {}, text: 'ok' })),
-  })
-  await $.session.start(START)
-  const subagentSkill = { tool: 'Skill', skill: 'review-security', agentId: 'sub-1' } as const
-  const call = $.tool.call(subagentSkill)
-  await $.skill.prompt({ skill: 'review-security', text: 'review' })
-  held.open()
-  await call
-  await expectShown($, 'implementation')
-})
-
-test('a model answer of none clears the band and is remembered', async ($, on) => {
+test('stored checks show when the session starts and ask nothing', async ($, on) => {
   const models: string[] = []
   const clock = engine(on, {
-    store: { 'session:sess-1': stored('code review'), 'topic:sess-1': { name: 'csv export', at: 1 } },
+    store: { 'session:sess-1': { ...NONE, 'qa-tour': true }, 'topic:sess-1': { name: 'csv export', at: 1 } },
     turns: 3,
-    messages: [{ role: 'user', text: 'what is the weather', toolUses: [] }],
-    fork: () => answered('PHASE: none\nFEATURE: none'),
+    messages: [{ role: 'user', text: 'hi', toolUses: [] }],
     complete: model => {
       models.push(model)
-      return answered('PHASE: implementation')
+      return answered('FEATURE: x\nSTALE: none')
     },
   })
   await $.session.start(START)
-  await $.tool.call(EDIT)
-  await $.turn.complete(TURN)
-  await clock.advance(IDLE)
-  expect(await texts($)).toEqual(['● no phase yet'])
-  await $.classic.SessionStart({ source: 'resume', session_id: 'sess-1' })
   await settle(clock)
   expect(models).toEqual([])
-  expect(await texts($)).toEqual(['● no phase yet'])
+  await expectBand($, '✗ code-review  ✗ qa  ✓ qa-tour')
 })
 
-test('a stored phase and feature show when the session starts', async ($, on) => {
-  engine(on, { store: { 'session:sess-1': stored('manual QA'), 'topic:sess-1': { name: 'csv export', at: 1 } } })
+test('a session stored before the checklist starts crossed and asks nothing', async ($, on) => {
+  const models: string[] = []
+  const clock = engine(on, {
+    store: { 'session:sess-1': { phase: 'manual QA', at: 1, source: 'skill' } },
+    turns: 3,
+    messages: [{ role: 'user', text: 'hi', toolUses: [] }],
+    complete: model => {
+      models.push(model)
+      return answered('FEATURE: x\nSTALE: none')
+    },
+  })
   await $.session.start(START)
-  await expectShown($, 'manual QA')
-  await expectShown($, 'csv export')
+  await settle(clock)
+  expect(models).toEqual([])
+  await expectBand($, CROSSED)
 })
 
-test('a resumed session with nothing stored is labelled by haiku once', async ($, on) => {
+test('a resumed session with nothing stored is named by haiku once', async ($, on) => {
   const held = gate()
   const models: string[] = []
   const clock = engine(on, {
@@ -313,7 +475,7 @@ test('a resumed session with nothing stored is labelled by haiku once', async ($
     complete: async model => {
       models.push(model)
       await held.opened
-      return answered('PHASE: wrap-up\nFEATURE: csv export')
+      return answered('FEATURE: csv export\nSTALE: none')
     },
   })
   await $.session.start(START)
@@ -323,61 +485,50 @@ test('a resumed session with nothing stored is labelled by haiku once', async ($
   held.open()
   await settle(clock)
   expect(models).toEqual(['haiku'])
-  await expectShown($, 'wrap-up')
-  await expectShown($, 'csv export')
+  const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-1' })
+  expect(result.sessionTitle).toBe('csv export')
 })
 
-test('a session with a stored phase asks haiku nothing on start', async ($, on) => {
-  const models: string[] = []
-  const clock = engine(on, {
-    store: { 'session:sess-1': stored('planning') },
-    turns: 3,
-    messages: [{ role: 'user', text: 'plan it', toolUses: [] }],
-    complete: model => {
-      models.push(model)
-      return answered('PHASE: wrap-up')
-    },
-  })
-  await $.session.start(START)
-  await settle(clock)
-  expect(models).toEqual([])
-  await expectShown($, 'planning')
-})
-
-test('resuming another session in place shows its phase', async ($, on) => {
-  engine(on, { store: { 'session:sess-2': stored('QA fixes') } })
+test('resuming another session in place shows its checks', async ($, on) => {
+  engine(on, { store: { 'session:sess-2': { ...NONE, 'code-review': true } } })
   await $.classic.SessionStart({ source: 'resume', session_id: 'sess-2' })
-  await expectShown($, 'QA fixes')
+  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
 })
 
-test('clearing the session empties the band', async ($, on) => {
-  engine(on, { store: { 'session:sess-1': stored('code review'), 'topic:sess-1': { name: 'csv export', at: 1 } } })
+test('clearing the session crosses every check', async ($, on) => {
+  engine(on, { store: { 'session:sess-1': ALL, 'topic:sess-1': { name: 'csv export', at: 1 } } })
   await $.session.start(START)
   await $.classic.SessionStart({ source: 'clear', session_id: 'sess-3' })
-  expect(await texts($)).toEqual(['● no phase yet'])
+  await expectBand($, CROSSED)
 })
 
-test('a forked session inherits the phase and feature', async ($, on) => {
-  engine(on, { store: { 'session:sess-1': stored('code review'), 'topic:sess-1': { name: 'csv export', at: 1 } } })
+test('a forked session inherits the checks and feature', async ($, on) => {
+  engine(on, { store: { 'session:sess-1': { ...NONE, qa: true }, 'topic:sess-1': { name: 'csv export', at: 1 } } })
   await $.session.start(START)
   await $.classic.SessionStart({ source: 'fork', session_id: 'sess-2' })
   await $.classic.SessionStart({ source: 'clear', session_id: 'sess-3' })
   await $.classic.SessionStart({ source: 'resume', session_id: 'sess-2' })
-  await expectShown($, 'code review')
-  await expectShown($, 'csv export')
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-2' })
+  expect(result.sessionTitle).toBe('csv export')
+})
+
+test('a session forked from one with nothing recorded loads what the fork has stored', async ($, on) => {
+  engine(on, { store: { 'session:sess-2': { ...NONE, qa: true } } })
+  await $.session.start(START)
+  await $.classic.SessionStart({ source: 'fork', session_id: 'sess-2' })
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
 })
 
 test('starting a session prunes the least recently used sessions', async ($, on) => {
-  const others = Object.fromEntries(
-    Array.from({ length: 300 }, (_, index) => [`session:s${index}`, stored('implementation')]),
-  )
-  engine(on, { store: { 'session:sess-1': stored('wrap-up'), ...others } })
+  const others = Object.fromEntries(Array.from({ length: 300 }, (_, index) => [`session:s${index}`, ALL]))
+  engine(on, { store: { 'session:sess-1': { ...NONE, qa: true }, ...others } })
   await $.session.start(START)
-  await expectShown($, 'wrap-up')
+  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
   await $.classic.SessionStart({ source: 'resume', session_id: 's299' })
-  await expectShown($, 'implementation')
+  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
   await $.classic.SessionStart({ source: 'resume', session_id: 's0' })
-  expect(await texts($)).toEqual(['● no phase yet'])
+  await expectBand($, CROSSED)
 })
 
 test('the next prompt titles the session after its feature', async ($, on) => {
@@ -389,7 +540,7 @@ test('the next prompt titles the session after its feature', async ($, on) => {
 test('a renamed feature retitles the session the mod titled', async ($, on) => {
   const clock = engine(on, {
     store: { 'topic:sess-1': { name: 'dev-phase mod', at: 1 } },
-    fork: () => answered('PHASE: implementation\nFEATURE: login bug'),
+    fork: () => answered('FEATURE: login bug\nSTALE: none'),
   })
   await $.session.start(START)
   await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-1' })

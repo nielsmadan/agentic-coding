@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { digest } from '../core/phase'
+import { digest, UNCHECKED } from '../core/checklist'
 import {
   hasHistory,
   lastAssistantStop,
@@ -145,22 +145,23 @@ describe('toDigestMessages', () => {
 })
 
 describe('saved state', () => {
-  const record = { phase: 'planning', at: 1, source: 'skill' }
+  const checks = { ...UNCHECKED, qa: true }
 
   test('the last valid dev-phase entry wins over invalid and foreign ones', () => {
     const entries = [
-      saved({ record, topic: null }),
-      saved({ record: { phase: 'bogus', at: 1, source: 'skill' }, topic: null }),
-      saved({ record, topic: { bogus: 1 } }),
-      { type: 'custom', customType: 'other', data: { record: null, topic: null } },
+      saved({ checks, topic: null }),
+      saved({ checks: { qa: 'yes' }, topic: null }),
+      saved({ checks, topic: { bogus: 1 } }),
+      { type: 'custom', customType: 'other', data: { checks: UNCHECKED, topic: null } },
     ]
-    expect(latestState(entries)).toEqual({ record, topic: null })
+    expect(latestState(entries)).toEqual({ checks, topic: null })
   })
 
-  test('a stored none is kept as a decision', () => {
-    expect(latestState([saved({ record, topic: null }), saved({ record: null, topic: null })])).toEqual({
-      record: null,
-      topic: null,
+  test('an entry from before the checklist keeps its feature with every check crossed', () => {
+    const topic = { name: 'login bug', at: 1, titled: 'login bug' }
+    expect(latestState([saved({ record: { phase: 'planning', at: 1, source: 'skill' }, topic })])).toEqual({
+      checks: UNCHECKED,
+      topic,
     })
   })
 
@@ -170,12 +171,12 @@ describe('saved state', () => {
 
   test('the last title the mod gave survives a later entry without a topic', () => {
     const titled = { name: 'login bug', at: 1, titled: 'login bug' }
-    expect(latestTitle([saved({ record, topic: titled }), saved({ record: null, topic: null })])).toBe('login bug')
+    expect(latestTitle([saved({ checks, topic: titled }), saved({ checks, topic: null })])).toBe('login bug')
   })
 
   test('history means a user or assistant message', () => {
     expect(hasHistory([message({ role: 'user', content: 'hi' })])).toBe(true)
-    expect(hasHistory([message({ role: 'bashExecution', command: 'ls' }), saved({ record, topic: null })])).toBe(
+    expect(hasHistory([message({ role: 'bashExecution', command: 'ls' }), saved({ checks, topic: null })])).toBe(
       false,
     )
   })

@@ -1,6 +1,6 @@
 {
   "name": "dev-phase",
   "version": "0.1.0",
-  "description": "Shows the session's development phase above the prompt",
+  "description": "Shows a code-review / qa / qa-tour checklist above the prompt and names the session after its feature",
   "types": "./types/index.d.ts"
 }

@@ -1,5 +1,5 @@
-import { asRecord, asTopic } from '../core/phase'
-import type { DevPhaseState, DigestMessage, DigestToolUse } from '../core/phase'
+import { asChecks, asTopic, UNCHECKED } from '../core/checklist'
+import type { DevState, DigestMessage, DigestToolUse } from '../core/checklist'
 
 export type PiEntry = { type: string; customType?: string; data?: unknown; message?: unknown }
 
@@ -137,20 +137,22 @@ export const toDigestMessages = (entries: readonly PiEntry[], skillOf: SkillOf):
   })
 }
 
-const asState = (data: unknown): DevPhaseState | undefined => {
+const asState = (data: unknown): DevState | undefined => {
   if (!isFields(data)) return undefined
-  const record = data.record === null ? null : asRecord(data.record)
   const topic = data.topic === null ? null : asTopic(data.topic)
-  return record === undefined || topic === undefined ? undefined : { record, topic }
+  if (topic === undefined) return undefined
+  if (!('checks' in data)) return 'record' in data ? { checks: UNCHECKED, topic } : undefined
+  const checks = asChecks(data.checks)
+  return checks === undefined ? undefined : { checks, topic }
 }
 
-const savedStates = (entries: readonly PiEntry[]): DevPhaseState[] =>
+const savedStates = (entries: readonly PiEntry[]): DevState[] =>
   entries
     .filter(entry => entry.type === 'custom' && entry.customType === ENTRY_TYPE)
     .map(entry => asState(entry.data))
     .filter(state => state !== undefined)
 
-export const latestState = (entries: readonly PiEntry[]): DevPhaseState | undefined => savedStates(entries).at(-1)
+export const latestState = (entries: readonly PiEntry[]): DevState | undefined => savedStates(entries).at(-1)
 
 export const latestTitle = (entries: readonly PiEntry[]): string | undefined =>
   savedStates(entries)

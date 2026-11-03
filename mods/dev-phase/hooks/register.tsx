@@ -1,37 +1,39 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, ThemeKey } from 'claude-code'
+import type { EngineInterface, Register } from 'claude-code'
 
-import type { DevPhase, DevPhaseRecord, DevPhaseSource, DevTopic } from '../types'
+import type { DevCheck, DevChecks, DevState, DevTopic } from '../types'
 import {
-  asRecord,
+  asStoredChecks,
   asTopic,
   bareName,
+  checkItems,
+  checksKey,
   digest,
   digestPrompt,
   forkPrompt,
-  featureSuffix,
   IDLE_MS,
   isCheckpoint,
-  isProvisional,
   MAX_TOKENS,
   MODEL_TIMEOUT_MS,
-  NO_PHASE_LABEL,
-  phaseOfSkill,
-  provisionalPhase,
   retitle,
+  sameChecks,
+  skillEffect,
   staleKeys,
-  storeKey,
   topicKey,
+  UNCHECKED,
+  unearnedChecks,
+  unknownStale,
   verdictState,
-} from '../core/phase'
+  withCheck,
+  withoutChecks,
+} from '../core/checklist'
 
 type Dollar = EngineInterface
-type Ask = { sessionId: string; generation: number; serial: number }
-type TurnContext = { previous: DevPhaseRecord | null; topic: DevTopic | null; answer: string }
+type Ask = { sessionId: string; generation: number; serial: number; held: readonly DevCheck[] }
+type TurnContext = DevState & { answer: string }
 type Pending = { ask: Ask; turn: TurnContext }
 type Outcome = 'settled' | 'retry'
 type Tracker = {
-  isSkillTurn: boolean
   isDirty: boolean
   isForking: boolean
   queued: Pending | undefined
@@ -39,21 +41,11 @@ type Tracker = {
   serial: number
   subagentSkills: Map<string, number>
   classifiedFromLog: string | undefined
+  turnChecks: Map<DevCheck, boolean>
 }
 
-const current = atom({ plugin: 'dev-phase', key: 'current' } as const, null)
+const checksAtom = atom({ plugin: 'dev-phase', key: 'checks' } as const, UNCHECKED)
 const topicAtom = atom({ plugin: 'dev-phase', key: 'topic' } as const, null)
-
-const PHASE_COLOR = {
-  planning: 'planMode',
-  implementation: 'claude',
-  'agent QA': 'warning',
-  'QA fixes': 'warning',
-  'code review': 'suggestion',
-  'review fixes': 'suggestion',
-  'manual QA': 'permission',
-  'wrap-up': 'success',
-} as const satisfies Record<DevPhase, ThemeKey>
 
 const KEPT_SESSIONS = 300
 
@@ -76,9 +68,9 @@ async function touch($: Dollar, key: string): Promise<unknown> {
   return value
 }
 
-async function save($: Dollar, sessionId: string, record: DevPhaseRecord | null): Promise<void> {
-  await put($, storeKey(sessionId), record)
-  if (await isCurrentSession($, sessionId)) await update($, current, () => record)
+async function saveChecks($: Dollar, sessionId: string, checks: DevChecks): Promise<void> {
+  await put($, checksKey(sessionId), checks)
+  if (await isCurrentSession($, sessionId)) await update($, checksAtom, () => checks)
 }
 
 async function saveTopic($: Dollar, sessionId: string, topic: DevTopic | null): Promise<void> {
@@ -87,12 +79,16 @@ async function saveTopic($: Dollar, sessionId: string, topic: DevTopic | null): 
   if (await isCurrentSession($, sessionId)) await update($, topicAtom, () => topic)
 }
 
+async function storedChecks($: Dollar, sessionId: string): Promise<DevChecks> {
+  return asStoredChecks(await $.store.get(checksKey(sessionId))) ?? UNCHECKED
+}
+
 async function storedTopic($: Dollar, sessionId: string): Promise<DevTopic | undefined> {
   return asTopic(await $.store.get(topicKey(sessionId)))
 }
 
-async function setPhase($: Dollar, phase: DevPhase, source: DevPhaseSource): Promise<void> {
-  await save($, await $.session.id(), { phase, at: await $.clock.now(), source })
+async function storedState($: Dollar, sessionId: string): Promise<DevState> {
+  return { checks: await storedChecks($, sessionId), topic: (await storedTopic($, sessionId)) ?? null }
 }
 
 async function prune($: Dollar, sessionId: string): Promise<void> {
@@ -100,13 +96,15 @@ async function prune($: Dollar, sessionId: string): Promise<void> {
   await Promise.all(stale.map(key => $.store.delete(key)))
 }
 
-async function applyVerdict($: Dollar, tracker: Tracker, ask: Ask, text: string, source: DevPhaseSource): Promise<void> {
-  const known = (await storedTopic($, ask.sessionId)) ?? null
-  const next = verdictState(text, { record: null, topic: known }, await $.clock.now(), source)
+async function applyVerdict($: Dollar, tracker: Tracker, ask: Ask, text: string): Promise<void> {
+  const known = await storedState($, ask.sessionId)
+  const next = verdictState(text, known, await $.clock.now(), ask.held)
   if (next === undefined) return debug($, `unparseable verdict: ${text.slice(0, 200)}`)
+  const unknown = unknownStale(text)
+  if (unknown.length > 0) debug($, `unknown stale checks: ${unknown.join(', ')}`)
   if (ask.generation !== tracker.generation) return
-  if (next.topic !== known) await saveTopic($, ask.sessionId, next.topic)
-  await save($, ask.sessionId, next.record)
+  await saveChecks($, ask.sessionId, next.checks)
+  if (next.topic !== known.topic) await saveTopic($, ask.sessionId, next.topic)
 }
 
 async function classifyFromLog($: Dollar, tracker: Tracker, ask: Ask): Promise<void> {
@@ -114,20 +112,20 @@ async function classifyFromLog($: Dollar, tracker: Tracker, ask: Ask): Promise<v
   if (rows === '') return
   const reply = await $.model.complete({
     model: 'haiku',
-    prompt: digestPrompt(rows, (await storedTopic($, ask.sessionId)) ?? null),
+    prompt: digestPrompt(await storedState($, ask.sessionId), rows),
     maxTokens: MAX_TOKENS,
     effort: 'low',
     timeoutMs: MODEL_TIMEOUT_MS,
   })
-  if (reply.isAnswered) return applyVerdict($, tracker, ask, reply.text, 'log')
+  if (reply.isAnswered) return applyVerdict($, tracker, ask, reply.text)
   debug($, `log classification unanswered: ${reply.reason}`)
 }
 
 async function classifyTurn($: Dollar, tracker: Tracker, { ask, turn }: Pending): Promise<Outcome> {
-  const reply = await $.model.fork({ prompt: forkPrompt(turn.previous, turn.topic, turn.answer) })
+  const reply = await $.model.fork({ prompt: forkPrompt(turn, turn.answer) })
   if (reply.isAnswered) {
     debug($, `fork read ${reply.usage.cache_read_input_tokens} cached tokens`)
-    await applyVerdict($, tracker, ask, reply.text, 'fork')
+    await applyVerdict($, tracker, ask, reply.text)
     return 'settled'
   }
   switch (reply.reason) {
@@ -177,18 +175,23 @@ function classifyFromLogLater($: Dollar, tracker: Tracker, ask: Ask): void {
 }
 
 async function hydrate($: Dollar, tracker: Tracker, sessionId: string, hasHistory: boolean): Promise<void> {
-  const stored = await touch($, storeKey(sessionId))
+  const stored = await touch($, checksKey(sessionId))
   const topic = asTopic(await touch($, topicKey(sessionId)))
-  await update($, current, () => asRecord(stored) ?? null)
+  await update($, checksAtom, () => asStoredChecks(stored) ?? UNCHECKED)
   await update($, topicAtom, () => topic ?? null)
   if (stored !== undefined || !hasHistory || tracker.classifiedFromLog === sessionId) return
   tracker.classifiedFromLog = sessionId
-  classifyFromLogLater($, tracker, { sessionId, generation: tracker.generation, serial: tracker.serial })
+  classifyFromLogLater($, tracker, { sessionId, generation: tracker.generation, serial: tracker.serial, held: [] })
 }
 
 function markDirty(tracker: Tracker): void {
   tracker.isDirty = true
   tracker.generation += 1
+}
+
+function resetTurn(tracker: Tracker): void {
+  tracker.isDirty = false
+  tracker.turnChecks = new Map()
 }
 
 function skillCount(tracker: Tracker, skill: string): number {
@@ -197,7 +200,6 @@ function skillCount(tracker: Tracker, skill: string): number {
 
 export const register: Register = on => {
   const tracker: Tracker = {
-    isSkillTurn: false,
     isDirty: false,
     isForking: false,
     queued: undefined,
@@ -205,11 +207,7 @@ export const register: Register = on => {
     serial: 0,
     subagentSkills: new Map(),
     classifiedFromLog: undefined,
-  }
-
-  const resetTurn = (): void => {
-    tracker.isSkillTurn = false
-    tracker.isDirty = false
+    turnChecks: new Map(),
   }
 
   on('turn.start', async ($, e, next) => {
@@ -229,23 +227,18 @@ export const register: Register = on => {
 
   on('skill.prompt', async ($, e, next) => {
     if (skillCount(tracker, e.skill) > 0) return next(e)
-    const phase = phaseOfSkill(e.skill, (await read($, current))?.phase)
-    if (phase !== undefined) {
-      tracker.isSkillTurn = true
-      tracker.generation += 1
-      await setPhase($, phase, 'skill')
-    }
+    const { check, isDirtying } = skillEffect(e.skill)
+    if (isDirtying) markDirty(tracker)
+    if (check === undefined) return next(e)
+    const checks = await read($, checksAtom)
+    if (!tracker.turnChecks.has(check)) tracker.turnChecks.set(check, checks[check])
+    await saveChecks($, await $.session.id(), withCheck(checks, check))
     return next(e)
   })
 
   on('tool.call', { tool: ['Edit', 'Write', 'NotebookEdit'] }, async ($, e, next) => {
     const ran = await next(e)
-    if (ran.deny !== undefined || ran.isError === true) return ran
-    markDirty(tracker)
-    if (tracker.isSkillTurn) return ran
-    const path = e.tool === 'NotebookEdit' ? e.notebook_path : e.file_path
-    const phase = provisionalPhase((await read($, current))?.phase, path)
-    if (phase !== undefined) await setPhase($, phase, 'edit')
+    if (ran.deny === undefined && ran.isError !== true) markDirty(tracker)
     return ran
   })
 
@@ -258,15 +251,19 @@ export const register: Register = on => {
   on('turn.complete', async ($, e, next) => {
     const done = await next(e)
     if (e.agentId !== undefined) return done
-    if (tracker.isSkillTurn) {
-      resetTurn()
+    const ran = tracker.turnChecks
+    tracker.turnChecks = new Map()
+    const sessionId = await $.session.id()
+    if (e.reason !== 'answer') {
+      const unearned = unearnedChecks(ran)
+      if (unearned.length > 0) await saveChecks($, sessionId, withoutChecks(await read($, checksAtom), unearned))
       return done
     }
-    if (!tracker.isDirty || e.reason !== 'answer') return done
+    if (!tracker.isDirty) return done
     tracker.isDirty = false
     const pending: Pending = {
-      ask: { sessionId: await $.session.id(), generation: tracker.generation, serial: tracker.serial },
-      turn: { previous: await read($, current), topic: await read($, topicAtom), answer: e.answer },
+      ask: { sessionId, generation: tracker.generation, serial: tracker.serial, held: [...ran.keys()] },
+      turn: { checks: await read($, checksAtom), topic: await read($, topicAtom), answer: e.answer },
     }
     $.clock.after(IDLE_MS, () => runClassification($, tracker, pending))
     return done
@@ -293,23 +290,26 @@ export const register: Register = on => {
   on('classic.SessionStart', async ($, e, next) => {
     switch (e.source) {
       case 'clear':
-        resetTurn()
-        await update($, current, () => null)
+        resetTurn(tracker)
+        await update($, checksAtom, () => UNCHECKED)
         await update($, topicAtom, () => null)
         break
       case 'resume':
-        resetTurn()
+        resetTurn(tracker)
         await hydrate($, tracker, e.session_id, true)
         break
       case 'fork': {
-        resetTurn()
-        const inherited = await read($, current)
+        resetTurn(tracker)
+        const inherited = await read($, checksAtom)
         const inheritedTopic = await read($, topicAtom)
+        if (inheritedTopic === null && sameChecks(inherited, UNCHECKED)) {
+          await hydrate($, tracker, e.session_id, true)
+          break
+        }
         if (inheritedTopic !== null) {
           await put($, topicKey(e.session_id), { name: inheritedTopic.name, at: inheritedTopic.at })
         }
-        if (inherited === null) await hydrate($, tracker, e.session_id, true)
-        else await put($, storeKey(e.session_id), inherited)
+        await put($, checksKey(e.session_id), inherited)
         break
       }
       case 'startup':
@@ -323,33 +323,15 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
-    const record = await read($, current)
-    const topic = await read($, topicAtom)
     const { Box, Text } = $.ui.resolve(e)
-    const feature =
-      topic === null ? null : (
-        <Text dimColor wrap="truncate-end">
-          {featureSuffix(topic)}
-        </Text>
-      )
-    if (record === null) {
-      return (
-        <Box width={e.props.bodyColumns}>
-          <Text dimColor>{NO_PHASE_LABEL}</Text>
-          {feature}
-        </Box>
-      )
-    }
-    const isDimmed = isProvisional(record)
     return (
-      <Box width={e.props.bodyColumns}>
-        <Text color={PHASE_COLOR[record.phase]} dimColor={isDimmed}>
-          ●{' '}
-        </Text>
-        <Text bold dimColor={isDimmed}>
-          {record.phase}
-        </Text>
-        {feature}
+      <Box width={e.props.bodyColumns} gap={2}>
+        {checkItems(await read($, checksAtom)).map(({ check, mark, color }) => (
+          <Box key={check}>
+            <Text color={color}>{`${mark} `}</Text>
+            <Text>{check}</Text>
+          </Box>
+        ))}
       </Box>
     )
   })
