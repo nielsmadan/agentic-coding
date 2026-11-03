@@ -232,7 +232,8 @@ Deleting rather than replacing is the choice that matters: one document to maint
 two, and no contest over who writes the key last.
 
 **`publish/` generates the public skills collection.** `publish/sync.py` renders the
-`publish`-classified skills from `loadout/skills/`, preferring complete skill
+`publish`-classified skills from `loadout/skills/` and `loadout/templates/skills/`
+(a name in both is an error), preferring complete skill
 directories in `publish/overrides/<name>/` when present, into
 [nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin
 marketplace and `npx skills` collection; a workflow in that repo runs it hourly.

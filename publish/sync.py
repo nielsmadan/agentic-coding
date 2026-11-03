@@ -18,6 +18,8 @@ from typing import Callable, Protocol, Sequence
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO_ROOT / "publish" / "skills.toml"
 SKILLS_ROOT = REPO_ROOT / "loadout" / "skills"
+TEMPLATE_SKILLS_ROOT = REPO_ROOT / "loadout" / "templates" / "skills"
+SKILL_ROOTS = (SKILLS_ROOT, TEMPLATE_SKILLS_ROOT)
 
 
 def load_manifest(
@@ -48,6 +50,20 @@ def available_skills(skills_root: Path) -> list[str]:
     )
 
 
+def skill_locations(skills_roots: Sequence[Path]) -> tuple[dict[str, Path], list[str]]:
+    locations: dict[str, Path] = {}
+    errors: list[str] = []
+    for root in skills_roots:
+        for name in available_skills(root):
+            if name in locations:
+                errors.append(
+                    f"{name}: defined in both {locations[name].parent} and {root}"
+                )
+            else:
+                locations[name] = root / name
+    return locations, errors
+
+
 def manifest_errors(
     available: list[str],
     publish: list[str],
@@ -76,9 +92,10 @@ def manifest_errors(
 
 
 def skill_sources(
-    publish: list[str], skills_root: Path, overrides_root: Path
+    publish: list[str], locations: dict[str, Path], overrides_root: Path
 ) -> tuple[dict[str, Path], list[str]]:
-    sources = {name: skills_root / name for name in publish}
+    sources = {name: locations[name] for name in publish if name in locations}
+    listed = set(publish)
     if overrides_root.is_symlink():
         return sources, ["overrides: symlinked directory refused"]
     if not overrides_root.exists():
@@ -88,9 +105,9 @@ def skill_sources(
     errors: list[str] = []
     for override in sorted(overrides_root.iterdir()):
         name = override.name
-        if override.is_file() and not override.is_symlink() and name not in sources:
+        if override.is_file() and not override.is_symlink() and name not in listed:
             continue
-        if name not in sources:
+        if name not in listed:
             errors.append(f"overrides/{name}: skill is not listed in a publish group")
         elif override.is_symlink():
             errors.append(f"overrides/{name}: symlinked directory refused")
@@ -105,19 +122,22 @@ def skill_sources(
     return sources, errors
 
 
+def resolve_sources(
+    publish: list[str], manifest_path: Path, skills_roots: Sequence[Path]
+) -> tuple[set[str], dict[str, Path], list[str]]:
+    locations, errors = skill_locations(skills_roots)
+    sources, override_errors = skill_sources(
+        publish, locations, manifest_path.parent / "overrides"
+    )
+    return set(locations) | set(sources), sources, errors + override_errors
+
+
 def check_manifest(
-    *, manifest_path: Path = MANIFEST_PATH, skills_root: Path = SKILLS_ROOT
+    *, manifest_path: Path = MANIFEST_PATH, skills_roots: Sequence[Path] = SKILL_ROOTS
 ) -> list[str]:
     publish, private, local, _ = load_manifest(manifest_path)
-    sources, override_errors = skill_sources(
-        publish, skills_root, manifest_path.parent / "overrides"
-    )
-    available = set(available_skills(skills_root))
-    available.update(
-        name for name, source in sources.items() if source.parent != skills_root
-    )
-    errors = manifest_errors(sorted(available), publish, private, local)
-    return errors + override_errors
+    available, _, errors = resolve_sources(publish, manifest_path, skills_roots)
+    return errors + manifest_errors(sorted(available), publish, private, local)
 
 
 # `/Users/nielsmadan`, not `/Users/` — the risk is identity leaking, not the
@@ -369,8 +389,9 @@ LONG_SUMMARY = (
     "reviewers for architecture, security, performance, interfaces, tests, and "
     "language-specific design, with cross-CLI second opinions), planning and "
     "research workflows, testing and debugging, git and session history, docs "
-    "and writing, and small environment tools. Generated and synced hourly "
-    "from a single source repo."
+    "and writing, web and mobile workflows (SEO, Flutter and React Native "
+    "upgrades), and small environment tools. Generated and synced hourly from "
+    "a single source repo."
 )
 KEYWORDS = ["agent-skills", "code-review", "planning", "testing", "workflow"]
 
@@ -567,27 +588,27 @@ def write_artifacts(out: Path, grouped: list[tuple[str, list[tuple[str, str]]]])
 
 
 def source_errors(
-    *, manifest_path: Path = MANIFEST_PATH, skills_root: Path = SKILLS_ROOT
+    *,
+    manifest_path: Path = MANIFEST_PATH,
+    skills_roots: Sequence[Path] = SKILL_ROOTS,
+    repo_root: Path = REPO_ROOT,
 ) -> list[str]:
     """Scan source skill files for personal strings only — markers and private
     references are legal in source."""
     publish, _, _, _ = load_manifest(manifest_path)
-    sources, errors = skill_sources(
-        publish, skills_root, manifest_path.parent / "overrides"
-    )
+    _, sources, errors = resolve_sources(publish, manifest_path, skills_roots)
     if errors:
         return errors
+    errors.extend(
+        f"{name}: no such skill directory"
+        for name in sorted(set(publish) - set(sources))
+    )
     for name, source in sorted(sources.items()):
-        if not source.is_dir():
-            errors.append(f"{name}: no such skill directory")
-            continue
         for path in sorted(source.rglob("*")):
             if not path.is_file():
                 continue
             content = path.read_text(encoding="utf-8", errors="ignore")
-            relative = path.relative_to(source.parent)
-            if source.parent != skills_root:
-                relative = Path("overrides") / relative
+            relative = path.relative_to(repo_root)
             for match in PERSONAL.finditer(content):
                 line = _line_of(content, match.start())
                 errors.append(
@@ -600,20 +621,13 @@ def build(
     out: Path,
     *,
     manifest_path: Path = MANIFEST_PATH,
-    skills_root: Path = SKILLS_ROOT,
+    skills_roots: Sequence[Path] = SKILL_ROOTS,
     loader: Loader = load_loadout,
 ) -> tuple[list[str], list[str]]:
     """Render everything into `out`. Returns (errors, warnings)."""
     publish, private, local, groups = load_manifest(manifest_path)
-    sources, override_errors = skill_sources(
-        publish, skills_root, manifest_path.parent / "overrides"
-    )
-    available = set(available_skills(skills_root))
-    available.update(
-        name for name, source in sources.items() if source.parent != skills_root
-    )
-    errors = manifest_errors(sorted(available), publish, private, local)
-    errors.extend(override_errors)
+    available, sources, errors = resolve_sources(publish, manifest_path, skills_roots)
+    errors.extend(manifest_errors(sorted(available), publish, private, local))
     unpublished = private + local
     if errors:
         return errors, []

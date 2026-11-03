@@ -540,7 +540,7 @@ class BuildTest(unittest.TestCase):
                 return (lambda root: [], _banner_render)
 
             errors, warnings = sync.build(
-                out, manifest_path=manifest, skills_root=skills_root, loader=loader
+                out, manifest_path=manifest, skills_roots=[skills_root], loader=loader
             )
             self.assertTrue(any("no such skill" in e for e in errors))
             self.assertEqual(warnings, [])
@@ -556,7 +556,7 @@ class BuildTest(unittest.TestCase):
             errors, warnings = sync.build(
                 out,
                 manifest_path=manifest,
-                skills_root=skills_root,
+                skills_roots=[skills_root],
                 loader=self._loader(skills_root, ["alpha", "beta"]),
             )
             self.assertEqual(errors, [])
@@ -585,7 +585,7 @@ class BuildTest(unittest.TestCase):
             errors, _ = sync.build(
                 out,
                 manifest_path=manifest,
-                skills_root=skills_root,
+                skills_roots=[skills_root],
                 loader=self._loader(skills_root, ["alpha"]),
             )
             self.assertIn(
@@ -601,7 +601,7 @@ class BuildTest(unittest.TestCase):
             errors, _ = sync.build(
                 out,
                 manifest_path=manifest,
-                skills_root=skills_root,
+                skills_roots=[skills_root],
                 loader=self._loader(skills_root, ["alpha"], render),
             )
             self.assertIn("alpha: missing provenance header", errors)
@@ -615,7 +615,7 @@ class BuildTest(unittest.TestCase):
             errors, warnings = sync.build(
                 out,
                 manifest_path=manifest,
-                skills_root=skills_root,
+                skills_roots=[skills_root],
                 loader=self._loader(skills_root, ["alpha"], render),
             )
             self.assertTrue(
@@ -645,7 +645,8 @@ class SourceErrorsTest(unittest.TestCase):
                 "line one\nsee ~/ac/nono here\n", encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_root=skills_root
+                manifest_path=manifest, skills_roots=[skills_root],
+                repo_root=manifest.parent,
             )
             self.assertTrue(
                 any("demo/SKILL.md:2: personal string" in e for e in errors)
@@ -661,7 +662,8 @@ class SourceErrorsTest(unittest.TestCase):
                 "a\nb\n/Users/nielsmadan/x\n", encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_root=skills_root
+                manifest_path=manifest, skills_roots=[skills_root],
+                repo_root=manifest.parent,
             )
             self.assertTrue(
                 any("demo/refs/notes.md:3: personal string" in e for e in errors)
@@ -677,7 +679,11 @@ class SourceErrorsTest(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(
-                sync.source_errors(manifest_path=manifest, skills_root=skills_root),
+                sync.source_errors(
+                    manifest_path=manifest,
+                    skills_roots=[skills_root],
+                    repo_root=manifest.parent,
+                ),
                 [],
             )
 
@@ -736,18 +742,22 @@ class OverrideTest(unittest.TestCase):
         return sync.build(
             self.out,
             manifest_path=self.manifest,
-            skills_root=self.sources,
+            skills_roots=[self.sources],
             loader=lambda: (self._discover, self._render),
         )
 
     def _assert_rejected(self, message):
         self.assertIn(
             message,
-            sync.check_manifest(manifest_path=self.manifest, skills_root=self.sources),
+            sync.check_manifest(manifest_path=self.manifest, skills_roots=[self.sources]),
         )
         self.assertIn(
             message,
-            sync.source_errors(manifest_path=self.manifest, skills_root=self.sources),
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=[self.sources],
+                repo_root=self.manifest.parent,
+            ),
         )
         sentinel = self.out / "keep.txt"
         sentinel.write_text("Previous output", encoding="utf-8")
@@ -755,7 +765,7 @@ class OverrideTest(unittest.TestCase):
         errors, warnings = sync.build(
             self.out,
             manifest_path=self.manifest,
-            skills_root=self.sources,
+            skills_roots=[self.sources],
             loader=loader,
         )
         self.assertIn(message, errors)
@@ -833,14 +843,22 @@ class OverrideTest(unittest.TestCase):
             self.overrides, "demo", "Public demo.", "Use the project root."
         )
         self.assertEqual(
-            sync.source_errors(manifest_path=self.manifest, skills_root=self.sources),
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=[self.sources],
+                repo_root=self.manifest.parent,
+            ),
             [],
         )
         self.assertEqual(self._build(), ([], []))
         (self.sources / "other/notes.md").write_text("~/ac", encoding="utf-8")
         self.assertEqual(
-            sync.source_errors(manifest_path=self.manifest, skills_root=self.sources),
-            ["other/notes.md:1: personal string '~/ac'"],
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=[self.sources],
+                repo_root=self.manifest.parent,
+            ),
+            ["src/other/notes.md:1: personal string '~/ac'"],
         )
 
     def test_override_publishes_when_local_source_is_absent(self):
@@ -849,11 +867,15 @@ class OverrideTest(unittest.TestCase):
         )
         shutil.rmtree(self.sources / "demo")
         self.assertEqual(
-            sync.check_manifest(manifest_path=self.manifest, skills_root=self.sources),
+            sync.check_manifest(manifest_path=self.manifest, skills_roots=[self.sources]),
             [],
         )
         self.assertEqual(
-            sync.source_errors(manifest_path=self.manifest, skills_root=self.sources),
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=[self.sources],
+                repo_root=self.manifest.parent,
+            ),
             [],
         )
         self.assertEqual(self._build(), ([], []))
@@ -872,7 +894,8 @@ class OverrideTest(unittest.TestCase):
                 path.write_text("Use ~/ac\n", encoding="utf-8")
                 self.assertEqual(
                     sync.source_errors(
-                        manifest_path=self.manifest, skills_root=self.sources
+                        manifest_path=self.manifest, skills_roots=[self.sources],
+                        repo_root=self.manifest.parent,
                     ),
                     [f"overrides/demo/{relative}:1: personal string '~/ac'"],
                 )
@@ -944,7 +967,7 @@ class OverrideTest(unittest.TestCase):
         errors, _ = sync.build(
             self.out,
             manifest_path=self.manifest,
-            skills_root=self.sources,
+            skills_roots=[self.sources],
             loader=lambda: (
                 lambda root: [] if root == self.overrides else self._discover(root),
                 self._render,
@@ -952,6 +975,117 @@ class OverrideTest(unittest.TestCase):
         )
         self.assertIn(
             "demo: not rendered (missing from discover_skills output)", errors
+        )
+
+
+class TemplateRootTest(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.manifest = self.root / "skills.toml"
+        self.manifest.write_text(
+            'private = ["hidden"]\n[groups]\nCore = ["demo"]\nLanguage = ["review-x"]\n',
+            encoding="utf-8",
+        )
+        self.globals = self.root / "skills"
+        self.templates = self.root / "templates"
+        self.roots = [self.globals, self.templates]
+        self.out = self.root / "out"
+        self.out.mkdir()
+        self._write_skill(self.globals, "demo", "Demo.")
+        self._write_skill(self.templates, "review-x", "Review X.")
+        self._write_skill(self.templates, "hidden", "Hidden.")
+
+    def _write_skill(self, root, name, description):
+        directory = root / name
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: {description}\n---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        return directory
+
+    def _discover(self, root):
+        return [
+            FakeSkill(directory.name, directory / "SKILL.md", ())
+            for directory in sorted(root.iterdir())
+            if (directory / "SKILL.md").is_file()
+        ]
+
+    def _render(self, skill, harness):
+        banner = f"<!-- Generated by loadout from skills/{skill.name}/. -->\n"
+        return skill.document.read_text(encoding="utf-8").replace(
+            "\n---\n", f"\n---\n\n{banner}", 1
+        )
+
+    def _build(self):
+        return sync.build(
+            self.out,
+            manifest_path=self.manifest,
+            skills_roots=self.roots,
+            loader=lambda: (self._discover, self._render),
+        )
+
+    def test_skills_from_both_roots_are_published(self):
+        errors, _ = self._build()
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            sorted(p.name for p in (self.out / "skills").iterdir()),
+            ["demo", "review-x"],
+        )
+        self.assertIn("| `review-x` | Review X. |", (self.out / "README.md").read_text())
+
+    def test_unclassified_template_skill_is_an_error(self):
+        self._write_skill(self.templates, "stray", "Stray.")
+        self.assertIn(
+            "stray: unclassified — add it to a group, private, or local "
+            "in publish/skills.toml",
+            sync.check_manifest(manifest_path=self.manifest, skills_roots=self.roots),
+        )
+
+    def test_name_defined_in_both_roots_is_an_error(self):
+        self._write_skill(self.templates, "demo", "Shadow demo.")
+        message = f"demo: defined in both {self.globals} and {self.templates}"
+        self.assertIn(
+            message,
+            sync.check_manifest(manifest_path=self.manifest, skills_roots=self.roots),
+        )
+        self.assertIn(
+            message,
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=self.roots,
+                repo_root=self.manifest.parent,
+            ),
+        )
+        errors, _ = self._build()
+        self.assertIn(message, errors)
+
+    def test_personal_string_in_template_source_is_reported(self):
+        (self.templates / "review-x" / "notes.md").write_text(
+            "see ~/ac\n", encoding="utf-8"
+        )
+        self.assertEqual(
+            sync.source_errors(
+                manifest_path=self.manifest,
+                skills_roots=self.roots,
+                repo_root=self.manifest.parent,
+            ),
+            ["templates/review-x/notes.md:1: personal string '~/ac'"],
+        )
+
+    def test_template_skill_may_override_publicly(self):
+        overrides = self.root / "overrides"
+        (overrides / "review-x").mkdir(parents=True)
+        (overrides / "review-x" / "SKILL.md").write_text(
+            "---\nname: review-x\ndescription: Public review X.\n---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        errors, _ = self._build()
+        self.assertEqual(errors, [])
+        self.assertIn(
+            "Public review X.", (self.out / "skills" / "review-x" / "SKILL.md").read_text()
         )
 
 
@@ -1133,7 +1267,7 @@ class RenderEscapeTest(unittest.TestCase):
             out = root / "out"
             out.mkdir()
             errors, warnings = sync.build(
-                out, manifest_path=manifest, skills_root=src, loader=loader
+                out, manifest_path=manifest, skills_roots=[src], loader=loader
             )
             self.assertTrue(any("escapes the skill directory" in e for e in errors))
 
@@ -1163,7 +1297,7 @@ class RenderEscapeTest(unittest.TestCase):
             out = root / "out"
             out.mkdir()
             errors, _ = sync.build(
-                out, manifest_path=manifest, skills_root=src, loader=loader
+                out, manifest_path=manifest, skills_roots=[src], loader=loader
             )
             self.assertTrue(any("ghostless: not rendered" in e for e in errors))
             self.assertFalse((out / "README.md").exists())
@@ -1178,7 +1312,8 @@ class SourceErrorsMissingDirTest(unittest.TestCase):
                 'private = []\n[groups]\nAll = ["ghost"]\n', encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_root=root / "skills"
+                manifest_path=manifest, skills_roots=[root / "skills"],
+                repo_root=manifest.parent,
             )
             self.assertTrue(any("ghost: no such skill directory" in e for e in errors))
 
