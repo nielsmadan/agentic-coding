@@ -42,6 +42,24 @@ whose device claims block other sessions with a non-retriable `DEVICE_IN_USE …
 and one under `$TMPDIR` is wiped by the next reboot together with the runner it built. When the
 daemon is stuck, ask the user to run `agent-device-daemon restart` in their own terminal.
 
+**Physical devices are shared** between checkouts and agents, so claim and release them in
+pairs:
+
+- **Claim before touching the phone.** Run `splash target claim <variant>`, then open the
+  `agent-device` session. If another checkout holds the claim, stop and tell the user; do not
+  drive the device or pass `--force`. In a checkout without `splashdown.toml` the claim fails:
+  check `splash target claims` and `agent-device devices`, which marks claimed devices, and tell
+  the user before using one.
+- **One session per checkout and device, run from the checkout root.** Name it
+  `<checkout>-<variant>` (`app1-pixel`) and reuse that name. agent-device ties a device claim
+  to the directory the command ran in, so the same session opened from a subdirectory blocks
+  itself with `DEVICE_IN_USE … in workspace`.
+- **Release both when the task ends:** `agent-device close --session <name>`, then
+  `splash target release <variant>`. Keep them only when the user asks to leave the app open,
+  and say so in the final report.
+- **Pass the session flag as two words** (`--session "$name"`). A single variable holding
+  `--session name` reaches agent-device as one argument and fails with `Unknown flag`.
+
 ### Setup
 
 The `mobile`, `flutter`, and `react-native` templates select this shared guidance and the
