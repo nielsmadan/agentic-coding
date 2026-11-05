@@ -138,6 +138,7 @@
     "(allow iokit-open)",
     "(allow file-issue-extension (extension-class \"com.apple.app-sandbox.read\" \"com.apple.app-sandbox.read-write\"))",
     "(allow generic-issue-extension (extension-class-prefix \"com.apple.virtualization.extension.\"))",
-    "(allow process-exec (literal \"/bin/ps\") (with no-sandbox))"
+    "(allow process-exec (literal \"/bin/ps\") (with no-sandbox))",
+    "(allow mach-lookup (global-name \"com.apple.SecurityServer\"))"
   ]
 }
