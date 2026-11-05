@@ -103,6 +103,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
   "$SCRIPT_DIR/bin/sops-exec:$HOME/.local/bin/sops-exec"
   "$SCRIPT_DIR/bin/agent-chromium:$HOME/.local/bin/agent-chromium"
+  "$SCRIPT_DIR/bin/agent-device-daemon:$HOME/.local/bin/agent-device-daemon"
   # pratfall. The advisor-* and cmdgen-* profiles back /second-opinion and the
   # llmcli.zsh command generators.
   "$SCRIPT_DIR/pratfall/config.toml:$HOME/.config/pratfall/config.toml"
@@ -226,6 +227,21 @@ sync_agent_signing_unlock() {
 # screen, so it starts at each login. Interactive machines start it on demand.
 sync_agent_chromium_autostart() {
   local label="com.nielsmadan.agent-chromium"
+  local dest="$HOME/Library/LaunchAgents/$label.plist"
+  create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
+  if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
+    launchctl bootstrap "gui/$(id -u)" "$dest" && echo "✓  Loaded $label"
+  fi
+}
+
+# agent-device's daemon is shared by every agent and runs with the permissions of
+# whoever started it: unsandboxed, it lets a sandboxed client write anywhere through
+# it. Left to the agents it also exits after five idle minutes, so each reboot or
+# quiet spell hands the next start to whichever session comes first. This agent
+# starts it under nono with idle shutdown off at login and restarts it if it dies.
+sync_agent_device_daemon() {
+  [[ -x "$HOME/.local/share/mise/shims/agent-device" ]] || command -v agent-device >/dev/null || return 0
+  local label="com.nielsmadan.agent-device-daemon"
   local dest="$HOME/Library/LaunchAgents/$label.plist"
   create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
   if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
@@ -492,6 +508,9 @@ done
 echo ""
 if [[ "$PROFILE" != default ]]; then
   sync_agent_chromium_autostart
+fi
+if [[ "$PROFILE" != unsandboxed ]]; then
+  sync_agent_device_daemon
 fi
 
 validate_pratfall_config

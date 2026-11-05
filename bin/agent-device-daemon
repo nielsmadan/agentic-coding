@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+PROFILE = "claude-local"
+INFO_PATH = Path.home() / ".agent-device" / "daemon.json"
+SANDBOX_CWD = Path.home() / "wrksp"
+EX_CONFIG = 78
+
+
+def registered_pid(info_text):
+    try:
+        return int(json.loads(info_text)["pid"])
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
+def is_alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def read_text(path):
+    try:
+        return path.read_text()
+    except FileNotFoundError:
+        return ""
+
+
+def daemon_env(env):
+    kept = {key: value for key, value in env.items() if key != "AGENT_DEVICE_STATE_DIR"}
+    return {**kept, "AGENT_DEVICE_DAEMON_IDLE_TIMEOUT_MS": "0"}
+
+
+def start_command(profile):
+    return ["nono", "run", "--silent", "--profile", profile, "--", "agent-device", "session", "list"]
+
+
+def live_daemon_pid():
+    pid = registered_pid(read_text(INFO_PATH))
+    return pid if pid is not None and is_alive(pid) else None
+
+
+def start():
+    result = subprocess.run(
+        start_command(PROFILE),
+        cwd=SANDBOX_CWD,
+        env=daemon_env(os.environ),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr)
+        return result.returncode
+    print(f"started sandboxed agent-device daemon, pid {live_daemon_pid()}")
+    return 0
+
+
+def ensure():
+    pid = live_daemon_pid()
+    if pid is not None:
+        print(f"agent-device daemon running, pid {pid}")
+        return 0
+    return start()
+
+
+def restart():
+    if live_daemon_pid() is not None:
+        subprocess.run(["agent-device", "daemon", "stop"], check=False)
+    return start()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Keep one sandboxed, never-idle agent-device daemon running for every agent."
+    )
+    parser.add_argument("action", nargs="?", default="ensure", choices=["ensure", "status", "restart"])
+    args = parser.parse_args()
+    if os.environ.get("AGENT_SANDBOX"):
+        print("agent-device-daemon starts its own sandbox; run it from your own terminal.", file=sys.stderr)
+        return EX_CONFIG
+    if args.action == "status":
+        pid = live_daemon_pid()
+        print(f"running, pid {pid}" if pid else "not running")
+        return 0 if pid else 1
+    return {"ensure": ensure, "restart": restart}[args.action]()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

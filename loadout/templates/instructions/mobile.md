@@ -33,6 +33,15 @@ one orchestration when supported. Batch familiar routes with selectors and expec
 guards, stopping at states that need inspection. For feature QA, use the `qa` skill
 and its native adapter for coverage, evidence, and context management.
 
+**One daemon serves every session.** All `agent-device` commands go through one background
+daemon whose state, signed iOS runner and device claims live in `~/.agent-device`. Where
+`agent-device-daemon` is on `PATH`, a login agent keeps that daemon running inside the sandbox;
+`agent-device-daemon status` shows it. Never point `AGENT_DEVICE_STATE_DIR` or `--state-dir`
+somewhere else to get past a stuck or busy daemon: a private state dir starts a second daemon
+whose device claims block other sessions with a non-retriable `DEVICE_IN_USE … in workspace`,
+and one under `$TMPDIR` is wiped by the next reboot together with the runner it built. When the
+daemon is stuck, ask the user to run `agent-device-daemon restart` in their own terminal.
+
 ### Setup
 
 The `mobile`, `flutter`, and `react-native` templates select this shared guidance and the
