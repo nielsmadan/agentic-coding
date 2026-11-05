@@ -23,6 +23,11 @@ fi
 
 cmd=$1; shift
 
+# The requirement covers this launch only: inherited, it would make every nested
+# sops-exec under nono (where the store is unreadable) refuse a keyed child.
+require=$AGENT_REQUIRE_SECRETS
+unset AGENT_REQUIRE_SECRETS
+
 if command -v sops >/dev/null 2>&1 && [[ -f $SOPS_SECRETS && -f $SOPS_AGE_KEY_FILE ]]; then
   exec sops exec-env "$SOPS_SECRETS" "$cmd $(printf '%q ' "$@")"
 fi
@@ -31,7 +36,7 @@ fi
 # through to the bare command; a caller that cannot function without the keys
 # sets AGENT_REQUIRE_SECRETS=1 and gets a loud failure instead of a subscription
 # quietly billed or an agent running keyless.
-if [[ -n $AGENT_REQUIRE_SECRETS ]]; then
+if [[ -n $require ]]; then
   print -u2 -r -- "sops-exec: refusing to run '$cmd' without secrets (AGENT_REQUIRE_SECRETS is set)"
   command -v sops >/dev/null 2>&1 || print -u2 -r -- "  sops not on PATH"
   [[ -f $SOPS_SECRETS ]]           || print -u2 -r -- "  no secrets file at $SOPS_SECRETS"
