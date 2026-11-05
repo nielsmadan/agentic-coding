@@ -1,8 +1,7 @@
 ## React Native project tooling
 
 Use `templates = ["react-native"]` in `loadout/config.toml`. This template includes shared
-mobile device automation, the shared React guidance, Metro log tooling, and a project-scoped
-upgrade skill. For JavaScript runtime logs use `rn-logs` below.
+mobile device automation, the shared React guidance, and a project-scoped upgrade skill.
 
 ### Metro ports (`splashdown`)
 
@@ -32,28 +31,21 @@ Run CocoaPods through the project's Gemfile, `cd ios && bundle exec pod install`
 `pod`. A version mismatch between the two rewrites `Podfile.lock` and churns
 `project.pbxproj`.
 
-### Streaming Metro logs (`rn-logs`)
+### JavaScript logs (`agent-device logs`)
 
-Use [`rn-logs`](https://github.com/okwasniewski/react-native-logs-cli) (npm package
-`rn-logs-cli`) to read the JavaScript runtime logs Metro collects via CDP — `console.log`/
-`warn`/`error`, redbox content, Hermes uncaught exceptions, anything your JS surfaces while
-the app is running. It's purpose-built for agent consumption (plain-text output, low
-context). The React Native template supplies its shell permission.
+Read JavaScript runtime output with `agent-device logs`. In development builds, React Native
+writes `console.log`/`warn`/`error` to the platform log, which is what it streams: on Android
+under the `ReactNativeJS` logcat tag, on iOS under `com.facebook.react.log:javascript`.
 
 ```bash
-rn-logs apps                                  # list apps connected to Metro
-rn-logs logs --app <name>                     # follow logs for that app
-rn-logs logs --app <name> --limit 50          # snapshot last 50 lines then exit
-rn-logs logs --app <name> --verbose           # include full stack traces
+agent-device logs clear --restart     # start a clean capture for the open session
+agent-device logs mark "before submit"
+agent-device logs path                # then grep that file, never read it whole
+grep -n -E "ReactNativeJS|react.log:javascript" <path>
 ```
 
-Notes:
-- Read the assigned Metro port from `splashdown.env`, then pass it to `rn-logs` with
-  `--port <n>`.
-- `rn-logs` attaches to Metro's CDP inspector channel. **It cannot run simultaneously with
-  React Native DevTools** — they compete for the channel. Pick one per session.
-- Use this for JS-side issues. For native crashes / NSLog output / adb logcat, use
-  `npx react-native log-ios` or `log-android` directly (not pre-approved; will prompt).
+For components that logged errors or warnings while rendering, use
+`agent-device react-devtools errors`. For native crashes, see `help debugging` (`debug symbols`).
 
 ### When to reach for the deployed skill
 
@@ -66,5 +58,4 @@ Notes:
 
 - Run `loadout sync` in the project to refresh template instructions, permissions, and skills
   for its configured harnesses.
-- Install `rn-logs-cli` globally for log streaming (`npm install -g rn-logs-cli` or
-  `bun add -g rn-logs-cli`). Device-automation setup is covered in the shared mobile guidance.
+- Device-automation setup is covered in the shared mobile guidance.
