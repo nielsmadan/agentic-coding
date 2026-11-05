@@ -14,7 +14,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/brainstorm` | Work out how to solve a defined problem — a `blind-spots` interview, 5-8 structurally different approaches cut to the credible few, one independent critic subagent per survivor, then a recommendation with trade-offs; hands off to `plan`/`longshot` only for implementation work (`--debate` adds `second-opinion` advisors). `longshot` embeds it on a real approach fork; `plan` offers it on a close call |
 | `/check-agent-logs` | Search Claude Code, Codex, Droid, OpenCode, and Pi session logs to recover prior context across the current project and sibling checkouts (`--all` by default; supports per-agent and `--current` selectors); `--timeline` lists when sessions were active in a date range |
 | `/check-notes` | Find information in the user's personal Obsidian vault at `~/wrksp/notes` — reads its hand-maintained `index.md` map to locate the topic, falls back to searching the vault |
-| `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 9 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
+| `/code-review` | Cleans comments and mechanical loose ends automatically, then reviews code. Comprehensive mode runs 10 language-agnostic aspects plus applicable add-ons; `--quick` uses one integrated reviewer |
 | `/colima` | Diagnose Docker in the Colima VM — a stopped VM, the sandboxed-session limits, and Colima reporting `Running` over a dead daemon |
 | `/commit` | Commit only the changes THIS session made (never another agent's work in a shared checkout) — stages by explicit path, hunk-level when a file is co-edited. With a message arg, one commit; with no arg, splits the session's work into the fewest self-contained commits (a feature plus its tests, docs and connected chores stay together) and auto-writes each feat/fix/chore message |
 | `/debug-log` | Add debug logging to trace code execution |
@@ -43,6 +43,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-architecture` | System architecture review — layering, module boundaries, coupling, pattern fit, quality attributes (--staged, --all, --multi) |
 | `/review-cleancode` | Clean code principles review — SOLID, DRY, YAGNI, KISS, code smells (--staged, --all, --multi) |
 | `/review-comments` | Review comments for necessity, accuracy, duplication, clarity, and concision (--all, --staged, --changed) |
+| `/review-consistency` | Consistency review — checks that a change follows the codebase's existing patterns (naming, placement, mechanisms, sibling shape, registration), citing the precedent for each divergence (--staged, --all) |
 | `/review-correctness` | Correctness review — logic, state transitions, races, exhaustiveness, unknown external values, error handling, deadlines, cancellation, and retry safety (--staged, --all) |
 | `/review-functional` | Pragmatic functional review — effects at the edges, no hidden shared state, no mutation of a caller's data, determinism (--staged, --all). Excludes currying, recursion and monads by design |
 | `/review-history` | Analyze git history and past issue logs |
@@ -67,12 +68,13 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 
 ### /code-review
 
-Clean up comments and mechanical loose ends automatically (via `review-tidy --fix`, which invokes `review-comments --fix` and formats last), then review code with optional multi-model feedback. The cleanup is reported separately instead of being scored as a review finding. Mechanical findings from the reviewers themselves are applied too and listed under "Applied automatically".
+Clean up comments and mechanical loose ends automatically (via `review-tidy --fix`, which invokes `review-comments --fix` and formats last), then review code with optional multi-model feedback. The cleanup is reported separately instead of being scored as a review finding. Safe fixes from the reviewers themselves are applied too and listed under "Applied automatically": ones that cannot change production behaviour, with any change to what a test executes verified by running the tests first.
 
 **Arguments:**
 - `<target>` - File, directory, or PR to review
 - `--quick` - One integrated review pass with no independent scorer-agent round; cannot combine with aspect flags or `--multi`
 - `--functional` - Review functional principles only; included in the default comprehensive fan-out
+- `--consistency` - Review consistency with existing codebase patterns only; included in the default comprehensive fan-out
 - `--defensive` - Review defensive-programming gaps only; included in the default comprehensive fan-out
 - `--multi` - Also get a review from Codex
 
@@ -332,6 +334,21 @@ Review comments in full-file context. Finds repeated rationale, stale or vague e
 - Default: `--staged --changed` combined
 
 **Example:** `/review-comments --staged`
+
+---
+
+### /review-consistency
+
+Check that a change does things the way the codebase already does them. For each added or changed construct it finds existing siblings of the same kind and flags divergences in naming, placement, mechanisms (errors, logging, config, existing helpers), sibling shape, and registration — every finding cites at least two agreeing precedents or a written rule. Documented project rules and the newer of two competing patterns win over older precedent. `--all` reports clusters where the codebase itself has competing patterns. Findings safe to apply without a decision are tagged `autofix` — private renames, names-only doc list entries, test code moved unchanged to where siblings keep it, ad-hoc test mocks replaced by the established fixture — and `code-review` applies them after verifying test changes. `code-review --consistency` selects this reviewer.
+
+**Arguments:**
+- `--staged` - Git staged files
+- `--unpushed` - Files changed across all unpushed commits
+- `--changed` - Git unstaged changes
+- `--all` - Entire codebase (competing-pattern audit)
+- Default: files from the current conversation context
+
+**Example:** `/review-consistency --staged`
 
 ---
 
