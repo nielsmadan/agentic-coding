@@ -8,7 +8,7 @@
 # writes outside the workspace, which workspace-write blocks. approval_policy
 # stays on-request there — with no nono and no Seatbelt, the prompt is the only
 # guard left, whereas the sandboxed path drops it because nono is the boundary.
-codex() {
+_codex_launch() {
   if _agent_unsandboxed_profile; then
     AGENT_HARNESS=codex sops-exec codex "$@"
     return
@@ -20,9 +20,13 @@ codex() {
   fi
   AGENT_HARNESS=codex _agent_sandboxed codex-local codex -c sandbox_mode='"danger-full-access"' -c approval_policy='"never"' "$@"
 }
-codex-raw() { AGENT_HARNESS=codex sops-exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
+_codex_raw_launch() { AGENT_HARNESS=codex sops-exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
 
 alias cxcof="codex fork --last"
 
 alias cxco-raw="codex-raw resume --last"
 alias cxcof-raw="codex-raw fork --last"
+
+codex() { _agent_iterm_run codex _codex_launch "$@"; }
+
+codex-raw() { _agent_iterm_run codex-raw _codex_raw_launch "$@"; }

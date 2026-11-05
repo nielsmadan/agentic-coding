@@ -1,6 +1,6 @@
 # Claude Code aliases
 
-claude() {
+_claude_launch() {
   if _agent_raw_dir; then
     print -u2 -r -- "claude: unsandboxed (${PWD:A})"
     claude-raw "$@"
@@ -11,7 +11,7 @@ claude() {
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.
-claude-raw() { AGENT_HARNESS=claude sops-exec claude "$@"; }
+_claude_raw_launch() { AGENT_HARNESS=claude sops-exec claude "$@"; }
 
 alias clco-raw="claude-raw --continue"
 
@@ -31,7 +31,7 @@ clcof-raw() {
 # through to a bare `claude` would silently bill the subscription instead.
 # The tier aliases are remapped cheap->strong so /model haiku|sonnet|opus
 # switches models mid-session. [1m] declares the real 1M context window.
-clor() {
+_clor_launch() {
   local start="${CLOR_MODEL:-sonnet}"
   local effort="${CLOR_EFFORT:-high}"
   local -a launch=(nono run -p claude-local -- claude)
@@ -57,3 +57,9 @@ DOCKER_HOST=unix://$HOME/.colima/default/docker.sock \
 $sandbox_env \
 $(printf '%q ' "${launch[@]}") --model $(printf '%q' "$start") --permission-mode acceptEdits $(printf '%q ' "$@")"
 }
+
+claude() { _agent_iterm_run claude _claude_launch "$@"; }
+
+claude-raw() { _agent_iterm_run claude-raw _claude_raw_launch "$@"; }
+
+clor() { _agent_iterm_run clor _clor_launch "$@"; }
