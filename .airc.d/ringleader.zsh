@@ -5,4 +5,5 @@
 #
 # bin/rl-launch puts the agent wrappers back in front of the sessions rl resumes;
 # a bare `codex` falls back to its own workspace-write Seatbelt with no network.
-rl() { PATH="$HOME/ac/bin/rl-launch:$PATH" sops-exec rl "$@"; }
+: ${AC_DIR:=${0:A:h:h}}
+rl() { PATH="$AC_DIR/bin/rl-launch:$PATH" sops-exec rl "$@"; }

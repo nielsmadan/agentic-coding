@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const STATUS_BIN = join(homedir(), "ac", "bin", "agent-sandbox-status");
+const STATUS_BIN = join(homedir(), ".local", "bin", "agent-sandbox-status");
 
 function sandboxStatus(): Promise<string | undefined> {
   return new Promise((resolve) => {

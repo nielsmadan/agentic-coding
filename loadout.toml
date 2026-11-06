@@ -2,6 +2,14 @@
 name = "ac"
 path = "loadout"
 
+# Juggler's status hooks: hooklinesinker's Claude and Codex registrations and its
+# Pi and OpenCode adapters. Every profile lists it except studio-agents, since
+# Juggler shows only Niels's sessions.
+[[source]]
+name = "ac-juggler"
+path = "loadout/juggler"
+use = ["hooks", "module-config"]
+
 # Destinations and renderers come from loadout's agent preset, which carries each
 # harness's config-directory variable — so no machine path is named here.
 # `permissions` and `mcp` render without being asked for; `instructions` needs an

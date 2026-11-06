@@ -66,6 +66,13 @@ printf '%s\\n' "$?"
 ''')
         self.assertEqual(result.stdout.splitlines(), ["0", "1"])
 
+    def test_studio_profiles_launch_without_nono(self):
+        for profile in ("studio", "studio-agents"):
+            with self.subTest(profile=profile):
+                self.config.write_text(f'profile = "{profile}"\n')
+                result = self.run_shell("source .airc.d/05-sandbox.zsh; _agent_unsandboxed_profile")
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_explicit_sandbox_requirements_take_precedence(self):
         for key in ("AGENT_FORCE_SANDBOX", "AGENT_REQUIRE_SANDBOX"):
             with self.subTest(key=key):

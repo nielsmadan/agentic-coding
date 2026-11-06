@@ -1,0 +1,31 @@
+#!/bin/bash
+# The fleet shares the macOS user with the studio profile, so it renders into its own dirs
+# under ~/fleet/harness, from the ac checkout this script lives in (/opt/ac on the Studio).
+# Its own XDG_CONFIG_HOME keeps loadout's written-record apart; one shared record would retire the other profile's files.
+set -euo pipefail
+
+FLEET_HOME="${FLEET_HOME:-$HOME/fleet/harness}"
+FLEET_ENV=(
+  "CLAUDE_CONFIG_DIR=$FLEET_HOME/claude"
+  "CODEX_HOME=$FLEET_HOME/codex"
+  "PI_CODING_AGENT_DIR=$FLEET_HOME/pi/agent"
+)
+
+case "${1:-}" in
+  --env)
+    printf 'export %q\n' "${FLEET_ENV[@]}"
+    # A forwarded agent is Niels's and asks him for Touch ID; the fleet pushes over HTTPS.
+    echo 'unset SSH_AUTH_SOCK'
+    exit 0
+    ;;
+  "") ;;
+  *)
+    echo "Usage: $0 [--env]" >&2
+    echo "  Syncs the studio-agents profile into \$FLEET_HOME (default ~/fleet/harness)." >&2
+    echo "  --env prints the shell lines an agent launcher must run." >&2
+    exit 64
+    ;;
+esac
+
+exec env "${FLEET_ENV[@]}" XDG_CONFIG_HOME="$FLEET_HOME/config" \
+  "$(cd "$(dirname "$0")/.." && pwd)/sync.sh" --profile studio-agents

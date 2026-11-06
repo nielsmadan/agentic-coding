@@ -40,6 +40,15 @@ and approval settings. `AGENT_FORCE_SANDBOX` or `AGENT_REQUIRE_SANDBOX` still
 requests nono. Run `source ~/.airc` once after pulling the launcher changes.
 Switch back with `./sync.sh --autonomous` or `./sync.sh --normal`.
 
+The Mac Studio has two profiles for one shared macOS user, both raw and without
+agent-chromium. There this repo is a read-only checkout at `/opt/ac`, which
+`studio-deploy` in `~/rc` updates; nothing here assumes `~/ac`. `/opt/ac/sync.sh
+--profile studio` renders Niels's own sessions into the default directories.
+`/opt/ac/bin/fleet-sync` renders `studio-agents` into `~/fleet/harness` with its
+own loadout machine config, since a second profile in the same directories would
+overwrite or retire the first; the agent launcher runs what `bin/fleet-sync
+--env` prints, which also drops a forwarded SSH agent.
+
 Machine prerequisites (`python3`, the agent CLIs, `npx`/`uvx`/`dart` for some
 MCP servers) are **not** auto-installed — set those up separately.
 
@@ -79,11 +88,13 @@ destinations are generated real files, not repository symlinks. Keeping hooks,
 plugins, and settings in distinct slices prevents a residual settings document
 from becoming a second owner of generated keys.
 
-Juggler's status hooks call the shared Hooklinesinker binary. Claude and Codex
-registrations live in `loadout/hooks/hooklinesinker-*.json`; the installed Pi and
-OpenCode adapters are copied verbatim from
-`loadout/module-config/pi/extensions/hooklinesinker-pi.ts` and
-`loadout/module-config/opencode/plugins/hooklinesinker-opencode.ts`.
+Juggler's status hooks call the shared Hooklinesinker binary. They are a source
+of their own, `loadout/juggler/`, which every profile lists except the Studio's
+fleet profile, since Juggler shows only Niels's sessions. Claude and Codex
+registrations live in `loadout/juggler/hooks/hooklinesinker-*.json`; the
+installed Pi and OpenCode adapters are copied verbatim from
+`loadout/juggler/module-config/pi/extensions/hooklinesinker-pi.ts` and
+`loadout/juggler/module-config/opencode/plugins/hooklinesinker-opencode.ts`.
 The commands retain Hooklinesinker's canonical installed path so its health checks
 recognize them. Juggler manages the binary and its consumer registration. After a
 Hooklinesinker upgrade changes the hooks, copy the installed registrations and

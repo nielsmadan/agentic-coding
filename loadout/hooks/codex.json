@@ -4,7 +4,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "~/ac/bin/agent-sandbox-status",
+          "command": "~/.local/bin/agent-sandbox-status",
           "timeout": 5
         }
       ]

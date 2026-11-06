@@ -13,7 +13,7 @@
 extends = "default"
 
 # A child's [[source]] list replaces the parent's, so `ac` is restated before
-# the profile-only source, which adds servers and their approvals.
+# the profile-only source, which adds servers and their approvals, and Juggler's.
 [[source]]
 name = "ac"
 path = "loadout"
@@ -22,6 +22,11 @@ path = "loadout"
 name = "ac-autonomous"
 path = "loadout/autonomous"
 use = ["mcp", "permissions"]
+
+[[source]]
+name = "ac-juggler"
+path = "loadout/juggler"
+use = ["hooks", "module-config"]
 
 [claude]
 settings    = ["claude"]

@@ -7,7 +7,9 @@
 # ---------------------------------------------------------------------------
 
 # ${0:A:h} resolves through any symlink (~/.airc -> repo/.airc) to the repo dir.
-_airc_dir="${0:A:h}/.airc.d"
+# The repo can live anywhere (~/ac on the MacBook, /opt/ac on the Studio).
+export AC_DIR="${0:A:h}"
+_airc_dir="$AC_DIR/.airc.d"
 for _airc_f in "$_airc_dir"/*.zsh(N); do
   source "$_airc_f"
 done

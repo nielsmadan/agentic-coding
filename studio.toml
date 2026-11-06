@@ -1,0 +1,43 @@
+# Niels's own sessions on the Mac Studio, and the base studio-agents.toml
+# extends. The Studio runs agents raw, without nono, as one non-admin user
+# shared with the fleet; it has its own secrets store and no logged-in browser.
+#
+# A child's [[source]] list replaces the parent's, so `ac` is restated before
+# the Studio source, which supplies servers started by path and a web-fetch
+# skill without the agent browser, and Juggler's.
+
+extends = "default"
+
+[[source]]
+name = "ac"
+path = "loadout"
+
+[[source]]
+name = "ac-studio"
+path = "loadout/studio"
+use = ["mcp", "skills"]
+
+[source.overrides]
+skills = ["web-fetch"]
+
+[[source]]
+name = "ac-juggler"
+path = "loadout/juggler"
+use = ["hooks", "module-config"]
+
+[all]
+substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", "web-fetching.shared" = "web-fetching.shared.studio", git-policy = "git-policy.studio" }
+
+[claude]
+plugins = ["claude", "unsandboxed"]
+substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "git-policy.studio" }
+
+[pi]
+plugins = ["pi", "unsandboxed"]
+
+[skills.nono-sandbox]
+agents = []
+
+# The notes vault stays off the Studio, so there is nothing for it to search.
+[skills.check-notes]
+agents = []

@@ -45,7 +45,8 @@
 # wrappers themselves), which the sandbox exists to prevent — so claude and codex
 # route to their -raw variant here. AGENT_FORCE_SANDBOX=1 overrides. pi and
 # opencode have no raw variant and are unaffected.
-AGENT_RAW_DIRS=("$HOME/ac" "$HOME/rc")
+: ${AC_DIR:=${0:A:h:h}}
+AGENT_RAW_DIRS=("$AC_DIR" "$HOME/rc")
 
 _agent_unsandboxed_profile() {
   [[ -n $AGENT_FORCE_SANDBOX || -n $AGENT_REQUIRE_SANDBOX ]] && return 1
@@ -54,7 +55,7 @@ _agent_unsandboxed_profile() {
   python3 -c 'import sys, tomllib
 with open(sys.argv[1], "rb") as handle:
     config = tomllib.load(handle)
-sys.exit(config.get("profile") != "unsandboxed")' "$config"
+sys.exit(config.get("profile") not in ("unsandboxed", "studio", "studio-agents"))' "$config"
 }
 
 _agent_raw_dir() {
@@ -75,7 +76,7 @@ _agent_sandboxed() {
   if _agent_unsandboxed_profile; then
     sops-exec "$cmd" "$@"
   elif command -v nono >/dev/null 2>&1 && [ -f "$HOME/.config/nono/profiles/$profile.json" ]; then
-    PATH="$HOME/ac/bin/sandbox-shims:$HOME/ac/bin:$PATH" \
+    PATH="$AC_DIR/bin/sandbox-shims:$AC_DIR/bin:$PATH" \
     AGENT_SANDBOX=1 \
     AGENT_SANDBOX_PROFILE="$profile" \
     DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \

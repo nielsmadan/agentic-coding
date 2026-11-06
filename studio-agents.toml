@@ -1,0 +1,65 @@
+# The agent fleet on the Mac Studio. It shares the macOS user with Niels's
+# `studio` sessions, so it renders into its own config directories: see
+# bin/fleet-sync, which sets them before syncing this profile.
+#
+# Droid and OpenCode are not fleet harnesses. second-opinion runs them with the
+# `studio` config in their default directories, which a second writer here
+# would overwrite.
+#
+# Claude runs with no permission rules, as in autonomous.toml, so the auto-mode
+# classifier judges every call and `git push` goes through. Codex drops its rules
+# for the same reason; its only one was the push deny. The Telegram plugin goes,
+# since every fleet session would poll the same bot.
+#
+# The fleet's blind-spots (loadout/studio-agents/) sends open decisions to the
+# project's lead. It keeps the skill's name because longshot, brainstorm and the
+# research skills call it by that name.
+
+extends = "studio"
+remove = ["droid", "opencode"]
+
+# A child's [[source]] list replaces the parent's, so studio.toml's sources are
+# restated before the fleet's, all but ac-juggler: Juggler shows only Niels's
+# sessions, so the fleet gets no hooklinesinker hooks or adapters.
+[[source]]
+name = "ac"
+path = "loadout"
+
+[[source]]
+name = "ac-studio"
+path = "loadout/studio"
+use = ["mcp", "skills"]
+
+[source.overrides]
+skills = ["web-fetch"]
+
+[[source]]
+name = "ac-studio-agents"
+path = "loadout/studio-agents"
+use = ["skills"]
+
+[source.overrides]
+skills = ["blind-spots"]
+
+# A child's `substitute` map replaces the parent's whole map, so the Studio
+# swaps are restated here alongside the fleet's. The unattended fragment carries
+# the fleet's git policy, so it takes git-policy's place in the order.
+[all]
+substitute = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", "web-fetching.shared" = "web-fetching.shared.studio", git-policy = "unattended.studio-agents", agent-dispatch = "agent-dispatch.autonomous" }
+
+[claude]
+settings    = ["claude"]
+hooks       = ["claude"]
+permissions = []
+plugins     = ["claude", "unsandboxed", "studio-agents"]
+substitute  = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "unattended.studio-agents", agent-dispatch = "agent-dispatch.autonomous" }
+
+[codex]
+hooks       = ["codex"]
+permissions = []
+
+[skills.guide]
+agents = []
+
+[skills.qa-tour]
+agents = []

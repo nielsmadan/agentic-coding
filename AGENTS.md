@@ -16,12 +16,15 @@ environment and the tools around it.
   - `permissions.toml` - shell and MCP permission rules for all agents (see Permissions)
   - `mcp.toml` - which MCP servers exist machine-wide (see MCP Servers)
   - `autonomous/` - a second source (`mcp.toml`, `permissions.toml`) that only `autonomous.toml`, and so `unsandboxed`, declares
+  - `studio/` - the Mac Studio source (`mcp.toml` with servers started by path, a `web-fetch` skill without agent-chromium) that `studio.toml`, and so `studio-agents.toml`, declares
+  - `juggler/` - Juggler's status hooks as their own source (`hooks/hooklinesinker-{claude,codex}.json` and the Pi and OpenCode adapters under `module-config/`), which every profile lists except `studio-agents.toml`
+  - `studio-agents/` - the fleet's source: a `blind-spots` that sends open decisions to the project's lead instead of asking, declared only by `studio-agents.toml`
   - `instructions/` - shared prose fragments for each agent's **global** guidance; edit these (see Global Instructions)
   - `skills/` - global skills, rendered to all four harnesses (see Skills)
   - `templates/` - project-type manifests and the shared parts they select (see Project Templates)
   - `settings/` - the hand-maintained half of each harness's settings: `claude.json`, `claude-afk.json`, `droid.json`, `opencode.json`, `pi.json`
-  - `hooks/` - hook *wiring* per harness (`claude.json`, `hooklinesinker-claude.json`, `hooklinesinker-codex.json`)
-  - `plugins/` - plugin enablement per harness (`claude.json`, `pi.json`, `unsandboxed.json`)
+  - `hooks/` - hook *wiring* per harness (`claude.json`, `codex.json`)
+  - `plugins/` - plugin enablement per harness (`claude.json`, `pi.json`, `unsandboxed.json`, `studio-agents.json`)
   - `module-config/<harness>/` - files copied to the harness's own config dir; the hook scripts themselves live in `loadout/module-config/claude/hooks/`
   - `defaults/` - `codex.json` (model defaults) and its generated `codex.owned` record
 - `nono/` - sandbox profiles, symlinked to `~/.config/nono/profiles/` (see Sandbox)
@@ -31,7 +34,7 @@ environment and the tools around it.
 - `publish/` - renders the public skills collection (see below)
 - `mods/` - Claude Code mods (hooks modules); one with a `pi/` folder is also a pi extension. `sync.sh` installs both (see [docs/skills-and-integration.md](docs/skills-and-integration.md))
 - `docs/` - deeper reference, notably [`security-model.md`](docs/security-model.md)
-- `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); loads everything under `.airc.d/`
+- `.airc` - entry point sourced from `~/.zshrc` (symlinked from `~/.airc`); exports `AC_DIR`, the repo's own location, and loads everything under `.airc.d/`. Nothing may assume `~/ac`: on the Studio the repo is a read-only checkout at `/opt/ac`, so `.airc.d/` uses `$AC_DIR`, hook commands call `~/.local/bin/agent-sandbox-status` (linked by `sync.sh`), and `sync.sh` writes nothing into the repo on a profile without nono
 - `.airc.d/` - one `.zsh` file per topic, sourced in glob order
   - `00-path.zsh` puts `bin/` on PATH; `10-env.zsh` sets shared env vars; the rest hold aliases/functions per tool
 - `bin/` - standalone CLI scripts on PATH (e.g. `ccmove`, `clcof`); add new ones here rather than as zsh functions. `.airc.d/00-path.zsh` covers interactive shells only — a script that must also run under launchd needs an explicit `~/.local/bin` symlink in `sync.sh`'s `SYMLINKS` (as `jina-fetch` and `sops-exec` have)

@@ -9,8 +9,9 @@ unset _acbin
 # runs `mise activate` (it lives in ~/.zshrc, which only interactive shells
 # read), so without this it finds neither sops nor nono and both wrappers fall
 # through to an unsandboxed, keyless command. mise shims cover sops, nono and
-# pi; the other three agent binaries are each installed somewhere else.
-for _acdir in "$HOME/.local/share/mise/shims" "$HOME/.local/bin" \
+# pi; the other three agent binaries are each installed somewhere else. The
+# system shims come first: on the Studio, admin installs the tools there.
+for _acdir in /usr/local/share/mise/shims "$HOME/.local/share/mise/shims" "$HOME/.local/bin" \
               /opt/homebrew/bin "$HOME/.opencode/bin"; do
   [[ -d $_acdir && ":$PATH:" != *":$_acdir:"* ]] && export PATH="$PATH:$_acdir"
 done
