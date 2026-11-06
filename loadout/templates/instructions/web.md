@@ -87,9 +87,10 @@ mobile/desktop UI):
 
 ### Notes
 
-- `agent-browser` arrives globally via `npm i -g agent-browser && agent-browser
-  install`; the template supplies instructions and shell permissions for the
-  project's configured harnesses.
+- `agent-browser` and the Chrome that `agent-browser install` downloads are
+  installed machine-wide, not by the project. If either is missing, report it
+  rather than installing it. The template supplies instructions and shell
+  permissions for the project's configured harnesses.
 - Run `loadout sync` in the project to refresh template instructions,
   permissions, and skills. For a vendored catalog, run `loadout template sync web`
   first to update its source copy.
