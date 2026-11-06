@@ -1,20 +1,21 @@
 import type { DevCheck, DevChecks, DevState } from '../types'
 import {
+  awaitsAddressing,
   digest,
   digestPrompt,
   IDLE_MS,
   isCheckpoint,
   MAX_TOKENS,
   MODEL_TIMEOUT_MS,
+  recordBefore,
+  restoreChecks,
   retitle,
   sameChecks,
   skillEffect,
   UNCHECKED,
-  unearnedChecks,
   unknownStale,
   verdictState,
   withCheck,
-  withoutChecks,
 } from '../core/checklist'
 import { bandLine } from './band'
 import type { BandTheme } from './band'
@@ -197,8 +198,9 @@ export const createDevPhase =
       const { check, isDirtying } = skillEffect(skill)
       if (isDirtying) markDirty()
       if (check === undefined) return
-      if (!turnChecks.has(check)) turnChecks.set(check, state.checks[check])
-      setChecks(withCheck(state.checks, check))
+      const ticked = withCheck(state.checks, check)
+      turnChecks = recordBefore(turnChecks, check, state.checks, ticked)
+      setChecks(ticked)
     }
 
     const cancelIdle = (): void => {
@@ -394,12 +396,12 @@ export const createDevPhase =
       const ran = turnChecks
       turnChecks = new Map()
       if (e.aborted || !lastRunAnswered) {
-        setChecks(withoutChecks(state.checks, unearnedChecks(ran)))
+        setChecks(restoreChecks(state.checks, ran))
         commit()
         return
       }
       const isUnclassified = saved === undefined
-      if (!(isDirty || isUnclassified)) return
+      if (!(isDirty || isUnclassified || awaitsAddressing(state.checks))) return
       isDirty = false
       const ask = { generation, serial, held: [...ran.keys()] }
       idleTimer = deps.setTimer(() => {

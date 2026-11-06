@@ -3,27 +3,32 @@ import { describe, expect, test } from 'claude-code/testing'
 import {
   asChecks,
   asStoredChecks,
+  awaitsAddressing,
   checkItems,
   digest,
   digestPrompt,
   forkPrompt,
   isCheckRun,
   isGitCommit,
+  parseAddressed,
   parseFeature,
   parseStale,
+  recordBefore,
   redact,
+  restoreChecks,
   retitle,
   skillEffect,
   staleKeys,
   UNCHECKED,
-  unearnedChecks,
   unknownStale,
   verdictState,
   withCheck,
   withoutChecks,
 } from '../core/checklist'
 
-const ALL = { 'code-review': true, qa: true, 'qa-tour': true }
+const ALL = { 'code-review': true, 'findings-addressed': true, qa: true, 'qa-tour': true }
+const REVIEWED = { ...UNCHECKED, 'code-review': true }
+const ALL_REVIEW = { ...REVIEWED, 'findings-addressed': true }
 
 describe('skillEffect', () => {
   test('the three checklist skills set their own check and dirty the turn, under a plugin prefix too', () => {
@@ -43,29 +48,52 @@ describe('skillEffect', () => {
     expect(skillEffect('test')).toEqual({ check: undefined, isDirtying: false })
     expect(skillEffect('commit')).toEqual({ check: undefined, isDirtying: false })
   })
+
+  test('findings-addressed is no skill, so a skill of that name sets nothing', () => {
+    expect(skillEffect('findings-addressed')).toEqual({ check: undefined, isDirtying: false })
+  })
 })
 
 describe('checks', () => {
   test('the band lists every check in order with its mark and colour', () => {
     expect(checkItems({ ...UNCHECKED, qa: true })).toEqual([
       { check: 'code-review', mark: '✗', color: 'error' },
+      { check: 'findings-addressed', mark: '✗', color: 'error' },
       { check: 'qa', mark: '✓', color: 'success' },
       { check: 'qa-tour', mark: '✗', color: 'error' },
     ])
   })
 
   test('setting a check leaves the others as they were', () => {
-    expect(withCheck({ ...UNCHECKED, qa: true }, 'code-review')).toEqual({ 'code-review': true, qa: true, 'qa-tour': false })
+    expect(withCheck({ ...ALL, qa: false }, 'qa')).toEqual(ALL)
+  })
+
+  test('a code-review run brings new findings, so it crosses findings-addressed', () => {
+    expect(withCheck(ALL, 'code-review')).toEqual({ ...ALL, 'findings-addressed': false })
   })
 
   test('cleared checks are crossed and the rest kept', () => {
-    expect(withoutChecks(ALL, ['qa'])).toEqual({ 'code-review': true, qa: false, 'qa-tour': true })
+    expect(withoutChecks(ALL, ['qa'])).toEqual({ ...ALL, qa: false })
     expect(withoutChecks(UNCHECKED, [])).toEqual(UNCHECKED)
   })
 
-  test('only a record with all three booleans is read back, as a fresh record of just those', () => {
+  test('findings-addressed is crossed with code-review', () => {
+    expect(withoutChecks(ALL, ['code-review'])).toEqual({ ...ALL, 'code-review': false, 'findings-addressed': false })
+  })
+
+  test('only a reviewed session with findings-addressed crossed awaits addressing', () => {
+    expect(awaitsAddressing(REVIEWED)).toBe(true)
+    expect(awaitsAddressing(ALL)).toBe(false)
+    expect(awaitsAddressing(UNCHECKED)).toBe(false)
+  })
+
+  test('only a record with every skill check as a boolean is read back, as a fresh record of just the checks', () => {
     expect(asChecks({ ...ALL, extra: 1 })).toEqual(ALL)
     expect(asChecks({ 'code-review': true, qa: 'yes', 'qa-tour': false })).toBeUndefined()
+  })
+
+  test('a record from before findings-addressed reads it as crossed', () => {
+    expect(asChecks({ 'code-review': true, qa: true, 'qa-tour': false })).toEqual({ ...REVIEWED, qa: true })
   })
 
   test('a stored phase record from before the checklist reads as every check crossed', () => {
@@ -75,8 +103,16 @@ describe('checks', () => {
     expect(asStoredChecks('garbage')).toBeUndefined()
   })
 
-  test('a run that is not answered takes back only the checks it newly set', () => {
-    expect(unearnedChecks(new Map([['qa', false], ['code-review', true]]))).toEqual(['qa'])
+  test('a turn records each check its skills changed, as it was before the first change', () => {
+    const first = recordBefore(new Map(), 'code-review', ALL, withCheck(ALL, 'code-review'))
+    expect([...first]).toEqual([['code-review', true], ['findings-addressed', true]])
+    const second = recordBefore(first, 'qa', { ...ALL, 'findings-addressed': false }, { ...ALL, 'findings-addressed': false, qa: false })
+    expect([...second]).toEqual([['code-review', true], ['findings-addressed', true], ['qa', true]])
+  })
+
+  test('a run that is not answered puts back what its skills changed', () => {
+    const before = new Map([['code-review', false], ['findings-addressed', true]] as const)
+    expect(restoreChecks({ ...ALL, 'findings-addressed': false }, before)).toEqual({ ...ALL, 'code-review': false })
   })
 })
 
@@ -102,6 +138,12 @@ describe('parseStale', () => {
     expect(parseStale('STALE: qa\nSTALE: none')).toEqual([])
   })
 
+  test('findings-addressed is not a stale choice, and all means the skill checks', () => {
+    expect(parseStale('STALE: findings-addressed')).toEqual([])
+    expect(unknownStale('STALE: findings-addressed')).toEqual(['findings-addressed'])
+    expect(parseStale('STALE: all')).toEqual(['code-review', 'qa', 'qa-tour'])
+  })
+
   test('none and unknown names cross nothing, and unknown names are reported', () => {
     expect(parseStale('STALE: none')).toEqual([])
     expect(parseStale('STALE: security-review, qa')).toEqual(['qa'])
@@ -110,6 +152,15 @@ describe('parseStale', () => {
 
   test('an answer without a stale line has no stale verdict', () => {
     expect(parseStale('FEATURE: x')).toBeUndefined()
+  })
+})
+
+describe('parseAddressed', () => {
+  test('reads yes or no in any case and markdown', () => {
+    expect(parseAddressed('STALE: none\nADDRESSED: yes')).toBe(true)
+    expect(parseAddressed('**ADDRESSED:** No.')).toBe(false)
+    expect(parseAddressed('ADDRESSED: none')).toBeUndefined()
+    expect(parseAddressed('STALE: none')).toBeUndefined()
   })
 })
 
@@ -127,9 +178,20 @@ describe('verdictState', () => {
 
   test('a verdict crosses the stale checks and keeps an unchanged feature', () => {
     expect(verdictState('FEATURE: csv export\nSTALE: qa', current, 9)).toEqual({
-      checks: { 'code-review': true, qa: false, 'qa-tour': true },
+      checks: { ...ALL, qa: false },
       topic: current.topic,
     })
+  })
+
+  test('addressed findings tick findings-addressed while code-review holds', () => {
+    const reviewed = { checks: REVIEWED, topic: null }
+    expect(verdictState('STALE: none\nADDRESSED: yes', reviewed, 9)?.checks).toEqual(ALL_REVIEW)
+    expect(verdictState('STALE: code-review\nADDRESSED: yes', reviewed, 9)?.checks).toEqual(UNCHECKED)
+    expect(verdictState('STALE: none\nADDRESSED: no', reviewed, 9)?.checks).toEqual(REVIEWED)
+  })
+
+  test('an answer of no never crosses findings already addressed', () => {
+    expect(verdictState('STALE: none\nADDRESSED: no', current, 9)?.checks).toEqual(ALL)
   })
 
   test('a new feature is named with the time it was named', () => {
@@ -140,11 +202,7 @@ describe('verdictState', () => {
   })
 
   test('a check held for the turn that ran it survives a stale verdict', () => {
-    expect(verdictState('STALE: code-review, qa', current, 9, ['code-review'])?.checks).toEqual({
-      'code-review': true,
-      qa: false,
-      'qa-tour': true,
-    })
+    expect(verdictState('STALE: code-review, qa', current, 9, ['code-review'])?.checks).toEqual({ ...ALL, qa: false })
   })
 
   test('a verdict missing a line keeps that part', () => {
@@ -179,6 +237,12 @@ describe('prompts', () => {
     const prompt = forkPrompt({ checks: { ...UNCHECKED, qa: true, 'qa-tour': true }, topic: null }, 'Done.')
     expect(prompt).toContain('Set now: qa, qa-tour.')
     expect(prompt).toContain('FEATURE: <name|none>\nSTALE: <')
+  })
+
+  test('only a review whose findings are open asks whether they were addressed', () => {
+    expect(forkPrompt({ checks: REVIEWED, topic: null }, 'Done.')).toContain('STALE: <comma-separated set checks that no longer hold|none>\nADDRESSED: <yes|no>')
+    expect(digestPrompt({ checks: REVIEWED, topic: null }, 'user: hi')).toContain('Addressed: whether every finding')
+    expect(forkPrompt({ checks: ALL, topic: null }, 'Done.')).toContain('Answer with exactly two lines')
   })
 
   test('the digest prompt says when no check is set', () => {

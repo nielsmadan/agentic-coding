@@ -5,6 +5,7 @@ import type { DevCheck, DevChecks, DevState, DevTopic } from '../types'
 import {
   asStoredChecks,
   asTopic,
+  awaitsAddressing,
   bareName,
   checkItems,
   checksKey,
@@ -15,17 +16,17 @@ import {
   isCheckpoint,
   MAX_TOKENS,
   MODEL_TIMEOUT_MS,
+  recordBefore,
+  restoreChecks,
   retitle,
   sameChecks,
   skillEffect,
   staleKeys,
   topicKey,
   UNCHECKED,
-  unearnedChecks,
   unknownStale,
   verdictState,
   withCheck,
-  withoutChecks,
 } from '../core/checklist'
 
 type Dollar = EngineInterface
@@ -231,8 +232,9 @@ export const register: Register = on => {
     if (isDirtying) markDirty(tracker)
     if (check === undefined) return next(e)
     const checks = await read($, checksAtom)
-    if (!tracker.turnChecks.has(check)) tracker.turnChecks.set(check, checks[check])
-    await saveChecks($, await $.session.id(), withCheck(checks, check))
+    const ticked = withCheck(checks, check)
+    tracker.turnChecks = recordBefore(tracker.turnChecks, check, checks, ticked)
+    await saveChecks($, await $.session.id(), ticked)
     return next(e)
   })
 
@@ -254,16 +256,17 @@ export const register: Register = on => {
     const ran = tracker.turnChecks
     tracker.turnChecks = new Map()
     const sessionId = await $.session.id()
+    const checks = await read($, checksAtom)
     if (e.reason !== 'answer') {
-      const unearned = unearnedChecks(ran)
-      if (unearned.length > 0) await saveChecks($, sessionId, withoutChecks(await read($, checksAtom), unearned))
+      const restored = restoreChecks(checks, ran)
+      if (!sameChecks(restored, checks)) await saveChecks($, sessionId, restored)
       return done
     }
-    if (!tracker.isDirty) return done
+    if (!tracker.isDirty && !awaitsAddressing(checks)) return done
     tracker.isDirty = false
     const pending: Pending = {
       ask: { sessionId, generation: tracker.generation, serial: tracker.serial, held: [...ran.keys()] },
-      turn: { checks: await read($, checksAtom), topic: await read($, topicAtom), answer: e.answer },
+      turn: { checks, topic: await read($, topicAtom), answer: e.answer },
     }
     $.clock.after(IDLE_MS, () => runClassification($, tracker, pending))
     return done

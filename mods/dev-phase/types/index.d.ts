@@ -1,4 +1,4 @@
-export type DevCheck = 'code-review' | 'qa' | 'qa-tour'
+export type DevCheck = 'code-review' | 'findings-addressed' | 'qa' | 'qa-tour'
 
 export type DevChecks = Readonly<Record<DevCheck, boolean>>
 

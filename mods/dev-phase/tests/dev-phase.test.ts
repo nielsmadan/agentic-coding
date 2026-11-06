@@ -27,9 +27,9 @@ const START = { cwd: '/w', surface: 'terminal', isInteractive: true } as const
 
 const EDIT = { tool: 'Edit', file_path: '/w/a.ts', old_string: 'a', new_string: 'b' } as const
 
-const ALL = { 'code-review': true, qa: true, 'qa-tour': true }
+const ALL = { 'code-review': true, 'findings-addressed': true, qa: true, 'qa-tour': true }
 
-const CROSSED = '✗ code-review  ✗ qa  ✗ qa-tour'
+const CROSSED = '✗ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour'
 
 type World = {
   store?: Record<string, unknown>
@@ -109,7 +109,7 @@ test('a fresh session shows every check crossed on one line', async ($, on) => {
   await expectBand($, CROSSED)
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
   const marks = await ui.findAll({ type: 'Text', text: /✗/ })
-  expect(marks.map(element => element.props.color)).toEqual(['error', 'error', 'error'])
+  expect(marks.map(element => element.props.color)).toEqual(['error', 'error', 'error', 'error'])
   await ui.unmount()
 })
 
@@ -117,20 +117,20 @@ test('a checklist skill ticks its check in green and keeps it across a resume', 
   engine(on)
   await $.session.start(START)
   await $.skill.prompt({ skill: 'qa', text: 'qa' })
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
   expect((await ui.find({ type: 'Text', text: /✓/ }))?.props.color).toBe('success')
   await ui.unmount()
   await $.classic.SessionStart({ source: 'clear', session_id: 'sess-2' })
   await $.classic.SessionStart({ source: 'resume', session_id: 'sess-1' })
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
 })
 
 test('each checklist skill ticks only its own check', async ($, on) => {
   engine(on)
   await $.skill.prompt({ skill: 'qa-tour', text: 'tour' })
   await $.skill.prompt({ skill: 'code-review', text: 'review' })
-  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✓ qa-tour')
 })
 
 test('a skill a subagent runs ticks nothing and asks nothing', async ($, on) => {
@@ -155,7 +155,7 @@ test('after a subagent finishes a skill, the main agent running it ticks it', as
   const subagentSkill = { tool: 'Skill', skill: 'plugin:code-review', agentId: 'sub-1' } as const
   await $.tool.call(subagentSkill)
   await $.skill.prompt({ skill: 'code-review', text: 'review' })
-  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
 })
 
 test('a skill the main agent runs through the Skill tool ticks its check', async ($, on) => {
@@ -167,7 +167,7 @@ test('a skill the main agent runs through the Skill tool ticks its check', async
   await $.skill.prompt({ skill: 'qa', text: 'qa' })
   held.open()
   await call
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
 })
 
 test('an interrupted turn takes back the checks its skills newly set', async ($, on) => {
@@ -175,9 +175,9 @@ test('an interrupted turn takes back the checks its skills newly set', async ($,
   await $.session.start(START)
   await $.skill.prompt({ skill: 'code-review', text: 'review' })
   await $.skill.prompt({ skill: 'qa', text: 'qa' })
-  await expectBand($, '✓ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
   await $.turn.complete({ ...TURN, reason: 'aborted', isAborted: true })
-  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
 })
 
 test("a verdict cannot cross a check its own turn ran, but crosses older ones", async ($, on) => {
@@ -189,7 +189,7 @@ test("a verdict cannot cross a check its own turn ran, but crosses older ones", 
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
   expect(fork.prompts).toHaveLength(1)
-  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
 })
 
 test('an idle session after an edit asks the fork, crosses what went stale and names the feature', async ($, on) => {
@@ -202,7 +202,7 @@ test('an idle session after an edit asks the fork, crosses what went stale and n
   expect(fork.prompts).toEqual([])
   await clock.advance(1)
   expect(fork.prompts).toEqual([expect.stringContaining('Set now: code-review, qa, qa-tour.')])
-  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
   const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-1' })
   expect(result.sessionTitle).toBe('dev-phase mod')
 })
@@ -213,7 +213,7 @@ test('a verdict that nothing went stale keeps every check', async ($, on) => {
   await $.tool.call(EDIT)
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
 })
 
 test('a planning skill asks the fork after its turn, which can start a new feature', async ($, on) => {
@@ -237,7 +237,51 @@ test('a checklist skill turn asks the fork so earlier checks are judged again', 
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
   expect(fork.prompts).toEqual([expect.stringContaining('Set now: code-review, qa.')])
-  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
+})
+
+test('re-running a ticked check keeps it through its own turn\'s verdict', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: code-review, qa')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
+  await $.session.start(START)
+  await $.tool.call(EDIT)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await $.skill.prompt({ skill: 'qa', text: 'qa' })
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
+})
+
+test('a code-review run crosses findings-addressed, and a verdict that they were addressed ticks it', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none\nADDRESSED: yes')])
+  const clock = engine(on, { store: { 'session:sess-1': ALL }, fork: fork.reply })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toEqual([expect.stringContaining('ADDRESSED: <yes|no>')])
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
+})
+
+test('while findings are open, a turn without edits asks whether they were addressed', async ($, on) => {
+  const fork = recorder([answered('FEATURE: x\nSTALE: none\nADDRESSED: yes')])
+  const clock = engine(on, { store: { 'session:sess-1': { ...NONE, 'code-review': true } }, fork: fork.reply })
+  await $.session.start(START)
+  await $.turn.complete(TURN)
+  await clock.advance(IDLE)
+  expect(fork.prompts).toHaveLength(1)
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✗ qa  ✗ qa-tour')
+})
+
+test('an interrupted code-review puts back findings it had marked addressed', async ($, on) => {
+  engine(on, { store: { 'session:sess-1': ALL } })
+  await $.session.start(START)
+  await $.skill.prompt({ skill: 'code-review', text: 'review' })
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
+  await $.turn.complete({ ...TURN, reason: 'aborted', isAborted: true })
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
 })
 
 test('a turn with another skill and no edits asks nothing', async ($, on) => {
@@ -261,7 +305,7 @@ test('a reply before the idle wait moves the question to the next turn', async (
   await $.turn.complete({ ...TURN, turnId: 't2' })
   await clock.advance(IDLE)
   expect(fork.prompts).toHaveLength(1)
-  await expectBand($, '✓ code-review  ✗ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
 })
 
 test('an unanswered fork is asked again after the next turn', async ($, on) => {
@@ -271,11 +315,11 @@ test('an unanswered fork is asked again after the next turn', async ($, on) => {
   await $.tool.call({ tool: 'Bash', command: 'git commit -m x' })
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
   await $.turn.complete({ ...TURN, turnId: 't2' })
   await clock.advance(IDLE)
   expect(fork.prompts).toHaveLength(2)
-  await expectBand($, '✗ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
 })
 
 test('with nothing to fork the log is judged by haiku', async ($, on) => {
@@ -382,7 +426,7 @@ test('a failed edit asks nothing', async ($, on) => {
   await $.turn.complete(TURN)
   await clock.advance(IDLE)
   expect(fork.prompts).toEqual([])
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
 })
 
 test('a verdict that a checklist skill overtook is dropped', async ($, on) => {
@@ -401,7 +445,7 @@ test('a verdict that a checklist skill overtook is dropped', async ($, on) => {
   await $.skill.prompt({ skill: 'qa', text: 'qa' })
   held.open()
   await settle(clock)
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
 })
 
 test('a turn that ends while the fork runs is asked about when it returns', async ($, on) => {
@@ -425,11 +469,11 @@ test('a turn that ends while the fork runs is asked about when it returns', asyn
   await clock.advance(IDLE)
   gates[0]?.open()
   await settle(clock)
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
   gates[1]?.open()
   await settle(clock)
   expect(prompts).toHaveLength(2)
-  await expectBand($, '✓ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✗ qa-tour')
 })
 
 test('stored checks show when the session starts and ask nothing', async ($, on) => {
@@ -446,7 +490,7 @@ test('stored checks show when the session starts and ask nothing', async ($, on)
   await $.session.start(START)
   await settle(clock)
   expect(models).toEqual([])
-  await expectBand($, '✗ code-review  ✗ qa  ✓ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✗ qa  ✓ qa-tour')
 })
 
 test('a session stored before the checklist starts crossed and asks nothing', async ($, on) => {
@@ -492,7 +536,7 @@ test('a resumed session with nothing stored is named by haiku once', async ($, o
 test('resuming another session in place shows its checks', async ($, on) => {
   engine(on, { store: { 'session:sess-2': { ...NONE, 'code-review': true } } })
   await $.classic.SessionStart({ source: 'resume', session_id: 'sess-2' })
-  await expectBand($, '✓ code-review  ✗ qa  ✗ qa-tour')
+  await expectBand($, '✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
 })
 
 test('clearing the session crosses every check', async ($, on) => {
@@ -508,7 +552,7 @@ test('a forked session inherits the checks and feature', async ($, on) => {
   await $.classic.SessionStart({ source: 'fork', session_id: 'sess-2' })
   await $.classic.SessionStart({ source: 'clear', session_id: 'sess-3' })
   await $.classic.SessionStart({ source: 'resume', session_id: 'sess-2' })
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
   const result = await $.classic.UserPromptSubmit({ prompt: 'go', session_id: 'sess-2' })
   expect(result.sessionTitle).toBe('csv export')
 })
@@ -517,16 +561,16 @@ test('a session forked from one with nothing recorded loads what the fork has st
   engine(on, { store: { 'session:sess-2': { ...NONE, qa: true } } })
   await $.session.start(START)
   await $.classic.SessionStart({ source: 'fork', session_id: 'sess-2' })
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
 })
 
 test('starting a session prunes the least recently used sessions', async ($, on) => {
   const others = Object.fromEntries(Array.from({ length: 300 }, (_, index) => [`session:s${index}`, ALL]))
   engine(on, { store: { 'session:sess-1': { ...NONE, qa: true }, ...others } })
   await $.session.start(START)
-  await expectBand($, '✗ code-review  ✓ qa  ✗ qa-tour')
+  await expectBand($, '✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
   await $.classic.SessionStart({ source: 'resume', session_id: 's299' })
-  await expectBand($, '✓ code-review  ✓ qa  ✓ qa-tour')
+  await expectBand($, '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour')
   await $.classic.SessionStart({ source: 'resume', session_id: 's0' })
   await expectBand($, CROSSED)
 })

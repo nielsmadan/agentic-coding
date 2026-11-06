@@ -6,9 +6,13 @@ export type DigestToolUse = { tool: string; input: Readonly<Record<string, unkno
 
 export type DigestMessage = { role: 'user' | 'assistant'; text: string; toolUses: readonly DigestToolUse[] }
 
-export const UNCHECKED: DevChecks = { 'code-review': false, qa: false, 'qa-tour': false }
+export const UNCHECKED: DevChecks = { 'code-review': false, 'findings-addressed': false, qa: false, 'qa-tour': false }
 
 export const CHECKS = Object.keys(UNCHECKED) as readonly DevCheck[]
+
+const ADDRESSED: DevCheck = 'findings-addressed'
+
+const SKILL_CHECKS = CHECKS.filter(check => check !== ADDRESSED)
 
 export type CheckItem = { check: DevCheck; mark: '✓' | '✗'; color: 'success' | 'error' }
 
@@ -32,22 +36,28 @@ export type SkillEffect = { check: DevCheck | undefined; isDirtying: boolean }
 
 export const skillEffect = (skill: string): SkillEffect => {
   const bare = bareName(skill)
-  const check = CHECKS.find(name => name === bare)
+  const check = SKILL_CHECKS.find(name => name === bare)
   return { check, isDirtying: check !== undefined || NEW_WORK_SKILLS.has(bare) }
 }
 
-export const withCheck = (checks: DevChecks, check: DevCheck): DevChecks => ({ ...checks, [check]: true })
+export const withCheck = (checks: DevChecks, check: DevCheck): DevChecks =>
+  check === 'code-review' ? { ...checks, [check]: true, [ADDRESSED]: false } : { ...checks, [check]: true }
 
-export const withoutChecks = (checks: DevChecks, cleared: readonly DevCheck[]): DevChecks =>
-  Object.fromEntries(CHECKS.map(check => [check, checks[check] && !cleared.includes(check)])) as DevChecks
+export const withoutChecks = (checks: DevChecks, cleared: readonly DevCheck[]): DevChecks => {
+  const isCleared = (check: DevCheck) => cleared.includes(check) || (check === ADDRESSED && cleared.includes('code-review'))
+  return Object.fromEntries(CHECKS.map(check => [check, checks[check] && !isCleared(check)])) as DevChecks
+}
+
+export const awaitsAddressing = (checks: DevChecks): boolean => checks['code-review'] && !checks[ADDRESSED]
 
 export const sameChecks = (a: DevChecks, b: DevChecks): boolean => CHECKS.every(check => a[check] === b[check])
 
 export const asChecks = (value: unknown): DevChecks | undefined => {
   if (typeof value !== 'object' || value === null) return undefined
   const fields = value as Record<string, unknown>
-  return CHECKS.every(check => typeof fields[check] === 'boolean')
-    ? (Object.fromEntries(CHECKS.map(check => [check, fields[check]])) as DevChecks)
+  const field = (check: DevCheck) => (check === ADDRESSED ? (fields[check] ?? false) : fields[check])
+  return CHECKS.every(check => typeof field(check) === 'boolean')
+    ? (Object.fromEntries(CHECKS.map(check => [check, field(check)])) as DevChecks)
     : undefined
 }
 
@@ -56,8 +66,21 @@ const isPhaseRecord = (value: unknown): boolean => value === null || (typeof val
 export const asStoredChecks = (value: unknown): DevChecks | undefined =>
   asChecks(value) ?? (isPhaseRecord(value) ? UNCHECKED : undefined)
 
-export const unearnedChecks = (ran: ReadonlyMap<DevCheck, boolean>): DevCheck[] =>
-  [...ran].filter(([, wasSet]) => !wasSet).map(([check]) => check)
+export const recordBefore = (
+  before: ReadonlyMap<DevCheck, boolean>,
+  ran: DevCheck,
+  current: DevChecks,
+  next: DevChecks,
+): Map<DevCheck, boolean> =>
+  new Map([
+    ...before,
+    ...CHECKS.filter(check => (check === ran || current[check] !== next[check]) && !before.has(check)).map(
+      check => [check, current[check]] as const,
+    ),
+  ])
+
+export const restoreChecks = (checks: DevChecks, before: ReadonlyMap<DevCheck, boolean>): DevChecks =>
+  Object.fromEntries(CHECKS.map(check => [check, before.get(check) ?? checks[check]])) as DevChecks
 
 const GIT_COMMIT = /\bgit\b(?:\s+-C\s+\S+)?\s+commit\b/
 
@@ -72,7 +95,7 @@ export const isCheckpoint = (command: string): boolean => isGitCommit(command) |
 
 export const IDLE_MS = 30_000
 export const MODEL_TIMEOUT_MS = 20_000
-export const MAX_TOKENS = 60
+export const MAX_TOKENS = 80
 
 const CHECKS_PREFIX = 'session:'
 
@@ -127,9 +150,11 @@ export const verdictState = (
 ): DevState | undefined => {
   const stale = parseStale(text)
   const feature = parseFeature(text)
-  if (stale === undefined && feature === undefined) return undefined
+  const addressed = parseAddressed(text)
+  if (stale === undefined && feature === undefined && addressed === undefined) return undefined
+  const kept = stale === undefined ? current.checks : withoutChecks(current.checks, stale.filter(check => !held.includes(check)))
   return {
-    checks: stale === undefined ? current.checks : withoutChecks(current.checks, stale.filter(check => !held.includes(check))),
+    checks: addressed === true && kept['code-review'] ? { ...kept, [ADDRESSED]: true } : kept,
     topic: feature === undefined ? current.topic : nameTopic(current.topic, feature, at),
   }
 }
@@ -143,12 +168,21 @@ const featureGuide = (topic: DevTopic | null): string => {
 }
 
 const checksGuide = (checks: DevChecks): string => {
-  const set = CHECKS.filter(check => checks[check])
-  return `Checks: each of ${CHECKS.join(', ')} is set when the skill of that name runs. Set now: ${set.length === 0 ? 'none' : set.join(', ')}.
-A set check no longer holds when the session has moved on to a different feature or bug than the one it ran for, or when substantial changes were made after its most recent run: changes to behaviour, control flow, state, data handling, interfaces or integrations that could invalidate what it verified. Formatting, comments, renames, documentation, and fixes for problems that check's own run found do not count. When unsure, the check holds.`
+  const set = SKILL_CHECKS.filter(check => checks[check])
+  return `Checks: each of ${SKILL_CHECKS.join(', ')} is set when the skill of that name runs. Set now: ${set.length === 0 ? 'none' : set.join(', ')}.
+A set check no longer holds when the session has moved on to a different feature or bug than the one it ran for, or when substantial changes were made after its most recent run: changes to behaviour, control flow, state, data handling, interfaces or integrations that could invalidate what it verified. Formatting, comments, renames, documentation, and fixes for problems that check's own run found do not count. When unsure, the check holds.${awaitsAddressing(checks) ? ADDRESSED_GUIDE : ''}`
 }
 
-const ANSWER_FORMAT = `Answer with exactly two lines and nothing else:
+const ADDRESSED_GUIDE = `
+Addressed: whether every finding of the most recent code-review run has been dealt with: fixed, or rejected or deferred with a stated reason. A review that reported no findings counts as addressed. Findings still open, partly fixed, or waiting on the user's decision are not addressed. When unsure, answer no.`
+
+const answerFormat = (checks: DevChecks): string =>
+  awaitsAddressing(checks)
+    ? `Answer with exactly three lines and nothing else:
+FEATURE: <name|none>
+STALE: <comma-separated set checks that no longer hold|none>
+ADDRESSED: <yes|no>`
+    : `Answer with exactly two lines and nothing else:
 FEATURE: <name|none>
 STALE: <comma-separated set checks that no longer hold|none>`
 
@@ -165,7 +199,7 @@ ${checksGuide(state.checks)}
 
 Your final reply this turn ended with: """${answer.slice(-1200) || '(no text)'}"""
 
-${ANSWER_FORMAT}`
+${answerFormat(state.checks)}`
 
 const oneLine = (text: string, max: number): string => text.replace(/\s+/g, ' ').trim().slice(0, max)
 
@@ -229,7 +263,7 @@ ${checksGuide(state.checks)} A set check whose most recent run is not in the tra
 ${rows}
 </transcript>
 
-${ANSWER_FORMAT}`
+${answerFormat(state.checks)}`
 
 const answerLine = (text: string, label: string): string | undefined =>
   [...text.matchAll(new RegExp(`^[\\s>*_#-]*${label}[*_]*:[*_]*[ \\t]*(.*)$`, 'gim'))].at(-1)?.[1]
@@ -254,11 +288,16 @@ const isAll = (name: string): boolean => name === 'all' || name.startsWith('all-
 export const parseStale = (text: string): DevCheck[] | undefined => {
   const names = staleNames(text)
   if (names === undefined) return undefined
-  return names.some(isAll) ? [...CHECKS] : CHECKS.filter(check => names.includes(check))
+  return names.some(isAll) ? [...SKILL_CHECKS] : SKILL_CHECKS.filter(check => names.includes(check))
 }
 
 export const unknownStale = (text: string): string[] =>
-  (staleNames(text) ?? []).filter(name => name !== 'none' && !isAll(name) && !CHECKS.some(check => check === name))
+  (staleNames(text) ?? []).filter(name => name !== 'none' && !isAll(name) && !SKILL_CHECKS.some(check => check === name))
+
+export const parseAddressed = (text: string): boolean | undefined => {
+  const answer = /^(yes|no)\b/.exec(normalise(answerLine(text, 'ADDRESSED') ?? ''))?.[1]
+  return answer === undefined ? undefined : answer === 'yes'
+}
 
 export const parseFeature = (text: string): string | null | undefined => {
   const named = answerLine(text, 'FEATURE')
