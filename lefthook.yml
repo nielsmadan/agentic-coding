@@ -4,6 +4,9 @@ pre-commit:
       run: loadout check --global --staged
     publish-manifest:
       run: python3 publish/sync.py --check-manifest --check-sources
+    juggler-studio:
+      glob: "loadout/juggler/**"
+      run: bin/juggler-studio --check
     sandbox-writable:
       glob: "nono/*.json"
       run: ./bin/nono-audit --check

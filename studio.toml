@@ -4,7 +4,8 @@
 #
 # A child's [[source]] list replaces the parent's, so `ac` is restated before
 # the Studio source, which supplies servers started by path and a web-fetch
-# skill without the agent browser, and Juggler's.
+# skill without the agent browser, and Juggler's. The Studio's Juggler hooks
+# call the deployed /opt/bin/hooklinesinker (bin/juggler-studio generates them).
 
 extends = "default"
 
@@ -22,7 +23,7 @@ skills = ["web-fetch"]
 
 [[source]]
 name = "ac-juggler"
-path = "loadout/juggler"
+path = "loadout/juggler-studio"
 use = ["hooks", "module-config"]
 
 [all]

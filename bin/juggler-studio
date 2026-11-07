@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Regenerate loadout/juggler-studio/ from loadout/juggler/ with /opt/bin/hooklinesinker."""
+
+import argparse
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "loadout" / "juggler"
+TARGET = ROOT / "loadout" / "juggler-studio"
+STUDIO_BIN = "/opt/bin/hooklinesinker"
+REWRITES = [
+    ('join(homedir(), ".local/share/hooklinesinker/bin/hooklinesinker")', f'"{STUDIO_BIN}"'),
+    ("~/.local/share/hooklinesinker/bin/hooklinesinker", STUDIO_BIN),
+]
+
+
+def studio_copy(text):
+    for old, new in REWRITES:
+        text = text.replace(old, new)
+    return text
+
+
+def expected_files():
+    return {
+        path.relative_to(SOURCE): studio_copy(path.read_text())
+        for path in sorted(SOURCE.rglob("*"))
+        if path.is_file()
+    }
+
+
+def stale_paths(expected):
+    present = {path.relative_to(TARGET) for path in TARGET.rglob("*") if path.is_file()} if TARGET.exists() else set()
+    changed = [rel for rel, text in expected.items() if not (TARGET / rel).is_file() or (TARGET / rel).read_text() != text]
+    return sorted(changed + sorted(present - expected.keys()))
+
+
+def unrewritten(expected):
+    return [rel for rel, text in expected.items() if ".local/share/hooklinesinker" in text]
+
+
+def write(expected):
+    for path in (TARGET.rglob("*") if TARGET.exists() else []):
+        if path.is_file() and path.relative_to(TARGET) not in expected:
+            path.unlink()
+    for rel, text in expected.items():
+        (TARGET / rel).parent.mkdir(parents=True, exist_ok=True)
+        (TARGET / rel).write_text(text)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="exit 1 if loadout/juggler-studio/ is out of date")
+    args = parser.parse_args()
+    expected = expected_files()
+    missed = unrewritten(expected)
+    if missed:
+        sys.exit(f"juggler-studio: the hooklinesinker path changed shape in {', '.join(map(str, missed))}; update REWRITES")
+    if args.check:
+        stale = stale_paths(expected)
+        if stale:
+            sys.exit(f"juggler-studio: out of date: {', '.join(map(str, stale))}; run bin/juggler-studio")
+        return
+    write(expected)
+
+
+if __name__ == "__main__":
+    main()

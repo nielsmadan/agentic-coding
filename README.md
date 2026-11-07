@@ -98,7 +98,13 @@ installed Pi and OpenCode adapters are copied verbatim from
 The commands retain Hooklinesinker's canonical installed path so its health checks
 recognize them. Juggler manages the binary and its consumer registration. After a
 Hooklinesinker upgrade changes the hooks, copy the installed registrations and
-adapters back into these sources before syncing.
+adapters back into these sources, then run `bin/juggler-studio`, before syncing.
+The Studio's `studio` profile lists `loadout/juggler-studio/` instead, which that
+script generates from `loadout/juggler/` with `/opt/bin/hooklinesinker` in place
+of the home path, since the agents there can write to `~/.local/share`; the
+pre-commit hook and `tests/test_juggler_studio.py` fail while it is stale. On the
+Studio, `studio-deploy hooklinesinker <version>` (in `~/rc`) installs that binary
+and registers Juggler's consumer.
 
 Codex keeps mutable state in `~/.codex/config.toml`, so that file is not
 symlinked. loadout writes it in place instead, owning only the keys it declares
