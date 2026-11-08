@@ -120,7 +120,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/bin/agent-device-daemon:$HOME/.local/bin/agent-device-daemon"
   # pratfall. The advisor-* and cmdgen-* profiles back /second-opinion and the
   # llmcli.zsh command generators.
-  "$SCRIPT_DIR/pratfall/config.toml:$HOME/.config/pratfall/config.toml"
+  "$SCRIPT_DIR/pratfall/config.toml:${XDG_CONFIG_HOME:-$HOME/.config}/pratfall/config.toml"
 )
 
 # Destinations loadout now writes directly, which earlier versions of this
@@ -293,7 +293,7 @@ validate_pratfall_config() {
     echo "     https://github.com/nielsmadan/pratfall"
     return 0
   fi
-  prat --config "$HOME/.config/pratfall/config.toml" config validate
+  prat --config "${XDG_CONFIG_HOME:-$HOME/.config}/pratfall/config.toml" config validate
 }
 
 # Autonomous profiles get a copy without command_prefix instead of the link.
@@ -301,7 +301,7 @@ validate_pratfall_config() {
 # sops-exec prefix would re-inject the whole store over it.
 render_autonomous_pratfall_config() {
   local source="$SCRIPT_DIR/pratfall/config.toml"
-  local dest="$HOME/.config/pratfall/config.toml"
+  local dest="${XDG_CONFIG_HOME:-$HOME/.config}/pratfall/config.toml"
   mkdir -p "$(dirname "$dest")"
   # Writing through the old link would overwrite the repo source.
   [[ -L "$dest" ]] && rm "$dest"
