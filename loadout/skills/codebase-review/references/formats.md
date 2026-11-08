@@ -67,15 +67,16 @@ error.
 ```markdown
 ## startup (from [docs/startup.md](docs/startup.md), main @ 7f11450)
 
-- [ ] **ST-B1** ✔ · high · UF: none · ruled: fix · B-3 — The config hook re-evaluates every
+- [ ] **ST-B1** ✔ · Should Fix · UF: none · ruled: fix · B-3 — The config hook re-evaluates every
   flag with no user on the first download and overwrites the user's flags.
   Fix: pass the last evaluated user; skip the hook for the initial fetch.
   `src/services/FeatureFlags.ts:46-52,407-425` · Depends: — · Touches: FeatureFlags.ts
-- [ ] **ST-O4** ✔ (likely) · med · UF: major · held — Load fonts lazily; first paint changes
+- [ ] **ST-O4** ✔ (likely) · ungraded · UF: major · held — Load fonts lazily; first paint changes
   from a branded splash to a plain one for ~200 ms. Scenario: … · Depends: —
-- [x] **ST-T2** ✔ · low · UF: none · fixed 3b1c0de — dead `isLogin` branch.
+- [x] **ST-T2** ✔ · Nice to Have · UF: none · fixed 3b1c0de — dead `isLogin` branch.
 ```
 
+- **Priority:** use Review grading from SKILL.md; keep unconfirmed claims ungraded.
 - **Verification marks:** `✔` means the verifier confirmed it in the code. `✔ (likely)` means
   it was checked but not fully confirmed. No mark means it is the reviewer's reading only and
   must not be handed off.
@@ -107,6 +108,8 @@ SIBLINGS:  {{existing review docs and what each covers}}. Build on them, link to
 BOUNDARY:  {{out of scope: what other aspects own}}
 
 ## Questions
+{{Review grading section from SKILL.md}}
+
 {{the aspect's questions from its catalog section in aspects.md, plus project-specific ones}}
 Also answer: is it consistent (count each competing pattern with grep)? Do the repo's docs
 and ADRs about this area match the code? What is tested?
@@ -116,7 +119,8 @@ Open with a TL;DR of about 8 bullets. Use tables and mermaid diagrams over prose
 English, no marketing words.
 
 ## Findings
-Ranked, one per entry: class (bug / improvement / tidy-up / doc error), severity,
+Ranked, one per entry: class (bug / improvement / tidy-up / doc error),
+priority (Must Fix / Should Fix / Nice to Have; apply the supplied Review grading rubric),
 user-facing level (none / minor / major, with a scenario for minor and major),
 path:line, the concrete failure or cost, and a concrete fix.
 

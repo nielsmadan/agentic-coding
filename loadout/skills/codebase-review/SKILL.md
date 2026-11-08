@@ -25,6 +25,28 @@ References:
 - `references/formats.md`: programme, ledger, prompts, briefs, decision waves, the final report
 - `references/workers.md`: worker setup, worker mode, syncing and local integration
 
+## Review grading
+
+Use only these finding priorities, in descending order:
+
+- **Critical Issues (Must Fix):** a verified path causes data loss, a security failure, a materially
+  wrong operation, or makes a core workflow unusable without reasonable recovery.
+- **Improvements (Should Fix):** an ordinary supported workflow demonstrably fails or repeatedly
+  imposes substantial friction, or a concrete design defect creates meaningful maintenance cost.
+- **Suggestions (Nice to Have):** a worthwhile improvement with small practical impact, including
+  optional polish, local simplification, and rare recoverable edge cases.
+
+Grade the demonstrated consequence, realistic reachability, and available recovery against project
+priorities. A category, missing convention, hypothetical future problem, or confidence that a claim
+is true does not set its priority. Do not assign automatic severity floors or ceilings. Keep
+unverified claims in validation gaps, outside the graded finding count; distinguish suggestions
+from defects. For plans, trace the consequence if implemented and state the assumptions.
+
+Use the short labels **Must Fix**, **Should Fix**, and **Nice to Have** in summaries and ledgers.
+Keep effort, verification status, user-facing change size, and tool/vendor diagnostic ratings
+separate. When called by `code-review`, return its requested evidence and impact fields; the parent
+owns scoring and final triage. Otherwise apply this rubric directly. Omit empty priority sections.
+
 ## The contract
 
 State it back at the start gate:
@@ -179,7 +201,7 @@ For each aspect, in plan order, with up to 3 in parallel where the plan allows:
    numbers, rejects what the code disproves, and marks duplicates of existing ledger entries.
    A finding with no verification mark never gets handed off.
 3. **Second opinion, where it pays.** Invoke `second-opinion` for any of the following:
-   - a high-severity finding the verifier only rated `✔ (likely)`
+   - a potentially consequential finding the verifier only rated `✔ (likely)`; keep it ungraded until confirmed
    - a security or data-loss finding
    - a recommendation that would restructure a whole area
 

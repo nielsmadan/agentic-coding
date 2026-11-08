@@ -10,6 +10,28 @@ Find what makes a skill fail the agent that follows it, prove each finding with
 evidence, and fix only what the user approves. Evidence from real use outranks
 static opinion: a rule the agent broke in practice matters more than a style nit.
 
+## Review grading
+
+Use only these finding priorities, in descending order:
+
+- **Critical Issues (Must Fix):** a verified path causes data loss, a security failure, a materially
+  wrong operation, or makes a core workflow unusable without reasonable recovery.
+- **Improvements (Should Fix):** an ordinary supported workflow demonstrably fails or repeatedly
+  imposes substantial friction, or a concrete design defect creates meaningful maintenance cost.
+- **Suggestions (Nice to Have):** a worthwhile improvement with small practical impact, including
+  optional polish, local simplification, and rare recoverable edge cases.
+
+Grade the demonstrated consequence, realistic reachability, and available recovery against project
+priorities. A category, missing convention, hypothetical future problem, or confidence that a claim
+is true does not set its priority. Do not assign automatic severity floors or ceilings. Keep
+unverified claims in validation gaps, outside the graded finding count; distinguish suggestions
+from defects. For plans, trace the consequence if implemented and state the assumptions.
+
+Use the short labels **Must Fix**, **Should Fix**, and **Nice to Have** in summaries and ledgers.
+Keep effort, verification status, user-facing change size, and tool/vendor diagnostic ratings
+separate. When called by `code-review`, return its requested evidence and impact fields; the parent
+owns scoring and final triage. Otherwise apply this rubric directly. Omit empty priority sections.
+
 ## Instructions
 
 ### 1. Resolve the target
@@ -90,8 +112,8 @@ Before dispatching, tell the user how the work is divided (readers plus testers)
 
 Present one ranked list. For each finding:
 
-- **Severity:** *breaks* (the skill fails or misleads), *degrades* (works with
-  friction, or triggers poorly), *polish*.
+- **Priority:** Must Fix, Should Fix, or Nice to Have using Review grading.
+  Keep mechanical lint errors/warnings separate from the consequence of the skill defect.
 - **Evidence:** lint output, a rubric item with its source, a session ref with the
   user's quoted words, or a test result.
 - **Fix:** the concrete edit, quoting the old and new lines.
@@ -135,8 +157,8 @@ User: "review qa-tour, it gave up on a screen it could easily have reached"
    session where the agent said it could not reach the screen without sending an
    email, and quotes the user's correction.
 4. A dry run of "tour the new inbox screen" reports a guess at the same step.
-5. Report: one *breaks* finding with session and test evidence, plus two
-   *polish* items. The user approves the first; apply it, sync, re-run the dry run.
+5. Report: one Should Fix finding with session and test evidence, plus two
+   Nice to Have items. The user approves the first; apply it, sync, re-run the dry run.
 
 ### Sweep before publishing
 
