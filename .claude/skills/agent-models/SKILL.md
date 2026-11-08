@@ -175,7 +175,7 @@ Read `references/targets.md` and update the targets in the approved scope. It ca
 names, prefix rules (`openrouter/` on some keys, not others), the `[1m]` context
 suffix on `clor`, and which files are loadout sources vs generated.
 
-Preserve unrelated content in every file: pi's `openai-codex/*` entries, the
+Preserve unrelated content in every file: pi's `openai/*` entries, the
 `clor` continuation backslashes, `CLOR_MODEL` / `CLOR_EFFORT` overrides.
 
 For extraction, update `DEFAULT_MODEL` and `FALLBACK_MODEL` in

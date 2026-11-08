@@ -98,10 +98,10 @@ slice (which supplies `packages`).
 "defaultModel": "<low id>",
 "defaultThinkingLevel": "<low effort>",
 "enabledModels": [
-  "openai-codex/gpt-6-astra",
-  "openai-codex/gpt-6-luna",
-  "openai-codex/gpt-5.6-terra",
-  "openai-codex/gpt-6-sol",
+  "openai/gpt-6-astra",
+  "openai/gpt-6-luna",
+  "openai/gpt-5.6-terra",
+  "openai/gpt-6-sol",
   "openrouter/<low id>",
   "openrouter/<mid id>",
   "openrouter/<high-main id>",
@@ -110,7 +110,7 @@ slice (which supplies `packages`).
 ```
 
 - `enabledModels` entries carry an `openrouter/` prefix; `defaultModel` does not.
-- Leave the `openai-codex/*` entries alone — that ladder is not OpenRouter and
+- Leave the bare `openai/*` entries (Pi's ChatGPT subscription login) alone — that ladder is not OpenRouter and
   is not part of the trio.
 - **Run `loadout sync --global` after editing** or the change never reaches Pi.
 - Pi writes `/model` and `/settings` picks into the *generated* file, where the
