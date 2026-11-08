@@ -21,7 +21,7 @@ class AgentsUpdateTests(unittest.TestCase):
 
         chosen = agents_update.select(available, [])
 
-        self.assertEqual([agent.name for agent in chosen], ["claude", "codex", "opencode", "pi", "droid"])
+        self.assertEqual([agent.name for agent in chosen], ["claude", "codex", "opencode", "pi", "droid", "cursor"])
 
     def test_selects_named_agents_in_canonical_order(self):
         available = agents_update.agents(Path("/home/u"))

@@ -36,10 +36,13 @@
 # com.google.Chrome. mach-register rule in nono/agent-common.json — both are
 # required, neither is sufficient alone.
 #
-# --silent covers claude and opencode only: both draw a fullscreen TUI that does
-# not reclaim the region nono's capability banner writes to, so the banner shows
-# through their scroll area. It suppresses nono's own output wholesale, exit
-# summary included; the child's own denial errors are unaffected.
+# --silent covers claude, opencode and cursor only: claude and opencode draw a
+# fullscreen TUI that does not reclaim the region nono's capability banner writes
+# to, so the banner shows through their scroll area; cursor-agent writes an
+# in-use marker into its read-only install dir on every start, so its exit
+# summary would report that harmless denial each time. It suppresses nono's own
+# output wholesale, exit summary included; the child's own denial errors are
+# unaffected.
 #
 # Working in these repos means writing outside ~/wrksp (loadout sync, these
 # wrappers themselves), which the sandbox exists to prevent — so claude and codex
@@ -71,7 +74,7 @@ _agent_raw_dir() {
 _agent_sandboxed() {
   local profile=$1 cmd=$2
   local -a nono_options=()
-  [[ $profile == (claude|opencode)-local ]] && nono_options+=(--silent)
+  [[ $profile == (claude|opencode|cursor)-local ]] && nono_options+=(--silent)
   shift 2
   if _agent_unsandboxed_profile; then
     sops-exec "$cmd" "$@"

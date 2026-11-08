@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Update every agent CLI in one go, from an unsandboxed shell.
 
-Sandboxed agents cannot replace their own binaries: claude, pi and droid install
-into paths the sandbox grants read-only, so their built-in updaters fail or report
+Sandboxed agents cannot replace their own binaries: claude, pi, droid and cursor
+install into paths the sandbox grants read-only, so their built-in updaters fail or report
 "skipped". This runs each updater directly, bypassing the sandboxed zsh wrappers.
 
     agents-update                 # update all installed agents
@@ -43,6 +43,11 @@ def agents(home: Path) -> tuple[Agent, ...]:
         ),
         Agent("pi", (*pi, "--version"), ("mise", "upgrade", PI_PACKAGE)),
         Agent("droid", (str(local_bin / "droid"), "--version"), (str(local_bin / "droid"), "update")),
+        Agent(
+            "cursor",
+            (str(local_bin / "cursor-agent"), "--version"),
+            (str(local_bin / "cursor-agent"), "update"),
+        ),
     )
 
 

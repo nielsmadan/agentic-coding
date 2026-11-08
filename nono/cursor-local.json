@@ -1,0 +1,45 @@
+{
+  "extends": [
+    "default",
+    "agent-common",
+    "agent-private"
+  ],
+  "meta": {
+    "name": "cursor-local",
+    "description": "Cursor CLI — no nolabs-ai pack exists, so this is written from scratch"
+  },
+  "groups": {
+    "include": [
+      {
+        "name": "user_caches_macos",
+        "when": "macos"
+      },
+      "node_runtime",
+      "rust_runtime",
+      "python_runtime",
+      "git_config",
+      "unlink_protection"
+    ]
+  },
+  "security": {
+    "signal_mode": "isolated",
+    "capability_elevation": false
+  },
+  "filesystem": {
+    "read": [
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
+    ]
+  },
+  "network": {
+    "block": false
+  },
+  "workdir": {
+    "access": "readwrite"
+  },
+  "environment": {
+    "set_vars": {
+      "AGENT_CLI_CREDENTIAL_STORE": "memory"
+    }
+  }
+}

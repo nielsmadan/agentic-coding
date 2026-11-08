@@ -105,6 +105,7 @@ SYMLINKS=(
   "$SCRIPT_DIR/nono/opencode-local.json:$HOME/.config/nono/profiles/opencode-local.json"
   "$SCRIPT_DIR/nono/pi-local.json:$HOME/.config/nono/profiles/pi-local.json"
   "$SCRIPT_DIR/nono/droid-local.json:$HOME/.config/nono/profiles/droid-local.json"
+  "$SCRIPT_DIR/nono/cursor-local.json:$HOME/.config/nono/profiles/cursor-local.json"
   # Shell
   "$SCRIPT_DIR/.airc:$HOME/.airc"
   # bin/ is on PATH in interactive shells via .airc.d/00-path.zsh. launchd jobs

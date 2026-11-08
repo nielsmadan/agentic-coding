@@ -55,7 +55,8 @@
       "$HOME/.local/state/mise/tracked-configs",
       "$HOME/.local/state/splashdown",
       "$HOME/.local/state/watchman",
-      "$HOME/.factory"
+      "$HOME/.factory",
+      "$HOME/.cursor"
     ],
     "read": [
       "/AppleInternal",
@@ -77,7 +78,8 @@
       "$HOME/.yarn",
       "$HOME/.config/yarn",
       "$HOME/.docker/contexts",
-      "$HOME/.local/share/claude"
+      "$HOME/.local/share/claude",
+      "$HOME/.local/share/cursor-agent"
     ],
     "read_file": [
       "$HOME/.gitconfig-local",
@@ -97,7 +99,8 @@
     ],
     "deny": [
       "$HOME/.dolt/creds",
-      "$HOME/.factory/auth.v2.loginkeychain"
+      "$HOME/.factory/auth.v2.loginkeychain",
+      "$HOME/.cursor/extensions"
     ],
     "bypass_protection": [
       "$HOME/.docker/config.json",
