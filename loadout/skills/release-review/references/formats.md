@@ -112,6 +112,7 @@ conversation.
 
 Checkout: <absolute path>. Base: <commit>, which must contain <commits it depends on>.
 Entries: S-06, S-07 (copied verbatim below; changes.md is the source of truth).
+Approach: <implement directly | plan | longshot — run that skill with this brief as its input>
 
 ## Rules
 - If an entry's premise does not match the code you find, stop and report. Do not adapt the

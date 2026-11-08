@@ -139,6 +139,11 @@ On yes:
 2. Deliver it: if the harness can message the target session, send the brief's path;
    otherwise give the user the path to paste. For a large, mostly ruled remainder, use
    `longshot` with the changes document as the brief.
+
+   **Bigger changes go through `plan` or `longshot`.** An entry that spans several areas,
+   changes a shared interface, or costs more than about half a day goes alone in its brief,
+   marked `Approach: plan`, or `Approach: longshot` for multi-hour work. The implementer
+   session runs that skill on the brief instead of implementing it directly.
 3. Mark the entries `handed off` and add the batch to **In flight**.
 4. **Don't monitor the other session.** Answer its questions when they arrive. When it
    reports, read its commits, run its Verify commands yourself, and only then mark entries
