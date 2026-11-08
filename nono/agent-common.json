@@ -131,7 +131,9 @@
   },
   "environment": {
     "set_vars": {
-      "FACTORY_DISABLE_KEYRING": "1"
+      "FACTORY_DISABLE_KEYRING": "1",
+      "__UNSAFE_EXPO_HOME_DIRECTORY": "$HOME/wrksp/.expo-agent",
+      "VERCEL_CONFIG_DIR_PATH": "$HOME/wrksp/.vercel-agent"
     }
   },
   "unsafe_macos_seatbelt_rules": [
