@@ -187,7 +187,7 @@ That closed a real defect. The old path staged a document and fed it to
 
 **`~/.config/opencode/opencode.json` has one owner now.** loadout writes both the `mcp` key and `permission`, composing them into one document. It used to have two — `mcp/sync.py` owned `mcp` and loadout carried it across with `preserve = ["mcp"]`, which is why sync order was load-bearing. Both are gone: loadout generates that key, so `preserve` would name a generated key and loadout refuses it outright.
 
-Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, rendered from a project's own `loadout/mcp.toml` and from any template it declares (see Project Templates).
+Project-scoped MCP servers are a different mechanism: those live in a project's own `.mcp.json`, rendered from a project's own `loadout/mcp.toml` and from any kit it declares (see Project Kits).
 
 ## Codex Model Defaults
 
@@ -232,7 +232,7 @@ Deleting rather than replacing is the choice that matters: one document to maint
 two, and no contest over who writes the key last.
 
 **`publish/` generates the public skills collection.** `publish/sync.py` renders the
-`publish`-classified skills from `loadout/skills/` and `loadout/templates/skills/`
+`publish`-classified skills from `loadout/skills/` and `loadout/kits/skills/`
 (a name in both is an error), preferring complete skill
 directories in `publish/overrides/<name>/` when present, into
 [nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin

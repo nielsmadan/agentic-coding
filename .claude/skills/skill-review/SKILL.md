@@ -17,7 +17,7 @@ static opinion: a rule the agent broke in practice matters more than a style nit
 A skill name selects one skill for a deep review. `--all` runs the sweep in step 7
 instead. With neither, ask which skill.
 
-Skills live in `loadout/skills/` (global), `loadout/templates/skills/` (template)
+Skills live in `loadout/skills/` (global), `loadout/kits/skills/` (kit)
 and `.claude/skills/` (repo-local). Read the source, never a rendered copy under
 `~/.claude/skills/` or another harness directory. Read SKILL.md and every supporting
 file, then its history:
@@ -105,7 +105,7 @@ prose. Then verify:
 
 ```bash
 .claude/skills/skill-review/scripts/lint_skill.py <name>
-loadout sync --global && loadout check --global    # global and template skills
+loadout sync --global && loadout check --global    # global skills; run project sync for kit skills
 python3 publish/sync.py --check-manifest --check-sources
 ```
 

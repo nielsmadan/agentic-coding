@@ -26,8 +26,13 @@ def frontmatter(name: str = "demo", description: str = GOOD_DESCRIPTION) -> str:
 
 
 class SkillFixture:
-    def __init__(self, text: str, files: dict[str, str] | None = None, dirname: str = "demo",
-                 scope: str = "template"):
+    def __init__(
+        self,
+        text: str,
+        files: dict[str, str] | None = None,
+        dirname: str = "demo",
+        scope: str = "kit",
+    ):
         self.path = Path(CLEANUP.enter_context(tempfile.TemporaryDirectory())) / dirname
         self.path.mkdir()
         (self.path / "SKILL.md").write_text(text)

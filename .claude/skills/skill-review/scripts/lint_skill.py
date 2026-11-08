@@ -20,7 +20,7 @@ import yaml
 REPO = Path(__file__).resolve().parents[4]
 SKILL_ROOTS = (
     ("global", REPO / "loadout/skills"),
-    ("template", REPO / "loadout/templates/skills"),
+    ("kit", REPO / "loadout/kits/skills"),
     ("repo-local", REPO / ".claude/skills"),
 )
 HARNESS_KEYS = ("claude", "codex", "opencode", "pi")

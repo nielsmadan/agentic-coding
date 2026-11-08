@@ -411,9 +411,7 @@ class RenderTest(unittest.TestCase):
             out = root / "out"
             out.mkdir()
             skills = [
-                FakeSkill(
-                    "demo", skill_dir / "SKILL.md", (Path("scripts/run.sh"),)
-                )
+                FakeSkill("demo", skill_dir / "SKILL.md", (Path("scripts/run.sh"),))
             ]
             sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
             copied = out / "skills" / "demo" / "scripts" / "run.sh"
@@ -457,9 +455,7 @@ class RenderTest(unittest.TestCase):
             (skill_dir / "SKILL.md").write_text("x", encoding="utf-8")
             out = root / "out"
             out.mkdir()
-            skills = [
-                FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))
-            ]
+            skills = [FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))]
             with self.assertRaises(ValueError) as ctx:
                 sync.render_tree(out, ["demo"], skills, lambda s, h: "x")
             self.assertIn("escapes the skill directory", str(ctx.exception))
@@ -564,9 +560,7 @@ class BuildTest(unittest.TestCase):
             for name in ("alpha", "beta"):
                 document = out / "skills" / name / "SKILL.md"
                 self.assertTrue(document.is_file())
-                self.assertIn(
-                    sync.PROVENANCE, document.read_text(encoding="utf-8")
-                )
+                self.assertIn(sync.PROVENANCE, document.read_text(encoding="utf-8"))
             for relative in (
                 "README.md",
                 "LICENSE",
@@ -645,7 +639,8 @@ class SourceErrorsTest(unittest.TestCase):
                 "line one\nsee ~/ac/nono here\n", encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_roots=[skills_root],
+                manifest_path=manifest,
+                skills_roots=[skills_root],
                 repo_root=manifest.parent,
             )
             self.assertTrue(
@@ -662,7 +657,8 @@ class SourceErrorsTest(unittest.TestCase):
                 "a\nb\n/Users/nielsmadan/x\n", encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_roots=[skills_root],
+                manifest_path=manifest,
+                skills_roots=[skills_root],
                 repo_root=manifest.parent,
             )
             self.assertTrue(
@@ -749,7 +745,9 @@ class OverrideTest(unittest.TestCase):
     def _assert_rejected(self, message):
         self.assertIn(
             message,
-            sync.check_manifest(manifest_path=self.manifest, skills_roots=[self.sources]),
+            sync.check_manifest(
+                manifest_path=self.manifest, skills_roots=[self.sources]
+            ),
         )
         self.assertIn(
             message,
@@ -862,12 +860,12 @@ class OverrideTest(unittest.TestCase):
         )
 
     def test_override_publishes_when_local_source_is_absent(self):
-        self._write_skill(
-            self.overrides, "demo", "Public demo.", "Public workflow."
-        )
+        self._write_skill(self.overrides, "demo", "Public demo.", "Public workflow.")
         shutil.rmtree(self.sources / "demo")
         self.assertEqual(
-            sync.check_manifest(manifest_path=self.manifest, skills_roots=[self.sources]),
+            sync.check_manifest(
+                manifest_path=self.manifest, skills_roots=[self.sources]
+            ),
             [],
         )
         self.assertEqual(
@@ -894,7 +892,8 @@ class OverrideTest(unittest.TestCase):
                 path.write_text("Use ~/ac\n", encoding="utf-8")
                 self.assertEqual(
                     sync.source_errors(
-                        manifest_path=self.manifest, skills_roots=[self.sources],
+                        manifest_path=self.manifest,
+                        skills_roots=[self.sources],
                         repo_root=self.manifest.parent,
                     ),
                     [f"overrides/demo/{relative}:1: personal string '~/ac'"],
@@ -978,7 +977,7 @@ class OverrideTest(unittest.TestCase):
         )
 
 
-class TemplateRootTest(unittest.TestCase):
+class KitRootTest(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -989,13 +988,13 @@ class TemplateRootTest(unittest.TestCase):
             encoding="utf-8",
         )
         self.globals = self.root / "skills"
-        self.templates = self.root / "templates"
-        self.roots = [self.globals, self.templates]
+        self.kits = self.root / "kits"
+        self.roots = [self.globals, self.kits]
         self.out = self.root / "out"
         self.out.mkdir()
         self._write_skill(self.globals, "demo", "Demo.")
-        self._write_skill(self.templates, "review-x", "Review X.")
-        self._write_skill(self.templates, "hidden", "Hidden.")
+        self._write_skill(self.kits, "review-x", "Review X.")
+        self._write_skill(self.kits, "hidden", "Hidden.")
 
     def _write_skill(self, root, name, description):
         directory = root / name
@@ -1034,10 +1033,12 @@ class TemplateRootTest(unittest.TestCase):
             sorted(p.name for p in (self.out / "skills").iterdir()),
             ["demo", "review-x"],
         )
-        self.assertIn("| `review-x` | Review X. |", (self.out / "README.md").read_text())
+        self.assertIn(
+            "| `review-x` | Review X. |", (self.out / "README.md").read_text()
+        )
 
-    def test_unclassified_template_skill_is_an_error(self):
-        self._write_skill(self.templates, "stray", "Stray.")
+    def test_unclassified_kit_skill_is_an_error(self):
+        self._write_skill(self.kits, "stray", "Stray.")
         self.assertIn(
             "stray: unclassified — add it to a group, private, or local "
             "in publish/skills.toml",
@@ -1045,8 +1046,8 @@ class TemplateRootTest(unittest.TestCase):
         )
 
     def test_name_defined_in_both_roots_is_an_error(self):
-        self._write_skill(self.templates, "demo", "Shadow demo.")
-        message = f"demo: defined in both {self.globals} and {self.templates}"
+        self._write_skill(self.kits, "demo", "Shadow demo.")
+        message = f"demo: defined in both {self.globals} and {self.kits}"
         self.assertIn(
             message,
             sync.check_manifest(manifest_path=self.manifest, skills_roots=self.roots),
@@ -1062,20 +1063,18 @@ class TemplateRootTest(unittest.TestCase):
         errors, _ = self._build()
         self.assertIn(message, errors)
 
-    def test_personal_string_in_template_source_is_reported(self):
-        (self.templates / "review-x" / "notes.md").write_text(
-            "see ~/ac\n", encoding="utf-8"
-        )
+    def test_personal_string_in_kit_source_is_reported(self):
+        (self.kits / "review-x" / "notes.md").write_text("see ~/ac\n", encoding="utf-8")
         self.assertEqual(
             sync.source_errors(
                 manifest_path=self.manifest,
                 skills_roots=self.roots,
                 repo_root=self.manifest.parent,
             ),
-            ["templates/review-x/notes.md:1: personal string '~/ac'"],
+            ["kits/review-x/notes.md:1: personal string '~/ac'"],
         )
 
-    def test_template_skill_may_override_publicly(self):
+    def test_kit_skill_may_override_publicly(self):
         overrides = self.root / "overrides"
         (overrides / "review-x").mkdir(parents=True)
         (overrides / "review-x" / "SKILL.md").write_text(
@@ -1085,7 +1084,8 @@ class TemplateRootTest(unittest.TestCase):
         errors, _ = self._build()
         self.assertEqual(errors, [])
         self.assertIn(
-            "Public review X.", (self.out / "skills" / "review-x" / "SKILL.md").read_text()
+            "Public review X.",
+            (self.out / "skills" / "review-x" / "SKILL.md").read_text(),
         )
 
 
@@ -1211,7 +1211,6 @@ class ArtifactTest(unittest.TestCase):
                 self.assertTrue((out / relative).is_file(), relative)
 
 
-
 class MarkerFenceTest(unittest.TestCase):
     def test_unbalanced_fence_is_an_error(self):
         text = "# doc\n\n```\nunterminated\n"
@@ -1260,9 +1259,7 @@ class RenderEscapeTest(unittest.TestCase):
             (skill_dir / "SKILL.md").write_text(
                 "---\nname: demo\ndescription: d\n---\nbody\n", encoding="utf-8"
             )
-            skills = [
-                FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))
-            ]
+            skills = [FakeSkill("demo", skill_dir / "SKILL.md", (Path("/etc/passwd"),))]
             loader = lambda: (lambda r: skills, lambda s, h: "x")
             out = root / "out"
             out.mkdir()
@@ -1277,7 +1274,7 @@ class RenderEscapeTest(unittest.TestCase):
             manifest = root / "skills.toml"
             manifest.write_text(
                 'private = []\n[groups]\nAll = ["demo", "ghostless"]\n',
-                encoding="utf-8"
+                encoding="utf-8",
             )
             src = root / "skills"
             for name in ("demo", "ghostless"):
@@ -1312,7 +1309,8 @@ class SourceErrorsMissingDirTest(unittest.TestCase):
                 'private = []\n[groups]\nAll = ["ghost"]\n', encoding="utf-8"
             )
             errors = sync.source_errors(
-                manifest_path=manifest, skills_roots=[root / "skills"],
+                manifest_path=manifest,
+                skills_roots=[root / "skills"],
                 repo_root=manifest.parent,
             )
             self.assertTrue(any("ghost: no such skill directory" in e for e in errors))

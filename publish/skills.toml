@@ -1,6 +1,6 @@
 # Which skills reach the public collection at github.com/nielsmadan/skills.
 #
-# Every skill in loadout/skills/ and loadout/templates/skills/ must appear in
+# Every skill in loadout/skills/ and loadout/kits/skills/ must appear in
 # exactly one group below, in private, or in local. A skill in none is a build
 # failure: default-public would leak a personal skill written months from now,
 # and default-private would silently drop work. The groups drive the published

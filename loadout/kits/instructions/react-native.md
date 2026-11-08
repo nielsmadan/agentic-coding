@@ -1,6 +1,6 @@
 ## React Native project tooling
 
-Use `templates = ["react-native"]` in `loadout/config.toml`. This template includes shared
+Use `kits = ["react-native"]` in `loadout/config.toml`. This kit includes shared
 mobile device automation, the shared React guidance, and a project-scoped upgrade skill.
 
 ### Metro ports (`splashdown`)
@@ -56,6 +56,6 @@ For components that logged errors or warnings while rendering, use
 
 ### Notes
 
-- Run `loadout sync` in the project to refresh template instructions, permissions, and skills
+- Run `loadout sync` in the project to refresh kit instructions, permissions, and skills
   for its configured harnesses.
 - Device-automation setup is covered in the shared mobile guidance.

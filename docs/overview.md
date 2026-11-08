@@ -2,7 +2,7 @@
 
 Index for the `docs/` tree. **`docs/` is supplementary** — the canonical
 current-state documentation for this repo lives in [`AGENTS.md`](../AGENTS.md)
-(structure, permissions, project templates, shell config) and
+(structure, permissions, project kits, shell config) and
 [`README.md`](../README.md) (the top-level entry point).
 
 ## What's here
@@ -14,7 +14,7 @@ current-state documentation for this repo lives in [`AGENTS.md`](../AGENTS.md)
 
 ## Where to look for what
 
-- **How the repo is laid out, how to add a skill / permission / template** →
+- **How the repo is laid out, how to add a skill / permission / kit** →
   [`AGENTS.md`](../AGENTS.md).
 - **What the sandbox actually protects, and how to still push from your shell** →
   [`security-model.md`](security-model.md).

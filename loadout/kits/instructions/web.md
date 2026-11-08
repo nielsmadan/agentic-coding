@@ -1,6 +1,6 @@
 ## Web project tooling
 
-Use `templates = ["web"]` in `loadout/config.toml` to select web instructions,
+Use `kits = ["web"]` in `loadout/config.toml` to select web instructions,
 permissions, and project-scoped skills; `react-web` adds the shared React guidance and
 `/review-react` on top. Use the globally installed `agent-browser`
 CLI to drive Chrome/Chromium via CDP and verify UI work end-to-end.
@@ -59,7 +59,7 @@ Use it **at the start of any HTML/CSS or client-side JS feature**: search
 first to see if a standardized pattern already exists before reaching for
 custom code or extra dependencies. Skip it for backend, CI/CD, generic
 scripts, or lint/git tasks. Network access is required (`npx` fetches the
-package on first use); the template's permissions pre-approve the relevant
+package on first use); the kit's permissions pre-approve the relevant
 invocations for the project's supported configured harnesses.
 
 Complements `/review-security` (which audits *existing* app code for
@@ -71,7 +71,7 @@ Sourced from GoogleChrome/modern-web-guidance under Apache 2.0.
 
 ### Frontend design & polish
 
-This template also bundles three web-specific design skills (they're scoped to
+This kit also bundles three web-specific design skills (they're scoped to
 web projects rather than global, since their idioms — CSS, Google Fonts,
 `motion/react`, bento grids, hero-viewport rules — don't apply to native
 mobile/desktop UI):
@@ -89,10 +89,10 @@ mobile/desktop UI):
 
 - `agent-browser` and the Chrome that `agent-browser install` downloads are
   installed machine-wide, not by the project. If either is missing, report it
-  rather than installing it. The template supplies instructions and shell
+  rather than installing it. The kit supplies instructions and shell
   permissions for the project's configured harnesses.
-- Run `loadout sync` in the project to refresh template instructions,
-  permissions, and skills. For a vendored catalog, run `loadout template sync web`
+- Run `loadout sync` in the project to refresh kit instructions,
+  permissions, and skills. For a vendored catalog, run `loadout kit sync web`
   first to update its source copy.
 - For DevTools-grade auditing (Lighthouse, performance traces, heap snapshots,
   network/CPU throttling, Chrome extension dev) consider also adding the

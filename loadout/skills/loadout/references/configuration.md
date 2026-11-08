@@ -15,8 +15,8 @@ project config is `<repo>/loadout/config.toml`. For global scope, first resolve 
 `~/.config/loadout/config.toml`. Never probe both. The machine config names the global source
 directory and optionally the active profile.
 
-If project scope is absent, report `loadout init --harness <name> --root <repo>`. If global scope
-is absent, report `loadout init --global`. Initialization and adoption of existing harness files
+If project scope is absent, report `loadout init project --harness <name> --root <repo>`. If global scope
+is absent, report `loadout init global`. Initialization and adoption of existing harness files
 are outside this workflow.
 
 ## Capability matrix
@@ -27,12 +27,12 @@ are outside this workflow.
 | `mcp-permissions` | `loadout/permissions.local.toml` | `loadout/permissions.toml` | MCP policy from selected `permissions.toml` sources |
 | `mcp` | unsupported | `loadout/mcp.toml` | `mcp.toml` from selected sources |
 | `instructions` | unsupported | `loadout/config.toml` and `loadout/instructions/*.md` | manifest selection and `instructions/*.md` fragments |
-| `skills` | unsupported | supported for `claude`, `opencode`, `pi` via `loadout/skills/<name>/`; Codex unsupported | `skills/<name>/` trees from selected sources |
+| `skills` | `loadout/skills/<name>.local/SKILL.md`, replacing the shared skill | supported for `claude`, `codex`, `droid`, `opencode`, `pi` via `loadout/skills/<name>/` | `skills/<name>/` trees from selected sources |
 | `settings` | unsupported | unsupported | supported for `claude`, `opencode` via `settings/<name>.json` fragments; Codex uses `defaults`; Pi unsupported |
 | `defaults` | unsupported | unsupported | Codex top-level settings via `defaults/<name>.json` fragments |
 | `hooks` | unsupported | unsupported | `hooks/<name>.json` fragments selected by agents offering hooks |
 | `plugins` | unsupported | unsupported | `plugins/<name>.json` fragments selected by agents offering plugins |
-| `templates` | unsupported | declarations and vendored copies under `loadout/templates/` | definitions under `templates/<name>/` in declared sources |
+| `kits` | unsupported | `kits` in `loadout/config.toml`, vendored copies under `loadout/kits/` | `kits/<name>.toml` catalogs or `kits/<name>/` directories in declared sources |
 | `harnesses` | unsupported | `harnesses` in `loadout/config.toml` | declared agent blocks or legacy targets |
 | `profiles` | unsupported | unsupported | `loadout.toml` plus `<profile>.toml` files |
 
@@ -68,20 +68,17 @@ settings residual. Codex top-level settings use the separate `defaults` slice an
 Pi's permission document does not preserve a settings residual, so report Pi as unsupported instead
 of editing its harness-owned settings file.
 
-Project MCP server definitions reach Claude and OpenCode directly. Pi reads Claude's `.mcp.json`
-when that shared destination is present; a Pi-only project has no MCP output. Codex has no verified
-project MCP destination. Global MCP server definitions render for all four configured agents;
-Claude's output is staged for a separate `claude mcp add-json` step rather than written into its
-runtime state, so report that remaining application step.
+Project MCP server definitions reach Claude, Droid, OpenCode and Pi (`.pi/mcp.json`). Codex
+project scope writes no server config. Global MCP server definitions render for all five
+configured harnesses; Claude's output owns `mcpServers` in `.claude.json` directly.
 
-Project skills reach Claude, OpenCode, and Pi. Codex has no verified project skills directory, so
-report it as unsupported for a Codex-only or Codex-specific project skill request.
+Project skills reach all five harnesses. Codex reads `.agents/skills`.
 
 ## Source rules
 
 Permissions are TOML rules with `[shell]` and `[mcp]` categories; `[mcp]` supplies the
 `mcp-permissions` artifact. Preserve the existing order: OpenCode and Pi use last-match-wins
-semantics after rendering. Project permissions merge template, committed, then personal tiers;
+semantics after rendering. Project permissions merge kit, committed, then personal tiers;
 use `permissions.local.toml` only for personal requests.
 
 MCP server definitions are tables in `mcp.toml`, separate from permission policy. Project scope
@@ -91,8 +88,10 @@ the same server.
 
 Project instructions are named in `loadout/config.toml` and stored in
 `loadout/instructions/<name>.md`. Project skills are whole trees under
-`loadout/skills/<name>/`. Templates are declared by name; use `loadout template add`, `vendor`, or
-`sync` when that command exactly expresses the request.
+`loadout/skills/<name>/`. Kits are selected by name in `kits = [...]`; use
+`loadout kit add <name> --linked` to read the source on each render, or
+`loadout kit add <name> --vendored` to copy it and record its hash under `[kit.<name>]`.
+Use `loadout kit sync <name>` to update a vendored copy, then `loadout sync` to render it.
 
 Global fragments resolve through `[[source]]` entries. A bare fragment name must resolve uniquely;
 use `source/name` when two sources offer it. Reuse an existing selected fragment when ownership is

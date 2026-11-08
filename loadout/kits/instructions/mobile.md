@@ -62,12 +62,12 @@ pairs:
 
 ### Setup
 
-The `mobile`, `flutter`, and `react-native` templates select this shared guidance and the
+The `mobile`, `flutter`, and `react-native` kits select this shared guidance and the
 `agent-device` shell permission for the project's configured harnesses. Run `loadout sync` in
-the project after changing its templates.
+the project after changing its kits.
 
 Install `agent-device` globally (`npm install -g agent-device`), with Xcode for iOS and the
-Android SDK + ADB for Android. Template sync supplies configuration; install these machine
+Android SDK + ADB for Android. Kit sync supplies configuration; install these machine
 prerequisites separately.
 
 ### Testing on a physical device

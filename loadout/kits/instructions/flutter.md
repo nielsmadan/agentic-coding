@@ -1,6 +1,6 @@
 ## Flutter project tooling
 
-Use `templates = ["flutter"]` in `loadout/config.toml`. This template includes shared mobile
+Use `kits = ["flutter"]` in `loadout/config.toml`. This kit includes shared mobile
 device automation, Dart analysis, simulator MCP servers, and a project-scoped upgrade skill.
 Use `agent-device` for app interaction and UI verification.
 
@@ -25,9 +25,9 @@ If a question is about Dart syntax or framework APIs rather than this project's 
 
 ### Notes
 
-- Run `loadout sync` in the project to refresh template instructions, permissions, skills,
+- Run `loadout sync` in the project to refresh kit instructions, permissions, skills,
   and MCP configuration for its supported configured harnesses.
-- The Flutter template pre-approves its listed `ios-sim` tools. For additional MCP approvals,
+- The Flutter kit pre-approves its listed `ios-sim` tools. For additional MCP approvals,
   use `/loadout` to add the specific `server/tool` name to the project's permission source.
 - Machine prerequisites (`npx`, `uvx`, `dart`) must be installed for the MCP servers to
   actually start. Device-automation setup is covered in the shared mobile guidance.

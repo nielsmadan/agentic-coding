@@ -89,7 +89,7 @@ silently: the skill is simply never chosen.
 
 - Harness-agnostic wording: no single-harness tool names or invocation syntax unless
   inside a `:::` harness block. [REPO]
-- Placed in the right scope (global, template, repo-local). Global skills stay
+- Placed in the right scope (global, kit, repo-local). Global skills stay
   free of personal strings because they publish. [REPO]
 - Follows the user's global instructions it touches: functional style for new
   scripts, zero-comment default, verification policy (no unsourced "best practice"

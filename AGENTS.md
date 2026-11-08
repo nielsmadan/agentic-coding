@@ -22,7 +22,7 @@ environment and the tools around it.
   - `studio-agents/` - the fleet's source: a `blind-spots` that sends open decisions to the project's lead instead of asking, declared only by `studio-agents.toml`
   - `instructions/` - shared prose fragments for each agent's **global** guidance; edit these (see Global Instructions)
   - `skills/` - global skills, rendered to all four harnesses (see Skills)
-  - `templates/` - project-type manifests and the shared parts they select (see Project Templates)
+  - `kits/` - project-type manifests and the shared parts they select (see Project Kits)
   - `settings/` - the hand-maintained half of each harness's settings: `claude.json`, `claude-afk.json`, `droid.json`, `opencode.json`, `pi.json`
   - `hooks/` - hook *wiring* per harness (`claude.json`, `codex.json`)
   - `plugins/` - plugin enablement per harness (`claude.json`, `pi.json`, `unsandboxed.json`, `studio-agents.json`)
@@ -135,11 +135,11 @@ The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides 
 
 ## Global agent configuration
 
-The generated global-instruction, Pi, and template-loading details are in [docs/global-agent-configuration.md](docs/global-agent-configuration.md).
+The generated global-instruction, Pi, and kit-loading details are in [docs/global-agent-configuration.md](docs/global-agent-configuration.md).
 
-## Project templates
+## Project kits
 
-Template structure and the rejected alternatives are in [docs/project-templates.md](docs/project-templates.md).
+Kit structure and the rejected alternatives are in [docs/project-kits.md](docs/project-kits.md).
 
 ## Secrets Policy
 

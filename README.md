@@ -2,7 +2,7 @@
 
 Version-controlled configuration shared across the AI coding tools I run:
 **Claude Code**, **OpenAI Codex**, **OpenCode**, and **Pi**.
-One repo holds the skills, hooks, permissions, project templates, and shell glue
+One repo holds the skills, hooks, permissions, project kits, and shell glue
 for all of them.
 
 Most harness config is rendered in place by **loadout** from the fragments under
@@ -56,13 +56,13 @@ MCP servers) are **not** auto-installed — set those up separately.
 
 | Path | What it holds |
 |------|---------------|
-| `loadout/` | Source fragments for generated instructions, permissions, MCP servers, settings, hooks, plugins, skills, defaults, templates, and module config |
+| `loadout/` | Source fragments for generated instructions, permissions, MCP servers, settings, hooks, plugins, skills, defaults, kits, and module config |
 | `loadout.toml` | Manifest selecting and composing those fragments for each harness |
 | `codex/` | Removes stale nono configuration blocks |
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `pratfall/` | [pratfall](https://github.com/nielsmadan/pratfall) profiles for the `/second-opinion` advisors and the `ccli`/`cxcli`/`occli` command generators, installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
-| `loadout/templates/` | Template manifests (`mobile.toml`, `flutter.toml`, `react-base.toml`, `react-native.toml`, `react-web.toml`, `web.toml`) and shared catalog parts |
+| `loadout/kits/` | Kit manifests (`mobile.toml`, `flutter.toml`, `react-base.toml`, `react-native.toml`, `react-web.toml`, `web.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `clcof`) |
 | `docs/` | Repo notes |
@@ -152,11 +152,11 @@ personal rules that are never committed.
 See the [Permissions section in `AGENTS.md`](AGENTS.md#permissions) for the full
 model (shared vs. agent-native entries, the autonomous profile).
 
-## Project templates
+## Project kits
 
-`loadout/templates/<type>.toml` selects config for a *kind* of project from shared
-`instructions/`, `permissions/`, `mcp/`, and `skills/` folders under `loadout/templates/`.
-These parts only reach projects that select a template. For example, `flutter.toml` contains:
+`loadout/kits/<type>.toml` selects config for a *kind* of project from shared
+`instructions/`, `permissions/`, `mcp/`, and `skills/` folders under `loadout/kits/`.
+These parts only reach projects that select a kit. For example, `flutter.toml` contains:
 
 ```toml
 instructions = ["mobile", "flutter"]
@@ -169,13 +169,13 @@ A project opts in by name:
 
 ```sh
 loadout init project --harness claude
-loadout template add flutter     # templates = ["flutter"]
+loadout kit add flutter --linked     # kits = ["flutter"]
 loadout sync
 ```
 
 Flutter and React Native select the same mobile parts directly:
 
-| Template | Shared or framework tooling |
+| Kit | Shared or framework tooling |
 |---|---|
 | `mobile` | `agent-device` workflow, setup guidance, and shell permission; also usable alone for native apps |
 | `flutter` | Shared mobile tooling, Dart and simulator MCPs, simulator tool permissions, and `/flutter-upgrade` |
@@ -184,20 +184,20 @@ Flutter and React Native select the same mobile parts directly:
 | `web` | Browser automation, web guidance, design, themes, and SEO skills |
 | `react-web` | Everything in `web` plus React base |
 
-For React Native use `templates = ["react-native"]`; for a React web app,
-`templates = ["react-web"]`. Existing declarations such as `["mobile", "flutter"]` still
-work: shared instruction parts render once. Declared templates pick up catalog changes on
+For React Native use `kits = ["react-native"]`; for a React web app,
+`kits = ["react-web"]`. Existing declarations such as `["mobile", "flutter"]` still
+work: shared instruction parts render once. Linked kits pick up catalog changes on
 the next project `loadout sync`.
 
-Use `loadout template vendor <name>` to copy a manifest and its referenced parts into a
-project, then `loadout template sync <name>` to update that copy. Updates to shared parts
-name every affected vendored template and require confirmation. Existing vendored directory
-templates need a one-time conversion; see the migration steps in
-[Project Templates](AGENTS.md#project-templates).
+Use `loadout kit add <name> --vendored` to copy a manifest and its referenced parts into a
+project, then `loadout kit sync <name>` to update that copy. Updates to shared parts
+name every affected vendored kit and require confirmation. Projects using the old
+`templates` key or folder must rename them to `kits`, including `[template.<name>]`
+provenance tables to `[kit.<name>]`; see [Project Kits](docs/project-kits.md).
 
-A template is a source at the bottom of the precedence chain, so anything the
+A kit is a source at the bottom of the precedence chain, so anything the
 project declares itself outranks it. See the
-[Project Templates section in `AGENTS.md`](AGENTS.md#project-templates).
+[Project Kits section in `AGENTS.md`](AGENTS.md#project-kits).
 
 ## Shell config
 
@@ -217,4 +217,4 @@ entries).
 - [`AGENTS.md`](AGENTS.md) — project instructions, policies, and detailed
   subsystem docs
 - [`loadout/skills/README.md`](loadout/skills/README.md) — full skill catalog
-- [`loadout/templates/`](loadout/templates/) — per-project-type config and skills
+- [`loadout/kits/`](loadout/kits/) — per-project-type config and skills

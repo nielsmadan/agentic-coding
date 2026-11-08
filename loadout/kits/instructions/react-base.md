@@ -1,6 +1,6 @@
 ## React project conventions
 
-The `react-native` and `react-web` templates select this shared React guidance and the
+The `react-native` and `react-web` kits select this shared React guidance and the
 `review-react` and `review-typescript` skills; `react-base` selects them alone.
 
 For static analysis and tests use the project's own scripts directly (`yarn type-check`,

@@ -22,8 +22,8 @@ Read [the configuration reference](references/configuration.md) before choosing 
    Treat MCP server definitions as `mcp`; tool approval for those servers is the separate
    `mcp-permissions` artifact.
 4. Choose the narrowest existing authoritative fragment. Preserve comments, ordering, naming
-   conventions, and unrelated content. Use an existing mechanical command such as
-   `loadout harness add` or `loadout template add` when it exactly represents the request.
+   conventions, and unrelated content. Use `loadout kit add <name> --linked` or
+   `loadout kit add <name> --vendored` when it exactly represents the request.
 5. Run `loadout sync --root <repo>` for personal/project scope. For global scope, run
    `loadout sync --global --profile <name>` when the request explicitly names a profile;
    otherwise run `loadout sync --global` for the active profile.
