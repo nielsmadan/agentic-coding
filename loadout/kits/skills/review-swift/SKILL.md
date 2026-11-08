@@ -1,6 +1,6 @@
 ---
 name: review-swift
-description: Swift-specific code review focused on JUDGMENT-level design a linter and the compiler can't decide — state modeling with enums and value types (make invalid states unrepresentable), optional and error modeling, concurrency isolation intent, ARC ownership, SwiftUI identity/lifetime/dependencies, and escape hatches (`!`, `as!`, `try!`, `@unchecked Sendable`) that compile but hide a modeling problem. Deliberately does NOT duplicate SwiftLint, swift-format, or Swift 6 strict-concurrency diagnostics. Auto-invoked by `code-review` on Swift projects. Triggers "review swift", "swift review", "swiftui review", "swift concurrency review".
+description: Swift-specific code review focused on JUDGMENT-level design a linter and the compiler can't decide — state modeling with enums and value types (make invalid states unrepresentable), optional and error modeling, concurrency isolation intent, ARC ownership, SwiftUI identity/lifetime/dependencies, and escape hatches (`!`, `as!`, `try!`, `@unchecked Sendable`) that compile but hide a modeling problem. Deliberately does NOT duplicate SwiftLint, swift-format, or Swift 6 strict-concurrency diagnostics. Auto-invoked by `code-review` on Swift projects. Triggers "review swift", "swift review", "swift concurrency review".
 argument-hint: '[--staged | --unpushed | --changed | --all | --multi]'
 effort: high
 ---
@@ -37,6 +37,10 @@ SwiftLint has **no** SwiftUI property-wrapper or ownership rules, so all of §4 
 **3. Xcode runtime diagnostics** catch some SwiftUI misuse at runtime (off-main-thread `ObservedObject`/`StateObject` mutation, cross-actor `Binding` access, `StateObject` accessed without being installed on a view). These are runtime issues, not review findings. Note they reportedly have **no `@Observable` equivalent** — so migrating to `@Observable` loses that safety net, which makes §4 review *more* important, not less.
 
 **The baseline read is a silencer, not a finding.** Read the config so you don't report what a rule already covers. *Recommending* a lint or language-mode change is a project-level action — see §P — and belongs in an `--all` audit, not a diff review.
+
+SwiftUI presentation, accessibility, adaptive layout, navigation, localization, and native
+window/command interaction belong to `review-swiftui`. Keep state ownership, identity,
+lifetime, dependencies, and rendering cost here; do not repeat the UI review.
 
 ## What this skill checks
 

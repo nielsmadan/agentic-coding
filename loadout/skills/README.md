@@ -55,6 +55,7 @@ catalog — keep the good trigger wording in the frontmatter, not here.
 | `/review-plan` | Multi-agent review of implementation plans |
 | `/review-product` | Review a product from the user's perspective — build a persona, map use cases, audit friction/gaps (`--live`, `--multi`); writes to `docs/product/`, checks it against `docs/prd/` |
 | `/review-security` | Security audit for vulnerabilities (--staged, --all) |
+| `review-swiftui` (project kit) | SwiftUI presentation, accessibility, adaptive layout, navigation, localization, keyboard focus, and macOS window commands; bundled with `review-swift` in the `swiftui` and `macos` kits |
 | `/review-tidy` | Coordinate comment cleanup through `review-comments` and fix the mechanical loose ends a change leaves behind — docs naming renamed or removed symbols, orphaned private code, stale test names, formatter and lint autofixes (--staged, --all, --fix). Runs as a `code-review` preflight |
 | `/review-todo` | Turns a completed review into a persistent workflow: proposes the complete ordered plan for approval, then implements accepted findings and commits them in logical chunks |
 | `/second-opinion` | Get a second opinion |

@@ -72,19 +72,19 @@ Aspect flags let you run a subset of the review agents instead of all 10. Flags 
 | `--functional` | Agent 7b: Functional Review (delegates to `/review-functional`) |
 | `--consistency` | Agent 7c: Consistency Review (delegates to `/review-consistency`) |
 
-Two further aspects are **conditional add-ons** — in the default (no-aspect-flag) run they are included automatically when they apply; with explicit aspect flags they run only if their own flag is passed (see Step 3b.5 for detection):
+Further aspects are **conditional add-ons** — in the default (no-aspect-flag) run they are included automatically when they apply; with explicit aspect flags they run only if their own flag is passed (see Step 3b.5 for detection):
 
 | Flag | Maps to |
 |------|---------|
-| `--cli` / `--react` | Agent 8b: Project-Shape Review — delegates to `review-cli` or `review-react`. Auto-included when the repo ships a console entry point, or depends on React and the scope touches components. Orthogonal to language: it composes with the language review rather than replacing it. |
+| `--cli` / `--react` / `--swiftui` | Agent 8b: Project-Shape Review — delegates to `review-cli`, `review-react`, or `review-swiftui`. Auto-included for console entry points, scoped React components, or scoped SwiftUI implementation. Orthogonal to language: it composes with the language review rather than replacing it. |
 | `--typescript` / `--swift` / `--python` | Agent 8: Language Review — delegates to the matching `review-<language>` skill (e.g. `review-typescript`, `review-swift`, `review-python`). Auto-included when the scoped files are of that language. |
 | `--project` | Agent 9: Project-Specific Review — delegates to the project's own `review-project` skill. Auto-included when that skill exists in the repo. |
 | `--library-use` | Agent 10: Library-Use Review — delegates to `review-library-use` (checks code against the repo's `library-use` conventions). Auto-included when the repo has a `library-use` reference. |
 
 **Aspect rules:**
 - Normalize `--logic` and `--defensive` to `--correctness` before selecting agents; any combination of these flags runs Agent 1 exactly once.
-- In comprehensive mode, no aspect flags → run all 10 core agents, **plus** any detected language review, the project review, and the library-use review if present.
-- One or more aspect flags → run only those agents, skip the rest. The conditional add-ons run only if `--typescript` / `--cli` / `--react` / `--project` / `--library-use` (or another `--<language>`) is among the flags.
+- In comprehensive mode, no aspect flags → run all 10 core agents, **plus** any detected language and project-shape reviews, the project review, and the library-use review if present.
+- One or more aspect flags → run only those agents, skip the rest. The conditional add-ons run only if `--typescript` / `--cli` / `--react` / `--swiftui` / `--project` / `--library-use` (or another `--<language>`) is among the flags.
 - `--quick` is a complete preset and cannot be combined with aspect flags.
 - `--multi` composes with any aspect selection.
 - The non-flag portion of `$ARGUMENTS` is the review target (e.g. `src/auth/`).
@@ -136,7 +136,7 @@ Strip aspect flags (`--correctness`, `--logic`, `--architecture`, `--security`, 
 
 If `--quick` appears with any aspect flag or with `--multi`, abort with `--quick is a complete review preset; remove the aspect flags or --multi.` It may compose with a target, one scope flag, and `--rereview`.
 
-In comprehensive mode, if any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when a `--<language>`/`--cli`/`--react`/`--project`/`--library-use` flag is passed). Otherwise launch all 10 core agents plus whatever Step 3b.5 detects. In quick mode, follow the single-reviewer branch in Step 3c.
+In comprehensive mode, if any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when a `--<language>`/`--cli`/`--react`/`--swiftui`/`--project`/`--library-use` flag is passed). Otherwise launch all 10 core agents plus whatever Step 3b.5 detects. In quick mode, follow the single-reviewer branch in Step 3c.
 
 ### 3b. Resolve scope
 
@@ -168,7 +168,7 @@ This file list is passed to inline agents and is also used to build the target a
 
 ### 3b.5. Detect language & project reviews
 
-Determine which conditional add-on reviews apply. In comprehensive mode these become additional agents. In quick mode their skill/reference text becomes guidance for the single integrated reviewer. Skip this entirely if explicit aspect flags were passed **and** none of them is `--typescript`/`--cli`/`--react`/`--project`/`--library-use`/another `--<language>` — in that case the user asked for a specific subset and add-ons don't run.
+Determine which conditional add-on reviews apply. In comprehensive mode these become additional agents. In quick mode their skill/reference text becomes guidance for the single integrated reviewer. Skip this entirely if explicit aspect flags were passed **and** none of them is `--typescript`/`--cli`/`--react`/`--swiftui`/`--project`/`--library-use`/another `--<language>` — in that case the user asked for a specific subset and add-ons don't run.
 
 **Language detection registry.** For each language below, it applies if the resolved file list matches its extensions, or (for the `all` scope / when the file list is empty) the repo root has its marker file. If it applies **and** a `review-<language>` skill is installed, include that agent in comprehensive mode or record its `SKILL.md` as guidance for quick mode.
 
@@ -187,6 +187,12 @@ Determine which conditional add-on reviews apply. In comprehensive mode these be
 |---|---|---|
 | CLI | `[project.scripts]` / `[project.entry-points."console_scripts"]` in `pyproject.toml`, `[[bin]]` or `src/main.rs` in a Cargo project, `bin` in `package.json`, or a `main`-package `cobra`/`urfave` import in Go | `review-cli` |
 | React | `react` in `package.json` dependencies, and scoped `.jsx`/`.tsx` files or files that call hooks (at `all` scope, the dependency alone) | `review-react` |
+| SwiftUI | Scoped SwiftUI view, scene, modifier, or control implementation, or UI resources consumed by it; at `all` scope, that implementation anywhere in the project. An import or a Swift project marker alone is insufficient | `review-swiftui` |
+
+In default reviews, when Swift and SwiftUI both apply, include both reviewers. Explicit
+aspect flags still select only the requested reviewers. `review-swift` owns state, identity,
+lifetime, dependencies, concurrency, and rendering cost; `review-swiftui` owns presentation
+and interaction. Pass this boundary to both and deduplicate by the underlying cause.
 
 **Project review detection.** If the repo defines its own project review skill at `.claude/skills/review-project/SKILL.md` **or** `.agents/skills/review-project/SKILL.md`, include the project review agent in comprehensive mode or record its `SKILL.md` as guidance for quick mode. If neither exists, skip silently.
 
@@ -235,7 +241,7 @@ For every harness, retain full review reasoning effort. Give the reviewer this i
 
 - Read the applicable `AGENTS.md` / `CLAUDE.md` files and the scoped diff or files. For each changed behavior, trace the path from its callers through the implementation and dependencies to its observable result, including failure paths. Read surrounding code and related tests to check the contracts at each boundary; do not stop at the diff hunks. For a whole-file or whole-repo target, trace the main behaviors in scope.
 - Read `review-correctness` and apply both passes directly without launching another reviewer. Review correctness, edge cases, error handling, regressions, catch-all `else`/`default` branches that would silently absorb a newly added enum or API value, missing or weak tests, security red flags, and interface compatibility. Check performance hazards supported by the traced paths. Also check design and maintainability: module responsibilities, coupling, duplication, interface clarity, hidden shared state, and mutation of caller-owned data. Check consistency: compare each added construct with two or more existing siblings of the same kind and flag divergences in naming, placement, mechanism (errors, logging, config, existing helpers) or registration, citing the precedent `file:line`s; documented project rules and newer patterns win over older precedent. Tie each concern to concrete code and its consequences.
-- If Step 3b.5 detected language, project, or library-use guidance, read those matching `SKILL.md` files as review references and apply their checks directly. Do not invoke them as skills.
+- If Step 3b.5 detected language, project-shape, project, or library-use guidance, read those matching `SKILL.md` files as review references and apply their checks directly. Do not invoke them as skills.
 - Before accepting or dismissing a suspected issue, trace a concrete triggering input or state, inspect callers and excluding guards, and check whether tests exercise the behavior and assert the relevant result. Use targeted checks when available; run any experiment that writes files in a disposable copy. If the reviewer lacks execution tools, request a specific check from the parent, which must resolve it before final filtering or report the remaining uncertainty.
 - Return only actionable findings supported by a concrete code path. For each finding, include severity (`Critical`, `Should Fix`, or `Nice to Have`), `file:line`, what is wrong, why it matters, a concise fix, the `file:line` where you traced it, effort (`S`: one file, local, no interface or test changes; `M`: several files or new or changed tests; `L`: a public interface, a migration, or callers in other modules), likelihood (`routine`, `plausible`, `rare`, or `theoretical`), and blast radius (`low`, `medium`, or `high`). For `rare` or `theoretical`, name the reachability reason and cite any excluding guard.
 - After verification, omit findings you did not trace through every link in the code and omit `rare`/`theoretical` findings with low or medium blast radius. Keep rare high-blast-radius findings and tag them with the short reachability reason. Tracing decides only whether the claim is true; a true finding that matters little is `Nice to Have`, not dropped.

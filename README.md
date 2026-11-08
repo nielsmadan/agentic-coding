@@ -62,7 +62,7 @@ MCP servers) are **not** auto-installed — set those up separately.
 | `nono/` | Shared and per-harness nono sandbox profiles installed by symlink |
 | `pratfall/` | [pratfall](https://github.com/nielsmadan/pratfall) profiles for the `/second-opinion` advisors and the `ccli`/`cxcli`/`occli` command generators, installed by symlink |
 | `publish/` | Generator and fail-closed manifest for the public skills collection ([nielsmadan/skills](https://github.com/nielsmadan/skills)) |
-| `loadout/kits/` | Kit manifests (`mobile.toml`, `flutter.toml`, `react-base.toml`, `react-native.toml`, `react-web.toml`, `web.toml`) and shared catalog parts |
+| `loadout/kits/` | Kit manifests (`mobile.toml`, `flutter.toml`, `react-base.toml`, `react-native.toml`, `react-web.toml`, `web.toml`, `swift.toml`, `swiftui.toml`, `macos.toml`) and shared catalog parts |
 | `.airc` / `.airc.d/` | Shell entry point and per-topic zsh files (PATH, env vars, aliases/functions per tool) |
 | `bin/` | Standalone CLI scripts on PATH (`ccmove`, `clcof`) |
 | `docs/` | Repo notes |
@@ -188,6 +188,11 @@ For React Native use `kits = ["react-native"]`; for a React web app,
 `kits = ["react-web"]`. Existing declarations such as `["mobile", "flutter"]` still
 work: shared instruction parts render once. Linked kits pick up catalog changes on
 the next project `loadout sync`.
+
+For a native SwiftUI Mac app, use `loadout kit add macos --linked`; for SwiftUI apps on
+other Apple platforms, use `loadout kit add swiftui --linked`. Both include `review-swift`
+and `review-swiftui`, with separate language/state and presentation/interaction responsibilities.
+The `swift` kit remains sufficient for non-UI Swift projects.
 
 Use `loadout kit add <name> --vendored` to copy a manifest and its referenced parts into a
 project, then `loadout kit sync <name>` to update that copy. Updates to shared parts

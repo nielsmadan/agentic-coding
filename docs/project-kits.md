@@ -30,6 +30,13 @@ selects those same mobile parts plus Flutter instructions, MCP servers and permi
 permissions plus its four web skills; `react-web.toml` selects those web parts plus the React
 parts.
 
+`swift.toml` selects `review-swift` for Swift language and ownership checks. `swiftui.toml`
+adds shared SwiftUI instructions and `review-swiftui` for presentation, accessibility, layout,
+navigation, localization, and input. `macos.toml` includes both reviews and adds native Mac
+window, menu, keyboard, and document interaction guidance. Use `macos` for a native SwiftUI
+Mac app, or `swiftui` for other Apple-platform SwiftUI apps. Neither requires `mobile` or VM
+tooling; `macos-vm` remains a separate optional machine-specific kit.
+
 Keeping them here version-controls the config centrally without making it global: a kit
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
 unrelated projects.
