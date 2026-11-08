@@ -5,7 +5,7 @@ without it.
 
 ## programme.md
 
-The resume point, in `<docs-root>/codebase-review/programme.md`. Write it for a reader who has
+The resume point, in `.codebase-review/programme.md`. Write it for a reader who has
 no conversation history.
 
 ```markdown
@@ -18,7 +18,7 @@ no conversation history.
 | Decision | Ruling | Date |
 |---|---|---|
 | Repos reviewed | app (writable with --fix), middleware (read-only reference) | … |
-| Docs root | ~/work/<project>/docs (outside the repos) | … |
+| Open findings at end | roadmap doc `docs/roadmap.md` in the repo | … |
 | Repo docs | wrong ADRs logged as D findings; fixed only in --fix | … |
 | Fix policy | bugs + tidy-ups fix; improvements fix if ≤ ½ day; major UF held | … |
 | Major user-facing means | changes a flow, a screen's content or a default a user would notice | … |
@@ -26,13 +26,17 @@ no conversation history.
 
 ## Start
 Base: <repo> <branch> <sha> · Approved: <user's reply, date> · Started: <ISO>
+Types: <path → type per repo or package> — <signals>
 
 ## Aspects
 | # | Aspect | Tier | Model | Scope (paths) | Doc | Status | Findings |
 |---|---|---|---|---|---|---|---|
-| 5 | startup | 2 | opus | src/App.tsx, src/contexts/User*, ios/, android/ | app/startup.md | verified | 10B 13O 10T |
+| 5 | startup | 2 | opus | src/App.tsx, src/contexts/User*, ios/, android/ | docs/startup.md | verified | 10B 13O 10T |
 
 Aspect statuses: `queued → reviewing → verifying → verified`.
+
+## Skipped
+- <aspect> (<catalog section>) — <one-line reason, e.g. "no network layer: the library does no I/O">
 
 ## Workers
 | Name | Harness | Checkout | Branch | Baseline | State |
@@ -61,7 +65,7 @@ Priorities section that the synthesis writes at the top. IDs are stable and neve
 error.
 
 ```markdown
-## startup (from [app/startup.md](app/startup.md), main @ 7f11450)
+## startup (from [docs/startup.md](docs/startup.md), main @ 7f11450)
 
 - [ ] **ST-B1** ✔ · high · UF: none · ruled: fix · B-3 — The config hook re-evaluates every
   flag with no user on the first download and overwrites the user's flags.
@@ -103,7 +107,7 @@ SIBLINGS:  {{existing review docs and what each covers}}. Build on them, link to
 BOUNDARY:  {{out of scope: what other aspects own}}
 
 ## Questions
-{{aspect questions from aspects.md, plus project-specific ones}}
+{{the aspect's questions from its catalog section in aspects.md, plus project-specific ones}}
 Also answer: is it consistent (count each competing pattern with grep)? Do the repo's docs
 and ADRs about this area match the code? What is tested?
 
@@ -157,6 +161,7 @@ A worker executes it without ever having seen this conversation.
 Worker: <name> · Checkout: <path> · Branch: codebase-review/<name>
 Base: integration branch <I> must contain <sha>. Catch up first (workers.md, Syncing).
 Check command: <cmd> · Commit convention: <feat/fix/chore, no scopes, no body | repo's own>
+Approach: <per-finding loop | plan | longshot — plan or longshot for one bigger change>
 
 ## Rules
 - If a finding's premise does not match the code, stop that finding and report it. Do not
@@ -217,7 +222,7 @@ TODO / rejected.>
 <the roadmap's first five items, each with cost and finding IDs.>
 
 ## Where things are
-Docs: <root>. Ledger/TODO: <path>. Integration branch: <branch> <base>..<tip>
+Work folder: `.codebase-review/` (kept: <what still holds it> | deleted). Harvested into: <repo doc paths, committed or not>. Open findings moved to: <end state>. Integration branch: <branch> <base>..<tip>
 (<n> commits). Workers: <branch and path each>, with the cleanup commands.
 Nothing was pushed.
 ```
