@@ -45,7 +45,7 @@ Apply these guidelines to build a cohesive design system:
 
 - **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt for distinctive, characterful choices. Pair a distinctive display font with a refined body font.
 - **Color & Theme**: Commit to a cohesive palette. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (`animation-delay`) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
+- **Motion**: Choose purposeful effects and micro-interactions. Prefer CSS for simple transitions in every framework; use a motion library when gestures, springs, interruption, or orchestration warrant it. Keep content usable with reduced motion and without animation support. Focus motion on moments that clarify state or establish the page's character.
 - **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
 - **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Use gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays as appropriate.
 
@@ -65,7 +65,7 @@ Composition constraints that hold regardless of aesthetic. Failing any of these 
 Write production-grade, functional code following the visual system:
 - Use CSS variables for color, spacing, and typography consistency
 - Load fonts from Google Fonts or CDN with `font-display: swap` and appropriate fallbacks
-- Prioritize CSS-only animations for HTML; use Motion library for React when available
+- Use `modern-web-guidance` for native HTML/CSS choices and browser fallbacks; keep motion consistent with the policy above
 - Ensure the interface is responsive and functional, not just decorative
 
 ### Step 5: Refine — Anti-Slop Pre-Flight

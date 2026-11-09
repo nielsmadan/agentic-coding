@@ -93,11 +93,26 @@ npx -y modern-web-guidance@latest retrieve "<id>"
 
 -   Always search **first** to find the most relevant guides.
 -   These guides are usually framework-agnostic; adapt them correctly to your setup.
--   Do not hallucinate guides or ignore them; they represent the preferred local standard for the user's project.
+-   Use retrieved guides as implementation evidence; reconcile them with the project's browser targets, design system, and required behavior. Verify surprising or conflicting advice against current platform documentation.
+
+## Choosing an implementation
+
+Apply these local defaults after retrieving the relevant guide. Detailed syntax and compatibility belong in the retrieved guidance, not a second feature catalog.
+
+- Start with the required interaction and a suitable native element, then CSS, then JavaScript for remaining behavior. Preserve established components when replacing them would lose functionality or expand the task into a rewrite.
+- For overlays, distinguish a modal dialog, disclosure, and non-modal popover before choosing positioning. Popover and anchor positioning solve different parts of the problem; assess support for each. Verify names, keyboard operation, focus restoration, and dismissal rather than assuming positioning supplies widget semantics.
+- Prefer CSS layout over measurement scripts when it meets the requirement. Use logical properties for direction-sensitive layout; choose component or viewport queries according to what actually controls the available space. Pick dynamic or small viewport units according to whether the screen should resize with browser chrome or remain stable.
+- Reuse design tokens. Consider perceptual color spaces, color mixing, and native scheme controls when creating or deriving tokens; a new syntax alone does not justify converting an existing palette. Check resulting contrast in each supported theme.
+- Use CSS for simple motion in React as well as plain HTML. Use a motion library when gestures, spring physics, interruption, or orchestration justify it. Scroll-linked visual effects and visibility-triggered application work are different requirements; keep observers where application logic needs them.
+- Build the usable static state first. Unsupported animation features and reduced-motion preferences must leave content visible, actions operable, and completion independent of an animation-end event. Verify both the enhanced and fallback paths for the changed interaction.
+
+These selection defaults were informed by [dxe-modern-css-html](https://github.com/kemiljk/skills/tree/main/skills/dxe-modern-css-html) (MIT); feature recipes remain in the existing guide service.
 
 
 ## Interpreting Browser Support & Fallbacks
 
+* **Project targets first**: Read the repo's support policy, Browserslist, or embedded runtime version before choosing a feature. Include Firefox and mobile browsers unless the project excludes them; do not infer a two-engine policy from an example. Check the exact capability and minimum versions, not just the API family or a global usage percentage.
+* **Detection matches the feature**: Use CSS `@supports` for the relevant CSS syntax and API/property detection for HTML or JavaScript capabilities. Detection does not prove the complete interaction works. When a required feature is unavailable, choose a usable simpler implementation or the project's established fallback; keep optional polish as progressive enhancement.
 * **Default Behavior**: All guides assume **Baseline Widely available** features are safe to use without fallbacks. For features that are not Baseline widely available, you **MUST** follow the fallback recommendations in the guide, unless the user has specified a custom browser support policy.
 * **Custom Policies**: If the user has already defined explicit browser support requirements, use the browser compatibility data in the guide to determine if a fallback can be safely ignored.
   - For Baseline YYYY targets, a feature satisfies this target if its "Baseline since" date is <= YYYY.
