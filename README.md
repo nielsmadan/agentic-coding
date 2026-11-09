@@ -48,8 +48,9 @@ agent-chromium. There this repo is a read-only checkout at `/opt/ac`, which
 own loadout machine config, since a second profile in the same directories would
 overwrite or retire the first; the agent launcher runs what `bin/fleet-sync
 --env` prints, which also drops a forwarded SSH agent and points git at
-`fleet/gitconfig`: commits as the factory's dev account, pushed over HTTPS with
-the token for each repo's owner (`bin/git-credential-fleet`).
+`fleet/gitconfig`: commits as the factory's dev account, signed with its key in
+`~/fleet/keys/signing`, pushed over HTTPS with the token for each repo's owner
+(`bin/git-credential-fleet`).
 
 Machine prerequisites (`python3`, the agent CLIs, `npx`/`uvx`/`dart` for some
 MCP servers) are **not** auto-installed — set those up separately.

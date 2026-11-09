@@ -67,11 +67,21 @@ class FleetGitconfigTests(unittest.TestCase):
             **TOKENS,
         }
 
-    def git(self, *args: str, stdin: str = "") -> str:
+    def run_git(self, *args: str, stdin: str = "", cwd: Path | None = None) -> subprocess.CompletedProcess:
         return subprocess.run(
-            ["git", *args], input=stdin, env=self.env, cwd=self.tmp,
-            capture_output=True, text=True, check=True,
-        ).stdout
+            ["git", *args], input=stdin, env=self.env, cwd=cwd or self.tmp,
+            capture_output=True, text=True,
+        )
+
+    def git(self, *args: str, stdin: str = "", cwd: Path | None = None) -> str:
+        result = self.run_git(*args, stdin=stdin, cwd=cwd)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return result.stdout
+
+    def repo(self) -> Path:
+        repo = self.tmp / "repo"
+        self.git("init", "-q", str(repo))
+        return repo
 
     def test_fill_answers_from_the_fleet_helper_instead_of_the_keychain(self):
         out = self.git("credential", "fill", stdin="url=https://github.com/quantumcraftio/agents.git\n\n")
@@ -81,6 +91,19 @@ class FleetGitconfigTests(unittest.TestCase):
     def test_ssh_remotes_are_fetched_over_https(self):
         out = self.git("ls-remote", "--get-url", "git@github.com:nielsmadan/loadout.git")
         self.assertEqual(out.strip(), "https://github.com/nielsmadan/loadout.git")
+
+    def test_commits_are_signed_with_the_fleet_key(self):
+        keys = self.tmp / "fleet" / "keys"
+        keys.mkdir(parents=True)
+        subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(keys / "signing")], check=True)
+        repo = self.repo()
+        self.git("commit", "-q", "--allow-empty", "-m", "x", cwd=repo)
+        self.assertIn("-----BEGIN SSH SIGNATURE-----", self.git("cat-file", "commit", "HEAD", cwd=repo))
+
+    def test_commit_fails_without_the_fleet_key(self):
+        result = self.run_git("commit", "-q", "--allow-empty", "-m", "x", cwd=self.repo())
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fleet/keys/signing", result.stderr)
 
     def test_commits_carry_the_dev_accounts_noreply_identity(self):
         self.assertEqual(self.git("config", "user.email").strip(),

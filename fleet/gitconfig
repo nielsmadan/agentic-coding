@@ -2,6 +2,14 @@
 [user]
 	name = quantumcraftdev
 	email = 354587309+quantumcraftdev@users.noreply.github.com
+	# Registered on quantumcraftdev as a signing key only; it grants no access.
+	signingkey = ~/fleet/keys/signing
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
 
 # The empty helper drops Homebrew's system-wide osxkeychain, so no token is ever stored.
 [credential]

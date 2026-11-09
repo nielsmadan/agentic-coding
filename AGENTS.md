@@ -30,7 +30,7 @@ environment and the tools around it.
   - `defaults/` - `codex.json` (model defaults) and its generated `codex.owned` record
 - `nono/` - sandbox profiles, symlinked to `~/.config/nono/profiles/` (see Sandbox)
 - `launchd/` - LaunchAgents that `sync.sh` symlinks into `~/Library/LaunchAgents/` and loads
-- `fleet/gitconfig` - the fleet's global git config (the dev account's identity, HTTPS through `bin/git-credential-fleet`, which picks `GH_TOKEN_<OWNER>` or `GH_TOKEN` like `bin/gh`); `bin/fleet-sync --env` points `GIT_CONFIG_GLOBAL` at it
+- `fleet/gitconfig` - the fleet's global git config (the dev account's identity, commits signed with `~/fleet/keys/signing`, HTTPS through `bin/git-credential-fleet`, which picks `GH_TOKEN_<OWNER>` or `GH_TOKEN` like `bin/gh`); `bin/fleet-sync --env` points `GIT_CONFIG_GLOBAL` at it
 - `codex/strip_nono_block.py` - removes the nono codex pack's block from `~/.codex/config.toml`
 - `pratfall/config.toml` - symlinked to `~/.config/pratfall/config.toml`; the `advisor-*` and `cmdgen-*` profiles (see Pratfall). The autonomous and unsandboxed profiles get a rendered copy without `command_prefix` instead, so dispatcher jobs are not wrapped in `sops-exec`; re-run `sync.sh` there after editing it
 - `publish/` - renders the public skills collection (see below)
