@@ -1,0 +1,25 @@
+# Global git config for the fleet's sessions; `bin/fleet-sync --env` points GIT_CONFIG_GLOBAL here.
+[user]
+	name = quantumcraftdev
+	email = 354587309+quantumcraftdev@users.noreply.github.com
+
+# The empty helper drops Homebrew's system-wide osxkeychain, so no token is ever stored.
+[credential]
+	helper =
+[credential "https://github.com"]
+	helper = fleet
+	useHttpPath = true
+
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+	insteadOf = ssh://git@github.com/
+
+[init]
+	defaultBranch = main
+[push]
+	default = simple
+	autoSetupRemote = true
+[rebase]
+	autoStash = true
+[rerere]
+	enabled = true

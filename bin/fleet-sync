@@ -5,6 +5,7 @@
 set -euo pipefail
 
 FLEET_HOME="${FLEET_HOME:-$HOME/fleet/harness}"
+AC_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FLEET_ENV=(
   "CLAUDE_CONFIG_DIR=$FLEET_HOME/claude"
   "CODEX_HOME=$FLEET_HOME/codex"
@@ -14,6 +15,7 @@ FLEET_ENV=(
 case "${1:-}" in
   --env)
     printf 'export %q\n' "${FLEET_ENV[@]}"
+    printf 'export GIT_CONFIG_GLOBAL=%q\n' "$AC_ROOT/fleet/gitconfig"
     # A forwarded agent is Niels's and asks him for Touch ID; the fleet pushes over HTTPS.
     echo 'unset SSH_AUTH_SOCK'
     exit 0
@@ -28,4 +30,4 @@ case "${1:-}" in
 esac
 
 exec env "${FLEET_ENV[@]}" XDG_CONFIG_HOME="$FLEET_HOME/config" \
-  "$(cd "$(dirname "$0")/.." && pwd)/sync.sh" --profile studio-agents
+  "$AC_ROOT/sync.sh" --profile studio-agents
