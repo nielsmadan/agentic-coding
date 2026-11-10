@@ -11,7 +11,7 @@ SANDBOXED = (
     "Sandbox status: this session runs INSIDE the nono sandbox (profile `{profile}`). "
     "The Sandbox section of your instructions applies as written: writes are limited to "
     "~/wrksp and the profile's grants. Anything that must write elsewhere, such as "
-    "`colima start`, `loadout sync` or `agents-update`, is for the user to run in their "
+    "`colima start`, `loadout sync` or `update-agents`, is for the user to run in their "
     "own terminal, not as a `!` command, which runs inside this same sandbox."
 )
 

@@ -102,7 +102,7 @@ reaches the model through a `SessionStart` hook for Claude and Codex (`loadout/h
 and a `sandbox-status` plugin for OpenCode and Pi (`loadout/module-config/`). The global
 instructions defer to that note, so keep them free of claims that hold in only one mode.
 
-**Update agents with `bin/agents-update`, from your own terminal.** claude, pi and droid install
+**Update agents with `bin/update-agents`, from your own terminal.** claude, pi and droid install
 into paths the sandbox grants read-only, so their built-in updaters fail inside it (droid reports
 only `Update to <version> was skipped.`). The script calls each updater by path, bypassing the
 sandboxed wrappers, and updates pi through `mise upgrade` because mise owns that install. It

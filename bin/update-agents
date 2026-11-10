@@ -5,9 +5,9 @@ Sandboxed agents cannot replace their own binaries: claude, pi, droid and cursor
 install into paths the sandbox grants read-only, so their built-in updaters fail or report
 "skipped". This runs each updater directly, bypassing the sandboxed zsh wrappers.
 
-    agents-update                 # update all installed agents
-    agents-update pi droid        # only these
-    agents-update --dry-run       # print the commands without running them
+    update-agents                 # update all installed agents
+    update-agents pi droid        # only these
+    update-agents --dry-run       # print the commands without running them
 """
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ def installed(agent: Agent) -> bool:
 def sandbox_refusal(environ: dict[str, str]) -> str | None:
     if environ.get("AGENT_SANDBOX"):
         return (
-            "agents-update: running inside the agent sandbox, where these installs are read-only.\n"
+            "update-agents: running inside the agent sandbox, where these installs are read-only.\n"
             "  Run it from your own terminal."
         )
     return None
@@ -95,7 +95,7 @@ def main() -> int:
     try:
         chosen = select(agents(Path.home()), args.names)
     except ValueError as error:
-        print(f"agents-update: {error}", file=sys.stderr)
+        print(f"update-agents: {error}", file=sys.stderr)
         return 64
 
     summary: list[str] = []
