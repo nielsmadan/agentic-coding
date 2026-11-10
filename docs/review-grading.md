@@ -29,6 +29,9 @@ Every skill that prioritizes review findings carries the same self-contained rub
 skills and the repository-local skill reviewer. This avoids a runtime dependency on another skill
 being installed. Domain checklists and examples supply evidence, not competing severity scales.
 
+`review-plan` does not carry the rubric. A plan has no verified paths or demonstrated failures to
+grade, so it sorts findings by plan disposition instead: Rework, Amend, Decide, Watch.
+
 `code-review` maps `critical`, `should`, and `suggestion` to the three tiers. Its comprehensive
 verification and likelihood triage remain separate from impact; rare catastrophic failures are still
 considered. In quick mode the integrated reviewer verifies its findings directly.
