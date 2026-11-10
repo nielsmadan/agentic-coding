@@ -20,13 +20,16 @@ no conversation history.
 | Repos reviewed | app (writable with --fix), middleware (read-only reference) | … |
 | Open findings at end | roadmap doc `docs/roadmap.md` in the repo | … |
 | Repo docs | wrong ADRs logged as D findings; fixed only in --fix | … |
-| Fix policy | bugs + tidy-ups fix; improvements fix if ≤ ½ day; major UF held | … |
+| Maturity | Active (user: "still adding features") | … |
+| Fix policy | bugs (common/plausible) fix; improvements fix if ≤ ½ day; major UF and risk flags held | … |
+| Change budget | 15% source growth; past it, improvements and tidy-ups are held | … |
 | Major user-facing means | changes a flow, a screen's content or a default a user would notice | … |
 | Integration | branch `main` in <path>; ff-only | … |
 
 ## Start
 Base: <repo> <branch> <sha> · Approved: <user's reply, date> · Started: <ISO>
 Types: <path → type per repo or package> — <signals>
+Size: source <n> · tests <n> · README <n> lines — `<the command that counted them>` · now: source +<n>%
 
 ## Aspects
 | # | Aspect | Tier | Model | Scope (paths) | Doc | Status | Findings |
@@ -41,7 +44,7 @@ Aspect statuses: `queued → reviewing → verifying → verified`.
 ## Workers
 | Name | Harness | Checkout | Branch | Baseline | State |
 |---|---|---|---|---|---|
-| w1 | claude | <path> (worktree) | codebase-review/w1 | 1432 passed | busy B-3 |
+| w1 | claude | <path> (worktree) | crew/w1 | 1432 passed | busy B-3 |
 
 ## Batches
 | Batch | Findings | Worker | Brief | State |
@@ -67,16 +70,27 @@ error.
 ```markdown
 ## startup (from [docs/startup.md](docs/startup.md), main @ 7f11450)
 
-- [ ] **ST-B1** ✔ · Should Fix · UF: none · ruled: fix · B-3 — The config hook re-evaluates every
-  flag with no user on the first download and overwrites the user's flags.
+- [ ] **ST-B1** ✔ · Should Fix · Reach: common (every fresh install) · UF: none · Risk: none ·
+  ruled: fix · B-3 — The config hook re-evaluates every flag with no user on the first download
+  and overwrites the user's flags.
   Fix: pass the last evaluated user; skip the hook for the initial fetch.
   `src/services/FeatureFlags.ts:46-52,407-425` · Depends: — · Touches: FeatureFlags.ts
-- [ ] **ST-O4** ✔ (likely) · ungraded · UF: major · held — Load fonts lazily; first paint changes
-  from a branded splash to a plain one for ~200 ms. Scenario: … · Depends: —
-- [x] **ST-T2** ✔ · Nice to Have · UF: none · fixed 3b1c0de — dead `isLogin` branch.
+- [ ] **ST-B6** ✔ · Nice to Have · Reach: misuse (hand-edited prefs file) · UF: none · Risk:
+  none · ruled: todo — A negative timeout in prefs crashes startup. Fix: clamp on load.
+- [ ] **ST-O4** ✔ (likely) · ungraded · UF: major · Risk: default behaviour · held — Load fonts
+  lazily; first paint changes from a branded splash to a plain one for ~200 ms. Scenario: … ·
+  Depends: —
+- [x] **ST-T2** ✔ · Nice to Have · UF: none · Risk: none · fixed 3b1c0de · audit: worthwhile —
+  dead `isLogin` branch.
 ```
 
 - **Priority:** use Review grading from SKILL.md; keep unconfirmed claims ungraded.
+- **Reach** (bugs only): `common`, `plausible`, `rare` or `misuse`, with the trigger in
+  brackets. Under Settled and Active, `rare` and `misuse` are ruled `todo`.
+- **Risk** lists the risk flags from SKILL.md that the proposed fix trips, or `none`. Any flag
+  rules the entry `held`. A worker that trips a new flag adds it and the entry becomes `held`.
+- **Audit** is the keep-audit verdict on a fixed entry: `real fix`, `worthwhile`, `churn` or
+  `worse`. The last two become wave items, and end as `kept wave <n>` or `dropped <revert sha>`.
 - **Verification marks:** `✔` means the verifier confirmed it in the code. `✔ (likely)` means
   it was checked but not fully confirmed. No mark means it is the reviewer's reading only and
   must not be handed off.
@@ -110,6 +124,8 @@ BOUNDARY:  {{out of scope: what other aspects own}}
 ## Questions
 {{Review grading section from SKILL.md}}
 
+{{Risk flags section from SKILL.md}}
+
 {{the aspect's questions from its catalog section in aspects.md, plus project-specific ones}}
 Also answer: is it consistent (count each competing pattern with grep)? Do the repo's docs
 and ADRs about this area match the code? What is tested?
@@ -121,8 +137,11 @@ English, no marketing words.
 ## Findings
 Ranked, one per entry: class (bug / improvement / tidy-up / doc error),
 priority (Must Fix / Should Fix / Nice to Have; apply the supplied Review grading rubric),
+reach for bugs (common / plausible / rare / misuse, with the concrete trigger),
 user-facing level (none / minor / major, with a scenario for minor and major),
-path:line, the concrete failure or cost, and a concrete fix.
+path:line, the concrete failure or cost, and the smallest fix that removes it, with the risk
+flags that fix trips (or none). Where a larger fix is tempting, name it and say why the smaller
+one is enough.
 
 ## Rules
 - Ground every claim in a path:line you actually read. Give the grep behind every count.
@@ -149,7 +168,10 @@ OUTPUT:    {{$RUN/verified-<aspect>.md}}
 For each finding, open the cited path:line and decide: ✔ confirmed, ✔ (likely) (plausible,
 not fully confirmable from code), or ✗ rejected (with the line that disproves it). Fix wrong
 line numbers. Mark duplicates of ledger entries with their ID. Check the user-facing level:
-anything that changes what a user sees or does is at least minor.
+anything that changes what a user sees or does is at least minor. Check the reach: trace who
+can actually produce the trigger, and downgrade it when only corrupt data, hostile input or API
+abuse can. Check the fix against these risk flags and add any it trips:
+{{Risk flags section from SKILL.md}}
 
 Write OUTPUT in the findings.md entry format. Return only the counts per verdict.
 Do not dispatch sub-agents or launch other agent CLIs. Modify nothing but OUTPUT.
@@ -157,29 +179,51 @@ Do not dispatch sub-agents or launch other agent CLIs. Modify nothing but OUTPUT
 
 ## briefs/B-n.md
 
-A worker executes it without ever having seen this conversation.
+Use crew's brief envelope (`crew` skill, `references/brief.md`), with the report path
+`.codebase-review/reports/B-<n>.md`. Its Items are the findings. Add these Rules after crew's
+defaults:
 
 ```markdown
-# Batch B-<n>: <theme>
+- Make the smallest change that removes the failure. A bug fix gets a test that would have
+  caught the bug. A fix in an event monitor or handler gets at least one test that drives a
+  real event through it.
+- If the fix trips a risk flag not already on the entry, or grows well past the failure it
+  removes, stop that finding: discard the change and report the flag with the simplest
+  alternative. Do not finish it. The flags:
+  <Risk flags section from SKILL.md, verbatim>
+- Doc changes follow the docs rule: fix what is wrong, add only what the doc's readers need,
+  and keep internals out of README and agent files.
+- Run `code-review` over the batch: `--quick` for one or two small findings, comprehensive
+  otherwise.
+```
 
-Worker: <name> · Checkout: <path> · Branch: codebase-review/<name>
-Base: integration branch <I> must contain <sha>. Catch up first (workers.md, Syncing).
-Check command: <cmd> · Commit convention: <feat/fix/chore, no scopes, no body | repo's own>
-Approach: <per-finding loop | plan | longshot — plan or longshot for one bigger change>
+Items: the verbatim entries from findings.md, including Touches and Depends.
 
-## Rules
-- If a finding's premise does not match the code, stop that finding and report it. Do not
-  adapt the fix to fit.
-- Confirm the new tests actually ran: the count moved, or the names appear in the output.
-- Read exit codes directly, never through a pipe.
-- One commit per finding; fold the code-review fixes into the commit they belong to.
-- Before reporting, rebase onto the lead's current tip and re-run the check command.
-- Do not push. Do not touch <I> or any repo not named here.
-- Report to <lead-name>: commits mapped to IDs, the check summary after the rebase, and the
-  stopped findings with reasons.
+## Keep-audit prompt
 
-## Findings
-<verbatim entries from findings.md, including Touches and Depends>
+Use a `general-purpose` agent on `opus`, one per slice. Give it the diffs and the findings'
+claims, never the rulings or the reasons a fix was chosen.
+
+```
+Judge whether each change in a range made this code better. You have no prior context.
+
+CODE:      {{repo}}; the slice is {{commits, each with its finding ID}} in {{base}}..{{tip}}.
+           READ-ONLY.
+CLAIMS:    {{per finding: the failure it claimed and the reach, from the ledger}}
+CONTEXT:   {{maturity and what the user said about it}}
+OUTPUT:    {{$RUN/audit-<slice>.md}}
+
+For each finding, read its commits' diff and the code around it, and classify the change:
+- real fix: the claimed failure is reachable as described, and the change removes it simply
+- worthwhile: not a bug fix, but the code or docs are clearly better for this project's maturity
+- churn: no failure a user or maintainer would meet, or a change for its own sake
+- worse: it adds risk, complexity or behaviour changes out of proportion to what it removes
+Give the reach as you see it, and for churn or worse the simpler alternative (often: nothing).
+Then list every behaviour change in the slice that no finding claimed, with the commit.
+
+Ground each verdict in a path:line. Return only the counts per verdict and the number of
+unclaimed behaviour changes. Do not dispatch sub-agents or launch other agent CLIs. Modify
+nothing but OUTPUT.
 ```
 
 ## Decision wave
@@ -193,6 +237,10 @@ four at most per call, keeping the wave's order.
 **1. ST-O4 · Lazy font loading** (unblocks ST-O1, ST-O10)
 Today: <scenario as the user experiences it>. After: <what changes for users>.
 Options: a) fix as proposed (recommended — <decisive trade-off>) b) <variant> c) keep as is → TODO.
+
+**2. RE-O3 · Recording reset counter** (audit: churn · 2 commits, +84 lines)
+Changed: <what the change does, in the user's terms>. Audit: <the auditor's reason, one line>.
+Options: a) drop it (recommended — <why>) b) keep it.
 ```
 
 Order a wave so that the decisions unlocking the most dependents come first. The next wave holds
@@ -214,9 +262,24 @@ only the decisions that became decidable or changed shape after this wave's answ
 | <one line> | <before → after, in the user's terms> | ST-B2 | 3b1c0de |
 Held and still undecided: <IDs, one line each, or "none">.
 
+## Judgment calls and risk flags
+| Change | Flag or audit verdict | Simpler alternative | Decided | Commit |
+|---|---|---|---|---|
+| <one line> | persisted format / churn / … | <what was not done> | wave 1 | 3b1c0de |
+Growth against the baseline: source +<n>% (budget <n>%), tests +<n>%, README +<n>%.
+
+## Behaviour changes no finding asked for
+<From the keep audit, each with its commit and what was decided, or "none".>
+
 ## Other changes
 <Grouped by theme, one line per group with commit count and IDs: "Token leaks closed in
 logging and crash reports (6 commits: AU-B2, AU-B3, ER-B5 …)".>
+
+## History
+<n> per-finding commits regrouped into <m> feature commits on `codebase-review/regrouped`;
+the tree is identical to <integration branch> and the check passes. One line per feature
+commit with its IDs. To adopt it (rewrites <integration branch>, so it waits for your yes):
+`git branch codebase-review/full <branch> && git reset --keep codebase-review/regrouped`
 
 ## Review coverage
 <aspects done, with the doc path for each; findings per class: found / verified / fixed /
@@ -231,5 +294,5 @@ Work folder: `.codebase-review/` (kept: <what still holds it> | deleted). Harves
 Nothing was pushed.
 ```
 
-Without `--fix`, drop User-facing changes and Other changes, and lead with Review coverage and
-Top of the TODO.
+Without `--fix`, drop every section about changes and History, and lead with Review coverage
+and Top of the TODO.
