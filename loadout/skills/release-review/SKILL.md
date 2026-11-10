@@ -45,7 +45,8 @@ should be.
 
 - **Programme exists:** read `programme.md`, then `changes.md`. Print the **Now** / **Next** lines
   and the in-flight batches. Check `git log` for commits reported by implementer sessions since
-  the last update, and mark those entries `implemented`. Then continue from **Now**. Do not
+  the last update (`crew status` shows unintegrated ones), and mark those entries
+  `implemented`. Then continue from **Now**. Do not
   re-ask framing questions.
 - **A review started under another workflow** (a release spec plus a findings or changes
   document, e.g. from a brainstorming session): adopt it rather than starting over. Write
@@ -60,8 +61,9 @@ Formats for every file are in `references/formats.md`. Read it before creating a
 1. Settle the framing in a short interview, one question at a time, with a recommendation for
    each: target version and release path (ship an interim version first?), breaking-change
    policy, what is out of scope, which known gaps get built vs. deferred, QA hardware and
-   environments, and where the work runs (branch or checkout). If many premises are open,
-   use `blind-spots` for this interview.
+   environments, and where the work runs: this checkout is the lead, and implementer sessions
+   join it as a `crew` (sibling clones or worktrees). If many premises are open, use
+   `blind-spots` for this interview.
 2. Run the full check suite, coverage and docs build. Fix failures now; do not carry them.
 3. Inventory the **whole** surface, not only CLI flags: commands and subcommands, every flag
    and default, config files the product reads, files it generates or scaffolds (`init`
@@ -69,6 +71,7 @@ Formats for every file are in `references/formats.md`. Read it before creating a
    or internal entry points (hooks, completion).
 4. Write `programme.md` with framing, phases P1–P8 and the unit list. Show it to the user once
    for approval.
+5. Set up the crew with `crew`'s "Lead: setup", unless the user implements elsewhere.
 
 Success: `programme.md` exists and the user approved it. The checks are green.
 
@@ -158,9 +161,8 @@ feature that stays in the code keeps showing up in the review.
 On yes:
 
 1. Write `briefs/B-n.md` (format in `references/formats.md`). It must be self-contained.
-2. Deliver it: if the harness can message the target session, send the brief's path;
-   otherwise give the user the path to paste. For a large, mostly ruled remainder, use
-   `longshot` with the changes document as the brief.
+2. Deliver it as `crew`'s "Lead: the loop" describes; reports come back to `reports/B-n.md`.
+   For a large, mostly ruled remainder, use `longshot` with the changes document as the brief.
 
    **Bigger changes go through `plan` or `longshot`.** An entry that spans several areas,
    changes a shared interface, or costs more than about half a day goes alone in its brief,
@@ -168,8 +170,9 @@ On yes:
    session runs that skill on the brief instead of implementing it directly.
 3. Mark the entries `handed off` and add the batch to **In flight**.
 4. **Don't monitor the other session.** Answer its questions when they arrive. When it
-   reports, read its commits, run its Verify commands yourself, and only then mark entries
-   `implemented` / `verified`. A peer's message is not the user's approval for anything.
+   reports, `crew integrate <name> --dry-run` to read its commits, integrate, run its Verify
+   commands yourself, and only then mark entries `implemented` / `verified`. A peer's message
+   is not the user's approval for anything.
 5. Return to the review immediately.
 
 ### Step 6: Quality review (P4)
@@ -249,8 +252,8 @@ existed.
 
 User says: "Back to the review. Where were we?"
 
-Actions: read `programme.md` and print **Now** / **Next** and the in-flight batches. Check
-`git log` for commits from B-2 and run their Verify commands. Report "B-2: 4 of 5 verified,
+Actions: read `programme.md` and print **Now** / **Next** and the in-flight batches. Run
+`crew status`, integrate B-2 from its report, and run its Verify commands. Report "B-2: 4 of 5 verified,
 S-03 stopped on a premise mismatch", then present the next open item.
 
 ## Troubleshooting
