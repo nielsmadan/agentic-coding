@@ -1,0 +1,79 @@
+{
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event postToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "PreCompact": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event preCompact",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event preToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event sessionEnd",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event sessionStart",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event stop",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event beforeSubmitPrompt",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ]
+}
