@@ -24,7 +24,7 @@ environment and the tools around it.
   - `skills/` - global skills, rendered to all four harnesses (see Skills)
   - `kits/` - project-type manifests and the shared parts they select (see Project Kits)
   - `settings/` - the hand-maintained half of each harness's settings: `claude.json`, `claude-afk.json`, `droid.json`, `opencode.json`, `pi.json`
-  - `hooks/` - hook *wiring* per harness (`claude.json`, `codex.json`)
+  - `hooks/` - hook *wiring* per harness (`claude.json`, `codex.json`, `cursor.json`)
   - `plugins/` - plugin enablement per harness (`claude.json`, `pi.json`, `unsandboxed.json`, `studio-agents.json`)
   - `module-config/<harness>/` - files copied to the harness's own config dir; the hook scripts themselves live in `loadout/module-config/claude/hooks/`
   - `defaults/` - `codex.json` (model defaults) and its generated `codex.owned` record
@@ -98,7 +98,8 @@ it. `pi` and `opencode` have no raw variant and always sandbox.
 
 **Every session is told which mode it is in.** The sandboxed branch exports `AGENT_SANDBOX=1` and
 `AGENT_SANDBOX_PROFILE`; `bin/agent-sandbox-status` turns them into a one-paragraph note, which
-reaches the model through a `SessionStart` hook for Claude and Codex (`loadout/hooks/`)
+reaches the model through a `SessionStart` hook for Claude, Codex and Cursor (`loadout/hooks/`;
+Cursor gets it as JSON `additional_context`, keyed on `AGENT_HARNESS=cursor`)
 and a `sandbox-status` plugin for OpenCode and Pi (`loadout/module-config/`). The global
 instructions defer to that note, so keep them free of claims that hold in only one mode.
 

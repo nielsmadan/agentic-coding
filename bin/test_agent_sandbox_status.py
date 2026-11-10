@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
+import json
 import os
 import subprocess
 import unittest
@@ -36,6 +37,18 @@ class StatusNoteTests(unittest.TestCase):
             [str(MODULE_PATH)], env=env, capture_output=True, text=True, check=True
         )
         self.assertEqual(result.stdout, status.status_note(env) + "\n")
+
+
+class HookOutputTests(unittest.TestCase):
+    def test_cursor_gets_the_note_as_additional_context(self):
+        env = {"AGENT_HARNESS": "cursor", "AGENT_SANDBOX": "1", "AGENT_SANDBOX_PROFILE": "cursor-local"}
+        self.assertEqual(
+            json.loads(status.hook_output(env)), {"additional_context": status.status_note(env)}
+        )
+
+    def test_other_harnesses_get_the_plain_note(self):
+        env = {"AGENT_HARNESS": "claude", "AGENT_SANDBOX": "1"}
+        self.assertEqual(status.hook_output(env), status.status_note(env))
 
 
 if __name__ == "__main__":
