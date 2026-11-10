@@ -10,6 +10,17 @@
       ]
     }
   ],
+  "PostToolUseFailure": [
+    {
+      "hooks": [
+        {
+          "command": "~/.local/share/hooklinesinker/bin/hooklinesinker ingest --agent cursor --event postToolUseFailure",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
   "PreCompact": [
     {
       "hooks": [
