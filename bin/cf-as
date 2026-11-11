@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import sys
+
+ACCOUNTS = {
+    "personal": (
+        "CLOUDFLARE_API_TOKEN_PERSONAL",
+        "7cd3590a7fcf960fcf9cf1543ad17dd3",
+    ),
+    "qc": (
+        "CLOUDFLARE_API_TOKEN_QUANTUMCRAFT",
+        "c350638ab95bb03d85b470cfa83a57cd",
+    ),
+}
+
+
+def command_environment(environment, token_name, account_id):
+    token = environment.get(token_name)
+    if not token:
+        raise ValueError(
+            f"{token_name} is missing or empty; restart the agent after updating SOPS, "
+            "or launch cf-as through sops-exec from your terminal"
+        )
+    alternate_auth = {
+        "CLOUDFLARE_API_KEY",
+        "CLOUDFLARE_EMAIL",
+        "CF_API_KEY",
+        "CF_EMAIL",
+        "CF_API_TOKEN",
+        "CF_ACCOUNT_ID",
+    }
+    return {
+        **{
+            key: value
+            for key, value in environment.items()
+            if key not in alternate_auth
+        },
+        "CLOUDFLARE_API_TOKEN": token,
+        "CLOUDFLARE_ACCOUNT_ID": account_id,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run a command with the selected Cloudflare read-only credentials.",
+        epilog=(
+            "Examples: cf-as personal wrangler pages project list; "
+            "cf-as qc wrangler whoami; cf-as personal python3 inspect-build-logs.py. "
+            "Tokens must already be injected into the environment."
+        ),
+    )
+    parser.add_argument("account", choices=ACCOUNTS)
+    parser.add_argument(
+        "command", nargs=argparse.REMAINDER, help="command and arguments"
+    )
+    args = parser.parse_args()
+    if not args.command:
+        parser.error("a command is required")
+    try:
+        environment = command_environment(os.environ, *ACCOUNTS[args.account])
+    except ValueError as error:
+        print(f"cf-as: {error}", file=sys.stderr)
+        return 78
+    try:
+        os.execvpe(args.command[0], args.command, environment)
+    except FileNotFoundError:
+        print(f"cf-as: command not found: {args.command[0]}", file=sys.stderr)
+        return 127
+    except PermissionError:
+        print(f"cf-as: command is not executable: {args.command[0]}", file=sys.stderr)
+        return 126
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

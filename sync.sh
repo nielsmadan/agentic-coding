@@ -114,6 +114,7 @@ SYMLINKS=(
   # wrappers call, so it must resolve without ~/.airc having been sourced.
   "$SCRIPT_DIR/bin/jina-fetch:$HOME/.local/bin/jina-fetch"
   "$SCRIPT_DIR/bin/sops-exec:$HOME/.local/bin/sops-exec"
+  "$SCRIPT_DIR/bin/cf-as:$HOME/.local/bin/cf-as"
   "$SCRIPT_DIR/bin/agent-chromium:$HOME/.local/bin/agent-chromium"
   # The hooks and plugins that report the sandbox status call it from here.
   "$SCRIPT_DIR/bin/agent-sandbox-status:$HOME/.local/bin/agent-sandbox-status"
