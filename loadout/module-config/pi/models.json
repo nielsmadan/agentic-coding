@@ -3,7 +3,7 @@
     "openai": {
       "modelOverrides": {
         "gpt-6-astra": {
-          "contextWindow": 1050000
+          "contextWindow": 872000
         }
       }
     }
