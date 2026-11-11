@@ -233,6 +233,11 @@ describe('prompts', () => {
     )
   })
 
+  test('both prompts ask for a name for work that is not software', () => {
+    expect(forkPrompt({ checks: UNCHECKED, topic: null }, 'Done.')).toContain('including writing, research or planning')
+    expect(digestPrompt({ checks: UNCHECKED, topic: null }, 'user: hi')).toContain('Answer none only when the session has not started on any task yet.')
+  })
+
   test('the fork is told which checks are set and asked for both lines', () => {
     const prompt = forkPrompt({ checks: { ...UNCHECKED, qa: true, 'qa-tour': true }, topic: null }, 'Done.')
     expect(prompt).toContain('Set now: qa, qa-tour.')

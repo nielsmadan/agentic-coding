@@ -163,8 +163,8 @@ const featureGuide = (topic: DevTopic | null): string => {
   const keep =
     topic === null
       ? ''
-      : ` It is currently named "${topic.name}". If that still names the same feature or bug as specifically as asked here, repeat it exactly; otherwise give the new name.`
-  return `Feature: the feature or bug the session as a whole is working on, as a noun phrase of at most 35 characters, specific enough to tell it apart from other work in the same repository, such as "CSV export with column picker" or "login redirect loop on Safari"; not the current step. Answer none when the session is not developing software.${keep}`
+      : ` It is currently named "${topic.name}". If that still names the same work as specifically as asked here, repeat it exactly; otherwise give the new name.`
+  return `Feature: the feature, bug or task the session as a whole is working on, as a noun phrase of at most 35 characters, specific enough to tell it apart from other work in the same repository, such as "CSV export with column picker", "login redirect loop on Safari" or "Q3 invoice reconciliation"; not the current step. Name any task, including writing, research or planning that is not software work. Answer none only when the session has not started on any task yet.${keep}`
 }
 
 const checksGuide = (checks: DevChecks): string => {
@@ -191,7 +191,7 @@ export const forkPrompt = (
   answer: string,
 ): string => `[dev-phase] A status display is asking a side question. Do not continue the work and do not call tools; just answer.
 
-Which feature or bug is this session working on, and do its review checks still hold?
+Which feature, bug or task is this session working on, and do its review checks still hold?
 
 ${featureGuide(state.topic)}
 
@@ -253,7 +253,7 @@ export const digest = (messages: readonly DigestMessage[], rows = 40): string =>
 export const digestPrompt = (
   state: DevState,
   rows: string,
-): string => `You track a software development session: which feature or bug it is working on, and whether its review checks still hold. Below are the last messages of its transcript, oldest first; tool calls are in square brackets.
+): string => `You track an agent session: which feature, bug or task it is working on, and whether its review checks still hold. Below are the last messages of its transcript, oldest first; tool calls are in square brackets.
 
 ${featureGuide(state.topic)}
 
