@@ -25,6 +25,8 @@ no conversation history.
 | Change budget | 15% source growth; past it, improvements and tidy-ups are held | … |
 | Major user-facing means | changes a flow, a screen's content or a default a user would notice | … |
 | Integration | branch `main` in <path>; ff-only | … |
+| Promises | "Tab can be recorded" (README:12); "click a field to record" (user) | … |
+| Smoke list | `just example`, real clicks and keys: click a recorder → it stays recording; ⌘K ⌘C records; … Baseline: 4/5 (click fails) | … |
 
 ## Start
 Base: <repo> <branch> <sha> · Approved: <user's reply, date> · Started: <ISO>
@@ -120,6 +122,8 @@ FINDINGS:  {{$RUN/findings-<aspect>.md}}. Write exactly this file.
 SIBLINGS:  {{existing review docs and what each covers}}. Build on them, link to them, do not
            repeat them, and correct them where the code now differs (say so explicitly).
 BOUNDARY:  {{out of scope: what other aspects own}}
+PROMISES:  {{the framing's Promises}}. A fix that narrows one trips the first risk flag. Where
+           the code breaks a promise, report the disagreement; never call the promise a doc error.
 
 ## Questions
 {{Review grading section from SKILL.md}}
@@ -146,6 +150,8 @@ one is enough.
 ## Rules
 - Ground every claim in a path:line you actually read. Give the grep behind every count.
   Write "inferred" or "not verified" rather than guess.
+- Behaviour a probe or test shows that you did not expect is a finding, even when it looks like
+  an artefact of the probe. Report it as unconfirmed rather than explain it away.
 - Do not dispatch sub-agents or launch other agent CLIs; do this work yourself.
 
 Reply with at most 15 lines: the main conclusions, the finding counts per class, and what
@@ -163,6 +169,7 @@ Independently verify review findings against the code. You have no prior context
 CODE:      {{repo}} @ {{sha}}, read-only.
 INPUT:     {{$RUN/findings-<aspect>.md}}
 LEDGER:    {{findings.md}}, for duplicate detection only.
+PROMISES:  {{the framing's Promises}}
 OUTPUT:    {{$RUN/verified-<aspect>.md}}
 
 For each finding, open the cited path:line and decide: ✔ confirmed, ✔ (likely) (plausible,
@@ -191,8 +198,12 @@ defaults:
   removes, stop that finding: discard the change and report the flag with the simplest
   alternative. Do not finish it. The flags:
   <Risk flags section from SKILL.md, verbatim>
+- These are promises. Never narrow one, and never edit a doc to drop or soften one:
+  <the framing's Promises, verbatim>
 - Doc changes follow the docs rule: fix what is wrong, add only what the doc's readers need,
   and keep internals out of README and agent files.
+- Behaviour you did not expect, in a test, probe or run, goes in the report as a possible
+  finding, even when it looks like an artefact.
 - Run `code-review` over the batch: `--quick` for one or two small findings, comprehensive
   otherwise.
 ```
@@ -211,6 +222,7 @@ CODE:      {{repo}}; the slice is {{commits, each with its finding ID}} in {{bas
            READ-ONLY.
 CLAIMS:    {{per finding: the failure it claimed and the reach, from the ledger}}
 CONTEXT:   {{maturity and what the user said about it}}
+PROMISES:  {{the framing's Promises}}. A change that narrows one is worse, whatever it fixes.
 OUTPUT:    {{$RUN/audit-<slice>.md}}
 
 For each finding, read its commits' diff and the code around it, and classify the change:
@@ -284,6 +296,7 @@ commit with its IDs. To adopt it (rewrites <integration branch>, so it waits for
 ## Review coverage
 <aspects done, with the doc path for each; findings per class: found / verified / fixed /
 TODO / rejected.>
+Smoke list with real input: baseline <n/m> · final <n/m> · not run: <check — what was tried>.
 
 ## Top of the TODO
 <the roadmap's first five items, each with cost and finding IDs.>

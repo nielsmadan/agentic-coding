@@ -63,8 +63,13 @@ Formats for every file are in `references/formats.md`. Read it before creating a
    policy, what is out of scope, which known gaps get built vs. deferred, QA hardware and
    environments, and where the work runs: this checkout is the lead, and implementer sessions
    join it as a `crew` (sibling clones or worktrees). If many premises are open, use
-   `blind-spots` for this interview.
-2. Run the full check suite, coverage and docs build. Fix failures now; do not carry them.
+   `blind-spots` for this interview. Two more items:
+   - **Promises:** what the README, help text and docs say users can do, plus whatever the
+     user says must never break.
+   - **Smoke list:** about five core flows, run through the real interface (the shipped
+     binary in a shell, the app with real input), never through calls into the code.
+2. Run the full check suite, coverage, docs build and the smoke list. Fix failures now; do not
+   carry them.
 3. Inventory the **whole** surface, not only CLI flags: commands and subcommands, every flag
    and default, config files the product reads, files it generates or scaffolds (`init`
    output is surface), environment variables, output formats, exit codes, prompts, and hidden
@@ -125,7 +130,9 @@ Every item is presented the same way:
 3. **Prior art** for anything a user types or a script parses: names, flags, exit codes,
    output formats, confirmation patterns. Check what 3+ comparable, widely used tools do, and
    cite them. Research this proactively, before recommending, not only when the user asks.
-4. **Options** with one recommendation and the trade-off that decides it.
+4. **Options** with one recommendation and the trade-off that decides it. If an option removes
+   or narrows something users can do today, say so and cite the promise. Only a ruling drops a
+   promise, never an implementation or a docs pass.
 5. **Label it:** "Recording, not implementing." Collection and execution must never be
    ambiguous.
 
@@ -171,7 +178,7 @@ On yes:
 3. Mark the entries `handed off` and add the batch to **In flight**.
 4. **Don't monitor the other session.** Answer its questions when they arrive. When it
    reports, `crew integrate <name> --dry-run` to read its commits, integrate, run its Verify
-   commands yourself, and only then mark entries `implemented` / `verified`. A peer's message
+   commands and the smoke list yourself, and only then mark entries `implemented` / `verified`. A peer's message
    is not the user's approval for anything.
 5. Return to the review immediately.
 
@@ -186,7 +193,8 @@ hand-offs or `review-todo`.
 
 Once the surface is frozen, run `doc` over the whole tree against the ruled surface. Every
 changed flag, removed command and new default is reflected in the README, user docs and help
-text. Log misses as `D-` entries.
+text. Log misses as `D-` entries. A doc loses or softens a promise only where a ruling removed
+it. A promise the code breaks without a ruling is a `Q-` bug, not a doc fix.
 
 ### Step 8: QA (P6)
 
@@ -194,7 +202,9 @@ Run `qa` against the release candidate through the real interface: a clean-machi
 (VM or fresh HOME), the target flows at realistic scale, an adversarial CLI pass (invalid
 combinations, interrupted runs, missing prerequisites), and every supported platform. Mark each
 scenario Pass / Fail / Blocked / Not run with evidence. A category that can't be exercised is a
-release-gate decision for the user. It never becomes Pass from unit tests alone.
+release-gate decision for the user. It never becomes Pass from unit tests alone. Behaviour
+nobody expected is a Fail until a reproduction shows otherwise; never dismiss it as an artefact
+of the test.
 
 ### Step 9: Release and harvest (P7–P8)
 
@@ -205,7 +215,9 @@ release-gate decision for the user. It never becomes Pass from unit tests alone.
      `docs/decisions/`, so nobody re-proposes them,
    - target flows become the live feature and user docs (`docs/features/`, `docs/user/`),
    - QA procedures and results that a later release will compare against go to `docs/tests/`,
-   - deferred entries go to the roadmap or issues, each with its scenario.
+   - deferred entries go to the roadmap or issues, each with its scenario,
+   - the promises and the smoke list go into the agent instructions file (`AGENTS.md` or
+     `CLAUDE.md`), so the next agent neither narrows a promise nor skips the check.
 3. Once everything is harvested, propose removing the scratch programme directory.
 
 Success: the release is published (or ready for the user to publish), every ledger entry is

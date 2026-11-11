@@ -18,6 +18,8 @@ conversation history.
 | Release path | ship 0.9.0, then run the programme, then 1.0.0 | 2026-09-14 |
 | Breaking changes | wide open until the freeze | 2026-09-14 |
 | Out of scope | Antigravity harness | 2026-09-14 |
+| Promises | "`init` never overwrites existing config" (README:40); … | 2026-09-14 |
+| Smoke list | in a scratch HOME: `tool init` → `tool sync` → `tool check` exits 0; … | 2026-09-14 |
 
 ## Phases
 | | Phase | Status |
@@ -116,4 +118,8 @@ truth). Add these Rules after crew's defaults:
   means the tests were deselected, not that they passed.
 - Probe in an isolated scratch HOME, and unset tool-specific config-dir variables that would
   otherwise point back at the real one.
+- Never narrow one of these promises, or edit a doc to drop or soften one. If an entry seems to
+  need it, stop that entry and report it: <the framing's Promises, verbatim>
+- Behaviour you did not expect goes in the report as a possible finding, even when it looks
+  like an artefact of the probe.
 ```

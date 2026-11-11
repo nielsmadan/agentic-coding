@@ -55,6 +55,7 @@ input, API abuse), with the concrete trigger. It feeds the priority and the fix 
 
 A fix that does any of these is held for a decision wave, whatever its user-facing level:
 
+- removes or narrows something users can do today, or contradicts a promise
 - changes a persisted or wire format, or what existing saved data means
 - adds public API, or changes what an existing API does
 - changes interaction or a default behaviour (focus, keys, clicks, timing)
@@ -63,9 +64,10 @@ A fix that does any of these is held for a decision wave, whatever its user-faci
 - adds an abstraction with one user
 - is much larger than the failure it removes
 
-Reviewers and verifiers put the flags on the entry. Workers check them again while implementing,
-because that is where most of them appear: a fix that trips an unlisted flag is stopped and
-reported with the simplest alternative, never finished.
+Reviewers and verifiers put the flags on the entry. Workers check again while implementing,
+where most flags appear, and stop a fix that trips an unlisted one. When the code and a promise
+disagree, the user decides which is wrong: calling it a bug does not lift the first flag, and no
+fix rewrites a promise to fit.
 
 ## The contract
 
@@ -76,8 +78,8 @@ State it back at the start gate:
 2. **Rulings, not stalls.** Every judgment call is decided and logged in `programme.md` as
    `R<n> — <decision> — <why> — <cost if wrong>`.
 3. **Held, not asked.** Under `--fix`, a major user-facing or risk-flagged change is parked as
-   `held`, along with everything that depends on it. The run continues around it, and the user decides held
-   items in waves at the end, never one at a time mid-run.
+   `held` with its dependents. The run continues around it; the user decides held items in
+   waves at the end, never mid-run.
 4. **Milestone pings only.** One line per finished aspect or integrated batch.
 5. **Local and unpushed.** Writes go to the work folder and, at the end, the harvest into the
    repo's docs. Under `--fix` they also go to the worker branches. Approval of the start gate
@@ -107,12 +109,9 @@ multi-repo run uses the primary repo. Its layout:
 - `run/`, for raw findings, verifications and check logs (`$RUN`)
 - `report.md`
 
-The folder is never committed. At the start gate, append `/.codebase-review/` to
-`.git/info/exclude`, which is local to this clone and shared with its worktrees, so `.gitignore`
-stays untouched. Do not choose another location, and do not ask about it.
-
-The folder is scratch, not the record. Phase 8 harvests what is durable into the repo's docs,
-then deletes the folder once nothing in it is still needed.
+The folder is scratch, never committed: at the start gate, append `/.codebase-review/` to
+`.git/info/exclude` (local, shared with worktrees; `.gitignore` stays untouched). Do not choose
+another location or ask about it. Phase 8 harvests what is durable and deletes the folder.
 
 ## Phase 0 — Start or resume, then recon
 
@@ -124,16 +123,17 @@ Look for `.codebase-review/programme.md` at the repo root.
   disk is not approval for new scope.
 - **Not found:** run the recon.
 
-Recon happens before any question, because an uninformed question wastes a round. Read the
-instruction files (`AGENTS.md`, `CLAUDE.md`, `README.md`), the docs tree and ADRs, the stack and
-build files, the test setup, the CI and lint config, the git state of every candidate repo, and
-any sibling checkouts in the workspace. Use at most 3 read-only `Explore` agents, one per repo.
-Draft the **system overview** from this (the first Core aspect in `references/aspects.md`). It is
-the first thing the user gets, and it makes the interview concrete.
+Recon comes before any question. Read the instruction files (`AGENTS.md`, `CLAUDE.md`,
+`README.md`), the docs tree and ADRs, the stack and build files, the test setup, the CI and
+lint config, the git state of every candidate repo, and any sibling checkouts. Use at most 3 read-only `Explore` agents, one per repo.
+Draft the **system overview** from this (the first Core aspect in `references/aspects.md`), so
+the interview is concrete. In it:
 
-**Tag the project types** in the overview, per repo or package, with the signals behind each
-tag (`Types: app/ → mobile app; packages/ui → library: UI component — signals: …`). The tags
-decide which catalog sections apply, so a wrong tag means a wrong plan.
+- **Tag the project types** per repo or package, with the signals behind each tag
+  (`Types: app/ → mobile app; packages/ui → library: UI component — signals: …`). The tags pick
+  the catalog sections, so a wrong tag means a wrong plan.
+- **List the promises:** what the README, docs, help text and examples say users can do ("Tab
+  can be recorded"), each with its source.
 
 ## Phase 1 — The interrogation
 
@@ -152,10 +152,13 @@ questions are mandatory wherever they fall in its tree:
   goes under Skipped with a one-line reason. Add the project-specific aspects the catalog lacks.
 - **Baseline:** the branch and commit to review. Uncommitted user edits are reviewed at their
   committed version and are never mentioned.
+- **Promises:** confirm the recon's list and ask what else must never break.
+- **Smoke list:** about five core workflows, and how this session drives them with real input:
+  events through the OS or the shipped binary (an example app with posted clicks and keys, the
+  CLI in a shell, a browser), never calls into the code.
 - **With `--fix`:**
-  - **How settled the project is.** Ask this before the fix policy, because the answer sets
-    the policy's default and the change budget (growth of the source lines, tests and docs
-    excluded, over the baseline):
+  - **How settled the project is.** Ask it first: it sets the fix policy's default and the
+    change budget (source-line growth over the baseline, tests and docs excluded):
 
     | Maturity | Default fix policy | Budget |
     |---|---|---|
@@ -167,10 +170,9 @@ questions are mandatory wherever they fall in its tree:
   - The **fix policy** per class, starting from that default.
   - What counts as a **major user-facing change** for this project. Major and risk-flagged
     changes are held. Minor ones are fixed and reported.
-  - The **integration branch**, and the checkout it lives in. This is normally the lead's own
-    checkout.
-  - **Workers:** how many, and where each one lives (a new worktree or an existing sibling
-    clone). Propose a number from the size of the codebase.
+  - The **integration branch** and its checkout, normally the lead's own.
+  - **Workers:** how many (propose from the codebase size), each in a new worktree or an
+    existing sibling clone.
   - The **check command** per repo, and the commit convention.
 - **Definition of done:** what the user must have at the end.
 
@@ -178,43 +180,33 @@ Answer the user's own opening questions with analysis in the first round. Do not
 
 ## Phase 2 — The plan
 
-Draft `programme.md` (format in `references/formats.md`) in the conversation. It contains the
-framing table, the type tags, the maturity, fix policy and change budget, the aspect list in
-catalog tier order, and the Skipped list. For each aspect it
-gives the scope paths, the doc path, the sibling docs it builds on, its boundary with
-neighbouring aspects, the model, and which aspects run in parallel (only those with disjoint
-scopes, at most 3 at once).
-
-The scope paths matter twice. They keep the reviewers apart, and the readiness analysis uses
-them to decide when an area is settled.
+Draft `programme.md` (format in `references/formats.md`) in the conversation: the framing, the
+type tags, the aspect list in catalog tier order, and the Skipped list. Each aspect gets scope
+paths, doc path, the sibling docs it builds on, its boundary with neighbours, the model, and
+which aspects run in parallel (disjoint scopes only, at most 3). Scope paths also tell the
+readiness analysis when an area is settled.
 
 **Self-review the draft** for overlapping scopes, aspects without questions, aspects the
-definition of done does not need (move them to Skipped with the reason) and missing framing. Then run
-`review-plan` over it, always, and fold in its findings. Bring any rejected finding to the gate
-with the reason.
+definition of done does not need (move them to Skipped) and missing framing. Then always run
+`review-plan` and fold in its findings; bring any rejected one to the gate with the reason.
+
+**Run the smoke list on the baseline** with real input. A failing check is the review's first
+finding. A check that could not be driven records what was tried; "needs a device" without an
+attempt is not a result.
 
 ## Phase 3 — Worker setup (`--fix` only)
 
-Load `crew` and sort out the hand-off before the review starts, following "Setup" in
-`references/workers.md`:
-
-1. Propose each worker's home and the commands that create it, and create the worktrees on the
-   user's yes.
-2. Give the user the `crew join` line for each named session.
-3. Wait for every worker's hello.
-
-The setup is done only when every worker has reported a green baseline and `crew status` shows
-each one joined and level.
-
-If the user wants `--fix` without worker sessions, the run still reviews and rules as normal.
-The ruled-fix findings then go to `longshot` at the end, with the ledger as its brief.
+Load `crew` and follow "Setup" in `references/workers.md`: propose each worker's home, create the worktrees on the user's yes, give the `crew join` line
+for each session, and wait until every worker reports a green baseline and `crew status` shows
+it joined and level. Without worker sessions, the ruled-fix findings go to `longshot` at the
+end, with the ledger as its brief.
 
 ### Start gate
 
-Present the framing, the type tags, the aspect plan with its Skipped list, the maturity, fix
-policy and change budget, the Workers table and the contract. Say that preparation is complete, then ask: **"Start the review with this plan? After you approve,
-you can leave it running."** Wait for an explicit yes. A reply that changes scope gets settled
-and a revised gate.
+Present the framing (including promises, maturity, fix policy and budget), the type tags, the
+baseline smoke results, the aspect plan with Skipped, the Workers table and the contract. Then
+ask: **"Start the review with this plan? After you approve, you can leave it running."** Wait
+for an explicit yes. A reply that changes scope gets settled and a revised gate.
 
 After the yes, announce **"The review is starting. I'll decide details myself, hold major
 user-facing changes for the end, and send milestone pings."** Only now create the work folder
@@ -242,14 +234,16 @@ For each aspect, in plan order, with up to 3 in parallel where the plan allows:
 4. **Ledger.** Merge the verified findings into `findings.md` under the aspect's section, with
    stable IDs. Under `--fix`, rule each one against the fix policy and its Reach: `fix`, `todo`
    or `held`. Any risk flag means `held`. Mark the dependents of held entries as blocked.
-5. **Docs.** The aspect doc stays in `.codebase-review/docs/` until the Phase 8 harvest.
-   Where the repo's own docs (README, `AGENTS.md`, ADRs, API docs) are wrong, log a `D`
-   finding, which the fix policy covers like any other finding. A missing doc is an
-   improvement, not a `D`. **The docs rule** binds every doc change in the run: fix what is
-   wrong, and add only what that doc's readers need. Keep internals (private names, wire
-   formats nobody writes by hand) out of README and agent files.
+5. **Docs.** A wrong repo doc is a `D` finding; a missing one is an improvement; a promise the
+   code breaks is held, never a `D`. **The docs rule** binds every doc change in the run: fix
+   what is wrong, add only what that doc's readers need, and keep internals (private names,
+   wire formats nobody writes by hand) out of README and agent files.
 6. **Ping**, for example `Aspect 7/22 done — auth: 19 findings (6 bugs), 2 held. On to analytics.`
    Send it in the same message as the next dispatch. An ended turn is a stopped run.
+
+**An anomaly is a finding until disproved.** Unexpected behaviour in a probe, test or
+reproduction goes in the ledger as `✔ (likely)`, even when it looks like an artefact. Only a
+real-input reproduction dismisses it.
 
 **Context discipline is what lets this finish.** Raw findings, verifications and logs stay in
 `$RUN`. This session reads the counts and the 15-line summaries, and pulls an entry in only to
@@ -266,23 +260,18 @@ the following hold:
 - its Touches do not overlap a batch in flight
 - it is not a multi-area refactor; those wait until Phase 6 has named the theme they belong to
 
-Group the ready findings into batches of 3 to 8 that share one area, write `briefs/B-n.md`, and
-deliver it to an idle worker as crew's "Lead: the loop" describes. Do not monitor the worker.
-When its report arrives, integrate it with crew plus the additions in `references/workers.md`.
-That includes running the check command yourself. Then go back to the review.
+Group ready findings into batches of 3 to 8 in one area, write `briefs/B-n.md`, and deliver it
+to an idle worker per crew's "Lead: the loop". Do not monitor it. On its report, integrate with
+crew plus the additions in `references/workers.md`, running the check yourself, then return to
+the review. Prioritise batches that remove code; hand-offs usually begin during tier 3.
 
-**Bigger changes go through `plan` or `longshot`.** A finding or Phase 6 theme that spans
-several areas, changes a shared interface, or costs more than about half a day goes alone in its
-brief, marked `Approach: plan`, or `Approach: longshot` for multi-hour work. The worker runs that
-skill on the brief in its own checkout instead of the per-finding loop (`crew`).
+**Bigger changes go through `plan` or `longshot`.** A finding or theme that spans areas,
+changes a shared interface, or costs more than about half a day goes alone in its brief, marked
+`Approach: plan` (or `longshot` for multi-hour work).
 
-**Track the change budget.** After each integration, recount the source lines the way the
-baseline was counted. Once growth passes the budget, keep handing off bugs, but hold every
-improvement and tidy-up not yet handed off as one wave item: "the budget is spent; fix these
-anyway, or move them to the TODO?"
-
-Prioritise batches that remove code, because removed code stops showing up in later aspects.
-An area is usually first settled after tier 2, so hand-offs normally begin during tier 3.
+**Track the change budget.** After each integration, recount source lines as the baseline was
+counted. Past the budget, bugs still go out, but every improvement and tidy-up not yet handed
+off is held as one wave item: fix them anyway, or move them to the TODO?
 
 ## Phase 6 — Synthesis
 
@@ -305,25 +294,18 @@ themes and the fix policy.
 
 Start once the review is complete and every ready batch has been handed off and integrated.
 
-**Keep audit first.** Every integrated change gets a second look by agents that never saw the
-rulings, because the steps above miss things and a fix that made the code worse looks just like
-one that made it better. Split `<base>..HEAD` by area into at most 4 slices and give each to a
-fresh `opus` agent with the keep-audit prompt (`references/formats.md`). Each agent classifies
-every finding's change as `real fix`, `worthwhile`, `churn` or `worse`, and lists any behaviour
-change no finding asked for. Record the verdict on the entry. Every `churn` or `worse` change,
-and every unasked-for behaviour change, becomes a wave item: keep it, or drop it. A dropped
-change is reverted by a worker as a batch, and the Phase 8 regroup folds the revert away.
+**Keep audit first**, because a fix that made the code worse looks just like one that made it
+better. Split `<base>..HEAD` by area into at most 4 slices, each for a fresh `opus` agent with
+the keep-audit prompt (`references/formats.md`), which never sees the rulings. It rates each
+change `real fix`, `worthwhile`, `churn` or `worse` and lists behaviour changes no finding asked
+for. Each `churn`, `worse` or unasked-for change becomes a keep-or-drop wave item; a drop is
+reverted by a worker, and the Phase 8 regroup folds the revert away.
 
-Then present the held items in waves (format in `references/formats.md`):
-
-- Each item is a scenario in the user's terms, with options and a recommendation.
-- The decisions that unblock the most dependents come first.
-- Each wave holds only the decisions that are independent of each other.
-
-Record each answer on the entry as `decided wave <n>`, along with the ruling. Re-run readiness:
-decided-fix items and their now-unblocked dependents become batches. Present the next wave
-while those batches run. Stop when nothing is held, or when the user parks the remainder as
-TODO.
+Then present the held items in waves (format in `references/formats.md`): each a scenario in
+the user's terms with options and a recommendation, the most-unblocking first, each wave only
+mutually independent decisions. Record answers as `decided wave <n>`, re-run readiness, and
+present the next wave while the new batches run. Stop when nothing is held or the user parks
+the rest as TODO.
 
 ## Phase 8 — Final checks, harvest, regroup and report
 
@@ -333,35 +315,33 @@ Under `--fix`:
 2. Run `code-review` over `<base>..HEAD` of the integration branch, with `--multi` when more
    than about 30 commits landed. Send the fixes to a worker as a final batch, then re-review
    only those fixes.
-3. Run `qa` over the user-facing changes where the app can be run here. Whatever cannot be
-   exercised goes to Blocked on you.
+3. **Run the smoke list with real input**, after any drops, then `qa` over the user-facing
+   changes. A check that did not run, with what was tried, goes first under Blocked on you,
+   and the report does not call the run complete.
 4. Run `doc --update` over the integrated range, under the docs rule, so the repo docs reflect
    what the fixes changed.
 
 ### Harvest
 
-**Harvest with `doc`.** Move into the repo's own doc set whatever the next reader of the repo
-needs and does not have, under the docs rule:
+**Harvest with `doc`**, under the docs rule, whatever the repo's next reader needs and lacks:
 
 - how the system works, where the repo lacks it: architecture, data flow, startup, state
   ownership
 - the conventions the consistency sweep settled
 - decisions from the waves that constrain future work, as ADRs if the repo keeps them
+- the promises and the smoke list, in the agent instructions file (`AGENTS.md` or
+  `CLAUDE.md`), so the next agent neither narrows a promise nor skips the check
 - the roadmap
 
-Leave behind the review mechanics: finding IDs, verification marks, batches, rulings about the
-run itself, and anything the code now says. Under `--fix`, commit the harvest on the integration
-branch. Without it, leave the doc changes uncommitted for the user to review.
-
-**Move the open findings** (`todo`, held and undecided, or every finding in a review-only run)
-to the end state the interview settled. An issue tracker is outward-facing: write the issue
-texts into the report for the user to file, and never create issues yourself.
+Leave behind the review mechanics (IDs, marks, batches, run rulings) and anything the code now
+says. Under `--fix`, commit the harvest on the integration branch; otherwise leave it
+uncommitted. **Move the open findings** to the end state the interview settled. For an issue
+tracker, write the issue texts into the report; never create issues yourself.
 
 ### Regroup the history (`--fix` only)
 
-Per-finding commits suit integration, not the history. They land in batch order, repairs sit
-apart from what they repair, and each message covers only its finding. Rebuild `<base>..HEAD`
-as feature commits:
+Per-finding commits suit integration, not history: batch order, repairs apart from what they
+repair, messages covering one finding. Rebuild `<base>..HEAD` as feature commits:
 
 1. **Group** the commits by feature or user-visible change, reordering freely. Fold every
    repair, revert and review fix into the commit it changes; a change and its revert vanish
@@ -374,39 +354,22 @@ as feature commits:
    the check command passes on the regrouped tip. A non-empty diff is a regroup bug: fix the
    regroup, never the code.
 
-`squash-commits` cannot do this, because it only merges neighbouring commits. Adopting the
-regroup rewrites the integration branch, so it waits for the user's yes to the report. On the
-yes, keep the old tip as `codebase-review/full` and move the branch with
-`git reset --keep codebase-review/regrouped`.
+(`squash-commits` only merges neighbours, so it cannot.) Adopting it rewrites the integration
+branch, so it waits for the user's yes to the report; then keep the old tip as
+`codebase-review/full` and run `git reset --keep codebase-review/regrouped`.
 
 ### Report
 
-Write the final report (template in `references/formats.md`) to `.codebase-review/report.md`
-and print it in full. It must contain:
-
-- **Blocked on you**, first
-- **User-facing changes**: each one with before → after in the user's terms, its finding and
-  its commit
-- **Judgment calls and risk flags**: every flagged change the user approved and every
-  audit-kept `churn` or `worse` change, each with its simpler alternative, and the growth of
-  source, test and README lines against the baseline and the budget
-- **Behaviour changes no finding asked for**: this list should be empty, and anything on it is
-  the first thing to look at
-- **Other changes**, summarised by theme
-- **History**: the regroup, with the commit to adopt it
-- review coverage, the top of the roadmap, and where everything is, including the worker
-  cleanup commands
-
-Do not remove worktrees or delete branches.
+Write the final report from the template in `references/formats.md` to
+`.codebase-review/report.md` and print it in full, Blocked on you first. Do not remove worktrees
+or delete branches.
 
 ### Delete the work folder
 
-**Delete `.codebase-review/`** once every finding is fixed, rejected, a duplicate or moved, and
-the harvest is committed or handed over. Before deleting, check each condition: the ledger has
-no open entry, the harvest commit exists or the doc diff is present, and the report was printed
-in this conversation. If the end state is "the work folder", or a condition fails, keep the
-folder and list what still holds it in Blocked on you. A later `codebase-review` run in this
-repo resumes the programme and deletes the folder once its last findings are addressed.
+**Delete `.codebase-review/`** after checking that the ledger has no open entry, the harvest
+commit or doc diff exists, and the report was printed here. If the end state is "the work
+folder", or a check fails, keep it and say what holds it under Blocked on you; a later run
+resumes and deletes it.
 
 ## Model per role
 
@@ -426,17 +389,9 @@ Pass `model` on every dispatch. An omitted model silently inherits the session's
 User: *"I'm new on this app and middleware. Review it thoroughly: architecture, state, startup,
 tests, everything. Don't commit anything."*
 
-Actions:
-1. Recon with 3 `Explore` agents, then a system overview draft.
-2. `blind-spots`: the middleware is reference only, 22 aspects including shop and onboarding
-   deep dives, and open findings stay in the work folder.
-3. `review-plan` over the programme, then the start gate and the yes. `.codebase-review/` is
-   created and excluded.
-4. Tiers 1–5 with pings. Each aspect yields a doc in `.codebase-review/docs/` plus verified
-   findings in `findings.md`. Two security findings go through `second-opinion`.
-5. Synthesis: the consistency sweep, consolidation, hotspots, and `architecture.md` with a
-   ranked roadmap.
-6. Harvest: an architecture doc and a startup doc go into the repo's `docs/`, uncommitted.
+Actions: recon and overview; `blind-spots` settles the middleware as reference only, 22
+aspects, and open findings staying in the work folder; `review-plan`, gate, yes; tiers 1–5 with
+pings; synthesis; an architecture and a startup doc harvested into `docs/`, uncommitted.
 
 Result: a report that leads with coverage and the roadmap, nothing committed, and the work folder
 kept, because its 300 open findings are the user's TODO.
@@ -445,13 +400,9 @@ kept, because its 300 open findings are the user's TODO.
 
 User: *"codebase-review this Swift package before I tag 1.0."*
 
-Actions:
-1. Recon tags it `library: UI component` (a published package, public exports, no app target).
-2. `blind-spots` confirms the tag. The plan takes Core, Library and UI component library, with
-   modules as the feature units. No client-app aspect is ever proposed, so nothing has to be
-   cut. Skipped: agent setup (the repo has no agent files).
-3. The run reviews the public API, semver history, platform matrix, theming, component
-   accessibility and behaviour inside hosts, then one deep dive per module.
+Actions: recon tags it `library: UI component`; the plan takes Core, Library and UI component
+library, with modules as feature units, so no client-app aspect is ever proposed. Skipped:
+agent setup (no agent files).
 
 Result: findings about accidental public API and an untested platform, and a roadmap toward 1.0.
 
@@ -461,38 +412,18 @@ User: *"codebase-review --fix. Big repo. Hold anything that changes what users s
 way. I'll run workers."*
 
 Actions:
-1. Interview: the project is Active, so bugs with a realistic trigger are fixed, improvements
-   are fixed when they cost half a day or less, and the budget is 15% source growth; a flow or
-   default change counts as major.
-2. Setup: worktree `../app-cr-w1` and the existing clone `../app2`. The user starts `w1` and
-   `w2` and runs `crew join <lead>` in each. Both hellos report green, and `crew status`
-   shows both level.
-3. Gate, then the yes.
-4. Hand-offs begin during tier 3, once startup and auth are settled. B-1 goes to w1. w1 rebases
-   onto `main`, the lead runs `crew integrate w1`, runs the check itself, and marks the findings
-   fixed.
-5. A worker stops one fix because it would change the saved format, so the lead holds it.
-6. After synthesis, the keep audit rates 3 changes as churn. Wave 1 has those 3 and 5 held
-   items unblocking 12 dependents; wave 2 has 3 items. Two churn changes are dropped.
-7. Final `code-review --multi`, then `qa`, `doc --update`, the harvest, and the regroup.
+1. Interview: Active, so a 15% budget; a flow or default change is major. The smoke list fails
+   one check on the baseline, which becomes the first finding.
+2. Setup: worktree `../app-cr-w1` and clone `../app2`, each running `crew join <lead>`. Gate, yes.
+3. Hand-offs from tier 3. A worker stops one fix that would change the saved format; it is held.
+4. The keep audit rates 3 changes as churn. Wave 1 has those 3 and 5 held items; two are dropped.
+5. `code-review --multi`, the smoke list and `qa`, `doc --update`, harvest, regroup.
 
 Result: 64 per-finding commits regrouped into 14 feature commits on a branch, with an identical
 tree, adopted on the user's yes. All local, with 9 user-facing changes listed before → after
 and source growth of 9%. The remaining TODO is ranked.
 
-### Example: resuming
-
-User: *"codebase-review"* in a repo with a programme.
-
-Action: print Now, Next and the batches. Integrate B-6, which w2 reported while the lead's
-session was closed. Continue with the next aspect.
-
 ## Troubleshooting
-
-### The run asks the user about a held change mid-run
-**Cause:** treating a major user-facing change as a stop.
-**Solution:** it is not a stop. Mark it held, block its dependents, and continue. It belongs in a
-Phase 7 wave.
 
 ### A finished project comes back with dozens of changes
 **Cause:** the maturity question was skipped or answered Overhaul, or `rare` and `misuse`
@@ -500,11 +431,11 @@ findings were ruled fix.
 **Solution:** re-ask the maturity question, re-rule the open findings against its default,
 and let the keep audit put what already landed to the user as keep or drop.
 
-### A fix grows into a redesign
-**Cause:** the worker kept going after the fix tripped a risk flag.
-**Solution:** the worker stops the finding and reports the flag with the simplest
-alternative, and the lead holds it. A batch commit whose diff leaves the finding's Touches is
-sent back.
+### A core workflow breaks, but every test passes
+**Cause:** recording, clicking or typing was only ever checked through unit tests and
+in-process probes.
+**Solution:** run the smoke list with real input. Turn the failure into a finding with a test,
+and add the check to the smoke list if it was missing.
 
 ### A worker's branch won't fast-forward
 **Cause:** another batch landed after the worker rebased, or the worker branched from a stale
@@ -512,17 +443,6 @@ tip.
 **Solution:** `crew integrate` exits 3; message the worker to run `crew sync --rebase` and
 re-report. Never merge with a merge commit, and never rebase on the worker's behalf. If it exits
 4 (the user's uncommitted edits), record it in Blocked on you and carry on.
-
-### Later aspects keep rediscovering the same issue
-**Cause:** the finding is ruled fix but not yet integrated, or reviewers are not given the
-ledger.
-**Solution:** the verifier marks duplicates against the ledger. Prioritise the removal batch, so
-the code stops presenting the issue.
-
-### Docs contradict each other after many aspects
-**Cause:** sibling docs were written against older commits.
-**Solution:** each reviewer brief lists its sibling docs and says to correct them explicitly.
-The consolidation pass in Phase 6 re-checks line references at the current HEAD.
 
 ### A worker reports green, but the check fails on the integration branch
 **Cause:** tests were deselected, an exit code was swallowed by a pipe, or the worker did not
