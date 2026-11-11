@@ -26,7 +26,7 @@ instructions = [
 
 [claude]
 settings = ["claude", "claude-afk"]
-hooks = ["claude", "hooklinesinker-claude"]
+hooks = ["claude", "hooklinesinker-claude", "ringleader-claude"]
 plugins = ["claude"]
 instructions = [
     "intro-claude", "web-fetching", "video-content",
@@ -36,7 +36,7 @@ instructions = [
 
 [codex]
 defaults = "codex"
-hooks = ["codex", "hooklinesinker-codex"]
+hooks = ["codex", "hooklinesinker-codex", "ringleader-codex"]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
     "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",

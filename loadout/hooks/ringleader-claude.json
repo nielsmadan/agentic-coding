@@ -1,0 +1,13 @@
+{
+  "SessionEnd": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "/Users/nielsmadan/.local/share/uv/tools/ringleader/lib/python3.13/site-packages/ringleader/hooks/session_end.sh",
+          "timeout": 5
+        }
+      ]
+    }
+  ]
+}
