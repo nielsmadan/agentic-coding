@@ -118,7 +118,8 @@ class EndToEndTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             roots = su.sal.Roots(claude_projects=root / "claude", claude_archive=root / "archive",
-                                 codex_sessions=root / "codex", droid_sessions=root / "droid",
+                                 codex_sessions=root / "codex", cursor_projects=root / "cursor",
+                                 cursor_chats=root / "cursor-chats", droid_sessions=root / "droid",
                                  opencode_db=root / "oc.db", pi_sessions=root / "pi")
             proj = roots.claude_projects / "-p"
             proj.mkdir(parents=True)
