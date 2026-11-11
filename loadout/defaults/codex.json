@@ -18,6 +18,14 @@
   "tui": {
     "whimsy": false,
     "auto_recap": false,
+    "status_line": [
+      "project-name",
+      "thread-title",
+      "model-with-reasoning",
+      "fast-mode",
+      "context-used",
+      "weekly-limit"
+    ],
     "keymap": {
       "chat": {
         "edit_queued_message": "alt-o"
