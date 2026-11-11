@@ -1,0 +1,11 @@
+{
+  "selectedModel": {
+    "modelId": "claude-haiku-5-5",
+    "parameters": [
+      { "id": "thinking", "value": "true" },
+      { "id": "context", "value": "300k" },
+      { "id": "reasoning_effort", "value": "high" }
+    ]
+  },
+  "hasChangedDefaultModel": true
+}

@@ -45,6 +45,7 @@ instructions = [
 ]
 
 [cursor]
+settings = "cursor"
 hooks = ["cursor", "hooklinesinker-cursor"]
 
 [droid]
