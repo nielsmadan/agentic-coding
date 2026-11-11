@@ -9,6 +9,7 @@ features.daemon_auto_start
 features.shell_snapshot
 model
 model_reasoning_effort
+sandbox_mode
 skills.max_context_tokens
 tui.auto_recap
 tui.keymap.chat.edit_queued_message

@@ -6,10 +6,10 @@
 # `studio` config in their default directories, which a second writer here
 # would overwrite.
 #
-# Claude runs with no permission rules, as in autonomous.toml, so the auto-mode
-# classifier judges every call and `git push` goes through. Codex drops its rules
-# for the same reason; its only one was the push deny. The Telegram plugin goes,
-# since every fleet session would poll the same bot.
+# No command review (decided 2026-11-11): Claude runs in bypassPermissions and
+# Codex with approval_policy never and no sandbox; recovery covers local mistakes.
+# Both drop their permission rules, so `git push` goes through. The Telegram
+# plugin goes, since every fleet session would poll the same bot.
 #
 # The fleet's blind-spots (loadout/studio-agents/) sends open decisions to the
 # project's lead. It keeps the skill's name because longshot, brainstorm and the
@@ -48,13 +48,14 @@ skills = ["blind-spots"]
 substitute = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", "web-fetching.shared" = "web-fetching.shared.studio", git-policy = "unattended.studio-agents", agent-dispatch = "agent-dispatch.autonomous" }
 
 [claude]
-settings    = ["claude"]
+settings    = ["claude", "claude-studio-agents"]
 hooks       = ["claude"]
 permissions = []
 plugins     = ["claude", "unsandboxed", "studio-agents"]
 substitute  = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "unattended.studio-agents", agent-dispatch = "agent-dispatch.autonomous" }
 
 [codex]
+defaults    = ["codex", "codex-studio-agents"]
 hooks       = ["codex"]
 permissions = []
 
