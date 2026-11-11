@@ -10,3 +10,8 @@ pre-commit:
     sandbox-writable:
       glob: "nono/*.json"
       run: ./bin/nono-audit --check
+
+post-commit:
+  commands:
+    sync-global:
+      run: loadout sync --global
