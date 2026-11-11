@@ -20,11 +20,10 @@
     "auto_recap": false,
     "status_line": [
       "project-name",
-      "thread-title",
       "model-with-reasoning",
-      "fast-mode",
       "context-used",
-      "weekly-limit"
+      "weekly-limit",
+      "thread-name"
     ],
     "keymap": {
       "chat": {
