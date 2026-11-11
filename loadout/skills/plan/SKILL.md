@@ -150,8 +150,10 @@ QA when consumer behavior changed.
 Run `code-review --multi` over the complete task diff, including new files and any
 changes already committed during the task. Give it an explicit scope so unrelated
 work in the checkout stays outside the review. This is mandatory, even without
-`--review`; do not substitute `--quick`. Run exactly one code review: do not pass
-`--rereview` or dispatch another review after fixes.
+`--review`; do not substitute `--quick`. Run one full code review only. After the
+fixes below, run `code-review --rereview` once in the same session: it reviews only
+what changed since the review, so the fix code does not go unreviewed. Fix what it
+finds without a further re-review.
 
 Fix every valid finding, including lower-severity ones, without another approval
 round. Record a concrete reason for any finding rejected as incorrect or
@@ -207,7 +209,7 @@ User: "Plan adding a `--json` flag to export."
 
 Actions: the session (or, below Opus, one read-only subagent) drafts the approach → present the plan including
 QA, review, and docs → wait for approval → implement in the main session →
-`qa --fix` → one `code-review --multi` → fix findings and verify → repeat QA only
+`qa --fix` → one `code-review --multi` → fix findings → `code-review --rereview` of the fixes → verify → repeat QA only
 if the fixes substantially changed code → update usage docs and examples → `commit`
 → report changes, QA, each review finding's resolution, checks, docs, and commits.
 
