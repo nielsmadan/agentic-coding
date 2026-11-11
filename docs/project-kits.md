@@ -37,6 +37,12 @@ window, menu, keyboard, and document interaction guidance. Use `macos` for a nat
 Mac app, or `swiftui` for other Apple-platform SwiftUI apps. Neither requires `mobile` or VM
 tooling; `macos-vm` remains a separate optional machine-specific kit.
 
+`backend.toml` is for API services with a compose-run database. It selects guidance on local
+services (per-checkout ports through splashdown, teardown after integration runs), migrations
+and seeds, staying off deployed environments, and keeping a committed OpenAPI spec or client
+in step with its routes. Its permissions make every `railway` command ask. Pair it with a
+language kit such as `typescript`.
+
 Keeping them here version-controls the config centrally without making it global: a kit
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
 unrelated projects.

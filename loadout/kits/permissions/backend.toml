@@ -1,0 +1,7 @@
+# Every `railway` command asks: its mutating subcommands have too many aliases
+# (`variable`/`vars`/`var`, `run`/`local`, `shell`, `ssh`, `down`, `restart`) for a
+# prefix list to cover. Everything else already runs under the global `default = "allow"`.
+
+[shell]
+
+ask = ["railway"]
