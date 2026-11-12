@@ -14,4 +14,10 @@ pre-commit:
 post-commit:
   commands:
     sync-global:
+      skip: [rebase]
+      run: loadout sync --global
+
+post-rewrite:
+  commands:
+    sync-global:
       run: loadout sync --global
