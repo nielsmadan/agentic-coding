@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""Mark every fleet clone as a trusted Codex project, so sessions in its worktrees start without the folder-trust prompt.
+
+    fleet-codex-trust <codex config.toml> <repos dir>
+
+Codex keys a worktree's trust to its main clone, so one entry per clone under the repos dir covers
+all of that clone's worktrees. Existing entries are left as they are.
+"""
+from __future__ import annotations
+
+import json
+import sys
+import tomllib
+from pathlib import Path
+
+
+def clone_roots(repos_dir: Path) -> list[Path]:
+    if not repos_dir.is_dir():
+        return []
+    return sorted(path.resolve() for path in repos_dir.iterdir() if (path / ".git").exists())
+
+
+def missing_entries(config_text: str, roots: list[Path]) -> str:
+    known = tomllib.loads(config_text).get("projects", {})
+    return "".join(
+        f'\n[projects.{json.dumps(str(root))}]\ntrust_level = "trusted"\n'
+        for root in roots
+        if str(root) not in known
+    )
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 2:
+        print(__doc__.strip(), file=sys.stderr)
+        return 64
+    config, repos_dir = Path(argv[0]), Path(argv[1])
+    text = config.read_text() if config.exists() else ""
+    addition = missing_entries(text, clone_roots(repos_dir))
+    if addition:
+        tmp = config.with_name(config.name + ".tmp")
+        tmp.write_text(text + addition)
+        tmp.replace(config)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

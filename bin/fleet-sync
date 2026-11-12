@@ -29,5 +29,6 @@ case "${1:-}" in
     ;;
 esac
 
-exec env "${FLEET_ENV[@]}" XDG_CONFIG_HOME="$FLEET_HOME/config" \
+env "${FLEET_ENV[@]}" XDG_CONFIG_HOME="$FLEET_HOME/config" \
   "$AC_ROOT/sync.sh" --profile studio-agents
+"$AC_ROOT/bin/fleet-codex-trust" "$FLEET_HOME/codex/config.toml" "$(dirname "$FLEET_HOME")/repos"
