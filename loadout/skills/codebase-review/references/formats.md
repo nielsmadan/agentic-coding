@@ -11,12 +11,13 @@ no conversation history.
 ```markdown
 # <project> codebase review
 
-**Now:** P4 · tier 3 · aspect `analytics` (12/24) · 2 batches in flight
+**Now:** P4 · tier 3 · aspect `analytics` (12/24) · judgment item 2 of 4 · 2 batches in flight
 **Next:** caching, then tests
 
 ## Framing
 | Decision | Ruling | Date |
 |---|---|---|
+| Mode | walkthrough (default) or `--auto` | … |
 | Repos reviewed | app (writable with --fix), middleware (read-only reference) | … |
 | Open findings at end | roadmap doc `docs/roadmap.md` in the repo | … |
 | Repo docs | wrong ADRs logged as D findings; fixed only in --fix | … |
@@ -38,7 +39,8 @@ Size: source <n> · tests <n> · README <n> lines — `<the command that counted
 |---|---|---|---|---|---|---|---|
 | 5 | startup | 2 | opus | src/App.tsx, src/contexts/User*, ios/, android/ | docs/startup.md | verified | 10B 13O 10T |
 
-Aspect statuses: `queued → reviewing → verifying → verified`.
+Aspect statuses: `queued → reviewing → verifying → verified`, then `walked` once the user has
+ruled on it (walkthrough).
 
 ## Skipped
 - <aspect> (<catalog section>) — <one-line reason, e.g. "no network layer: the library does no I/O">
@@ -90,7 +92,8 @@ error.
 - **Reach** (bugs only): `common`, `plausible`, `rare` or `misuse`, with the trigger in
   brackets. Under Settled and Active, `rare` and `misuse` are ruled `todo`.
 - **Risk** lists the risk flags from SKILL.md that the proposed fix trips, or `none`. Any flag
-  rules the entry `held`. A worker that trips a new flag adds it and the entry becomes `held`.
+  rules the entry `held` (a judgment item, in the walkthrough). A worker that trips a new flag
+  adds it, and the entry goes back to the user the same way.
 - **Audit** is the keep-audit verdict on a fixed entry: `real fix`, `worthwhile`, `churn` or
   `worse`. The last two become wave items, and end as `kept wave <n>` or `dropped <revert sha>`.
 - **Verification marks:** `✔` means the verifier confirmed it in the code. `✔ (likely)` means
@@ -102,9 +105,11 @@ error.
   after the fix.
 - **Statuses:** `open → verified → ruled: fix | todo | held → handed off (B-n) → fixed <sha>`.
   The other endings are `stopped (reason)`, `rejected (reason)` and `dup of <ID>`. A held entry
-  gets `decided <wave>` once the user rules on it.
+  gets `decided <wave>` once the user rules on it. In the walkthrough a ruling reads
+  `proposed: fix | todo` until the user confirms it, then `ruled: … (you, <aspect>)`; `deferred`
+  parks it for Phase 7, and `held` is not used.
 - **Depends** names the IDs this finding cannot be fixed without. A finding that depends on a
-  `held` entry is itself blocked until that entry is decided.
+  `held`, `proposed` or `deferred` entry is itself blocked until that entry is decided.
 - A finding found again by a later aspect is merged into the existing entry, never duplicated.
 
 ## Aspect reviewer prompt
@@ -238,7 +243,40 @@ unclaimed behaviour changes. Do not dispatch sub-agents or launch other agent CL
 nothing but OUTPUT.
 ```
 
-## Decision wave
+## Walkthrough messages
+
+Every message opens with the position line:
+`P4 · aspect auth (7/22) · judgment item 2 of 3 · ledger: 140 ruled, 4 deferred · B-3 in flight`
+
+**Opening an aspect**, then the policy table in the same message:
+
+```markdown
+## auth — how sign-in, sessions and tokens work
+<3–5 lines from the doc's TL;DR, in the user's terms> · Doc: `.codebase-review/docs/auth.md`
+17 findings: 3 bugs (1 Must Fix), 8 improvements, 5 tidy-ups, 1 doc error · 3 need your call
+
+### Settled by the policy — confirm, or name the ones to discuss
+| ID | Priority | What | Proposed |
+|---|---|---|---|
+| AU-B2 | Should Fix | Refresh token written to the crash log (plausible: any crash after sign-in) | fix |
+| AU-T1 | Nice to Have | Two copies of the expiry check | todo |
+```
+
+**A judgment item:**
+
+```markdown
+**AU-O3 · Sign-out keeps the session on other tabs** · Should Fix · UF: major
+Scenario: <who, what they do, what they see today, what they should see>.
+Prior art: <3+ tools, cited, when it is something a user types or a script parses>.
+Options: a) <option> (recommended — <the trade-off that decides it>) b) <option> c) TODO.
+Recording, not implementing.
+```
+
+**Closing an aspect:** what was ruled (fix / todo / rejected / deferred, with IDs), anything a
+worker report changed, the readiness prompt under `--fix`, the budget question if it is due,
+and `Next: <aspect> — <one line on what it covers>. Ready when you are.`
+
+## Decision wave (`--auto`)
 
 Present one wave as a single message, then use the harness's question tool for the choices,
 four at most per call, keeping the wave's order.
@@ -272,12 +310,12 @@ only the decisions that became decidable or changed shape after this wave's answ
 | Change | What users see now | Finding | Commit |
 |---|---|---|---|
 | <one line> | <before → after, in the user's terms> | ST-B2 | 3b1c0de |
-Held and still undecided: <IDs, one line each, or "none">.
+Held or deferred and still undecided: <IDs, one line each, or "none">.
 
 ## Judgment calls and risk flags
 | Change | Flag or audit verdict | Simpler alternative | Decided | Commit |
 |---|---|---|---|---|
-| <one line> | persisted format / churn / … | <what was not done> | wave 1 | 3b1c0de |
+| <one line> | persisted format / churn / … | <what was not done> | wave 1 / aspect auth | 3b1c0de |
 Growth against the baseline: source +<n>% (budget <n>%), tests +<n>%, README +<n>%.
 
 ## Behaviour changes no finding asked for
