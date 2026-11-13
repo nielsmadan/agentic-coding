@@ -10,7 +10,7 @@
   },
   "features": {
     "shell_snapshot": false,
-    "daemon_auto_start": false
+    "daemon_auto_start": true
   },
   "skills": {
     "max_context_tokens": 10000

@@ -45,5 +45,6 @@
   "skipAutoPermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "tui": "fullscreen",
-  "theme": "dark"
+  "theme": "dark",
+  "switchModelsOnFlag": false
 }
