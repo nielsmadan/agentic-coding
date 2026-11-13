@@ -34,7 +34,7 @@ local = ["time-reconstruct"]
     "review-perf", "review-security", "review-tidy", "review-todo",
     "second-opinion",
     "review-cli", "review-python", "review-react", "review-rust", "review-swift", "review-swiftui",
-    "review-typescript",
+    "review-typescript", "codebase-review-typescript",
 ]
 "Planning & research" = [
     "blind-spots", "brainstorm", "evaluate-tech", "ideation", "longshot",

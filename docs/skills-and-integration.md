@@ -20,6 +20,21 @@ What follows is the part that is *not* discoverable from the skill list itself.
 3. **Project review** — an *individual project* can define `.claude/skills/review-project/SKILL.md` for checks unique to that codebase. `code-review` calls it only when it exists; projects without one are unaffected. The minimal shape is documented in `code-review`'s "Language & project reviews" section.
 4. **Library-use review** — global `review-library-use` checks code against a per-repo `library-use` reference (docs-derived, version-specific correct-usage conventions). Auto-invoked when the repo has `.claude/skills/library-use/SKILL.md`, which the global `library-docs` skill generates and refreshes. Trio: `library-docs` (build/refresh) → `library-use` (per-repo reference) → `review-library-use` (audit).
 
+### Extending codebase-review
+
+Project-local skills named `codebase-review-*` extend whole-codebase review. For example,
+the TypeScript kit supplies `codebase-review-typescript`, and a repository can supply
+`codebase-review-project` for its own concerns. During recon the lead discovers the rendered
+skills across supported project harness directories, deduplicates copies, and records their
+scope and contributions in the programme. Global skills and unselected kit sources are not
+discovered. The active harness's copy wins; differing copies are reported.
+
+Extensions declare applicability, aspects to enrich, optional evidence collection, and how
+to interpret candidates. After approval the lead collects once per baseline/scope/config/tool
+identity, then passes artifacts to existing aspects. Reviewers retain the normal verification,
+grading, and ledger workflow. Partial analysis is a coverage gap, not a clean result.
+See [the extension contract](../loadout/skills/codebase-review/references/extensions.md).
+
 ### Adding a skill
 
 Drop the skill at `loadout/skills/<name>/SKILL.md` and run `loadout sync --global`.

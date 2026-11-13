@@ -30,6 +30,8 @@ References:
 - `references/formats.md`: programme, ledger, prompts, briefs, decision waves, the final report
 - `references/workers.md`: what a codebase review adds on top of `crew` (setup records, brief
   rules, integration checks, cleanup)
+- `references/extensions.md`: discover project-local review extensions during recon and
+  collect their evidence once for the aspects that consume it
 
 ## Review grading
 
@@ -154,6 +156,9 @@ the interview is concrete. In it:
   the catalog sections, so a wrong tag means a wrong plan.
 - **List the promises:** what the README, docs, help text and examples say users can do ("Tab
   can be recorded"), each with its source.
+- **Discover extensions:** follow `references/extensions.md` for each reviewed repository.
+  Read applicable project-local `codebase-review-*` skills, record their package scopes and
+  contributions, and include them in the plan. No installed extension means no extra work.
 
 ## Phase 1 — The interrogation
 
@@ -241,6 +246,10 @@ excluded. Then write `programme.md`, recording the base commit, the user's appro
 the baseline size (source, test and README lines, with the command that counted them).
 Set `RUN` to the absolute path of `.codebase-review/run`.
 
+Before dispatching aspect reviewers, collect the approved extensions' evidence as described
+in `references/extensions.md`. The lead owns tool setup and collection; reviewers consume the
+recorded artifacts. Tool failures become validation gaps, not findings or a clean result.
+
 ## Phase 4 — The review loop
 
 For each aspect, in plan order, with up to 3 in parallel where the plan allows. In the
@@ -249,7 +258,8 @@ presenting the current one, so the next is verified when its walk begins. Never 
 aspect before its verify step is done.
 
 1. **Review.** Dispatch the aspect reviewer (prompt in `references/formats.md`). It writes the
-   doc and `$RUN/findings-<aspect>.md`, and returns a 15-line summary.
+   doc and `$RUN/findings-<aspect>.md`, and returns a 15-line summary. Include the applicable
+   extension guidance and evidence paths; do not create another aspect for the same concern.
 2. **Verify.** A fresh verifier re-checks each finding at its `path:line`, fixes the line
    numbers, rejects what the code disproves, and marks duplicates of existing ledger entries.
    A finding with no verification mark never gets handed off.

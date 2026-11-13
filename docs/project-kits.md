@@ -43,6 +43,13 @@ and seeds, staying off deployed environments, and keeping a committed OpenAPI sp
 in step with its routes. Its permissions make every `railway` command ask. Pair it with a
 language kit such as `typescript`.
 
+`typescript.toml` selects `review-typescript` for type design and
+`codebase-review-typescript` for whole-codebase structural evidence. The latter is discovered
+by `codebase-review` after the kit is rendered into a project. It packages dependency-cruiser,
+ESLint-complexity and Git-churn collection without adding dependencies to that project.
+React kits keep their existing selections; add `typescript` explicitly to opt into this
+structural analysis alongside a framework kit. Both linked and vendored kits carry its scripts.
+
 Keeping them here version-controls the config centrally without making it global: a kit
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
 unrelated projects.

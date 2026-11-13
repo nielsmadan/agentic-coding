@@ -42,6 +42,15 @@ Size: source <n> · tests <n> · README <n> lines — `<the command that counted
 Aspect statuses: `queued → reviewing → verifying → verified`, then `walked` once the user has
 ruled on it (walkthrough).
 
+## Extensions and evidence
+| Extension / selected skill path | Repo / package scope | Applies to aspects | Collector / versions / config / exclusions | Revision | Artifacts | Status |
+|---|---|---|---|---|---|---|
+| codebase-review-typescript / <path> | <repo> / <package> | architecture, feature reviews, hotspots | typescript-structure-v1 / <versions and options> | <sha> | <summary and raw paths> | planned |
+
+Evidence statuses: `planned`, `complete`, `partial`, `unavailable`, `failed`, `stale`.
+Record discovery conflicts and collection limits here. A guidance-only extension uses `N/A`
+for collector and artifacts. Reuse evidence only when the complete collection identity matches.
+
 ## Skipped
 - <aspect> (<catalog section>) — <one-line reason, e.g. "no network layer: the library does no I/O">
 
@@ -121,12 +130,15 @@ Review one aspect of a codebase and write it up. You have no prior context.
 
 CODE:      {{repo paths, roles}} at {{branch}} @ {{sha}}. READ-ONLY: no edits, no git state
            changes, no installs. {{If the user has uncommitted edits: review the committed
-           version via `git show HEAD:<path>` and do not mention the local edits.}}
+           version via `git show <sha>:<path>` and do not mention the local edits.}}
 DOC:       {{absolute path}}. Write exactly this file.
 FINDINGS:  {{$RUN/findings-<aspect>.md}}. Write exactly this file.
 SIBLINGS:  {{existing review docs and what each covers}}. Build on them, link to them, do not
            repeat them, and correct them where the code now differs (say so explicitly).
 BOUNDARY:  {{out of scope: what other aspects own}}
+EXTENSIONS: {{applicable skill paths, evidence paths, revision/scope and coverage limitations;
+             none when no extension applies. Read this guidance and evidence; do not rerun
+             collectors or start nested review workflows. Verify candidates against CODE.}}
 PROMISES:  {{the framing's Promises}}. A fix that narrows one trips the first risk flag. Where
            the code breaks a promise, report the disagreement; never call the promise a doc error.
 
