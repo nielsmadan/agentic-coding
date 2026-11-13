@@ -512,7 +512,7 @@ describe('model replies', () => {
     await s.run(() => s.tool('edit', { path: '/u/w/b.ts' }))
     await s.advance(IDLE_MS)
     expect(s.notices).toEqual([
-      'dev-phase: no credentials for openrouter/google/gemini-2.5-flash-lite; feature names and check resets are off',
+      'dev-phase: no credentials for openrouter/deepseek/deepseek-v4.1-flash-1017; feature names and check resets are off',
     ])
   })
 })

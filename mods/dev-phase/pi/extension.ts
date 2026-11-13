@@ -105,7 +105,7 @@ const DIGEST_ENTRIES = 400
 
 // Same picks as bin/extraction.py; the agent-models skill updates both.
 const MODELS = [
-  ['openrouter', 'google/gemini-2.5-flash-lite'],
+  ['openrouter', 'deepseek/deepseek-v4.1-flash-1017'],
   ['openrouter', 'google/gemini-3.1-flash-lite'],
 ] as const
 

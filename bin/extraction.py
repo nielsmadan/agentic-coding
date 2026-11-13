@@ -9,17 +9,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-# Picked by benchmark/extract-model.md: fastest model in all three suites
-# (7.6s / 8.1s / 5.0s) at 5/5, 5/6, 4/4. Its predecessor ling-2.6-flash was
-# retired for answering off-topic questions with real quotes from the page --
-# 7 failures in 23 trials, measured in production under the pre-sentinel prompt
-# and an unset temperature, not reproducible from the recorded benchmark rows.
-# An upstream 429 on the default is a live failure mode; that is why
-# FALLBACK_MODEL exists. It stays on Gemini for speed: on 2026-10-10 it scored
-# 14/15 at the default's wall time and ~2.5x its price. Every Gemini model is
-# served by the same two Google providers, so it covers a per-model rate limit,
-# not a Google outage.
-DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
+# Picked on the 2026-11-11 small suite (docs/tests/extraction-models/). The
+# fallback runs on separate Google infrastructure, so it covers a 429 or outage.
+DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash-1017"
 FALLBACK_MODEL = "google/gemini-3.1-flash-lite"
 # External contract: also specified in loadout/skills/web-fetch/SKILL.md and
 # the check-agent-logs skill, and read by benchmark/bench-models.py. Changing the

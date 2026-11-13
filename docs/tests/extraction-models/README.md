@@ -1,8 +1,8 @@
 # Extraction model benchmark
 
-Current default: **Google Gemini 2.5 Flash-Lite** (`google/gemini-2.5-flash-lite`).
+Current default: **DeepSeek V4.1 Flash 1017** (`deepseek/deepseek-v4.1-flash-1017`).
 Current fallback: **Google Gemini 3.1 Flash-Lite** (`google/gemini-3.1-flash-lite`).
-These remain unchanged until a measured selection is approved.
+Selected on the [2026-11-11 run](runs/2026-11-11-refresh.md).
 
 `bin/extraction.py` owns the prompt, fencing, model defaults, OpenRouter request
 and fallback. `jina-fetch` supplies fetched pages; `distill` supplies files or
@@ -19,7 +19,7 @@ Choose a new output directory on every run; existing results are never overwritt
 Requires the injected `OPENROUTER_API_KEY`; fixtures are synthetic and need no Jina
 fetch or private data. Refresh the candidate list against OpenRouter's catalog,
 including the default and fallback controls and at most four challengers.
-`extraction-candidates.txt` records the six models used for the initial run, not a
+`extraction-candidates.txt` records the models of the latest run, not a
 permanent recommendation. Candidates must support at least 128k context; Grok/xAI
 are excluded. The runner saves live prices and distinct endpoint providers.
 
@@ -68,7 +68,9 @@ IDs and wait for approval before changing the two constants in
 ## Recorded runs
 
 - [2026-10-14 initial shared-extraction run](runs/2026-10-14-initial.md): baseline
-  for the small suite; proposed default change awaits approval.
+  for the small suite; its proposed default change was never applied.
+- [2026-11-11 refresh](runs/2026-11-11-refresh.md): selected DeepSeek V4.1 Flash
+  1017 as default and kept Gemini 3.1 Flash-Lite as fallback.
 
 ## Legacy suite and historical evidence
 

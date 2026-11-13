@@ -1,0 +1,219 @@
+{
+  "started_utc": "2026-11-10T23:49:41.104940+00:00",
+  "models": {
+    "google/gemini-2.5-flash-lite": {
+      "name": "Google: Gemini 2.5 Flash Lite",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000001",
+        "completion": "0.0000004",
+        "image": "0.0000001",
+        "audio": "0.0000003",
+        "input_audio_cache": "0.00000003",
+        "web_search": "0.014",
+        "internal_reasoning": "0.0000004",
+        "input_cache_read": "0.00000001",
+        "input_cache_write": "0.0000000833333333333333"
+      },
+      "max_input_price": 1e-07,
+      "max_output_price": 4e-07,
+      "providers": [
+        "Google AI Studio"
+      ]
+    },
+    "google/gemini-3.1-flash-lite": {
+      "name": "Google: Gemini 3.1 Flash Lite",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000025",
+        "completion": "0.0000015",
+        "image": "0.00000025",
+        "audio": "0.0000005",
+        "input_audio_cache": "0.00000005",
+        "web_search": "0.014",
+        "internal_reasoning": "0.0000015",
+        "input_cache_read": "0.000000025",
+        "input_cache_write": "0.0000000833333333333333"
+      },
+      "max_input_price": 2.5e-07,
+      "max_output_price": 1.5e-06,
+      "providers": [
+        "Google",
+        "Google AI Studio"
+      ]
+    },
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "name": "DeepSeek: DeepSeek V4.1 Flash 1017",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.000000006",
+        "completion": "0.0000005",
+        "input_cache_read": "0.000000005"
+      },
+      "max_input_price": 6e-09,
+      "max_output_price": 5e-07,
+      "providers": [
+        "Alibaba",
+        "AtlasCloud",
+        "Baidu",
+        "BaseTen",
+        "Cloudflare",
+        "Cohere",
+        "CoreWeave",
+        "Crusoe",
+        "Decart",
+        "DeepInfra",
+        "DeepSeek",
+        "DekaLLM",
+        "DigitalOcean",
+        "Fireworks",
+        "GMICloud",
+        "InferenceNet",
+        "Ionstream",
+        "Makora",
+        "Mistral",
+        "Modal",
+        "Morph",
+        "Near AI",
+        "Nebius",
+        "Novita",
+        "OpenInference",
+        "Parasail",
+        "Particle AI",
+        "Phala",
+        "PrimaLabs",
+        "PrimeIntellect",
+        "Reka",
+        "Relace",
+        "River",
+        "Sail Research",
+        "SiliconFlow",
+        "StepFun",
+        "StreamLake",
+        "Together",
+        "Venice",
+        "Wafer"
+      ]
+    },
+    "z-ai/glm-5.3-flash": {
+      "name": "Z.ai: GLM 5.3 Flash",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000000399",
+        "completion": "0.0000000784",
+        "input_cache_read": "0.00000003"
+      },
+      "max_input_price": 3.99e-08,
+      "max_output_price": 7.84e-08,
+      "providers": [
+        "AtlasCloud",
+        "BaseTen",
+        "Cohere",
+        "CoreWeave",
+        "Crusoe",
+        "Darkbloom",
+        "DeepInfra",
+        "DigitalOcean",
+        "Fireworks",
+        "Friendli",
+        "GMICloud",
+        "Inceptron",
+        "InferenceNet",
+        "Makora",
+        "Mistral",
+        "Modal",
+        "Morph",
+        "Near AI",
+        "Nebius",
+        "NextBit",
+        "Novita",
+        "OpenInference",
+        "Parasail",
+        "Particle AI",
+        "Phala",
+        "PrimeIntellect",
+        "Reka",
+        "Relace",
+        "River",
+        "Sail Research",
+        "SiliconFlow",
+        "StreamLake",
+        "Tenstorrent",
+        "Together",
+        "Venice",
+        "Wafer",
+        "Z.AI"
+      ]
+    },
+    "meta/muse-ember": {
+      "name": "Meta: Muse Ember",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000001",
+        "completion": "0.0000005",
+        "web_search": "0.0025",
+        "input_cache_read": "0.000000004",
+        "input_cache_write": "0.000000125"
+      },
+      "max_input_price": 1e-07,
+      "max_output_price": 5e-07,
+      "providers": [
+        "Google",
+        "Meta"
+      ]
+    },
+    "minimax/minimax-m3.1-flash": {
+      "name": "MiniMax: MiniMax M3.1 Flash",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.000000075",
+        "completion": "0.0000003",
+        "input_cache_read": "0.0000000075",
+        "overrides": [
+          {
+            "utc_start": 1500,
+            "utc_end": 100,
+            "prompt": "0.000000075",
+            "completion": "0.0000003",
+            "input_cache_read": "0.0000000075"
+          },
+          {
+            "utc_start": 100,
+            "utc_end": 1500,
+            "prompt": "0.00000015",
+            "completion": "0.0000006",
+            "input_cache_read": "0.000000015"
+          }
+        ]
+      },
+      "max_input_price": 1.5e-07,
+      "max_output_price": 6e-07,
+      "providers": [
+        "DigitalOcean",
+        "Fireworks",
+        "GMICloud",
+        "InferenceNet",
+        "Minimax",
+        "Nebius",
+        "Novita",
+        "Parasail",
+        "SambaNova",
+        "StreamLake",
+        "Together"
+      ]
+    }
+  },
+  "repeats": 3,
+  "workers": 3,
+  "budget_usd": 5.0,
+  "timeout_s": 60,
+  "seed": 42,
+  "warmup_calls": 0,
+  "temperature": 0,
+  "planned_calls": 144,
+  "source_hashes": {
+    "benchmark/extraction_benchmark.py": "dce807232c66954d0c4d3c2fd823c2062d07ac8558304b1b0210226ef82b7de6",
+    "benchmark/extraction_cases.py": "5bb8f98ca2e86814d55b46d7287b86e9941a84a30c31772486fc61f1c07d3ada",
+    "bin/extraction.py": "2cbdd917b6e2a822086434ca21e3108a0d74b8e7d78fe879ad9538dff7cbc21f"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "complete": true,
+  "budget_stopped": false,
+  "budget_charge_usd": 0.18220395699999994,
+  "models": [
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "calls": 24,
+      "passed": 20,
+      "errors": 0,
+      "median_s": 0.571222166530788,
+      "max_s": 1.6458430420607328,
+      "known_cost_usd": 0.021952,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "quotes",
+        "relevant"
+      ]
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 0.8006198954535648,
+      "max_s": 2.3072096249088645,
+      "known_cost_usd": 0.0551015,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 0.9974808336701244,
+      "max_s": 7.838815917028114,
+      "known_cost_usd": 0.034606573,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "z-ai/glm-5.3-flash",
+      "calls": 24,
+      "passed": 23,
+      "errors": 0,
+      "median_s": 1.2106294790282845,
+      "max_s": 12.216581082902849,
+      "known_cost_usd": 0.021388744,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "long-needle"
+      ]
+    },
+    {
+      "model": "meta/muse-ember",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 1.7089063751045614,
+      "max_s": 9.070243875030428,
+      "known_cost_usd": 0.0248303,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "minimax/minimax-m3.1-flash",
+      "calls": 24,
+      "passed": 20,
+      "errors": 0,
+      "median_s": 1.1974626254523173,
+      "max_s": 4.447197000030428,
+      "known_cost_usd": 0.02432484,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "embedded-instructions",
+        "relevant"
+      ]
+    }
+  ]
+}
