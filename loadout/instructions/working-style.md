@@ -10,6 +10,8 @@ Default to zero comments. Never write JSDoc-style `/** … */` blocks, multi-par
 
 A negative assertion earns its place only when the absence *is* the behaviour under test and names a specific thing that would otherwise have happened: `expect(write).not.toHaveBeenCalled()` after a rejected request, or no sidebar in a no-access state. If you cannot name what would have produced the thing, do not assert it is missing.
 
+**Don't write tests that only restate a constant.** `expect(MAX_RETRIES).toBe(3)` or `assert config.TIMEOUT == 30` repeats the source line: it breaks on every intentional change and catches no bug. Test the behaviour the value drives (the call gives up after the third retry), or write no test.
+
 ## Fix Escalation
 
 When fixing a bug or error, count failed fix attempts — a change made, the check re-run, and it still fails:
