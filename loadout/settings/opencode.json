@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode-go/mimo-v2.6-pro",
+  "model": "openrouter/meta/muse-ember",
   "subagent_depth": 2,
   "agent": {
     "coordinator": {
@@ -20,8 +20,8 @@
   "provider": {
     "openrouter": {
       "models": {
-        "openai/gpt-6-sol": {},
-        "meta/muse-spark-1.3": {}
+        "meta/muse-ember": {},
+        "openai/gpt-6.1-sol": {}
       }
     }
   }

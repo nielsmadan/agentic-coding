@@ -12,6 +12,10 @@ Chooses four OpenRouter models — **low**, **mid**, **high-main**,
 Standing constraints, not preferences:
 
 - **Never pick a Grok / xAI model.** `rank_models.py` filters them out entirely.
+- **Cap per-token price at $2/M input and $10/M output.** `rank_models.py`
+  excludes anything above it (`--max-price-in` / `--max-price-out` to change).
+  Real sessions bill by token, and a model past the cap made a poor
+  high-fallback in November 2026 even where it won `$/task`.
 - **Prefer alternative labs.** OpenAI, Anthropic and Google are eligible but only
   win a tier when clearly ahead of the best alternative; the point of these
   harnesses is to get a read on non-frontier-lab models.
@@ -276,7 +280,7 @@ records no longer parse. This has happened before: in September 2026 AA dropped
 `agenticIndex` from every page, and the script returned zero models.
 **Solution:** Re-run with `--no-cache` first — a truncated cached fetch looks the
 same. If still empty, inspect the cached HTML under `$TMPDIR/agent-models/` for
-`self.__next_f`, `intelligenceIndexIsEstimated` (the leaderboard record key) and
+`self.__next_f`, `"intelligenceIndex"` (the leaderboard record key) and
 `intelligenceIndexOutputTokensPerTask` (the `/models` record key). Report that the parser needs updating rather
 than falling back to reading the rendered chart, which has no numbers in it.
 

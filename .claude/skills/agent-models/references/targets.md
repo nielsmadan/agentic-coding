@@ -30,14 +30,14 @@ and low keeps only the terse one-shot slots (`occli`, the haiku rung). Whichever
 tier wins, everything above it must be reached deliberately: `clor`'s opus alias
 and `ocs`.
 
-**This cycle:** low = GPT-6 Luna, mid = MiMo-V2.6-Pro, high-main = GPT-6 Sol
-(max, user-selected past the cost cliff), high-fallback = Muse Spark 1.3 (max) —
-and **mid holds the default**. Luna is cheaper per session but 9 index points
-weaker; MiMo's $0.0036/M cache reads keep a typical session under the previous
-default's cost.
+**This cycle (2026-11-11):** low = GPT-6 Luna (medium), mid = Muse Ember (max),
+high-main = GPT-6.1 Sol (max), high-fallback = Kimi K3.1 Pro (max, user-selected
+over Claude Fable 5.2 for cost) — and **mid holds the default**. Ember ties Luna
+on input price ($0.10/M) and is 17 index points stronger.
 
-**User-selected advisors:** Pi uses GLM-5.3 at `max`; OpenCode uses Kimi K3 at
-`max`. OpenCode's advisor selection overrides its high-fallback tier binding.
+**User-selected advisors:** Pi uses Tencent Hy4 (`opencode-go/hy4`) at `high`, a
+lab no other advisor covers; OpenCode uses Kimi K3.1 Pro at `max`. Both override
+their tier bindings.
 
 | # | File | Key | Binding |
 |---|------|-----|------|
@@ -55,7 +55,7 @@ default's cost.
 | 5 | `pratfall/config.toml` | `cmdgen-opencode` → `model` | low |
 | 6 | `pratfall/config.toml` | `advisor-pi` → `model` | high-main |
 | 6 | `pratfall/config.toml` | `advisor-pi` → `effort` | high |
-| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3 (user override), with `#max` |
+| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3.1 Pro (user override), with `#max` |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.

@@ -31,6 +31,10 @@ BIG_LABS = {"openai", "anthropic", "google"}
 
 CACHE_TTL = 6 * 3600
 
+# USD per 1M tokens; real sessions bill by token, so this caps the coding ladder.
+MAX_PRICE_IN = 2.0
+MAX_PRICE_OUT = 10.0
+
 
 def cache_dir():
     d = os.path.join(os.environ.get("TMPDIR", "/tmp"), "agent-models")
@@ -120,7 +124,7 @@ def records(payload, key):
 
 def aa_models(no_cache=False):
     board = records(rsc_payload(fetch(AA_URL, "aa-leaderboard.html", no_cache)),
-                    "intelligenceIndexIsEstimated")
+                    "intelligenceIndex")
     detail = records(rsc_payload(fetch(AA_DETAIL_URL, "aa-models.html", no_cache)),
                      "intelligenceIndexOutputTokensPerTask")
     return [{**rec, **detail.get(slug, {})} for slug, rec in board.items()]
@@ -227,9 +231,11 @@ def flatten(rec, idx):
     }
 
 
-def eligible(m):
+def eligible(m, max_in=MAX_PRICE_IN, max_out=MAX_PRICE_OUT):
     """Reasons this model cannot be picked, or [] if it can."""
     why = []
+    if (m["price_in"] or 0) > max_in or (m["price_out"] or 0) > max_out:
+        why.append(f"over price cap (${max_in:g}/M in, ${max_out:g}/M out)")
     if m["creator"] in BANNED_CREATORS or BANNED_NAME_RE.search(m["name"] or ""):
         why.append("grok/xai excluded")
     if m["deprecated"]:
@@ -288,6 +294,10 @@ def main():
     ap.add_argument("--no-cache", action="store_true", help="bypass the 6h fetch cache")
     ap.add_argument("--all", action="store_true",
                     help="include excluded models in the table")
+    ap.add_argument("--max-price-in", type=float, default=MAX_PRICE_IN,
+                    help="USD per 1M input tokens (default %(default)s)")
+    ap.add_argument("--max-price-out", type=float, default=MAX_PRICE_OUT,
+                    help="USD per 1M output tokens (default %(default)s)")
     args = ap.parse_args()
 
     idx = or_index(args.no_cache)
@@ -295,7 +305,7 @@ def main():
 
     ok, excluded = [], []
     for m in raw:
-        why = eligible(m)
+        why = eligible(m, args.max_price_in, args.max_price_out)
         if why:
             m["excluded_because"] = why
             excluded.append(m)

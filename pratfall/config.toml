@@ -57,7 +57,7 @@ native_args = [
 [profiles.advisor-pi]
 agent = "pi"
 timeout = 600
-model = "opencode-go/glm-5.3"
+model = "openrouter/tencent/hy4"
 effort = "high"
 tools = ["read", "grep", "find", "ls"]
 native_args = ["--no-session"]
@@ -65,7 +65,7 @@ native_args = ["--no-session"]
 [profiles.advisor-opencode]
 agent = "opencode"
 timeout = 600
-model = "opencode-go/kimi-k3"
+model = "openrouter/moonshotai/kimi-k3.1-pro"
 effort = "max"
 native_args = ["--agent", "plan"]
 
@@ -100,7 +100,7 @@ native_args = ["--sandbox", "read-only", "--skip-git-repo-check"]
 
 [profiles.cmdgen-opencode]
 agent = "opencode"
-model = "opencode-go/gpt-6-luna"
+model = "openrouter/openai/gpt-6-luna"
 timeout = 60
 native_args = ["--agent", "plan"]
 

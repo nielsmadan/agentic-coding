@@ -15,7 +15,7 @@ opencode() {
 
 alias oc="opencode"
 # The OpenCode 2 TUI has no --model flag.
-alias ocs='OPENCODE_CONFIG_CONTENT='\''{"model":"openrouter/meta/muse-spark-1.3"}'\'' opencode'
+alias ocs='OPENCODE_CONFIG_CONTENT='\''{"model":"openrouter/moonshotai/kimi-k3.1-pro"}'\'' opencode'
 alias occof="opencode --continue --fork"
 
 # OpenCode scans ~/.claude/skills and .claude/skills as well as its own, and
