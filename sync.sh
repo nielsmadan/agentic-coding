@@ -448,6 +448,25 @@ sys.exit(0 if sys.argv[1] in known else 1)' "$name"; then
   done
 }
 
+# install_copy <source/> <dest> <path kept from the old dest, or ""> <path to drop>...
+install_copy() {
+  local source="$1" dest="${2:?}" keep="$3" kept="" excluded
+  shift 3
+  if [[ -n "$keep" && -d "$dest/$keep" ]]; then
+    kept="$(mktemp -d)"
+    mv "$dest/$keep" "$kept/keep"
+  fi
+  rm -rf "${dest:?}"
+  cp -a "$source" "$dest"
+  for excluded in "$@"; do rm -rf "${dest:?}"/$excluded; done
+  if [[ -n "$kept" ]]; then
+    rm -rf "${dest:?}/$keep"
+    mkdir -p "$(dirname "$dest/$keep")"
+    mv "$kept/keep" "$dest/$keep"
+    rmdir "$kept"
+  fi
+}
+
 # Each mods/<name> loads from a copy: ~/.claude/mods (CLAUDE_CODE_PLUGIN_DIRS in the claude
 # settings) and, with a pi/ folder, the pi agent dir's mods/ (`extensions` in
 # loadout/settings/pi.json), so a half-saved edit never reloads in the sessions watching it. The
@@ -460,22 +479,20 @@ sync_mods() {
   for source in "$SCRIPT_DIR"/mods/*/; do
     name="$(basename "$source")"
     dest="$HOME/.claude/mods/$name"
-    mkdir -p "$dest"
-    rsync -a --delete --delete-excluded --filter 'P .claude-plugin/types/' \
-      --exclude '.claude-plugin/types/' --exclude 'pi/' --exclude 'tests/pi-*' "$source" "$dest/"
+    mkdir -p "$(dirname "$dest")"
+    install_copy "$source" "$dest" .claude-plugin/types .claude-plugin/types pi 'tests/pi-*'
     # A read-only checkout (/opt/ac on the Studio) keeps the types it shipped with.
     if [[ -d "$dest/.claude-plugin/types" && -w "$source" ]]; then
-      rsync -a --delete "$dest/.claude-plugin/types/" "${source}.claude-plugin/types/"
+      rm -rf "${source:?}.claude-plugin/types"
+      cp -a "$dest/.claude-plugin/types" "${source}.claude-plugin/types"
     fi
     if [[ ! -f "${source}pi/index.ts" ]]; then
       echo "✓  $name (Claude Code)"
       continue
     fi
     dest="$pi_dir/mods/$name"
-    mkdir -p "$dest"
-    rsync -a --delete --delete-excluded \
-      --exclude '.claude-plugin/' --exclude 'hooks/' --exclude 'tests/' --exclude 'tsconfig.json' \
-      "$source" "$dest/"
+    mkdir -p "$(dirname "$dest")"
+    install_copy "$source" "$dest" "" .claude-plugin hooks tests tsconfig.json
     echo "✓  $name (Claude Code, pi)"
   done
 }
