@@ -26,11 +26,31 @@ name = "ac-juggler"
 path = "loadout/juggler-studio"
 use = ["hooks", "module-config"]
 
+# The instruction lists are restated to leave out `terminal`: Studio sessions
+# have no iTerm2 pane beside them for term-peek to read.
 [all]
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content",
+    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
+]
 substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", "web-fetching.shared" = "web-fetching.shared.studio", git-policy = "git-policy.studio" }
+
+[codex]
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content",
+    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
+    "codex-proactivity",
+]
 
 [claude]
 plugins = ["claude", "unsandboxed"]
+instructions = [
+    "intro-claude", "web-fetching", "video-content",
+    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
+]
 substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "git-policy.studio" }
 
 [pi]

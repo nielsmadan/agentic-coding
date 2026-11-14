@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+AGENTS = {"claude", "codex", "opencode", "pi", "droid", "cursor-agent", "nono", "clor"}
+SHELLS = {"zsh", "bash", "fish", "sh"}
+FIELD = "\x1f"
+RECORD = "\x1e"
+
+LIST_SCRIPT = """
+on run argv
+  set target to item 1 of argv
+  tell application "iTerm2"
+    repeat with w in windows
+      repeat with t in tabs of w
+        if (unique id of sessions of t) contains target then
+          set out to ""
+          repeat with s in sessions of t
+            tell s
+              set out to out & (unique id) & (ASCII character 31) & (variable named "session.path") & (ASCII character 31) & (variable named "session.commandLine") & (ASCII character 30)
+            end tell
+          end repeat
+          return out
+        end if
+      end repeat
+    end repeat
+  end tell
+  return ""
+end run
+"""
+
+CONTENTS_SCRIPT = """
+on run argv
+  set target to item 1 of argv
+  tell application "iTerm2"
+    repeat with w in windows
+      repeat with t in tabs of w
+        repeat with s in sessions of t
+          if unique id of s is target then return contents of s
+        end repeat
+      end repeat
+    end repeat
+  end tell
+  error "pane not found: " & target
+end run
+"""
+
+
+def osascript(script, *args):
+    return subprocess.run(
+        ["/usr/bin/osascript", "-", *args],
+        input=script,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    ).stdout
+
+
+def parse_panes(raw):
+    return [
+        dict(zip(("id", "path", "command"), record.split(FIELD)))
+        for record in raw.strip().split(RECORD)
+        if record.count(FIELD) == 2
+    ]
+
+
+def program(command):
+    words = command.split()
+    return Path(words[0]).name.lstrip("-") if words else ""
+
+
+def is_agent(command):
+    return any(Path(word).name.lstrip("-") in AGENTS for word in command.split()[:3])
+
+
+def pick(panes, own, cwd):
+    others = [p for p in panes if p["id"] != own and not is_agent(p["command"])]
+    if len(others) <= 1:
+        return others
+    same_dir = [p for p in others if p["path"] == cwd] or others
+    shells = [p for p in same_dir if program(p["command"]) in SHELLS]
+    return shells if len(shells) == 1 else same_dir
+
+
+def tail(text, lines):
+    kept = text.rstrip().splitlines()
+    return "\n".join(kept[-lines:]) if lines else "\n".join(kept)
+
+
+def describe(pane):
+    return f"{pane['id']}  {pane['command'] or '?'}  {pane['path']}"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Print recent output from the user's terminal pane next to this agent in the same iTerm2 tab"
+    )
+    parser.add_argument("-n", "--lines", type=int, default=200, help="lines to print (0 = whole scrollback)")
+    parser.add_argument("--pane", help="read this pane id instead of picking one")
+    parser.add_argument("--list", action="store_true", help="list the panes in this tab")
+    args = parser.parse_args()
+
+    session = os.environ.get("ITERM_SESSION_ID", "")
+    if not session:
+        sys.exit("term-peek: not running in an iTerm2 pane (ITERM_SESSION_ID unset)")
+    own = session.rsplit(":", 1)[-1]
+    panes = parse_panes(osascript(LIST_SCRIPT, own))
+
+    if args.list:
+        print("\n".join(describe(p) + ("  (this agent)" if p["id"] == own else "") for p in panes))
+        return
+    if args.pane:
+        chosen = args.pane
+    else:
+        candidates = pick(panes, own, os.getcwd())
+        if len(candidates) != 1:
+            listing = "\n".join("  " + describe(p) for p in candidates) or "  (none)"
+            sys.exit(f"term-peek: no single terminal pane in this tab; pass --pane <id>:\n{listing}")
+        chosen = candidates[0]["id"]
+        print(f"# {describe(candidates[0])}")
+    print(tail(osascript(CONTENTS_SCRIPT, chosen), args.lines))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except subprocess.CalledProcessError as exc:
+        sys.exit(f"term-peek: osascript failed: {exc.stderr.strip()}")
+    except subprocess.TimeoutExpired:
+        sys.exit("term-peek: osascript timed out")
