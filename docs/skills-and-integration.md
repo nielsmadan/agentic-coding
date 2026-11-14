@@ -377,6 +377,15 @@ Hook **scripts** live in `loadout/module-config/claude/hooks/`; their **wiring**
 - **Both profiles get it automatically.** `loadout.toml` gives Claude `hooks = ["claude", "hooklinesinker-claude"]` under either profile, so a hook added to the wiring reaches both. The settings overlay that does differ is `claude-afk`, and it carries only `env.CLAUDE_AFK_TIMEOUT_MS`. Run `loadout sync` afterwards.
 - **To auto-approve an MCP tool's permission prompt, use a `PermissionRequest` hook returning `decision.behavior: "allow"`** — a `PreToolUse` hook returning `permissionDecision: "allow"` does NOT suppress the prompt. `PermissionRequest` is the only event that fires in every mode, including plan mode and subagents. Since Claude Code's plan-mode rework (~v2.1.198) classifies each call read-only per-call, opaque third-party MCP tools prompt in plan mode regardless of their `mcp__*` allow rule. `auto-approve-mcp.sh` handles this generically from the generated global and project-local MCP policy while preserving deny → ask → allow precedence.
 
+## Phone access through tmux
+
+Agents run inside tmux so a phone can attach over SSH on the tailnet; it works for every agent and leaves Claude's setup-token auth alone, which Remote Control cannot.
+
+- **`bin/tmx`** starts and finds those sessions. `tmx` picks a running session (or starts one for the current directory); `tmx new [-C dir] [cmd…]` attaches to or creates the session named after a directory, running `cmd` through an interactive zsh so the agent wrappers apply and a shell remains when it exits; `tmx resume [rl args]` and `tmx last` run `rl resume` in a new session, named after the session's directory when `rl resume --dry-run` can tell without a picker.
+- **`.airc.d/tmx.zsh`** runs `tmx --auto` on an interactive SSH login, so the phone lands in the picker; Esc leaves a plain shell, `TMX_NO_AUTO=1` disables it.
+- **`notify-phone.sh`** is a `Notification` hook. It posts to `PHONE_NOTIFY_URL` (an ntfy topic URL, held in the sops store) only for sessions inside tmux and only once the Mac has been idle for `PHONE_NOTIFY_IDLE` seconds (default 120), measured from `ioreg`'s `HIDIdleTime`, which the sandbox can read.
+- The tmux settings that make agent TUIs usable from a phone (`extended-keys` for Shift+Enter, a short `escape-time`, `window-size latest`) live in `~/rc/tmux/tmux.conf`.
+
 ## GitHub tokens
 
 `gh` authenticates with read-only fine-grained PATs from the sops store — there is no

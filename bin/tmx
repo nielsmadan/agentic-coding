@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+FIELD = "\x1f"
+LIST_FORMAT = FIELD.join(
+    ["#{session_name}", "#{session_attached}", "#{pane_current_command}", "#{pane_current_path}"]
+)
+NEW_HERE = "+ new session here"
+
+
+def session_name(directory, existing):
+    base = re.sub(r"[.:\s]+", "-", Path(directory).name).strip("-") or "home"
+    if base not in existing:
+        return base
+    return next(f"{base}-{n}" for n in range(2, len(existing) + 3) if f"{base}-{n}" not in existing)
+
+
+def parse_sessions(output):
+    rows = (line.split(FIELD) for line in output.splitlines() if line)
+    return [
+        {"name": name, "attached": attached != "0", "command": command, "path": path}
+        for name, attached, command, path in rows
+    ]
+
+
+def describe(session, home):
+    path = session["path"].replace(home, "~", 1) if session["path"].startswith(home) else session["path"]
+    mark = " *" if session["attached"] else ""
+    return f"{session['name']}{mark}\t{session['command']}\t{path}"
+
+
+def shell_command(argv):
+    return ["zsh", "-ic", f"{shlex.join(argv)}; exec zsh -i"]
+
+
+def resume_directory(dry_run_output):
+    match = re.search(r"^\s*directory:\s*(.+)$", dry_run_output, re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+
+def knows_directory(rl_args):
+    return "--last" in rl_args or any(re.fullmatch(r"[0-9a-f-]{4,}", a) for a in rl_args)
+
+
+def list_sessions():
+    result = subprocess.run(
+        ["tmux", "list-sessions", "-F", LIST_FORMAT], capture_output=True, text=True
+    )
+    return parse_sessions(result.stdout) if result.returncode == 0 else []
+
+
+def enter(name):
+    if os.environ.get("TMUX"):
+        os.execvp("tmux", ["tmux", "switch-client", "-t", f"={name}"])
+    os.execvp("tmux", ["tmux", "attach-session", "-t", f"={name}"])
+
+
+def create(name, directory, command=None):
+    subprocess.run(
+        ["tmux", "new-session", "-d", "-s", name, "-c", directory, *(command or [])], check=True
+    )
+    enter(name)
+
+
+def pick(sessions, offer_new):
+    lines = [describe(s, str(Path.home())) for s in sessions] + ([NEW_HERE] if offer_new else [])
+    if not sys.stdin.isatty() or not shutil.which("fzf"):
+        print("\n".join(lines))
+        return None
+    result = subprocess.run(
+        ["fzf", "--height=~50%", "--reverse", "--delimiter=\t", "--prompt=tmux> ",
+         "--header=enter attaches, esc gives a plain shell"],
+        input="\n".join(lines), stdout=subprocess.PIPE, text=True,
+    )
+    choice = result.stdout.strip()
+    if not choice:
+        return None
+    return NEW_HERE if choice == NEW_HERE else choice.split("\t")[0].removesuffix(" *")
+
+
+def cmd_pick(args):
+    sessions = list_sessions()
+    if not sessions:
+        if args.auto:
+            return 0
+        return cmd_new(argparse.Namespace(directory=".", command=[]))
+    choice = pick(sessions, offer_new=not args.auto)
+    if choice == NEW_HERE:
+        return cmd_new(argparse.Namespace(directory=".", command=[]))
+    if choice:
+        enter(choice)
+    return 0
+
+
+def cmd_new(args):
+    directory = str(Path(args.directory).expanduser().resolve())
+    existing = {s["name"] for s in list_sessions()}
+    base = session_name(directory, set())
+    if not args.command and base in existing:
+        enter(base)
+    name = session_name(directory, existing)
+    create(name, directory, shell_command(args.command) if args.command else None)
+    return 0
+
+
+def cmd_resume(args):
+    rl_args = args.rl_args
+    directory = str(Path.home())
+    if knows_directory(rl_args):
+        dry = subprocess.run(
+            ["zsh", "-ic", shlex.join(["rl", "resume", "--dry-run", *rl_args])],
+            capture_output=True, text=True,
+        )
+        directory = resume_directory(dry.stdout) or directory
+    name = session_name(directory, {s["name"] for s in list_sessions()})
+    create(name, directory, shell_command(["rl", "resume", *rl_args]))
+    return 0
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        prog="tmx",
+        description="Run agents in tmux so a phone can attach over SSH. "
+        "With no command, pick a running session to attach to.",
+    )
+    parser.add_argument("--auto", action="store_true", help=argparse.SUPPRESS)
+    sub = parser.add_subparsers(dest="cmd")
+    new = sub.add_parser("new", help="attach to or create the session for a directory")
+    new.add_argument("-C", dest="directory", default=".", help="directory (default: current)")
+    new.add_argument("command", nargs=argparse.REMAINDER,
+                     help="command to run in a new session, e.g. claude --continue")
+    resume = sub.add_parser("resume", help="run `rl resume [args]` in a new session")
+    resume.add_argument("rl_args", nargs=argparse.REMAINDER)
+    sub.add_parser("last", help="shorthand for `tmx resume --last`")
+    sub.add_parser("ls", help="list sessions")
+    args = parser.parse_args(argv)
+
+    if not shutil.which("tmux"):
+        print("tmx: tmux is not installed", file=sys.stderr)
+        return 1
+    if args.cmd == "new":
+        return cmd_new(args)
+    if args.cmd == "resume":
+        return cmd_resume(args)
+    if args.cmd == "last":
+        return cmd_resume(argparse.Namespace(rl_args=["--last"]))
+    if args.cmd == "ls":
+        home = str(Path.home())
+        print("\n".join(describe(s, home) for s in list_sessions()) or "no tmux sessions")
+        return 0
+    return cmd_pick(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

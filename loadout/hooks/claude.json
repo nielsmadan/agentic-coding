@@ -55,5 +55,17 @@
         }
       ]
     }
+  ],
+  "Notification": [
+    {
+      "matcher": "permission_prompt|idle_prompt|elicitation_dialog|elicitation_url_dialog",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "~/.claude/hooks/notify-phone.sh",
+          "timeout": 10
+        }
+      ]
+    }
   ]
 }
