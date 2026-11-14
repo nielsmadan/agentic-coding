@@ -6,6 +6,8 @@
 
 **For fetching a known URL, use `WebFetch`.** It is the default for short pages.
 
+**If you have no `WebFetch` tool and only a `web-fetch` agent, do not use that agent to read pages.** It runs a full agent loop on the session's model and leaves no cached copy to quote from. Use `jina-fetch` for every page instead, and `curl` for short transactional pages where this machine's location matters.
+
 **When `WebFetch` fails, use `jina-fetch <url> "<what to extract>"`** (on `PATH`). It fetches through Jina, caches the full page under `TMPDIR`, and returns only the extract. Use the direct fetch first for transactional pages (prices, stock, shipping); go straight to `jina-fetch` for long-form reading (docs, articles, reviews), which `WebFetch` truncates, and for Stack Overflow, which blocks `WebFetch`.
 
 **Before writing that a source says something, paste the line.** A claim attributed to a document is a quote, not a summary — grep the cached file for it and reproduce the sentence. If you cannot paste it, you do not have it: say what the source does establish instead of rounding it up to what you expected. And when a page carries a canonical list (permissions, prerequisites, ordered steps), read the whole section by range rather than grepping for the items you expect, since a grep built from your expectation can only ever confirm it.
