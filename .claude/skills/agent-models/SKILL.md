@@ -1,15 +1,20 @@
 ---
 name: agent-models
-description: Pick and apply OpenRouter coding models for Pi, OpenCode and clor, plus the shared extraction models for distill and jina-fetch. Ranks candidates from Artificial Analysis by Intelligence Index vs cost per task, resolves exact OpenRouter ids, and updates every config that pins one. Use when the user says "pick models", "update the models", "refresh the model tiers", "which models should the agents use", "set the coding models", "new model came out", "refresh extraction models", "benchmark distill models", or asks what pi/opencode/clor are currently running.
+description: Refresh model tiers for claude, codex and pix session shortcuts, the OpenRouter coding models for Pi, OpenCode and clor, or the extraction models for distill and jina-fetch. Uses Artificial Analysis intelligence versus cost per task for coding and measured benchmarks for extraction. Use for "pick models", "update the models", "refresh model tiers", "update session presets", "refresh extraction models", or questions about current model bindings. Cursor agent shortcuts are outside this skill's targets.
 ---
 
 # Agent Models
 
-Chooses four OpenRouter models — **low**, **mid**, **high-main**,
-**high-fallback** — plus a measured extraction default and fallback shared by
-`distill` and `jina-fetch`. Coding and extraction are separate decisions.
+Maintains three independent selections:
 
-Standing constraints, not preferences:
+- **Session tiers:** `low`, `mid`, `high`, `xhigh`, `max` for `claude`, `codex`,
+  and `pix`. Anthropic only for Claude; OpenAI only for Codex and pix.
+- **OpenRouter coding:** `low`, `mid`, `high-main`, `high-fallback` for plain Pi,
+  OpenCode and clor.
+- **Extraction:** a measured default and fallback shared by `distill` and `jina-fetch`.
+
+The following constraints apply to the **OpenRouter coding** selection. Session
+tiers have their own rules in [session tiers](references/session-tiers.md).
 
 - **Never pick a Grok / xAI model.** `rank_models.py` filters them out entirely.
 - **Cap per-token price at $2/M input and $10/M output.** `rank_models.py`
@@ -27,21 +32,27 @@ Standing constraints, not preferences:
 
 ## Instructions
 
-Use `--coding` to refresh only coding tiers, `--extraction` to benchmark and select
-only extraction models, or no flag to do both. A read-only question runs neither.
-Benchmark artifacts may be written before approval; model configuration may not.
+A normal invocation refreshes all three selections: session tiers, OpenRouter
+coding and extraction. Include the Claude, Codex and pix tiers in the same proposal,
+application and verification as the existing models.
+The existing `--coding` option limits a run to both coding selections;
+`--extraction` limits it to extraction. A request naming particular harnesses
+narrows the scope; it does not authorize refreshing the others. A read-only
+question only inspects the current bindings.
+Benchmark artifacts may be written before approval; model configuration may not,
+unless the user's request already authorizes the picks or a choice among named alternatives.
 
 ### Step 1: Rank the candidates
 
-Skip Steps 1 and 2 for `--extraction`.
+Skip Steps 1 through 2a for `--extraction`.
 
 ```bash
 python3 .claude/skills/agent-models/scripts/rank_models.py
 ```
 
 It fetches `/leaderboards/models` (every model) and `/models` (a richer record —
-effort, token counts — for a featured subset of ~26), parses both out of the RSC
-payload each page server-renders, joins them on `slug`, resolves each model to an
+effort, token counts — for a featured subset), parses both out of the RSC
+payload each page server-renders, joins them on model/effort record `id`, resolves each model to an
 exact OpenRouter id, and prints a table plus the cost/intelligence Pareto
 frontier. Leaderboard-only records carry effort only in their name, which the
 script parses (`GPT-6 Sol (low)`).
@@ -102,7 +113,7 @@ Four checks. Each one has caught a real bad pick; run all four.
 ### Getting tokens per task
 
 The printed table has no token columns, and `--json` does not carry them either.
-They exist only on the `/models` records (~26 featured models) — leaderboard-only
+They exist only on the `/models` records (a featured subset) — leaderboard-only
 models have none. Pull them with the script's own parser:
 
 ```python
@@ -132,6 +143,12 @@ cost ≈ input_M × price_in  +  cache_read_M × 0.12 × price_in  +  output_M �
 Validate it against the session's own recorded cost before trusting it — pi
 records per-turn `usage.cost`, so the replay can be checked to the cent.
 
+### Step 2a: Choose the session tiers
+
+Follow the ranking and selection rules in [session tiers](references/session-tiers.md)
+for Claude's Anthropic ladder and the shared Codex/pix OpenAI ladder. Carry those
+picks into the combined proposal in Step 3.
+
 ### Step 2b: Benchmark extraction candidates
 
 Skip this step only for `--coding`. Read `docs/tests/extraction-models/README.md` and use the
@@ -156,6 +173,9 @@ If all candidates pass, report that this small suite did not distinguish quality
 
 ### Step 3: Present the proposal, and stop
 
+Include the five session tiers per lab, with native model IDs, efforts, scores,
+task costs and cliffs, alongside the OpenRouter and extraction proposals below.
+
 Show a table: tier, model name, creator, intelligence index, cost per task, effort,
 and exact OpenRouter id. Say in one line per tier why it won, and name the
 runner-up so an override is a one-word reply.
@@ -175,6 +195,8 @@ authorize an unmentioned extraction-model change.
 
 ### Step 4: Apply
 
+Apply the approved session tiers using [their targets](references/session-tiers.md#apply-and-verify).
+
 Read `references/targets.md` and update the targets in the approved scope. It carries the exact key
 names, prefix rules (`openrouter/` on some keys, not others), the `[1m]` context
 suffix on `clor`, and which files are loadout sources vs generated.
@@ -189,6 +211,9 @@ For extraction, update `DEFAULT_MODEL` and `FALLBACK_MODEL` in
 with the supporting run link. Do not rerun the paid benchmark just to apply a pick.
 
 ### Step 5: Sync and verify
+
+Run the [session-tier checks](references/session-tiers.md#apply-and-verify) for
+session changes; those shell sources and the project skill need no loadout sync.
 
 For extraction changes run:
 
@@ -275,9 +300,9 @@ ranking or edit anything — this is a question, not an instruction to re-pick.
 
 ### `rank_models.py` returns few or no models
 
-**Cause:** Artificial Analysis changed its payload shape, so the brace-matched
-records no longer parse. This has happened before: in September 2026 AA dropped
-`agenticIndex` from every page, and the script returned zero models.
+**Cause:** Artificial Analysis changed its payload shape. In November 2026 the
+leaderboard dropped its top-level `slug`; model/effort record IDs still joined it
+to the detail page. A release slug alone cannot distinguish effort variants.
 **Solution:** Re-run with `--no-cache` first — a truncated cached fetch looks the
 same. If still empty, inspect the cached HTML under `$TMPDIR/agent-models/` for
 `self.__next_f`, `"intelligenceIndex"` (the leaderboard record key) and

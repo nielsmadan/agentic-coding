@@ -1,7 +1,8 @@
 # Write targets
 
-Every place in this repo that pins an OpenRouter model id. All six must move
-together or the trio drifts apart.
+OpenRouter coding and extraction write targets. Session shortcuts for Claude,
+Codex and pix have a separate [target and selection workflow](session-tiers.md).
+All six OpenRouter coding targets must move together or the trio drifts apart.
 
 Ranking uses OpenRouter ids (`vendor/model`), and `rank_models.py` prints the
 exact id — never hand-guess one. **OpenCode, the OpenCode prat profiles

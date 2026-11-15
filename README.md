@@ -220,6 +220,25 @@ To extend it:
 Reload with `source ~/.airc` (idempotent — re-sourcing won't duplicate PATH
 entries).
 
+`claude`, `codex`, and `pix` accept a tier as the first argument, followed by
+normal CLI arguments: `claude low`, `codex high resume --last`, or
+`pix mid -p "Explain this error"`. These select a model and effort for that session:
+
+| Tier | Claude | Codex / pix |
+|---|---|---|
+| `low` | Haiku 5.5 · xhigh | GPT-6.1 Sol · low |
+| `mid` | Sonnet 5.5 · high | GPT-6.1 Sol · medium |
+| `high` | Opus 5.5 · high | GPT-6.1 Sol · xhigh |
+| `xhigh` | Fable 5.2 · medium | GPT-6.1 Sol · max |
+| `max` | Fable 5.2 · max | GPT-6 Astra · max |
+
+The mappings live in `.airc.d/07-model-tiers.zsh`; a normal `agent-models` run
+refreshes them alongside the other models using Artificial Analysis intelligence
+versus cost per task.
+Bare commands retain their existing defaults. Use `--` before a literal prompt
+that is exactly a tier name. Cursor keeps its `agent haiku|sonnet|opus` shortcuts,
+and plain `pi` keeps its own configuration.
+
 ## Further reading
 
 - [`AGENTS.md`](AGENTS.md) — project instructions, policies, and detailed

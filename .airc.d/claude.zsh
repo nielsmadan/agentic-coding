@@ -58,7 +58,14 @@ $sandbox_env \
 $(printf '%q ' "${launch[@]}") --model $(printf '%q' "$start") --permission-mode acceptEdits $(printf '%q ' "$@")"
 }
 
-claude() { _agent_iterm_run claude _claude_launch "$@"; }
+claude() {
+  local preset
+  if preset=$(_agent_model_tier anthropic "${1:-}"); then
+    shift
+    set -- --model "${preset%:*}" --effort "${preset##*:}" "$@"
+  fi
+  _agent_iterm_run claude _claude_launch "$@"
+}
 
 claude-raw() { _agent_iterm_run claude-raw _claude_raw_launch "$@"; }
 

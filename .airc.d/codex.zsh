@@ -27,6 +27,13 @@ alias cxcof="codex fork --last"
 alias cxco-raw="codex-raw resume --last"
 alias cxcof-raw="codex-raw fork --last"
 
-codex() { _agent_iterm_run codex _codex_launch "$@"; }
+codex() {
+  local preset
+  if preset=$(_agent_model_tier openai "${1:-}"); then
+    shift
+    set -- --model "${preset%:*}" -c "model_reasoning_effort=\"${preset##*:}\"" "$@"
+  fi
+  _agent_iterm_run codex _codex_launch "$@"
+}
 
 codex-raw() { _agent_iterm_run codex-raw _codex_raw_launch "$@"; }

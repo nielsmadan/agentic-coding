@@ -115,7 +115,10 @@ One source of truth, two harnesses, still scoped to this repo — `~/.codex/skil
 (the global directory loadout renders into) stays untouched, so the skill does not
 appear in unrelated projects. Verified against codex-cli 0.147.0.
 
-- **`agent-models`** — picks the low / mid / high-main / high-fallback OpenRouter
+- **`agent-models`** — every normal run refreshes the low / mid / high / xhigh / max
+  session shortcuts for Claude, Codex and pix in `.airc.d/07-model-tiers.zsh`,
+  using Anthropic and OpenAI model/effort pairs and cost per task. Cursor and
+  plain Pi are outside that selection. It also picks the low / mid / high-main / high-fallback OpenRouter
   models and writes them into every file that pins a model id (`loadout/settings/pi.json`,
   `loadout/settings/opencode.json`, `clor` in `.airc.d/claude.zsh`, the `ocs`
   alias, the `occli` backend, and the two `second-opinion` advisors). Ranks
@@ -126,7 +129,7 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
   Artificial Analysis pages are JS-rendered — fetchers return prose with no
   numbers. `scripts/rank_models.py` parses the per-model datasets out of the RSC
   payload (`self.__next_f`) that `/leaderboards/models` and `/models` server-render,
-  joins them on `slug`, then resolves exact
+  joins them on model/effort record `id`, then resolves exact
   OpenRouter ids from `openrouter.ai/api/v1/models`. Model *names* collide across
   builds (`deepseek/deepseek-v4-pro` is the 0423 build, not the 0813 one), so ids
   always come from that API, never from a name.

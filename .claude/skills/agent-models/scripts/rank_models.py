@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-"""Rank Artificial Analysis models by Intelligence Index vs cost per Intelligence
-Index task and resolve OpenRouter ids, so a low / mid / high-main / high-fallback
-trio can be chosen.
-
-/leaderboards/models server-renders every model into its RSC payload
-(self.__next_f); /models carries a richer record (effort, token counts) for a
-featured subset. Those payloads — not the rendered charts — are the data source.
-"""
+"""Rank Artificial Analysis model/effort pairs by intelligence and cost per task."""
 
 import argparse
+import itertools
 import json
 import os
 import re
@@ -19,12 +13,14 @@ import urllib.request
 AA_URL = "https://artificialanalysis.ai/leaderboards/models"
 AA_DETAIL_URL = "https://artificialanalysis.ai/models"
 OR_URL = "https://openrouter.ai/api/v1/models"
-UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
+UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0 Safari/537.36"
+)
 
 # Never selectable, per standing instruction.
 BANNED_CREATORS = {"xai"}
-BANNED_NAME_RE = re.compile(r"grok", re.I)
+BANNED_NAME_RE = re.compile(r"grok", re.IGNORECASE)
 
 # Eligible, but only win a tier when clearly ahead of the best alternative.
 BIG_LABS = {"openai", "anthropic", "google"}
@@ -44,7 +40,11 @@ def cache_dir():
 
 def fetch(url, name, no_cache=False, ttl=CACHE_TTL):
     path = os.path.join(cache_dir(), name)
-    if not no_cache and os.path.exists(path) and time.time() - os.path.getmtime(path) < ttl:
+    if (
+        not no_cache
+        and os.path.exists(path)
+        and time.time() - os.path.getmtime(path) < ttl
+    ):
         with open(path, encoding="utf-8", errors="replace") as fh:
             return fh.read()
     req = urllib.request.Request(url, headers={"User-Agent": UA})
@@ -56,7 +56,9 @@ def fetch(url, name, no_cache=False, ttl=CACHE_TTL):
 
 
 def rsc_payload(html):
-    chunks = re.findall(r'self\.__next_f\.push\(\[1,(".*?")\]\)</script>', html, re.S)
+    chunks = re.findall(
+        r'self\.__next_f\.push\(\[1,(".*?")\]\)</script>', html, re.DOTALL
+    )
     out = []
     for c in chunks:
         try:
@@ -102,7 +104,7 @@ def enclosing_object(s, pos):
             elif ch == "}":
                 depth -= 1
                 if depth == 0:
-                    return s[start:j + 1]
+                    return s[start : j + 1]
         j += 1
     return None
 
@@ -117,17 +119,25 @@ def records(payload, key):
             rec = json.loads(blob)
         except ValueError:
             continue
-        if rec.get("slug"):
-            out.setdefault(rec["slug"], rec)
+        identity = rec.get("id") or rec.get("slug")
+        if identity:
+            out.setdefault(identity, rec)
     return out
 
 
 def aa_models(no_cache=False):
-    board = records(rsc_payload(fetch(AA_URL, "aa-leaderboard.html", no_cache)),
-                    "intelligenceIndex")
-    detail = records(rsc_payload(fetch(AA_DETAIL_URL, "aa-models.html", no_cache)),
-                     "intelligenceIndexOutputTokensPerTask")
-    return [{**rec, **detail.get(slug, {})} for slug, rec in board.items()]
+    board = records(
+        rsc_payload(fetch(AA_URL, "aa-leaderboard.html", no_cache)), "intelligenceIndex"
+    )
+    detail = records(
+        rsc_payload(fetch(AA_DETAIL_URL, "aa-models.html", no_cache)),
+        "intelligenceIndexOutputTokensPerTask",
+    )
+    if not board or not detail:
+        raise ValueError(
+            "Artificial Analysis records missing; inspect the cached RSC payloads"
+        )
+    return [{**rec, **detail.get(identity, {})} for identity, rec in board.items()]
 
 
 def norm(s):
@@ -146,7 +156,7 @@ def or_index(no_cache=False):
         # ":free" / ":batch" style suffixes are separate SKUs; prefer the bare id.
         if ":" in mid or mid.startswith("~"):
             continue
-        name = (m.get("name") or "")
+        name = m.get("name") or ""
         bare = name.split(":", 1)[1] if ":" in name else name
         exact.setdefault(norm(bare), mid)
         exact.setdefault(norm(mid.split("/", 1)[-1]), mid)
@@ -155,10 +165,13 @@ def or_index(no_cache=False):
 
 
 def resolve(rec, idx):
-    rel = (rec.get("release") or {})
-    cands = [rel.get("name"),
-             re.sub(r"\s*\([^)]*\)\s*$", "", rec.get("name") or ""),
-             rec.get("slug"), rel.get("slug")]
+    rel = rec.get("release") or {}
+    cands = [
+        rel.get("name"),
+        re.sub(r"\s*\([^)]*\)\s*$", "", rec.get("name") or ""),
+        rec.get("slug"),
+        rel.get("slug"),
+    ]
 
     for c in cands:
         hit = idx["exact"].get(norm(c))
@@ -193,11 +206,11 @@ def resolve(rec, idx):
 def cost_per_task(rec):
     v = rec.get("intelligenceIndexCostPerTask")
     if isinstance(v, dict):
-        return (v.get("cost") or {}).get("total")
+        return (v.get("cost") or v).get("total")
     return v
 
 
-EFFORT_RE = re.compile(r"\b(minimal|low|medium|high|xhigh|max)\b", re.I)
+EFFORT_RE = re.compile(r"\b(minimal|low|medium|high|xhigh|max)\b", re.IGNORECASE)
 
 
 def effort_of(rec):
@@ -211,11 +224,12 @@ def effort_of(rec):
     return hit.group(1).lower() if hit else None
 
 
-def flatten(rec, idx):
+def flatten(rec, idx=None):
     creator = rec.get("creator") or {}
     return {
         "name": rec.get("name"),
         "release": (rec.get("release") or {}).get("name"),
+        "release_slug": (rec.get("release") or {}).get("slug"),
         "creator": creator.get("slug") or norm(rec.get("modelCreatorName")),
         "creator_name": creator.get("name") or rec.get("modelCreatorName"),
         "effort": effort_of(rec),
@@ -226,21 +240,25 @@ def flatten(rec, idx):
         "context": rec.get("contextWindowTokens"),
         "open_weights": rec.get("isOpenWeights"),
         "deprecated": bool(rec.get("deprecated")),
-        "aa_url": "https://artificialanalysis.ai/models/" + (rec.get("slug") or ""),
-        "openrouter_id": resolve(rec, idx),
+        "aa_url": "https://artificialanalysis.ai/models/" + rec["slug"]
+        if rec.get("slug")
+        else AA_URL,
+        "openrouter_id": resolve(rec, idx) if idx is not None else None,
     }
 
 
-def eligible(m, max_in=MAX_PRICE_IN, max_out=MAX_PRICE_OUT):
+def eligible(m, max_in=MAX_PRICE_IN, max_out=MAX_PRICE_OUT, ladder="openrouter"):
     """Reasons this model cannot be picked, or [] if it can."""
     why = []
-    if (m["price_in"] or 0) > max_in or (m["price_out"] or 0) > max_out:
+    if ladder == "openrouter" and (
+        (m["price_in"] or 0) > max_in or (m["price_out"] or 0) > max_out
+    ):
         why.append(f"over price cap (${max_in:g}/M in, ${max_out:g}/M out)")
     if m["creator"] in BANNED_CREATORS or BANNED_NAME_RE.search(m["name"] or ""):
         why.append("grok/xai excluded")
     if m["deprecated"]:
         why.append("deprecated")
-    if not m["openrouter_id"]:
+    if ladder == "openrouter" and not m["openrouter_id"]:
         why.append("no OpenRouter id")
     if not m["intelligence"] or not m["cost_per_task"]:
         why.append("missing intelligence index or cost")
@@ -251,7 +269,7 @@ def pareto(models):
     """Frontier on (cost per task ascending, intelligence index strictly increasing)."""
     front = []
     best = -1.0
-    for m in sorted(models, key=lambda x: x["cost_per_task"]):
+    for m in sorted(models, key=lambda x: (x["cost_per_task"], -x["intelligence"])):
         if m["intelligence"] > best:
             front.append(m)
             best = m["intelligence"]
@@ -260,7 +278,7 @@ def pareto(models):
 
 def marginals(front):
     out = []
-    for a, b in zip(front, front[1:]):
+    for a, b in itertools.pairwise(front):
         dc = b["cost_per_task"] - a["cost_per_task"]
         da = b["intelligence"] - a["intelligence"]
         out.append((a, b, dc / da if da else float("inf")))
@@ -271,86 +289,131 @@ def num(v, width, places):
     return f"{v:{width}.{places}f}" if v is not None else f"{'-':>{width}}"
 
 
-def fmt_table(models, front_ids):
-    hdr = (f"{'model':38} {'creator':12} {'eff':5} {'intel':>6} "
-           f"{'$/task':>7} {'in$':>6} {'out$':>6} {'ctx':>7}  openrouter id")
+def fmt_table(models, front_ids, ladder="openrouter"):
+    identity_label = "openrouter id" if ladder == "openrouter" else "AA release"
+    hdr = (
+        f"{'model':38} {'creator':12} {'eff':5} {'intel':>6} "
+        f"{'$/task':>7} {'in$':>6} {'out$':>6} {'ctx':>7}  {identity_label}"
+    )
     lines = [hdr, "-" * len(hdr)]
     for m in models:
         mark = "*" if id(m) in front_ids else " "
         ctx = m["context"] or 0
+        identity = m["openrouter_id"] if ladder == "openrouter" else m["release_slug"]
         lines.append(
             f"{mark}{str(m['name'])[:36]:37} {str(m['creator'])[:11]:12} "
             f"{str(m['effort'] or '-')[:5]:5} "
             f"{num(m['intelligence'], 6, 1)} {num(m['cost_per_task'], 7, 3)} "
             f"{(m['price_in'] or 0):6.2f} {(m['price_out'] or 0):6.2f} "
-            f"{ctx // 1000:6d}k  {m['openrouter_id']}")
+            f"{ctx // 1000:6d}k  {identity}"
+        )
     return "\n".join(lines)
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     ap.add_argument("--no-cache", action="store_true", help="bypass the 6h fetch cache")
-    ap.add_argument("--all", action="store_true",
-                    help="include excluded models in the table")
-    ap.add_argument("--max-price-in", type=float, default=MAX_PRICE_IN,
-                    help="USD per 1M input tokens (default %(default)s)")
-    ap.add_argument("--max-price-out", type=float, default=MAX_PRICE_OUT,
-                    help="USD per 1M output tokens (default %(default)s)")
+    ap.add_argument(
+        "--ladder",
+        choices=("openrouter", "anthropic", "openai"),
+        default="openrouter",
+        help="native ladders rank one lab without OpenRouter resolution or token-price caps",
+    )
+    ap.add_argument(
+        "--all", action="store_true", help="include excluded models in the table"
+    )
+    ap.add_argument(
+        "--max-price-in",
+        type=float,
+        default=MAX_PRICE_IN,
+        help="USD per 1M input tokens (default %(default)s)",
+    )
+    ap.add_argument(
+        "--max-price-out",
+        type=float,
+        default=MAX_PRICE_OUT,
+        help="USD per 1M output tokens (default %(default)s)",
+    )
     args = ap.parse_args()
 
-    idx = or_index(args.no_cache)
+    idx = or_index(args.no_cache) if args.ladder == "openrouter" else None
     raw = [flatten(r, idx) for r in aa_models(args.no_cache)]
+    if args.ladder != "openrouter":
+        raw = [m for m in raw if m["creator"] == args.ladder]
+    if not raw:
+        ap.error(
+            "no models found for this ladder; inspect the cached Artificial Analysis payloads"
+        )
 
     ok, excluded = [], []
     for m in raw:
-        why = eligible(m, args.max_price_in, args.max_price_out)
+        why = eligible(m, args.max_price_in, args.max_price_out, args.ladder)
         if why:
             m["excluded_because"] = why
             excluded.append(m)
         else:
             ok.append(m)
     ok.sort(key=lambda m: -m["intelligence"])
+    if not ok:
+        ap.error("no scored, priced candidates; inspect the data and exclusion rules")
 
     front = pareto(ok)
     front_ids = {id(m) for m in front}
     marg = marginals(front)
 
     if args.json:
-        json.dump({
-            "candidates": ok,
-            "excluded": excluded,
-            "frontier": [m["name"] for m in front],
-            "frontier_marginal_cost_per_intelligence_point": [
-                {"from": a["name"], "to": b["name"], "usd_per_point": r}
-                for a, b, r in marg],
-            "big_labs": sorted(BIG_LABS),
-        }, sys.stdout, indent=1)
+        json.dump(
+            {
+                "ladder": args.ladder,
+                "candidates": ok,
+                "excluded": excluded,
+                "frontier": [m["name"] for m in front],
+                "frontier_marginal_cost_per_intelligence_point": [
+                    {"from": a["name"], "to": b["name"], "usd_per_point": r}
+                    for a, b, r in marg
+                ],
+                "big_labs": sorted(BIG_LABS),
+            },
+            sys.stdout,
+            indent=1,
+        )
         print()
         return
 
     print(f"{len(ok)} selectable models  ({len(excluded)} excluded)")
     print("* = on the cost/intelligence Pareto frontier\n")
-    print(fmt_table(ok if not args.all else ok + excluded, front_ids))
+    print(fmt_table(ok if not args.all else ok + excluded, front_ids, args.ladder))
 
     print("\nFrontier, cheapest first — marginal cost per intelligence index point:")
     for a, b, rate in marg:
-        print(f"  {a['name'][:34]:35} -> {b['name'][:34]:35} "
-              f"+{b['intelligence'] - a['intelligence']:5.1f} pts for "
-              f"+${b['cost_per_task'] - a['cost_per_task']:.3f}  = ${rate:8.3f}/pt")
+        print(
+            f"  {a['name'][:34]:35} -> {b['name'][:34]:35} "
+            f"+{b['intelligence'] - a['intelligence']:5.1f} pts for "
+            f"+${b['cost_per_task'] - a['cost_per_task']:.3f}  = ${rate:8.3f}/pt"
+        )
     if marg:
         rates = sorted(r for *_, r in marg)
         median = rates[len(rates) // 2]
         cliffs = [(a, b, r) for a, b, r in marg if r > 5 * median]
         if cliffs:
-            print("\nCost cliffs (>5x median marginal rate) — do not buy past these:")
+            print(
+                "\nCost cliffs (>5x median marginal rate) — flag the premium before selecting:"
+            )
             for a, b, r in cliffs:
-                print(f"  after {a['name']}: {b['name']} costs ${r:.2f} per extra point")
+                print(
+                    f"  after {a['name']}: {b['name']} costs ${r:.2f} per extra point"
+                )
 
     if excluded and not args.all:
-        unscored = [m for m in excluded if not m["intelligence"] or not m["cost_per_task"]]
-        print(f"\nExcluded ({len(unscored)} more have no index score or cost per task):")
+        unscored = [
+            m for m in excluded if not m["intelligence"] or not m["cost_per_task"]
+        ]
+        print(
+            f"\nExcluded ({len(unscored)} more have no index score or cost per task):"
+        )
         for m in excluded:
             if m not in unscored:
                 print(f"  {str(m['name'])[:44]:45} {', '.join(m['excluded_because'])}")

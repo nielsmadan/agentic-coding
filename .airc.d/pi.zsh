@@ -3,7 +3,15 @@ pi() { AGENT_HARNESS=pi _agent_sandboxed pi-local pi "$@"; }
 
 # Subscription-backed Codex model; plain `pi` keeps the OpenRouter default.
 # --provider stops a missing ChatGPT login from resolving the id on OpenRouter.
-pix() { pi --provider openai --model gpt-6-astra:high "$@"; }
+pix() {
+  local preset
+  if preset=$(_agent_model_tier openai "${1:-}"); then
+    shift
+  else
+    preset=gpt-6-astra:high
+  fi
+  pi --provider openai --model "$preset" "$@"
+}
 
 # Claude API credits from the Max plan. The key is stored under another name so
 # Claude Code never picks it up; map it only inside the sandboxed pi process.
