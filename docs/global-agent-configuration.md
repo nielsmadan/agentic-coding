@@ -41,6 +41,14 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
 - **Codemode** — `loadout/settings/pi.json` adds `+codemode` to `defaultTools`, keeping regular
   tools available alongside JavaScript tool orchestration. Native MCP tools use codemode exposure
   by default; `pi-mcp-adapter` is not loaded.
+- **Code intelligence** — `@mrclrchtr/supi-code-intelligence` provides definitions, references,
+  hover, symbols, diagnostics, and preview/apply semantic refactors through `code_*` tools. It
+  also bundles AST inspection. The package is pinned to 12.0.0 in `loadout/plugins/pi.json`;
+  test later versions before changing the pin. Language-server binaries must be installed on
+  PATH separately. `loadout/module-config/pi/supi/config.json` disables the automatic repository
+  overview. Project-specific server overrides belong in `.pi/supi/config.json` in trusted projects.
+- **Planning** — use `/skill:plan` for our plan/approval/implementation workflow. The plan-mode
+  extension is not loaded, so planning relies on the skill's instructions rather than tool restrictions.
 - **Model picker** — `loadout/settings/pi.json` sets `enabledModels`, a glob allowlist
   (`provider/id`, minimatch, same format as Pi's `--models` flag) that scopes the `/model` default
   view and Ctrl+P cycling. It does **not** delete models from the "show all" tab. To change which
@@ -62,4 +70,6 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
 **`~/.pi/agent/settings.json` is generated, not symlinked** — that changed when pi settings moved
 into loadout. Pi still writes `lastChangelogVersion` and any `/settings` / `/model` change back into
 it at runtime, but those writes now land in a generated file and the next `loadout sync` discards
-them. A `/model` change you want to keep belongs in `loadout/settings/pi.json`.
+configuration changes. A `/model` change you want to keep belongs in `loadout/settings/pi.json`.
+Loadout preserves Pi's `lastChangelogVersion`, `extensionChangelogVersions`, and `deviceId` runtime
+metadata across syncs.

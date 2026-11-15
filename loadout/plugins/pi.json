@@ -3,11 +3,8 @@
     "pi-subagents": {
       "source": "npm:pi-subagents"
     },
-    "pi-plan-mode": {
-      "source": "npm:@narumitw/pi-plan-mode"
-    },
-    "pi-lsp": {
-      "source": "npm:@narumitw/pi-lsp"
+    "supi-code-intelligence": {
+      "source": "npm:@mrclrchtr/supi-code-intelligence@12.0.0"
     },
     "pi-statusline": {
       "source": "npm:@narumitw/pi-statusline"
