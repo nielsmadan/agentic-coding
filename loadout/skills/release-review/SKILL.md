@@ -12,6 +12,24 @@ Bring an existing product to a reviewed, consistent, documented and exercised re
 The user rules on every change. Implementation runs in parallel sessions or in longshot, not in
 the reviewing conversation.
 
+## Progress line
+
+Start every user-facing review reply with one compact progress line, including answers to
+side questions, hand-offs and resumed sessions. Derive it from `programme.md` and `changes.md`:
+
+`Review: P3/8 · Surface review · 3/10 units ruled · init: item 3/7 · next: quality review`
+
+Show the phase number and name, completed/total work for that phase, the current focus, and
+the next milestone. During P3, count units whose surface rulings are complete (including those
+already handed off, implemented or verified); show item position only when the unit's item
+list is known. In other phases use their actual checklist, areas or scenarios. Before the
+inventory exists, say `Review: framing and baseline · scope being counted · next: product map`.
+If a total is unknown, say so rather than estimating it. Phase numbers show sequence, not a
+percentage of effort or time. Update totals when scope changes and briefly explain the change.
+Keep implementation/verification counts distinct from review counts when reporting them; name
+any blocker in the line. On completion, state whether the release is published or ready for
+the user to publish. Keep this to one line; expand the phases table only when useful or asked.
+
 ## Review grading
 
 Use only these finding priorities, in descending order:
@@ -122,7 +140,7 @@ It catches inconsistencies between items that were each fine on their own.
 
 Every item is presented the same way:
 
-1. **Position line first:** `P3 · init (4/10) · item 3 of 7 · ledger: 21 ruled, 6 handed off, 4 implemented`.
+1. **Progress line first**, using the format above.
 2. **Scenario.** Describe a concrete user: what they are setting up, their starting state, the
    exact commands they run, what happens today, and what should happen. Never describe a
    problem only in terms of internal mechanisms ("the resolver refuses a routed project"). If
