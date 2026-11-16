@@ -5,6 +5,7 @@
   "approvals_reviewer": "auto_review",
   "sandbox_mode": "workspace-write",
   "check_for_update_on_startup": false,
+  "mcp_oauth_credentials_store": "file",
   "agents": {
     "max_concurrent_threads_per_session": 16
   },
