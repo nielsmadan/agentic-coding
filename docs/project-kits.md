@@ -37,6 +37,11 @@ window, menu, keyboard, and document interaction guidance. Use `macos` for a nat
 Mac app, or `swiftui` for other Apple-platform SwiftUI apps. Neither requires `mobile` or VM
 tooling; `macos-vm` remains a separate optional machine-specific kit.
 
+`macos-vm.toml` is for projects that test in a disposable Tart guest. Its instructions tell
+agents to clone the shared `base-macos-27` image per run, respect the two-guest limit, and
+delete the clone afterwards. Its `macos-vm` skill owns the VM lifecycle, guest control and the
+iTerm2 helper. `references/base-image.md` records what the base contains and how it was built.
+
 `backend.toml` is for API services with a compose-run database. It selects guidance on local
 services (per-checkout ports through splashdown, teardown after integration runs), migrations
 and seeds, staying off deployed environments, and keeping a committed OpenAPI spec or client

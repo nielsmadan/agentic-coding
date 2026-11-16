@@ -3,7 +3,8 @@ import re
 import subprocess
 import sys
 
-DISCOVER = r"""for python in "$HOME"/Library/Application\ Support/iTerm2/iterm2env*/versions/*/bin/python3; do
+DISCOVER = r"""for python in "$HOME"/Library/Application\ Support/iTerm2/uv/venvs/*/bin/python3 \
+    "$HOME"/Library/Application\ Support/iTerm2/iterm2env*/versions/*/bin/python3; do
   if [ -x "$python" ]; then printf '%s\n' "$python"; fi
 done"""
 
@@ -16,7 +17,7 @@ import iterm2.auth
 
 async def main():
     credentials = iterm2.auth.request_cookie_and_key(
-        False, "macOS VM test", iterm2.auth.AppKitApplescriptRunner)
+        False, "macOS VM test", iterm2.auth.CommandLineApplescriptRunner)
     os.environ["ITERM2_COOKIE"], os.environ["ITERM2_KEY"] = credentials.split(" ")
     connection = await asyncio.wait_for(iterm2.Connection.async_create(), 10)
     app = await iterm2.async_get_app(connection)

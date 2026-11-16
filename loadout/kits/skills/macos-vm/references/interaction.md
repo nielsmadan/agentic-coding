@@ -1,13 +1,14 @@
 # Guest interaction
 
-These mechanisms were exercised on 2026-09-18 with Tart 2.37.0, macOS 15.7.7, iTerm2 3.6.11,
-and its managed Python 3.14.0. Recheck when those dependencies change.
+These mechanisms were exercised on 2026-11-13 with Tart 2.41.1, macOS 27.2, iTerm2 3.7.7 and
+its uv-managed Python 3.12, in clones of the shared base. Recheck when those dependencies change.
 
 ## iTerm2 terminal input
 
-Install iTerm2 in the guest, use **Scripts → Manage → Install Python Runtime**, and enable
-**Settings → General → Magic → Enable Python API**. Open iTerm2 before connecting. Allow its
-normal API/Automation prompts in the guest. Host iTerm2 credentials are not needed.
+The shared base already has iTerm2, its Python runtime, Enable Python API, and the Automation
+grant the helper needs. In another guest, install iTerm2, use **Scripts → Manage → Install
+Python Runtime**, enable **Settings → General → Magic → Enable Python API**, and allow the
+Automation prompt. Open iTerm2 before connecting. Host iTerm2 credentials are not needed.
 
 Set `vm_skill` to the directory containing this skill's `SKILL.md` (use its loaded source path),
 and `vm` to the current guest. The host needs Python 3; the helper finds a guest-managed
@@ -32,18 +33,21 @@ Asynchronous commands need a later screen/state read; successful input only prov
 API accepted it, not that the command completed.
 
 The helper requests credentials inside the guest through
-`iterm2.auth.request_cookie_and_key(..., AppKitApplescriptRunner)`, sets them only in that Python
+`iterm2.auth.request_cookie_and_key(..., CommandLineApplescriptRunner)`, which asks through
+`/usr/bin/osascript`, sets them only in that Python
 process, and uses `Connection.async_create()`. It never serializes or prints the credentials.
 It can trigger a guest API authorization dialog; approve it there and retry if it times out.
 Treat screen output as private until reviewed, especially during authentication.
 
 ## Native UI control
 
-Probe the permission-dependent operation, not merely whether `osascript` exists:
+Probe the permission-dependent operation, not merely whether `osascript` exists. Do not use
+`UI elements enabled`: it returned `false` in the macOS 27.2 base while keystrokes and clicks
+worked.
 
 ```sh
 tart exec -i "$vm" /usr/bin/osascript - <<'APPLESCRIPT'
-tell application "System Events" to return UI elements enabled
+tell application "System Events" to get name of every application process whose background only is false
 APPLESCRIPT
 ```
 
@@ -69,6 +73,15 @@ tart exec -i "$vm" /usr/bin/osascript - <<'APPLESCRIPT'
 tell application "System Events" to tell process "Example" to set frontmost to true
 tell application "System Events" to key code 53
 APPLESCRIPT
+```
+
+For mouse input, use `cliclick` (installed in the shared base) with coordinates in points from
+a current screenshot. The base's display is 1024×768 points, and `screencapture` writes
+2048×1536 pixels.
+
+```sh
+tart exec "$vm" /opt/homebrew/bin/cliclick c:512,384    # click; m: moves, dc: double-clicks
+tart exec "$vm" /opt/homebrew/bin/cliclick p            # print the pointer position
 ```
 
 Automation (controlling another app), Accessibility (UI inspection/input), and Screen Recording

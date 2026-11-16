@@ -1,6 +1,6 @@
 ---
 name: macos-vm
-description: Provision and control a local Tart macOS VM for clean-install, release, integration, or developer-tool testing. Use for "test in the VM", "Tart", guest clipboard/input problems, or before pulling a macOS image. Reuse an existing local base; keep application-specific assertions in the project's test procedure.
+description: Provision and control a disposable Tart macOS VM, cloned from the shared base image, for clean-install, release, integration, or developer-tool testing. Use for "test in the VM", "Tart", guest clipboard/input problems, or before pulling a macOS image. Keep application-specific assertions in the project's test procedure.
 effort: low
 ---
 
@@ -16,12 +16,17 @@ UI selectors, and assertions.
 
 ```sh
 tart list
-sysctl -n kern.memorystatus_vm_pressure_level
+memory_pressure | tail -1
 ```
 
-Reuse an existing local base. Do not pull an image unless requested; an OCI name absent from
-`tart list` may download tens of GB. Run one guest at a time, at memory pressure `1` (normal);
-wait at `2` or `4`. APFS clones initially share disk blocks but grow with writes.
+Start from the shared base, `base-macos-27`. [The base image reference](references/base-image.md)
+lists what it contains and which permissions it already grants. Never boot or change a
+`base-*` VM, and do not pull an image unless the user asks: an OCI name absent from `tart list`
+may download tens of GB. The host runs at most two macOS guests in total, across all sessions.
+A third fails at start. If two are already `running`, wait or tell the user. Run one guest per
+task. Each guest holds its configured memory (8 GB by default); do not start one when the
+system-wide free percentage is below about 20%. APFS clones share disk blocks with their source
+and grow only with the guest's writes.
 
 Distinguish a clean base from a prepared, authenticated guest. For repeat tests, shut down the
 prepared guest before cloning it; retain the original and its login. Record this difference
@@ -29,8 +34,9 @@ instead of calling the clone a fresh install. Credentials remain private in the 
 
 ### 2. Clone and boot
 
-Set `base` to the exact existing name from `tart list`; choose a new disposable `vm` name.
-Set `shared` to an absolute staging directory in the workspace.
+Set `base` to `base-macos-27`, or to a prepared guest the user named. Name the clone
+`<project>-<purpose>-<YYYYmmdd-HHMMSS>`. Set `shared` to an absolute staging directory in the
+workspace.
 
 ```sh
 env TART_NO_AUTO_PRUNE=1 tart clone "$base" "$vm"
@@ -69,14 +75,16 @@ APPLESCRIPT
 1. Use guest CLI commands for installation, files, processes, and diagnostics.
 2. Use an application's API for structured input and observations. For iTerm2, use
    [the terminal helper](references/interaction.md#iterm2-terminal-input).
-3. Use guest AppleScript/System Events for native UI and keys when permissions allow it;
-   see [native UI control](references/interaction.md#native-ui-control).
+3. Use guest AppleScript/System Events for native UI and keys, and `cliclick` for mouse
+   input; see [native UI control](references/interaction.md#native-ui-control).
 4. Use visible guest interaction or [VNC](references/interaction.md#vnc-fallback) when
    Accessibility/Automation is unavailable, or for permission dialogs.
 
-System Events is not universally broken: it timed out in a stock guest, but UI reads and
-keyboard input worked in the prepared macOS 15.7.7 guest on 2026-09-18 with Tart 2.37.0.
-Do not rewrite TCC databases or disable SIP. Grant needed permissions through the guest's
+In a clone of the shared base, System Events, `cliclick` and `screencapture` work through
+`tart exec` with no prompt. Use them rather than compiling or installing your own input
+helper, which would need its own grants. A `tart exec` command that hangs usually means a
+consent dialog is waiting in the guest: take a VNC screenshot before assuming a transport
+failure. Do not rewrite TCC databases or disable SIP. Grant needed permissions through the guest's
 normal macOS UI, then repeat the actual operation.
 
 ### 5. Capture evidence and clean up
