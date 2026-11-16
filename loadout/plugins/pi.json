@@ -7,7 +7,8 @@
       "source": "npm:@mrclrchtr/supi-code-intelligence@12.0.0"
     },
     "pi-statusline": {
-      "source": "npm:@narumitw/pi-statusline"
+      "source": "npm:@narumitw/pi-statusline",
+      "enabled": false
     },
     "nono": {
       "source": "~/.config/nono/packages/nolabs-ai/pi"

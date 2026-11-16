@@ -372,6 +372,13 @@ A mod with a `pi/` folder is also a pi extension. `sync_mods` copies its `core/`
 
 **`dev-phase`** draws a one-line checklist, `✗ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour`, above the prompt (above the editor on pi) and names the session after the feature it is working on, or after the task when the work is not software, such as writing or research. A check ticks when the main agent runs the skill of that name, typed or through the Skill tool. A subagent's run does not count, and a turn that ends interrupted or in an error takes back the ticks it set. Only the idle classifier unsets a check: 30 s after an answered turn that edited files, committed, ran checks, or ran a checklist or planning skill, a fork of the session (on pi, an OpenRouter model reading a transcript digest) names the feature and lists the checks that went stale, either through substantial changes after the check's last run or through a move to another feature. A model judges "substantial" because the test is impact rather than line count, matching `plan`'s rule for repeating QA. The verdict for the turn that ran a skill never unsets that skill's own check. `findings-addressed` has no skill: a code-review run crosses it, it goes stale with code-review, and the same verdict ticks it once every finding of the latest review is fixed, or rejected or deferred with a reason (a review with no findings counts). While a review's findings are open, every answered turn is classified, not only one with edits, so a turn that only rejects findings can tick it. The mod keeps its old name because its stored topics (the Claude mod store) and pi session entries (`customType` `dev-phase`) are keyed by it; stored phase records from before the checklist read as all crossed and keep their feature. Every session already loads the installed copy, so to try the working copy alone, point the variable at it for one session: `claude --settings '{"env":{"CLAUDE_CODE_PLUGIN_DIRS":"<repo>/mods/dev-phase"}}'`.
 
+Pi's footer is `loadout/module-config/pi/extensions/statusline/index.ts`, deployed by
+`loadout sync --global` and loaded automatically from the agent's `extensions/`
+directory. It uses Claude's sandbox/raw icons, model and effort, context bar and
+colors on one row; other extension statuses fit inline, with lower-priority fields
+dropped on narrow terminals. The npm `pi-statusline` plugin is disabled in
+`loadout/plugins/pi.json`. Reload an existing Pi session with `/reload`.
+
 ## Hooks
 
 Hook **scripts** live in `loadout/module-config/claude/hooks/`; their **wiring** is a separate slice, `loadout/hooks/claude.json`. Neither belongs in `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:
