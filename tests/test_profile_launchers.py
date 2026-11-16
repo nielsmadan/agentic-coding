@@ -29,10 +29,12 @@ class ProfileLaunchersTest(unittest.TestCase):
         )
 
     def test_launchers_keep_arguments_without_nono(self):
+        standalone = {"opencode": ["--standalone"]}
         for agent in ("claude", "codex", "opencode", "pi"):
             with self.subTest(agent=agent):
                 result = self.run_shell(f'''
 source .airc.d/05-sandbox.zsh
+source .airc.d/06-iterm-agent.zsh
 source .airc.d/{agent}.zsh
 _agent_raw_dir() {{ return 1; }}
 sops-exec() {{ printf '%s\\n' "$@"; }}
@@ -40,11 +42,12 @@ sops-exec() {{ printf '%s\\n' "$@"; }}
 ''')
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout.splitlines(),
-                                 [agent, "--version", "two words"])
+                                 [agent, *standalone.get(agent, []), "--version", "two words"])
 
     def test_clor_launches_claude_with_openrouter_settings(self):
         result = self.run_shell('''
 source .airc.d/05-sandbox.zsh
+source .airc.d/06-iterm-agent.zsh
 source .airc.d/claude.zsh
 sops() { zsh -f -c "function claude { printf '%s\\n' \\"\\$ANTHROPIC_BASE_URL\\" \\"\\$@\\"; }; $3"; }
 clor --print 'two words'
