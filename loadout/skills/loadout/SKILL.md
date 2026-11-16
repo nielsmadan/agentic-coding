@@ -1,62 +1,76 @@
 ---
 name: loadout
-description: Use when changing AI coding-agent configuration in a repository or on this machine, especially where loadout may own generated harness files.
+description: Use when adopting existing harness configuration into Loadout, setting up Loadout in a project or global source, or changing Claude, Codex, Droid, OpenCode or Pi configuration. Handles onboarding, permissions, instructions, skills, agents (subagents), settings, hooks, plugins and MCP through their authoritative sources.
 ---
 
 # Loadout
 
-Change loadout's authoritative source, never a generated Claude, Codex, OpenCode, or Pi file.
-Read [the configuration reference](references/configuration.md) before choosing a source.
+Edit the declared source for each configured consumer. Generated harness files are outputs.
 
 ## Instructions
 
-1. Resolve the scope. No flag means `--personal` for the current project; the alternatives are
-   `--project` and `--global`. Accept at most one scope.
-2. Locate the project root or machine config, then read the selected loadout config and relevant
-   fragments. For `--global`, resolve the actual `XDG_CONFIG_HOME` environment value before
-   inspecting a machine config: use `$XDG_CONFIG_HOME/loadout/config.toml` when it is non-empty,
-   otherwise use `~/.config/loadout/config.toml`; never probe both. If that scope is not
-   initialized, report the matching `loadout init` command and make no changes.
-3. Identify configured agents from the selected source. A generic request applies to every
-   configured agent with a sound mapping; an agent-specific request applies only to that agent.
-   Treat MCP server definitions as `mcp`; tool approval for those servers is the separate
-   `mcp-permissions` artifact.
-4. Choose the narrowest existing authoritative fragment. Preserve comments, ordering, naming
-   conventions, and unrelated content. Use `loadout kit add <name> --linked` or
-   `loadout kit add <name> --vendored` when it exactly represents the request.
-5. Run `loadout sync --root <repo>` for personal/project scope. For global scope, run
-   `loadout sync --global --profile <name>` when the request explicitly names a profile;
-   otherwise run `loadout sync --global` for the active profile.
-6. Report the source files changed, agents reached, unsupported agents, and sync result.
-
-## Ask before writing
-
-- Personal scope cannot represent the requested artifact: stop and end with one direct question
-  asking whether to use the applicable project or global scope. Never widen personal
-  configuration into committed or machine-wide configuration without confirmation.
-- A non-default global profile is active and the user did not name a profile: ask whether the
-  change belongs only to that profile or to the default inherited configuration.
-- Competing mappings would materially change behavior, or an agent-specific change would alter a
-  shared fragment consumed by other agents: show the outcomes and ask.
-
-Partial agent support is not ambiguous: update supported configured agents and report exclusions.
-Global settings have sound mappings for Claude and OpenCode through `settings`, and for Codex
-through its `defaults` slice. Report configured Pi agents as unsupported rather than inventing or
-editing a harness-owned settings file.
-If sync refuses a generated file changed outside loadout, report the conflict and leave the source
-edit visible. Never use `--force` unless the user explicitly requests it.
+1. For setup or migration, read [onboarding](references/onboarding.md). Preview with
+   `loadout init project --dry-run --json` or `loadout init global --dry-run --json`, resolve
+   harnesses and ownership, then apply the approved
+   plan. Never execute discovered scripts or installers.
+2. For ordinary changes, read [configuration routing](references/configuration.md). Default to
+   personal configuration for the current project; explicit project/global scope takes precedence.
+   Locate the existing config and follow its declared producers: the manifest's harness blocks and
+   the source slices they name. Ask before widening scope or changing a source shared by other
+   consumers.
+   A repository that has not adopted loadout, where the user wants personal configuration, is
+   covered by a stealth source if one targets it: edit the stealth source's files and sync with
+   `loadout sync --stealth <name>`, never `init project` or a new `loadout/` there; see the
+   stealth row of the scope table and “Stealth sources” in the same reference.
+3. Apply a generic request to configured harnesses with a sound mapping. Report unsupported consumers.
+   Keep MCP server definitions separate from MCP tool-approval policy. Preserve ordering, comments,
+   private sources and unrelated fields; never create overlapping producers.
+4. Sync the edited source: `loadout sync --root <repo>` for project/personal changes;
+   `loadout sync --global` for the active global profile, or
+   `loadout sync --global --profile <name>` when explicitly selected; `loadout sync --stealth <name>`
+   for a stealth source. Rendered files are output: edit the source folder. Ask whether an unnamed change
+   under a non-default profile belongs to that profile or its inherited default.
+5. Report source files changed, harnesses reached, unsupported consumers and the sync result.
 
 ## Examples
 
-- “Allow `just test` for me” edits `loadout/permissions.local.toml` and syncs the project.
-- “Add this instruction to the project” edits a committed project instruction fragment and syncs.
-- “Change the global OpenCode model” edits the selected global settings fragment and syncs the
-  active global profile.
+- “Set up Loadout here” previews discovery, resolves the scope and configured harnesses, and shows
+  writes and removals before applying. Success leaves editable, uncommitted source.
+- “Allow `just test` for me” edits the existing personal permissions producer and syncs. If the
+  project has no personal producer, ask before changing committed ownership.
+- “Add my own MCP server for the work repositories” in a repository a stealth source targets edits the
+  stealth source's `mcp.toml` and runs `loadout sync --stealth <name>`; it does not touch the repository's
+  `.mcp.json` or `opencode.json`.
+- “Change the global Pi model” follows the settings fragment Pi's harness block names, edits its
+  `defaultModel` value and syncs the selected profile. Pi renders settings only when its block
+  also declares `plugins`.
 
 ## Troubleshooting
 
-- If the selected scope is unsupported, make no changes and ask about the narrowest supported
-  scope.
-- If global configuration is absent, report `loadout init --global` and stop.
-- If sync reports an externally modified output, preserve both the source edit and the output;
-  report the conflicting path instead of forcing the sync.
+- An unresolved preview needs an explicit scope, a harness choice, or a fix to the file it names;
+  `--yes` only approves a resolved plan. Retain unsupported inputs and report their paths.
+- A missing personal producer requires a scope decision. Do not silently edit shared source or
+  invent a second contributor claiming the same keys.
+- A change made outside loadout belongs in the source, not beside it. When sync refuses an output,
+  or `check` reports `hand-edited`, `owned-key`, `owned-key-removed`, `unknown`, `unmanaged`,
+  `unmanaged-link` or `unparsable`, follow
+  “Porting a change made outside loadout” in [configuration routing](references/configuration.md).
+  Run `sync --force` only after showing the diff and getting the user's approval; when sync cut a
+  diff short, read the complete one in the `sync-abort.diff` file it names. A file holding a
+  secret is never diffed: loadout names it and counts the lines that differ. Read the file on disk
+  and the source directly to see the change, or move the secret to an environment variable.
+- A `project.instructions` or `<harness>.instructions` note that the document repeats a heading,
+  or a `kit add` line naming a project skill the kit already supplies, marks guidance
+  held twice. Resolve it by “Guidance held twice” in
+  [configuration routing](references/configuration.md).
+- An init that lists `unadopted` items left copies that disagree across harnesses in place. Merge
+  them by “Resolving conflicting copies at init” in [onboarding](references/onboarding.md).
+- An init that lists `secrets` adopted them into the source as they were. Say the source's remote
+  must stay private and offer to move each into an environment variable, by “Secrets in the adopted
+  source” in [onboarding](references/onboarding.md).
+- A failed init has already put everything back. An init killed part way stops every later init
+  until it is put back, which needs the user at a terminal, as the onboarding reference describes.
+- In a linked git worktree of the registered global source, the checkout and merge hooks print
+  that nothing was synced: a worktree is not the registered folder, so it never renders global
+  scope. Edit and commit there as usual (its pre-commit check still runs), then sync from the
+  registered source once the change reaches it.

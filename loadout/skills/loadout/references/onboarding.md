@@ -1,0 +1,191 @@
+# Onboarding existing configuration
+
+Start with a read-only preview:
+
+```sh
+loadout init project --harness claude --harness codex --dry-run --json
+loadout init global /work/dotfiles --harness pi --dry-run --json
+```
+
+Scope is a subcommand: `init project` or `init global`. Global source selection defaults to cwd.
+`init project` exits 3 in a repository a stealth source has written into ("a stealth source writes personal files here"), and while any stealth record is unreadable or newer. Do not work around it: for personal configuration there, edit the stealth source (see “Stealth sources” in [configuration](configuration.md)); to adopt the repository, narrow the stealth source's `targets` so they no longer match it and run `loadout sync --stealth <name>` (a plain `loadout sync` inside the repository no longer reaches that stealth source), or run `loadout stealth remove <name>` when the user asks.
+Use a dedicated directory, never HOME or the filesystem
+root for a new repository. Without `--root`, project init resolves the enclosing Loadout/Git root
+from a nested directory; `--root` is used as given, so a monorepo folder such as `apps/web` becomes
+a project of its own. Configured roots establish harnesses; a shared AGENTS.md or installed binary does not.
+Repeat `--harness` when membership needs an explicit selection.
+
+Project init creates canonical sources for configuration with known project destinations. An empty
+project starts with `loadout/config.toml` and `loadout/permissions.toml`. Global init creates the
+canonical global slice sources it needs, subagents included. Command trees and unsupported
+harness-specific files remain where they are. Repeat init preserves existing source layouts.
+
+Init then renders, as the first sync. When the render matches the existing files under loadout's
+comparison it writes them and reports an exact reproduction; when it does not, the preview shows
+the diff and approval covers overwriting. Do not tell the user to run `sync` after init; run it
+after changing the source.
+
+After project init, offer a bundled kit: `loadout kit add frontend --vendored` (or
+`backend`), then `loadout sync`. These packaged kits work offline and provide short
+instruction seeds with empty categories, vendored with content-hash provenance. Global scope
+cannot activate them. Kit instructions, permissions, skills and MCP servers compose through
+the project's standard slices. Once a kit is added, compare its guidance with the project's
+own, as “Guidance held twice” in [configuration routing](configuration.md#guidance-held-twice)
+describes, and offer to delete what the project repeats.
+
+Init keeps a project's `.claude/settings.local.json` in place, and Claude still applies it. After
+init, offer to move the permissions it still needs into `loadout/permissions.local.toml`, ask
+about each entry that looks stale, and delete the file once the user agrees nothing in it is
+left to keep. Each verdict (`allow`, `ask`, `deny`) keeps its list:
+
+- `Bash(just test)`, a command with no wildcard, becomes the exact entry
+  `[shell] allow = ["=just test"]`.
+- `Bash(npm run:*)` becomes the prefix entry `"npm run"`, and `Bash(git log *)` stays the glob
+  `"git log *"`.
+- `mcp__gh__get_issue` becomes `[mcp] allow = ["gh/get_issue"]`.
+- Any other Claude tool rule, such as `Read(./docs/**)` or `WebFetch(domain:example.com)`, goes
+  to `[claude.extra] allow` or `deny` as written.
+- An `ask` rule for any other tool has no destination: `[claude.extra]` has no `ask`. Say so,
+  and leave it in `settings.local.json`, which then stays.
+
+`[shell]` and `[mcp]` entries are not Claude's alone: they render for every configured harness
+that can express them. An exact entry renders for Claude, OpenCode and Pi, while Codex and Droid
+leave an exact `allow` or `ask` to their own approval and treat an exact `deny` as a prefix. Tell
+the user which harnesses each moved rule now reaches. Loadout never gitignores
+`permissions.local.toml`, so before the first sync ask whether to list
+`/loadout/permissions.local.toml` in `.gitignore` or in `.git/info/exclude`, and add it there.
+
+Init installs no Git hooks. When the project or global source is in a Git repository, offer them
+separately, after init. Preview first with
+`loadout integrate git-hooks install --root <source-root> --dry-run`, adding `--regenerate` when
+the user wants the post-checkout and post-merge hooks too; install writes without asking, so show
+the preview and run the same command without `--dry-run` only once the user agrees. The
+pre-commit hook validates the staged source; the `--regenerate` hooks run guarded sync after a
+checkout or merge. A hook names no profile: each run resolves it as `sync` does. Read each line of
+the preview:
+
+- `install`: a new hook loadout writes. `managed`: already installed and current.
+- `occupied`: a hook loadout did not write, or one for another source. It stays untouched, and
+  the preview prints two lines to add to it by hand; show them to the user.
+- `stale`: a hook loadout wrote that is out of date; with `--regenerate` it shows as `update`
+  and is rewritten.
+- A `shared` hooks directory is common to every worktree of the repository. Install writes it as
+  usual, and one hook serves each worktree.
+- An `external` hooks directory, outside the repository or reached through a link (such as a
+  global `core.hooksPath`), gets nothing written. Install prints a block per hook, guarded to run
+  only in this repository, for the user to add by hand.
+
+A clone needs the same command. Kits must be vendored and staged, required dependencies must
+be in the repository, and optional private sources may be absent. A post-hook failure leaves Git's
+completed operation in place; resolve the reported output conflict and retry normal sync, without
+adding `--force`.
+
+Read the complete JSON `issues`, `notes`, candidates and dispositions. An incomplete preview exits
+2 and changes nothing. A permission rule init cannot carry into the source is an issue
+(`uncarried-rule`), not a note, and so is any other setting whose loss would change what the
+harness does (`uncarried-setting`), such as a server key, a header holding a reference or an
+`sse` server. Loadout 1.0 carries only Pi's shell and MCP rules, so a pi-permission-system key
+beyond them that changes what Pi allows, such as `"write": "deny"` or `"yoloMode": true`, is one
+too, and at project scope so is any top-level `"*"` and `yoloMode`, `piInfrastructureReadPaths`,
+`authorizerChain` or `shellTools` at any value; offer the two answers the issue names, removing those keys from that file or leaving Pi out
+of this init, and never edit the file without the user's say. A `source-refused` issue carries the refusal sync would give for the source init
+would write, such as two servers to rename; show it to the user as written. `notes` name what init changes or reports without refusing, such
+as comments a file will lose, an agent it does not adopt, or a harness that will now ask before
+shell commands because init seeded its catch-all; show every one to the user before applying, and
+offer to set `[shell] default` if they want another verdict. Prompts are available in an interactive terminal; JSON and dry-run never prompt.
+Init reads only the live deployment at each harness's known paths. A dotfiles copy in the
+selected directory is not read; if the user keeps one, install it first so the live deployment
+holds what they want adopted. Each refusal names the file to change; fix it on disk and run init
+again. Never edit a harness file just to make a refusal disappear without telling the user.
+
+Before applying, show scope, harnesses, authored sources, output destinations, retained/private
+entries, removals, and the generated files init will untrack (`untrack_paths`). Native document
+formatting may change as described in preview notes; opaque bytes and modes remain.
+
+Apply the same resolved arguments with `--yes` after approval, omitting `--dry-run`. Init first
+backs up every path it will touch to `$XDG_STATE_HOME/loadout/backups/`, then writes source and
+outputs and retires mapped originals. It commits nothing: in a project it only untracks the
+generated files it ignores, which leaves those removals staged, and it never creates a project
+repository. A new global
+source gets an uncommitted repository; offer the user the commit, never make it unasked.
+
+Global registration points `source` to the actual manifest directory. A conflicting registration
+requires `--registration replace` or `--registration keep`; neither resolves source-copy
+conflicts. Existing initialized sources are recognized
+and left as source; repeat init reports no migration. Registration can still be explicitly changed.
+Use normal check/sync for subsequent source edits.
+
+If init fails it puts every path back itself and deletes the backup (`"status": "restored"`,
+exit 1, with what it put back under `restored`); report the error. Ctrl-C does the same and exits
+130. Success deletes the backup too, so a finished adoption is undone through Git and the user's
+own copies, not by loadout. A `restored` init answers with `recommendation` and `install_command`,
+and so does an `incomplete` one unless every issue is a choice an option makes (`--harness`, a
+scope, `--registration`). They name this skill and `loadout integrate skill copy`, the command
+that copies it: you are already running it, so leave the command alone and work through the error
+or `issues` with the user.
+
+If putting everything back fails too, init answers `"status": "interrupted"` with exit 1 (130
+after Ctrl-C), the backup path and what to do, and the next init puts it back first. If an earlier
+init was killed, every later one exits 2 with `"status": "interrupted"` and the backup path, and
+changes nothing. Putting it back needs a terminal: ask the user to run
+`loadout init project` (or `init global`) there and answer yes, which loses any edit made since to
+the paths that init changed, then run init again. The backup holds copies of the user's
+configuration, so keep it private and never paste its content into the conversation.
+
+## Resolving conflicting copies at init
+
+Init does not refuse when one skill has different copies in two harnesses' skills folders, when
+one agent's copies hold different descriptions or instructions, or when a project's `CLAUDE.md`
+and `AGENTS.md` disagree. It adopts everything else, adopts nothing of
+that item, and lists it under `unadopted` in the JSON (in text: "Not adopted, conflicting copies
+of …"): the kind (`skill`, `agent` or `instructions`), the name, and each copy's path with the harnesses it
+serves. Every copy stays where it is, and nothing records the item as pending; `check` reports a
+left-out skill's folders as `unmanaged` until it is resolved.
+
+1. Read every copy listed.
+2. Merge them. Unify incidental differences such as wording, order and whitespace. Keep a
+   genuinely harness-specific difference as a `::: <harness>` body section, or, for a skill's
+   frontmatter, as a block keyed by the harness name whose indented keys override the shared ones.
+3. Write the merged item into the source: `skills/<name>/SKILL.md` or `agents/<name>.md` in the
+   global source, or `loadout/skills/<name>/SKILL.md` or `loadout/agents/<name>.md` in a project. Project instructions become
+   `loadout/instructions/main.md`, named by `instructions = ["main"]` in `loadout/config.toml`.
+4. Sync. It refuses, because the copies hold content loadout never wrote. Show the diff, and run
+   `sync --force` only after the user approves replacing them.
+
+## Secrets in the adopted source
+
+Init adopts a file that holds a secret as it is, into the source it would go to anyway, and lists
+each source file under `secrets` in the JSON; the text output gives each one a "Contains a
+secret" line with its path and a reason. The reason names what was found, never the value. The check is a heuristic: it can miss a secret and can
+flag a value that is not one.
+
+Tell the user the source now holds those secrets, so its remote must stay private, and offer to move
+each one into an environment variable:
+
+- An HTTP MCP server's bearer token: replace the literal `Authorization` header in `mcp.toml` with
+  `auth_env_var = "<NAME>"`. Loadout renders the name for each harness: `bearer_token_env_var` for
+  Codex, `Bearer ${NAME}` for Claude, Droid and Pi, `{env:NAME}` for OpenCode.
+- Any other value: use the reference syntax of the harness that reads it (`${NAME}` in Claude and Pi
+  MCP entries, `{env:NAME}` in OpenCode), and only in a source that harness alone reads.
+  `mcp.toml`'s `env`, `args` and `headers` reach every harness as written, so a reference there is
+  read literally by a harness that does not expand that syntax. When no reference fits, say so and
+  leave the value in place.
+
+Ask before each change, and make sure the variable is set where the harness runs before syncing:
+an unset variable leaves the server unauthenticated or the setting empty.
+
+## Later changes
+
+The same skill handles later configuration using the configuration reference.
+`loadout integrate skill install` vendors this bundled skill into the global source's
+`skills/loadout/` and syncs it to every configured harness. It asks before source changes; `--yes`
+approves them. Status identifies the source and its harnesses. Reinstall updates unchanged copies; uninstall removes only owned, unchanged content.
+
+When this skill was started from a plain copy that `loadout integrate skill copy` made, offer
+`loadout integrate skill install` once a global source is registered, so later releases update
+the skill. A global init adopts that copy into the source's `skills/loadout/`; install takes over
+a copy that is byte for byte the bundled skill (`integrate skill status` shows `identical copy,
+install takes it over`) and refuses one that differs. After a takeover, install notes that the
+`[skills.loadout] render = false` init wrote can now be removed; offer to remove it, so each
+harness gets the skill rendered for it. Without a global source, the copy stays a plain copy
+that sync never touches.
