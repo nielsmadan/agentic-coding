@@ -31,7 +31,7 @@ use = ["hooks", "module-config"]
 [all]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
 substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", "web-fetching.shared" = "web-fetching.shared.studio", git-policy = "git-policy.studio" }
@@ -39,7 +39,7 @@ substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", "web-fetc
 [codex]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
     "codex-proactivity",
 ]
@@ -48,7 +48,7 @@ instructions = [
 plugins = ["claude", "unsandboxed"]
 instructions = [
     "intro-claude", "web-fetching", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
 substitute = { secrets = "secrets.studio", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "git-policy.studio" }

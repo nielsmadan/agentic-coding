@@ -33,14 +33,14 @@ use = ["hooks", "module-config"]
 [all]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
 
 [codex]
 instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
     "codex-proactivity",
 ]
@@ -50,7 +50,7 @@ settings    = ["claude"]
 permissions = []
 instructions = [
     "intro-claude", "web-fetching", "video-content",
-    "secrets", "cloudflare", "sandbox", "containers", "agent-dispatch", "git-policy", "git-commit-policy",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
 ]
 substitute  = { agent-dispatch = "agent-dispatch.autonomous", git-policy = "git-policy.autonomous" }
