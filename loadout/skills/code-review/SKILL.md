@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: Clean up comments and mechanical loose ends, then review code with comprehensive and quick modes. Use when reviewing code changes, PRs, or specific files for quality, bugs, and best practices.
-argument-hint: '[target] [--quick] [--correctness] [--logic] [--architecture] [--security] [--performance] [--history] [--test] [--interface] [--clean-code] [--functional] [--consistency] [--defensive] [--typescript] [--project] [--library-use] [--staged] [--unpushed] [--all] [--changed] [--multi] [--rereview]'
+argument-hint: '[target] [--quick] [--correctness] [--logic] [--architecture] [--security] [--performance] [--history] [--test] [--interface] [--clean-code] [--functional] [--consistency] [--defensive] [--typescript] [--project] [--library-use] [--staged] [--unpushed] [--all] [--changed] [--multi] [--re]'
 effort: high
 ---
 
@@ -62,10 +62,10 @@ Flag parsing, scope resolution, and the preflight cleanup (Steps 1–3b.6) need 
 /code-review --multi                  # All aspects + external advisors
 /code-review --multi --architecture   # Architecture only + external advisors
 /code-review --all --multi            # Whole repo + external opinions
-/code-review --rereview               # Review, then re-review only what the fixes changed
+/code-review --re                     # Review, then re-review only what the fixes changed
 ```
 
-`--rereview` composes with comprehensive aspect selections, `--quick`, scope flags, or `--multi`. Invoked after an earlier review in the same conversation, it reviews only what changed since that review (Step 7) instead of starting over.
+`--re` composes with comprehensive aspect selections, `--quick`, scope flags, or `--multi`. Invoked after an earlier review in the same conversation, it reviews only what changed since that review (Step 7) instead of starting over.
 
 ## Review Modes
 
@@ -73,9 +73,9 @@ The default mode is comprehensive: run all selected perspectives independently, 
 
 Every mode first runs `review-tidy --fix` over the resolved scope; it coordinates comment cleanup through `review-comments` and then mechanical cleanup, with formatting last. The cleanup is a preflight edit, not a review perspective: its results are reported separately and are never scored or promoted into Must Fix/Should Fix findings.
 
-`--quick` runs one thorough integrated review at full reasoning effort, saving time through fewer agents and no separate scoring round. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--rereview` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
+`--quick` runs one thorough integrated review at full reasoning effort, saving time through fewer agents and no separate scoring round. It keeps the normal scope resolution, project-guideline checks, severity output, fix prompt, and optional `--re` loop, but uses one integrated read-only reviewer and no separate scorer agents. It does not activate automatically from diff size: a tiny auth, migration, or concurrency change may still deserve the comprehensive mode.
 
-`--quick` composes with a target, one scope flag, or `--rereview`. It cannot be combined with aspect flags or `--multi`; abort with `--quick is a complete review preset; remove the aspect flags or --multi.`
+`--quick` composes with a target, one scope flag, or `--re`. It cannot be combined with aspect flags or `--multi`; abort with `--quick is a complete review preset; remove the aspect flags or --multi.`
 
 ## Aspect Selection
 
@@ -154,9 +154,9 @@ Search for and identify all files related to "$ARGUMENTS". Use Glob and Grep to 
 
 If the removed `--comments` aspect flag is passed, abort with `Comment cleanup now runs automatically before every code review. Use review-comments directly for a standalone comment report.`
 
-Strip aspect flags (`--correctness`, `--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--test`, `--interface`, `--clean-code`, `--functional`, `--consistency`, `--defensive`, `--typescript`, `--project`, `--library-use`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--quick`, `--multi`, and `--rereview` from `$ARGUMENTS`. The remainder is the review target.
+Strip aspect flags (`--correctness`, `--logic`, `--architecture`, `--security`, `--performance`, `--history`, `--test`, `--interface`, `--clean-code`, `--functional`, `--consistency`, `--defensive`, `--typescript`, `--project`, `--library-use`), scope flags (`--staged`, `--unpushed`, `--all`, `--changed`), `--quick`, `--multi`, and `--re` from `$ARGUMENTS`. The remainder is the review target.
 
-If `--quick` appears with any aspect flag or with `--multi`, abort with `--quick is a complete review preset; remove the aspect flags or --multi.` It may compose with a target, one scope flag, and `--rereview`.
+If `--quick` appears with any aspect flag or with `--multi`, abort with `--quick is a complete review preset; remove the aspect flags or --multi.` It may compose with a target, one scope flag, and `--re`.
 
 In comprehensive mode, if any aspect flags are present, launch ONLY the corresponding agents (including the conditional add-ons only when a `--<language>`/`--cli`/`--react`/`--swiftui`/`--project`/`--library-use` flag is passed). Otherwise launch all 10 core agents plus whatever Step 3b.5 detects. In quick mode, follow the single-reviewer branch in Step 3c.
 
@@ -394,18 +394,18 @@ Build the options only from the `Critical Issues`, `Improvements`, and `Suggesti
 
 When the user selects a fix option, apply the fixes for exactly the chosen severity tier(s) — no more, no less. Record each finding's disposition in the snapshot's `findings.md`.
 
-Code written to fix a finding has not been reviewed. Without `--rereview`, end the run with a `Not yet reviewed` line naming the files the fixes changed, and suggest `/code-review --rereview`, which reviews only those changes.
+Code written to fix a finding has not been reviewed. Without `--re`, end the run with a `Not yet reviewed` line naming the files the fixes changed, and suggest `/code-review --re`, which reviews only those changes.
 
-## Step 7: Re-Review the Fixes (`--rereview`)
+## Step 7: Re-Review the Fixes (`--re`)
 
 A re-review checks only what changed since the last snapshot: the fixes, plus anything else edited since. It is not a second full review, and it does not re-run the preflight cleanup on unchanged files.
 
 It runs in two cases:
 
-- `--rereview` was passed and Step 6 applied fixes: continue straight into it.
-- `/code-review --rereview` is invoked and an earlier review in this conversation left a Step 5.5 snapshot: skip Steps 1–6 and start here from the latest snapshot. This covers fixes applied after the review ended, by the user or by a calling skill. With no snapshot in the conversation, run a normal review that loops as in the first case.
+- `--re` was passed and Step 6 applied fixes: continue straight into it.
+- `/code-review --re` is invoked and an earlier review in this conversation left a Step 5.5 snapshot: skip Steps 1–6 and start here from the latest snapshot. This covers fixes applied after the review ended, by the user or by a calling skill. With no snapshot in the conversation, run a normal review that loops as in the first case.
 
-Announce it, e.g. `Re-reviewing the 4 files changed since the review (--rereview)`.
+Announce it, e.g. `Re-reviewing the 4 files changed since the review (--re)`.
 
 ### 7a. Compute the delta
 
@@ -478,9 +478,9 @@ Runs the preflight cleanup and all 10 agents against every file in the repo (`gi
 Runs the same 10 review agents plus external reviews from every advisor `second-opinion` has configured, after the preflight cleanup. The output includes a cross-model agreement section highlighting issues where the internal agents and external advisors converge, giving higher confidence to consensus findings. `--multi` composes with aspect and scope flags, e.g. `/code-review --multi --architecture` or `/code-review --all --multi`.
 
 **Review, fix, then re-review automatically:**
-> /code-review --rereview
+> /code-review --re
 
-Runs the review, offers the fix prompt (Step 6), and once fixes are applied, re-reviews only what they changed. It confirms each fixed finding is resolved and checks the new code with the aspects that change touches. A rename-only fix gets no sub-agents at all, and a small fix gets one reviewer. The loop continues until a re-review comes back with no Must Fix/Should Fix findings or the user declines to fix. Run `/code-review --rereview` later in the same conversation to re-review fixes made after the review ended.
+Runs the review, offers the fix prompt (Step 6), and once fixes are applied, re-reviews only what they changed. It confirms each fixed finding is resolved and checks the new code with the aspects that change touches. A rename-only fix gets no sub-agents at all, and a small fix gets one reviewer. The loop continues until a re-review comes back with no Must Fix/Should Fix findings or the user declines to fix. Run `/code-review --re` later in the same conversation to re-review fixes made after the review ended.
 
 ## Troubleshooting
 

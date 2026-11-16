@@ -296,7 +296,7 @@ goes to "Blocked on you".
 
 Then `code-review` over the full diff of every touched
 repo (`--quick` only if the whole longshot was small), then a fix wave, then
-`code-review --rereview` in this session, which reviews only what the fix wave
+`code-review --re` in this session, which reviews only what the fix wave
 changed. Cross-repo runs get one reviewer whose job is
 **contract coherence** — wire formats, manifest shapes, command strings, identity
 semantics agreeing across repo boundaries.
