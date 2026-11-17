@@ -9,6 +9,7 @@ current-state documentation for this repo lives in [`AGENTS.md`](../AGENTS.md)
 
 | Doc | Purpose |
 |-----|---------|
+| [`models.md`](models.md) | Which model and provider each agent, shortcut and headless caller uses, and which account pays for it. |
 | [`security-model.md`](security-model.md) | What the sandbox guards against and what it does not, git and `gh` authentication, why `git push` behaves differently in sandboxed, raw, and interactive contexts, and the known gaps. |
 | [`skill-best-practices.md`](skill-best-practices.md) | Reference extract of Anthropic's skill-building guide — planning, structure, testing, distribution. A static external reference, not code-derived. |
 
