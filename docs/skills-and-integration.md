@@ -289,8 +289,8 @@ CLIs behind short aliases and named profiles. Two things here use it:
 
 **The point is that the guards live in the profile, not in the caller.** prat
 does **not** sandbox Codex for you — `prat cx` renders a plain `codex exec` with
-no `--sandbox`. `/second-opinion`'s read-only guarantee is `native_args` and
-`tools` on `advisor-claude` and `advisor-pi`, which is exactly why the skill must
+no `--sandbox`. `/second-opinion`'s read-only guarantee is the native tool flags in
+`native_args` on `advisor-claude` and `advisor-pi`, which is exactly why the skill must
 never fall back to a bare `prat cx`.
 
 **`advisor-codex` runs with `--sandbox danger-full-access`, on purpose.** Codex

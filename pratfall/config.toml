@@ -4,7 +4,7 @@
 # every invocation. Two groups live here:
 #
 #   advisor-*  the /second-opinion consultation agents. Their read-only guards
-#              are native_args and tools rather than skill text, so the skill
+#              are native_args rather than skill text, so the skill
 #              cannot omit one by accident. Codex is the exception: it has no
 #              read-only mode that works inside nono (see advisor-codex).
 #   cmdgen-*   the ccli/cxcli/occli shell-command generators in
@@ -31,8 +31,7 @@ command_prefix = ["sops-exec"]
 [profiles.advisor-claude]
 agent = "claude"
 timeout = 600
-tools = ["Read", "Grep", "Glob"]
-native_args = ["--disable-slash-commands"]
+native_args = ["--tools=Read,Grep,Glob", "--disable-slash-commands"]
 
 # agents.enabled=false is not redundant with the two --disable flags: those set
 # features.<name>, while the base ~/.codex/config.toml sets [agents]
@@ -59,8 +58,7 @@ agent = "pi"
 timeout = 600
 model = "openrouter/tencent/hy4"
 effort = "high"
-tools = ["read", "grep", "find", "ls"]
-native_args = ["--no-session"]
+native_args = ["--tools", "read,grep,find,ls", "--no-session"]
 
 [profiles.advisor-opencode]
 agent = "opencode"
@@ -74,7 +72,7 @@ agent = "droid"
 timeout = 600
 model = "gemini-4-argon"
 effort = "high"
-tools = ["Read", "Glob", "Grep", "LS"]
+native_args = ["--only-tools=Read,Glob,Grep,LS"]
 
 # --- shell-command generators (llmcli.zsh) --------------------------------
 
@@ -82,8 +80,8 @@ tools = ["Read", "Glob", "Grep", "LS"]
 agent = "claude"
 model = "haiku"
 timeout = 60
-disabled_tools = ["*"]
 native_args = [
+  "--disallowedTools=*",
   "--system-prompt",
   "You are a shell command generator. Return ONLY a single shell command. No explanation, no markdown, no code blocks.",
 ]
