@@ -6,8 +6,8 @@
   "extensions": [
     "mods/dev-phase/pi/index.ts"
   ],
-  "defaultProvider": "openrouter",
-  "defaultModel": "meta/muse-ember",
+  "defaultProvider": "vercel-ai-gateway",
+  "defaultModel": "deepseek/deepseek-v4.1-flash",
   "defaultThinkingLevel": "max",
   "enabledModels": [
     "openai/gpt-6-astra",
@@ -17,7 +17,8 @@
     "openrouter/openai/gpt-6-luna",
     "openrouter/meta/muse-ember",
     "openrouter/openai/gpt-6.1-sol",
-    "openrouter/moonshotai/kimi-k3.1-pro"
+    "vercel-ai-gateway/deepseek/deepseek-v4.1-flash",
+    "vercel-ai-gateway/moonshotai/kimi-k3.1-pro"
   ],
   "subagents": {
     "agentOverrides": {

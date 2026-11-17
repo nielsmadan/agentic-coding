@@ -1,7 +1,7 @@
 # No -raw variant: pi is never run outside the sandbox.
 pi() { AGENT_HARNESS=pi _agent_sandboxed pi-local pi "$@"; }
 
-# Subscription-backed Codex model; plain `pi` keeps the OpenRouter default.
+# Subscription-backed Codex model; plain `pi` keeps the Token Pass default.
 # --provider stops a missing ChatGPT login from resolving the id on OpenRouter.
 pix() {
   local preset

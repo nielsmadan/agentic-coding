@@ -56,15 +56,15 @@ native_args = [
 [profiles.advisor-pi]
 agent = "pi"
 timeout = 600
-model = "openrouter/tencent/hy4"
-effort = "high"
+model = "vercel-ai-gateway/moonshotai/kimi-k3.1-pro"
+effort = "max"
 native_args = ["--tools", "read,grep,find,ls", "--no-session"]
 
 [profiles.advisor-opencode]
 agent = "opencode"
 timeout = 600
-model = "openrouter/moonshotai/kimi-k3.1-pro"
-effort = "max"
+model = "openrouter/tencent/hy4"
+effort = "high"
 native_args = ["--agent", "plan"]
 
 [profiles.advisor-droid]

@@ -6,9 +6,10 @@ All six OpenRouter coding targets must move together or the trio drifts apart.
 
 Ranking uses OpenRouter ids (`vendor/model`), and `rank_models.py` prints the
 exact id — never hand-guess one. **OpenCode, the OpenCode prat profiles
-(`advisor-opencode`, `cmdgen-opencode`) and `advisor-pi` bill through the OpenCode
+(`advisor-opencode`, `cmdgen-opencode`) bill through the OpenCode
 Go subscription instead** whenever Go carries the model: write those as
-`opencode-go/<go id>`. Pi's own settings (`pi.json`) stay on OpenRouter.
+`opencode-go/<go id>`. Pi's default model and `advisor-pi` bill through Vercel
+Token Pass (`vercel-ai-gateway/<id>`) and are user-selected, not tier bindings.
 Go ids are bare (`kimi-k3`, `mimo-v2.6-pro`); `opencode models` lists them once
 `OPENCODE_API_KEY` is set. A model Go lacks (GPT-6 Sol) stays on OpenRouter, and
 so does any Go model sold as "Contributor", which trains on prompts. `clor`
@@ -36,15 +37,19 @@ high-main = GPT-6.1 Sol (max), high-fallback = Kimi K3.1 Pro (max, user-selected
 over Claude Fable 5.2 for cost) — and **mid holds the default**. Ember ties Luna
 on input price ($0.10/M) and is 17 index points stronger.
 
-**User-selected advisors:** Pi uses Tencent Hy4 (`opencode-go/hy4`) at `high`, a
-lab no other advisor covers; OpenCode uses Kimi K3.1 Pro at `max`. Both override
+**User-selected advisors:** Pi uses Kimi K3.1 Pro through Token Pass
+(`vercel-ai-gateway/moonshotai/kimi-k3.1-pro`) at `max`; OpenCode uses Tencent Hy4
+(`openrouter/tencent/hy4`) at `high`, a lab no other advisor covers. Both override
 their tier bindings.
+
+**User-selected Pi default:** `pi.json` defaults to DeepSeek V4.1 Flash on Token
+Pass, with Kimi K3.1 Pro as the Token Pass alternative. Token Pass covers only its
+featured models (Kimi K3, Kimi K3.1 Pro, GLM 5.3, GLM 5.3 Flash, DeepSeek V4.1
+Flash), so the OpenRouter tiers stay in `enabledModels` as extras.
 
 | # | File | Key | Binding |
 |---|------|-----|------|
-| 1 | `loadout/settings/pi.json` | `defaultModel` | **default** |
-| 1 | `loadout/settings/pi.json` | `defaultThinkingLevel` | default tier's effort |
-| 1 | `loadout/settings/pi.json` | `enabledModels` | all four |
+| 1 | `loadout/settings/pi.json` | `enabledModels` `openrouter/*` entries | low, mid, high-main |
 | 2 | `loadout/settings/opencode.json` | `model` | **default** |
 | 2 | `loadout/settings/opencode.json` | `provider.openrouter.models` | all four |
 | 3 | `.airc.d/claude.zsh` | `clor` → `CLOR_MODEL` start alias | the alias holding the default |
@@ -54,9 +59,8 @@ their tier bindings.
 | 3 | `.airc.d/claude.zsh` | `clor` → `CLAUDE_CODE_SUBAGENT_MODEL` | **default** |
 | 4 | `.airc.d/opencode.zsh` | `ocs` alias | high-fallback |
 | 5 | `pratfall/config.toml` | `cmdgen-opencode` → `model` | low |
-| 6 | `pratfall/config.toml` | `advisor-pi` → `model` | high-main |
-| 6 | `pratfall/config.toml` | `advisor-pi` → `effort` | high |
-| 6 | `pratfall/config.toml` | `advisor-opencode` → `model` | Kimi K3.1 Pro (user override), with `#max` |
+| 6 | `pratfall/config.toml` | `advisor-pi` → `model`, `effort` | Kimi K3.1 Pro on Token Pass, `max` (user override) |
+| 6 | `pratfall/config.toml` | `advisor-opencode` → `model`, `effort` | Tencent Hy4 on OpenRouter, `high` (user override) |
 
 Subagents take the **default**, not low: they run long-context exploration, which
 is exactly where a terse-but-pricier low tier loses on both capability and cost.
@@ -95,9 +99,9 @@ file is `~/.pi/agent/settings.json`, composed from this base plus the `plugins`
 slice (which supplies `packages`).
 
 ```json
-"defaultProvider": "openrouter",
-"defaultModel": "<low id>",
-"defaultThinkingLevel": "<low effort>",
+"defaultProvider": "vercel-ai-gateway",
+"defaultModel": "deepseek/deepseek-v4.1-flash",
+"defaultThinkingLevel": "max",
 "enabledModels": [
   "openai/gpt-6-astra",
   "openai/gpt-6-luna",
@@ -106,13 +110,15 @@ slice (which supplies `packages`).
   "openrouter/<low id>",
   "openrouter/<mid id>",
   "openrouter/<high-main id>",
-  "openrouter/<high-fallback id>"
+  "vercel-ai-gateway/deepseek/deepseek-v4.1-flash",
+  "vercel-ai-gateway/moonshotai/kimi-k3.1-pro"
 ]
 ```
 
-- `enabledModels` entries carry an `openrouter/` prefix; `defaultModel` does not.
-- Leave the bare `openai/*` entries (Pi's ChatGPT subscription login) alone — that ladder is not OpenRouter and
-  is not part of the trio.
+- Only the `openrouter/*` entries are tier targets; they carry the `openrouter/` prefix.
+- Leave `defaultProvider`, `defaultModel`, `defaultThinkingLevel`, the bare `openai/*`
+  entries (Pi's ChatGPT subscription login) and the `vercel-ai-gateway/*` entries
+  (Token Pass) alone — none of them is part of the trio.
 - **Run `loadout sync --global` after editing** or the change never reaches Pi.
 - Pi writes `/model` and `/settings` picks into the *generated* file, where the
   next sync discards them. A pick worth keeping has to be copied into this base.

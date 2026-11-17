@@ -9,8 +9,8 @@ Maintains three independent selections:
 
 - **Session tiers:** `low`, `mid`, `high`, `xhigh`, `max` for `claude`, `codex`,
   and `pix`. Anthropic only for Claude; OpenAI only for Codex and pix.
-- **OpenRouter coding:** `low`, `mid`, `high-main`, `high-fallback` for plain Pi,
-  OpenCode and clor.
+- **OpenRouter coding:** `low`, `mid`, `high-main`, `high-fallback` for plain Pi's
+  OpenRouter extras (its default is on Token Pass), OpenCode and clor.
 - **Extraction:** a measured default and fallback shared by `distill` and `jina-fetch`.
 
 The following constraints apply to the **OpenRouter coding** selection. Session
