@@ -6,8 +6,8 @@ Skills name tiers in Claude Code's terms. Here they map to:
 
 | Skill says | `model` | `reasoning_effort` |
 |---|---|---|
-| `haiku`, low | `gpt-6.1-sol` | `low` |
-| `sonnet`, mid | `gpt-6.1-sol` | `medium` |
-| `opus`, high | `gpt-6.1-sol` | `xhigh` |
+| `haiku`, low | `gpt-6.2-sol` | `low` |
+| `sonnet`, mid | `gpt-6.2-sol` | `medium` |
+| `opus`, high | `gpt-6.2-sol` | `xhigh` |
 
-Where a skill names no tier for a role, use high for implementing a design-level task and for a first-pass review, and mid for reconnaissance, research, docs edits, fixes, scoped re-reviews and scoring findings. Spawn on `gpt-6-astra` only when the user asks for it: it is the max tier, several times the cost of Sol at `xhigh` for a few benchmark points.
+Where a skill names no tier for a role, use high for implementing a design-level task and for a first-pass review, and mid for reconnaissance, research, docs edits, fixes, scoped re-reviews and scoring findings. Spawn on `gpt-6.2-astra` only when the user asks for it: it is the max tier, several times the cost of Sol at `xhigh` for a few benchmark points.
