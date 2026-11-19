@@ -44,6 +44,40 @@ sops-exec() {{ printf '%s\\n' "$@"; }}
                 self.assertEqual(result.stdout.splitlines(),
                                  [agent, *standalone.get(agent, []), "--version", "two words"])
 
+    def test_claude_launchers_pass_the_bellhop_relay_when_configured(self):
+        relay = Path(self.temporary.name) / "bellhop" / "bellhop-mcp.json"
+        relay.parent.mkdir()
+        relay.write_text("{}")
+        for launcher in ("claude", "claude-raw"):
+            with self.subTest(launcher=launcher):
+                result = self.run_shell(f'''
+source .airc.d/05-sandbox.zsh
+source .airc.d/06-iterm-agent.zsh
+source .airc.d/claude.zsh
+_agent_raw_dir() {{ return 1; }}
+sops-exec() {{ printf '%s\\n' "$@"; }}
+{launcher} mcp list
+''')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.splitlines(),
+                                 ["claude", f"--mcp-config={relay}", "mcp", "list"])
+
+    def test_sandboxed_claude_omits_the_bellhop_relay(self):
+        relay = Path(self.temporary.name) / "bellhop" / "bellhop-mcp.json"
+        relay.parent.mkdir()
+        relay.write_text("{}")
+        self.config.write_text('profile = "default"\n')
+        result = self.run_shell('''
+source .airc.d/05-sandbox.zsh
+source .airc.d/06-iterm-agent.zsh
+source .airc.d/claude.zsh
+_agent_raw_dir() { return 1; }
+_agent_sandboxed() { shift; printf '%s\\n' "$@"; }
+claude mcp list
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.splitlines(), ["claude", "mcp", "list"])
+
     def test_clor_launches_claude_with_openrouter_settings(self):
         result = self.run_shell('''
 source .airc.d/05-sandbox.zsh

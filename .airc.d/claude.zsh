@@ -1,17 +1,33 @@
 # Claude Code aliases
 
+# bellhop's relay lets callboard ring the session. It is passed here because loadout's
+# mcp.toml cannot yet give a server to Claude alone. The = form matters: --mcp-config
+# is variadic and would swallow a following subcommand or prompt.
+_claude_mcp_args() {
+  local relay="${XDG_CONFIG_HOME:-$HOME/.config}/bellhop/bellhop-mcp.json"
+  reply=()
+  [[ -r $relay ]] && reply=("--mcp-config=$relay")
+}
+
 _claude_launch() {
   if _agent_raw_dir; then
     print -u2 -r -- "claude: unsandboxed (${PWD:A})"
     claude-raw "$@"
     return
   fi
-  AGENT_HARNESS=claude _agent_sandboxed claude-local claude "$@"
+  # claude-local cannot read ~/.config/bellhop, and Claude refuses to start on an unreadable --mcp-config.
+  local -a reply=()
+  _agent_unsandboxed_profile && _claude_mcp_args
+  AGENT_HARNESS=claude _agent_sandboxed claude-local claude "${reply[@]}" "$@"
 }
 
 # Escape hatch: unsandboxed. For `loadout sync`, ~/ac and ~/rc work, and anything
 # that must write outside ~/wrksp.
-_claude_raw_launch() { AGENT_HARNESS=claude sops-exec claude "$@"; }
+_claude_raw_launch() {
+  local -a reply
+  _claude_mcp_args
+  AGENT_HARNESS=claude sops-exec claude "${reply[@]}" "$@"
+}
 
 alias clco-raw="claude-raw --continue"
 
