@@ -3,7 +3,3 @@
 #
 # The Studio allows no run-without-install, so every stdio server starts from a
 # binary the admin account installed through the package gate.
-
-[context7]
-transport = "stdio"
-command = "/opt/homebrew/bin/context7-mcp"

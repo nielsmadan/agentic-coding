@@ -14,11 +14,6 @@
 # This file defines which servers EXIST. Which of their tools may be called is
 # the separate `[mcp]` section of loadout/permissions.toml.
 
-[context7]
-transport = "stdio"
-command = "npx"
-args = ["-y", "@upstash/context7-mcp"]
-
 [jina]
 transport = "http"
 url = "https://mcp.jina.ai/v1"

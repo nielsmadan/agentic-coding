@@ -13,16 +13,15 @@ Follow the `web-fetch` skill where it is installed. In short:
 
 Without `jina-fetch` on PATH, use the Jina MCP `read_url` with its `question` parameter, which likewise returns only the matching passages.
 
-## Docs Agent (Context7)
+## Docs Agent
 
 **Spawn when:** Library/framework is identified
 
 ```
-Use Context7 to look up documentation for {library_name}.
+Look up the official documentation for {library_name}.
 
-1. First call resolve-library-id with libraryName="{library_name}" and query="{goal_or_problem}"
-2. If resolve-library-id returns no match, fall back to WebSearch: "{library_name} official documentation {goal_or_problem}"
-3. If a match is found, call query-docs with the resolved library ID and query="{goal_or_problem}"
+1. Use WebSearch: "{library_name} official documentation {goal_or_problem}"
+2. Fetch the 1-3 most relevant pages from the official docs site, preferring the version in use
 
 Focus on finding:
 - API usage relevant to: {goal_or_problem}

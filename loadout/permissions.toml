@@ -48,7 +48,6 @@ ask = []
 
 allow = [
   "jina/*",
-  "context7/*",
 ]
 
 deny = []
