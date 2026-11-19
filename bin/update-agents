@@ -48,6 +48,7 @@ def agents(home: Path) -> tuple[Agent, ...]:
             (str(local_bin / "cursor-agent"), "--version"),
             (str(local_bin / "cursor-agent"), "update"),
         ),
+        Agent("devin", (str(local_bin / "devin"), "--version"), (str(local_bin / "devin"), "update")),
     )
 
 
