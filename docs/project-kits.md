@@ -55,6 +55,11 @@ ESLint-complexity and Git-churn collection without adding dependencies to that p
 React kits keep their existing selections; add `typescript` explicitly to opt into this
 structural analysis alongside a framework kit. Both linked and vendored kits carry its scripts.
 
+`onboard.toml` is for repos you are getting to know rather than shipping in. It selects
+`code-tour`, which walks through existing code, and `code-guide`, which coaches you through
+writing a feature yourself in checkpointed steps. It is meant for stealth sources:
+`loadout kit add onboard --stealth NAME`.
+
 Keeping them here version-controls the config centrally without making it global: a kit
 reaches only a project that asks for it by name, so a bundled skill never pollutes sessions in
 unrelated projects.
