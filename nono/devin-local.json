@@ -1,0 +1,58 @@
+{
+  "extends": [
+    "default",
+    "agent-common",
+    "agent-private"
+  ],
+  "meta": {
+    "name": "devin-local",
+    "description": "Devin CLI — no nolabs-ai pack exists, so this is written from scratch"
+  },
+  "groups": {
+    "include": [
+      {
+        "name": "user_caches_macos",
+        "when": "macos"
+      },
+      "node_runtime",
+      "rust_runtime",
+      "python_runtime",
+      "git_config",
+      "unlink_protection"
+    ]
+  },
+  "security": {
+    "signal_mode": "isolated",
+    "capability_elevation": false
+  },
+  "filesystem": {
+    "allow": [
+      "$HOME/.config/devin",
+      "$HOME/.local/share/devin/mcp",
+      "$HOME/.local/share/devin/cli/logs",
+      "$HOME/.local/share/devin/cli/plugins_cache",
+      "$HOME/.local/share/devin/cli/session_locks",
+      "$HOME/.local/share/devin/cli/transcripts"
+    ],
+    "allow_file": [
+      "$HOME/.local/share/devin/cli/app_state.json",
+      "$HOME/.local/share/devin/cli/installation_id",
+      "$HOME/.local/share/devin/cli/sessions.db",
+      "$HOME/.local/share/devin/cli/sessions.db-shm",
+      "$HOME/.local/share/devin/cli/sessions.db-wal",
+      "$HOME/.local/share/devin/cli/skill_events_spool.lock",
+      "$HOME/.local/share/devin/cli/trusted_workspaces.json"
+    ],
+    "read": [
+      "$HOME/.local/share/devin",
+      "$NONO_PACKAGES",
+      "$NONO_CONFIG/profiles"
+    ]
+  },
+  "network": {
+    "block": false
+  },
+  "workdir": {
+    "access": "readwrite"
+  }
+}
