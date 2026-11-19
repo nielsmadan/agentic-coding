@@ -10,9 +10,6 @@
       "source": "npm:@narumitw/pi-statusline",
       "enabled": false
     },
-    "nono": {
-      "source": "~/.config/nono/packages/nolabs-ai/pi"
-    },
     "mouthfeel": {
       "source": "dev-packages/mouthfeel"
     }
