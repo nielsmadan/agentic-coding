@@ -250,6 +250,10 @@ Keep the file list resolved in Step 3b even if cleanup edits change git status. 
 
 ### 3c. Run the selected mode
 
+::: codex
+**Pass `model` and `reasoning_effort` on every `spawn_agent` call**, at the tiers your global instructions map: high for the quick-mode reviewer and for each comprehensive perspective, mid for the Steps 4–5 scorers. "Full review reasoning effort" below means the high tier's effort, not the session's.
+:::
+
 #### Quick mode (`--quick`)
 
 ::: claude codex opencode

@@ -62,7 +62,10 @@ concrete table before changing the presets.
 ## Apply and verify
 
 Update the relevant table in `.airc.d/07-model-tiers.zsh` and the current selection
-below. Update README's shortcut table if mappings change. The wrappers only translate
+below. Update README's shortcut table if mappings change. When the `openai` low, mid
+or high pair changes, update the table in `loadout/instructions/codex-subagent-models.md`
+to match and run `loadout sync --global`; Codex sub-agents take their model and
+effort from it. The wrappers only translate
 the pair into native flags; do not duplicate the ladder in each wrapper.
 
 Run the Python formatter on edited Python files, then:

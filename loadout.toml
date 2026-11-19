@@ -41,7 +41,7 @@ instructions = [
     "intro-shared", "web-fetching.shared", "video-content",
     "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy", "terminal",
     "functional-style", "working-style",
-    "codex-proactivity",
+    "codex-proactivity", "codex-subagent-models",
 ]
 
 [cursor]

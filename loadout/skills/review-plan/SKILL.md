@@ -71,6 +71,10 @@ Launch each batch together as runtime capacity allows. Complete all selected per
 | **Adversarial** | Maximally critical review | read-only sub-agent |
 | **Research** | Relevant practices online | `research-tech` skill |
 
+::: codex
+**Pass `model` and `reasoning_effort` on each reviewer's `spawn_agent` call**: the high tier your global instructions map for Alternatives, Robustness and Adversarial.
+:::
+
 **The three reviewers return findings without editing files.** Disable delegation tools for these workers where supported; read-only access alone does not prevent delegation. A coordinating role requires named subtasks, a descendant limit, and a stopping condition.
 
 **Account for the nested workflows.** `research-tech` chooses research workers and `second-opinion` queries its configured advisors. The main agent includes both in the overall allocation and queues them within runtime limits. Scope research to the plan's riskiest assumption and one follow-up cycle; additional reviewers must address a specific uncovered question.
