@@ -38,7 +38,8 @@ application and verification as the existing models.
 The existing `--coding` option limits a run to both coding selections;
 `--extraction` limits it to extraction. A request naming particular harnesses
 narrows the scope; it does not authorize refreshing the others. A read-only
-question only inspects the current bindings.
+question only inspects the current bindings and answers with the
+[purpose map](references/purpose-map.md), narrowed to the purposes asked about.
 Benchmark artifacts may be written before approval; model configuration may not,
 unless the user's request already authorizes the picks or a choice among named alternatives.
 
@@ -173,6 +174,10 @@ If all candidates pass, report that this small suite did not distinguish quality
 
 ### Step 3: Present the proposal, and stop
 
+Open with the [purpose map](references/purpose-map.md) in its proposal form:
+every purpose with `current → proposed`, so the user sees what each command and
+profile will run before reading any ranking. The detail below supports it.
+
 Include the five session tiers per lab, with native model IDs, efforts, scores,
 task costs and cliffs, alongside the OpenRouter and extraction proposals below.
 
@@ -258,7 +263,7 @@ levels, preserving the user-selected overrides in `references/targets.md`. The
 local `/second-opinion` skill names no model, but the public override in
 `publish/overrides/` does — check both stayed in step.
 
-Report the diff summary and leave the commit to the user.
+Report the resulting purpose map and the diff summary, and leave the commit to the user.
 
 ## Examples
 
@@ -293,8 +298,11 @@ haiku rung keep Luna.
 
 User says: "what is clor running right now?"
 
-Read `.airc.d/claude.zsh` and report the three tier mappings. Do not run the
-ranking or edit anything — this is a question, not an instruction to re-pick.
+Read `.airc.d/claude.zsh` and report `clor`'s rows from the purpose map: its
+startup model, the three switcher slots, the sub-agent model and the effort. Do not
+run the ranking or edit anything — this is a question, not an instruction to re-pick.
+
+User says: "which model is used for what?" — report the whole purpose map.
 
 ## Troubleshooting
 
