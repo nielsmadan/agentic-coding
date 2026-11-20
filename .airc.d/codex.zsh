@@ -20,7 +20,9 @@ _codex_launch() {
   fi
   AGENT_HARNESS=codex _agent_sandboxed codex-local codex -c sandbox_mode='"danger-full-access"' -c approval_policy='"never"' "$@"
 }
-_codex_raw_launch() { AGENT_HARNESS=codex sops-exec codex -c sandbox_mode='"danger-full-access"' "$@"; }
+# A -c override keeps Codex off its shared app server, the dedicated flag does not.
+# The sandboxed path needs -c: on the shared server, commands would run outside nono.
+_codex_raw_launch() { AGENT_HARNESS=codex sops-exec codex -s danger-full-access "$@"; }
 
 alias cxcof="codex fork --last"
 
