@@ -167,7 +167,7 @@ _agent_iterm_run() {
                         "--provider",
                         "openai",
                         "--model",
-                        "gpt-6-astra:high",
+                        "gpt-6.2-sol:max",
                         *args,
                     ],
                 )

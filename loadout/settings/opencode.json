@@ -21,7 +21,7 @@
     "openrouter": {
       "models": {
         "meta/muse-ember": {},
-        "openai/gpt-6.1-sol": {}
+        "openai/gpt-6.2-sol": {}
       }
     }
   }

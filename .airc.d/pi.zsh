@@ -8,7 +8,7 @@ pix() {
   if preset=$(_agent_model_tier openai "${1:-}"); then
     shift
   else
-    preset=gpt-6-astra:high
+    preset=gpt-6.2-sol:max
   fi
   pi --provider openai --model "$preset" "$@"
 }

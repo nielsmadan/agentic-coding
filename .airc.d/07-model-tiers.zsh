@@ -13,11 +13,11 @@ _agent_model_tier() {
       ;;
     openai)
       presets=(
-        low gpt-6.1-sol:low
-        mid gpt-6.1-sol:medium
-        high gpt-6.1-sol:xhigh
-        xhigh gpt-6.1-sol:max
-        max gpt-6-astra:max
+        low gpt-6.2-sol:low
+        mid gpt-6.2-sol:medium
+        high gpt-6.2-sol:max
+        xhigh gpt-6.2-astra:high
+        max gpt-6.2-astra:max
       )
       ;;
     *) return 1 ;;

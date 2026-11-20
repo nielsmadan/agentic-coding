@@ -83,7 +83,7 @@ native CLI's capabilities; do not claim a stub test proves server acceptance.
 These sources are read directly through `.airc` and the project skill symlink;
 no loadout sync is needed. Reload with `source ~/.airc` in the user's shell.
 
-## Current selection — 2026-11-15
+## Current selection — 2026-11-20
 
 Measured from the [AA leaderboard](https://artificialanalysis.ai/leaderboards/models)
 and [model details](https://artificialanalysis.ai/models) RSC records on this date.
@@ -96,19 +96,22 @@ The script's `fetch()` caches those pages under `$TMPDIR/agent-models/`.
 | Anthropic | high | claude-opus-5-5 | high | 51.84 | 3.465 |
 | Anthropic | xhigh | claude-fable-5-2 | medium | 56.41 | 3.803 |
 | Anthropic | max | claude-fable-5-2 | max | 64.56 | 26.539 |
-| OpenAI | low | gpt-6.1-sol | low | 34.80 | 0.161 |
-| OpenAI | mid | gpt-6.1-sol | medium | 46.35 | 0.359 |
-| OpenAI | high | gpt-6.1-sol | xhigh | 52.46 | 0.764 |
-| OpenAI | xhigh | gpt-6.1-sol | max | 54.61 | 1.272 |
-| OpenAI | max | gpt-6-astra | max | 56.85 | 6.245 |
+| OpenAI | low | gpt-6.2-sol | low | 40.59 | 0.184 |
+| OpenAI | mid | gpt-6.2-sol | medium | 52.68 | 0.406 |
+| OpenAI | high | gpt-6.2-sol | max | 57.3 | 1.014 |
+| OpenAI | xhigh | gpt-6.2-astra | high | 60.1 | 2.074 |
+| OpenAI | max | gpt-6.2-astra | max | 62.1 | 3.998 |
 
 The Anthropic ladder follows the user's explicit choices. Opus high is dominated
 by Fable low (53.92 at $3.097); flag that alternative on the next refresh.
 
-OpenAI choices use the cheapest of the user's named alternatives: Terra medium
-is $0.169 at 38.17 versus Sol low at $0.161; Terra xhigh is $0.401 at 45.25 versus
-Sol medium at $0.359. Sol xhigh beats Terra max ($0.961, 51.33) and Astra medium
-($2.732, 51.55) on both axes. Astra high costs $3.239 for 54.85 versus Sol max's
-$1.272 for 54.61. Astra max is 4.91× Sol max's cost for 2.25 more points; Fable max
-is 6.98× Fable medium's cost for 8.16 more points. These are intentional max-tier
-premiums, not value-tier recommendations.
+OpenAI low and mid are the cheapest Sol efforts in their bands: Sol low (40.59,
+$0.184) is 2.4 points above Terra medium for $0.015 more; Sol medium (52.68,
+$0.406) is 7.4 above Terra xhigh at nearly the same cost. High and xhigh are the
+user's choices (2026-11-20): high is Sol max rather than Sol xhigh (55.7, $0.648),
+1.6 points for $0.366 more, past the flagged cliff. xhigh is the user-requested
+Astra tier; Astra high was chosen because Astra medium (57.0, $1.618) is dominated
+by Sol max and Astra xhigh (61.6, $2.521) sits 0.5 points under max. Astra high
+costs $1.06 more than Sol max for 2.8 points. Astra max is 1.93× Astra high's cost
+for 2.0 more points; Fable max is 6.98× Fable medium's cost for 8.16 more points.
+These are intentional premiums, not value-tier recommendations.

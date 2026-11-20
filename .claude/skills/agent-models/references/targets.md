@@ -103,10 +103,10 @@ slice (which supplies `packages`).
 "defaultModel": "deepseek/deepseek-v4.1-flash",
 "defaultThinkingLevel": "max",
 "enabledModels": [
-  "openai/gpt-6-astra",
+  "openai/gpt-6.2-astra",
   "openai/gpt-6-luna",
   "openai/gpt-5.6-terra",
-  "openai/gpt-6-sol",
+  "openai/gpt-6.2-sol",
   "openrouter/<low id>",
   "openrouter/<mid id>",
   "openrouter/<high-main id>",
