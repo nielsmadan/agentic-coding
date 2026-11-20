@@ -1,0 +1,81 @@
+{
+  "complete": true,
+  "budget_stopped": false,
+  "budget_charge_usd": 0.17680124000000005,
+  "models": [
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 1.00443833344616,
+      "max_s": 2.049289833055809,
+      "known_cost_usd": 0.03499508,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 0.9240352085325867,
+      "max_s": 5.688374375225976,
+      "known_cost_usd": 0.055109,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "meta/muse-ember",
+      "calls": 24,
+      "passed": 24,
+      "errors": 0,
+      "median_s": 1.8366779381176457,
+      "max_s": 4.524284958140925,
+      "known_cost_usd": 0.024654248,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "calls": 24,
+      "passed": 22,
+      "errors": 0,
+      "median_s": 2.679596021072939,
+      "max_s": 6.5590171669609845,
+      "known_cost_usd": 0.03080568,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 1.624471312505193,
+      "max_s": 6.931448957882822,
+      "known_cost_usd": 0.024138575,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "tencent/hy4-flash",
+      "calls": 24,
+      "passed": 21,
+      "errors": 0,
+      "median_s": 2.844696708023548,
+      "max_s": 21.956594415940344,
+      "known_cost_usd": 0.007098657,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    }
+  ]
+}

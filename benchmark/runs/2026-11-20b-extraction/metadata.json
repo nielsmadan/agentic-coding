@@ -1,0 +1,254 @@
+{
+  "started_utc": "2026-11-20T10:19:06.178690+00:00",
+  "models": {
+    "deepseek/deepseek-v4.1-flash-1017": {
+      "name": "DeepSeek: DeepSeek V4.1 Flash 1017",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000006",
+        "input_cache_read": "0.000000003",
+        "overrides": [
+          {
+            "utc_days": [
+              "saturday",
+              "sunday"
+            ],
+            "prompt": "0.00000015",
+            "completion": "0.0000006",
+            "input_cache_read": "0.000000003"
+          },
+          {
+            "utc_days": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ],
+            "utc_start": 0,
+            "utc_end": 100,
+            "prompt": "0.00000015",
+            "completion": "0.0000006",
+            "input_cache_read": "0.000000003"
+          },
+          {
+            "utc_days": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ],
+            "utc_start": 100,
+            "utc_end": 400,
+            "prompt": "0.0000003",
+            "completion": "0.0000012",
+            "input_cache_read": "0.000000006"
+          },
+          {
+            "utc_days": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ],
+            "utc_start": 400,
+            "utc_end": 600,
+            "prompt": "0.00000015",
+            "completion": "0.0000006",
+            "input_cache_read": "0.000000003"
+          },
+          {
+            "utc_days": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ],
+            "utc_start": 600,
+            "utc_end": 1000,
+            "prompt": "0.0000003",
+            "completion": "0.0000012",
+            "input_cache_read": "0.000000006"
+          },
+          {
+            "utc_days": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ],
+            "utc_start": 1000,
+            "utc_end": 0,
+            "prompt": "0.00000015",
+            "completion": "0.0000006",
+            "input_cache_read": "0.000000003"
+          }
+        ]
+      },
+      "max_input_price": 3e-07,
+      "max_output_price": 1.2e-06,
+      "providers": [
+        "Alibaba",
+        "Ambient",
+        "Ant Digital",
+        "AtlasCloud",
+        "Baidu",
+        "BaseTen",
+        "Cloudflare",
+        "Cohere",
+        "CoreWeave",
+        "Crusoe",
+        "DeepInfra",
+        "DeepSeek",
+        "DekaLLM",
+        "DigitalOcean",
+        "Fireworks",
+        "GMICloud",
+        "Inceptron",
+        "InferenceNet",
+        "Ionstream",
+        "Makora",
+        "Mistral",
+        "Modal",
+        "ModelRun",
+        "Morph",
+        "Near AI",
+        "Nebius",
+        "Novita",
+        "OpenInference",
+        "Parasail",
+        "Particle AI",
+        "Pearl Research",
+        "PrimaLabs",
+        "PrimeIntellect",
+        "Reka",
+        "Relace",
+        "River",
+        "SiliconFlow",
+        "StepFun",
+        "StreamLake",
+        "Tenstorrent",
+        "Together",
+        "Venice",
+        "Wafer"
+      ]
+    },
+    "google/gemini-3.1-flash-lite": {
+      "name": "Google: Gemini 3.1 Flash Lite",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000025",
+        "completion": "0.0000015",
+        "image": "0.00000025",
+        "audio": "0.0000005",
+        "input_audio_cache": "0.00000005",
+        "web_search": "0.014",
+        "internal_reasoning": "0.0000015",
+        "input_cache_read": "0.000000025",
+        "input_cache_write": "0.0000000833333333333333"
+      },
+      "max_input_price": 2.5e-07,
+      "max_output_price": 1.5e-06,
+      "providers": [
+        "Google",
+        "Google AI Studio"
+      ]
+    },
+    "meta/muse-ember": {
+      "name": "Meta: Muse Ember",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000001",
+        "completion": "0.0000005",
+        "web_search": "0.0025",
+        "input_cache_read": "0.000000004",
+        "input_cache_write": "0.000000125"
+      },
+      "max_input_price": 1e-07,
+      "max_output_price": 5e-07,
+      "providers": [
+        "Google",
+        "Meta"
+      ]
+    },
+    "xiaomi/mimo-v2.6-flash": {
+      "name": "Xiaomi: MiMo-V2.6-Flash",
+      "context_length": 1050000,
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000028",
+        "input_cache_read": "0.0000000028"
+      },
+      "max_input_price": 1.4e-07,
+      "max_output_price": 2.8e-07,
+      "providers": [
+        "Cohere",
+        "Darkbloom",
+        "DeepInfra",
+        "GMICloud",
+        "Makora",
+        "Venice",
+        "Xiaomi"
+      ]
+    },
+    "openai/gpt-6-luna": {
+      "name": "OpenAI: GPT-6 Luna",
+      "context_length": 1050000,
+      "pricing": {
+        "prompt": "0.0000001",
+        "completion": "0.0000005",
+        "web_search": "0.01",
+        "input_cache_read": "0.00000001",
+        "input_cache_write": "0.000000125",
+        "overrides": [
+          {
+            "min_prompt_tokens": 272000,
+            "prompt": "0.0000002",
+            "completion": "0.00000075",
+            "input_cache_read": "0.00000002",
+            "input_cache_write": "0.00000025"
+          }
+        ]
+      },
+      "max_input_price": 2e-07,
+      "max_output_price": 7.5e-07,
+      "providers": [
+        "Amazon Bedrock",
+        "Azure",
+        "OpenAI"
+      ]
+    },
+    "tencent/hy4-flash": {
+      "name": "Tencent: Hy4 flash",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.000000035",
+        "completion": "0.0000001405",
+        "input_cache_read": "0.0000000015"
+      },
+      "max_input_price": 3.5e-08,
+      "max_output_price": 1.405e-07,
+      "providers": [
+        "Tencent"
+      ]
+    }
+  },
+  "repeats": 3,
+  "workers": 3,
+  "budget_usd": 5.0,
+  "timeout_s": 60,
+  "seed": 42,
+  "warmup_calls": 0,
+  "temperature": 0,
+  "planned_calls": 144,
+  "source_hashes": {
+    "benchmark/extraction_benchmark.py": "dce807232c66954d0c4d3c2fd823c2062d07ac8558304b1b0210226ef82b7de6",
+    "benchmark/extraction_cases.py": "5bb8f98ca2e86814d55b46d7287b86e9941a84a30c31772486fc61f1c07d3ada",
+    "bin/extraction.py": "b8f4f7c73568e9e9629218343294eaf2223fea519332ef2198cdbb1b1f99d672"
+  }
+}

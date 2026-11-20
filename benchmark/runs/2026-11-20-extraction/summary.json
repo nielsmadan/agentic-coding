@@ -1,0 +1,75 @@
+{
+  "complete": false,
+  "budget_stopped": true,
+  "budget_charge_usd": 0.0013836755,
+  "models": [
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "calls": 2,
+      "passed": 2,
+      "errors": 0,
+      "median_s": 0.9723139165434986,
+      "max_s": 1.1606931251008064,
+      "known_cost_usd": 0.000177675,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "google/gemini-3.1-flash-lite",
+      "calls": 0,
+      "passed": 0,
+      "errors": 0,
+      "median_s": null,
+      "max_s": null,
+      "known_cost_usd": 0,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "meta/muse-ember",
+      "calls": 2,
+      "passed": 2,
+      "errors": 0,
+      "median_s": 3.443964812438935,
+      "max_s": 3.9204568329732865,
+      "known_cost_usd": 0.0011258000000000002,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "xiaomi/mimo-v2.6-flash",
+      "calls": 1,
+      "passed": 0,
+      "errors": 0,
+      "median_s": 1.4541397499851882,
+      "max_s": 1.4541397499851882,
+      "known_cost_usd": 5.446e-05,
+      "unknown_cost_calls": 0,
+      "failures": [
+        "relevant"
+      ]
+    },
+    {
+      "model": "anthropic/claude-haiku-5.5",
+      "calls": 0,
+      "passed": 0,
+      "errors": 0,
+      "median_s": null,
+      "max_s": null,
+      "known_cost_usd": 0,
+      "unknown_cost_calls": 0,
+      "failures": []
+    },
+    {
+      "model": "tencent/hy4-flash",
+      "calls": 1,
+      "passed": 1,
+      "errors": 0,
+      "median_s": 2.3843108331784606,
+      "max_s": 2.3843108331784606,
+      "known_cost_usd": 2.57405e-05,
+      "unknown_cost_calls": 0,
+      "failures": []
+    }
+  ]
+}
