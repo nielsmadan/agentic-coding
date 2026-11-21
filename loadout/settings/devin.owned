@@ -1,6 +1,7 @@
 # Keys loadout manages in this destination. Generated; edit the fragment instead.
 # loadout-owned-format: 2
 agent.model
+permission_mode
 read_config_from.claude
 read_config_from.codex
 read_config_from.copilot
