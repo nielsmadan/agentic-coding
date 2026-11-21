@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Count skill invocations across Claude, Codex, Droid, OpenCode and Pi session logs."""
+"""Count skill invocations across Claude, Codex, Devin, Droid, OpenCode and Pi session logs."""
 
 from __future__ import annotations
 
@@ -26,12 +26,13 @@ _WROTE_BYTECODE, sys.dont_write_bytecode = sys.dont_write_bytecode, True
 _SPEC.loader.exec_module(sal)
 sys.dont_write_bytecode = _WROTE_BYTECODE
 
-AGENTS = ("claude", "codex", "droid", "opencode", "pi")
+AGENTS = ("claude", "codex", "devin", "droid", "opencode", "pi")
 USER, MODEL = "user", "model"
 
 CLAUDE_BASE_DIR = re.compile(r"^Base directory for this skill:\s*(\S+)")
 CODEX_SKILL_BLOCK = re.compile(r"<skill>\s*<name>([^<\s]+)</name>")
 SKILL_ATTR_BLOCK = re.compile(r'<skill name="([^"]+)"')
+SLASH_COMMAND = re.compile(r"^\s*/([A-Za-z0-9_.:-]+)")
 AUTOMATION_CWD = re.compile(r"^/(?:private/)?(?:tmp|var/folders)/|/\.sandbox/")
 INSTALLED_SKILL_FILE = re.compile(
     r"/\.(?:claude|codex|agents|factory|pi/agent|config/opencode)/(?:[^\s\"'`;|]*/)?"
@@ -118,6 +119,19 @@ def pi_skills(record: dict) -> list[tuple[str, str]]:
     return [(s, MODEL) for b in content
             if isinstance(b, dict) and b.get("type") == "toolCall"
             for s in installed_reads(b.get("arguments"))]
+
+
+def devin_skills(message: dict) -> list[tuple[str, str]]:
+    if message.get("role") == "user":
+        typed = sal.devin_typed_prompt(message)
+        command = SLASH_COMMAND.match(typed)
+        expanded = command and sal.flatten_content(message.get("content")) != typed
+        human = sal.devin_source(message) == "user"
+        return [(skill_name(command.group(1)), USER)] if expanded and human else []
+    calls = message.get("tool_calls") if message.get("role") == "assistant" else None
+    return [(skill_name(str(c["arguments"]["skill"])), MODEL) for c in calls or []
+            if isinstance(c, dict) and c.get("name") == "skill"
+            and isinstance(c.get("arguments"), dict) and c["arguments"].get("skill")]
 
 
 def opencode_skills(part: dict) -> list[tuple[str, str]]:
@@ -220,6 +234,26 @@ def opencode_events(roots, options) -> list[Event]:
         connection.close()
 
 
+def devin_events(roots, options) -> list[Event]:
+    if not roots.devin_db.is_file():
+        return []
+    connection = sal.open_devin(roots.devin_db)
+    try:
+        events = []
+        for row in sal.devin_session_rows(connection, options.cutoff):
+            session, cwd = str(row["id"]), row["working_directory"]
+            if not sal.cwd_in_scope(cwd, options):
+                continue
+            messages = sal.devin_messages(connection, session, row["main_chain_id"])
+            events.extend(Event("devin", session, cwd, sal.devin_timestamp(message, fallback),
+                                skill, trigger)
+                          for message, fallback in messages
+                          for skill, trigger in devin_skills(message))
+        return events
+    finally:
+        connection.close()
+
+
 def collect(agents: Iterable[str], roots, options) -> tuple[list[Event], list[str]]:
     events: list[Event] = []
     missing: list[str] = []
@@ -228,6 +262,11 @@ def collect(agents: Iterable[str], roots, options) -> tuple[list[Event], list[st
             if not roots.opencode_db.is_file():
                 missing.append(agent)
             events.extend(opencode_events(roots, options))
+            continue
+        if agent == "devin":
+            if not roots.devin_db.is_file():
+                missing.append(agent)
+            events.extend(devin_events(roots, options))
             continue
         paths = list(jsonl_paths(agent, roots, options))
         if not paths and agent != "claude" and not {

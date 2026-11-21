@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -25,6 +26,47 @@ def claude_meta(skill_path: str, tool_use: str | None = None) -> dict:
     if tool_use:
         record["sourceToolUseID"] = tool_use
     return record
+
+
+def devin_message(role: str, content: str, source: str, **extra) -> dict:
+    metadata = {"created_at": "2026-10-04T00:00:00Z", "telemetry": {"source": source},
+                **extra.pop("metadata", {})}
+    return {"role": role, "content": content, "metadata": metadata, **extra}
+
+
+def devin_skill_call(skill: str) -> dict:
+    return devin_message("assistant", "", "assistant",
+                         tool_calls=[{"name": "skill", "arguments": {"skill": skill}}])
+
+
+def devin_prompt(typed: str, content: str) -> dict:
+    return devin_message("user", content, "user", metadata={
+        "is_user_input": True,
+        "extensions": {"chisel/acp-content-blocks": [{"type": "text", "text": typed}]}})
+
+
+def make_devin_db(path: Path, cwd: str) -> None:
+    connection = sqlite3.connect(path)
+    connection.executescript("""
+        CREATE TABLE sessions (id TEXT PRIMARY KEY, working_directory TEXT, title TEXT,
+            created_at INTEGER, last_activity_at INTEGER, main_chain_id INTEGER);
+        CREATE TABLE message_nodes (session_id TEXT, node_id INTEGER, parent_node_id INTEGER,
+            chat_message TEXT, created_at INTEGER);
+        CREATE TABLE subagent_heads (session_id TEXT, agent_id TEXT, chain_node_id INTEGER,
+            updated_at INTEGER);
+    """)
+    connection.execute("INSERT INTO sessions VALUES ('dv1', ?, 't', 1790000000, 1790000100, 2)",
+                       (cwd,))
+    connection.execute("INSERT INTO subagent_heads VALUES ('dv1', 'sidekick', 4, 1790000100)")
+    nodes = [(0, None, devin_prompt("/devin:plan go", "plan body\ngo")),
+             (1, 0, devin_skill_call("qa")),
+             (2, 0, devin_skill_call("qa")),
+             (3, None, devin_message("user", "handoff", "subagent_task")),
+             (4, 3, devin_skill_call("nono-sandbox"))]
+    connection.executemany("INSERT INTO message_nodes VALUES ('dv1', ?, ?, ?, 1790000000)",
+                           [(n, parent, json.dumps(m)) for n, parent, m in nodes])
+    connection.commit()
+    connection.close()
 
 
 class DetectorTests(unittest.TestCase):
@@ -73,6 +115,14 @@ class DetectorTests(unittest.TestCase):
         self.assertEqual(su.pi_skills(typed), [("commit", "user")])
         self.assertEqual(su.pi_skills(read), [("brainstorming", "model")])
 
+    def test_devin_counts_skill_tool_and_expanded_slash_prompt(self):
+        self.assertEqual(su.devin_skills(devin_skill_call("qa")), [("qa", "model")])
+        self.assertEqual(su.devin_skills(devin_prompt("/devin:plan go", "plan body\ngo")),
+                         [("plan", "user")])
+
+    def test_devin_ignores_a_builtin_slash_command_left_unexpanded(self):
+        self.assertEqual(su.devin_skills(devin_prompt("/compact", "/compact")), [])
+
     def test_opencode_reads_skill_tool_name(self):
         part = {"type": "tool", "tool": "skill", "state": {"input": {"name": "superpowers:plan"}}}
         self.assertEqual(su.opencode_skills(part), [("plan", "model")])
@@ -119,7 +169,8 @@ class EndToEndTests(unittest.TestCase):
             root = Path(tmp)
             roots = su.sal.Roots(claude_projects=root / "claude", claude_archive=root / "archive",
                                  codex_sessions=root / "codex", cursor_projects=root / "cursor",
-                                 cursor_chats=root / "cursor-chats", droid_sessions=root / "droid",
+                                 cursor_chats=root / "cursor-chats", devin_db=root / "devin.db",
+                                 droid_sessions=root / "droid",
                                  opencode_db=root / "oc.db", pi_sessions=root / "pi")
             proj = roots.claude_projects / "-p"
             proj.mkdir(parents=True)
@@ -142,6 +193,28 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual([r["skill"] for r in report["skills"]], ["commit"])
         self.assertEqual(report["skills"][0]["by_agent"], {"claude": 1, "codex": 1})
+
+    def test_report_counts_devin_kept_chains_once(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            roots = su.sal.Roots(claude_projects=root / "claude", claude_archive=root / "archive",
+                                 codex_sessions=root / "codex", cursor_projects=root / "cursor",
+                                 cursor_chats=root / "cursor-chats", devin_db=root / "devin.db",
+                                 droid_sessions=root / "droid", opencode_db=root / "oc.db",
+                                 pi_sessions=root / "pi")
+            make_devin_db(roots.devin_db, f"{HOME}/proj")
+
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = su.main(["--days", "0", "--devin", "--format", "json"], roots=roots)
+
+        report = json.loads(out.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(report["incomplete"], [])
+        self.assertEqual(
+            sorted((r["skill"], r["invocations"], r["user"], r["model"], r["by_agent"]["devin"])
+                   for r in report["skills"]),
+            [("nono-sandbox", 1, 0, 1, 1), ("plan", 1, 1, 0, 1), ("qa", 1, 0, 1, 1)])
 
 
 if __name__ == "__main__":

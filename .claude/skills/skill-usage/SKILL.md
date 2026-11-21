@@ -1,6 +1,6 @@
 ---
 name: skill-usage
-description: Report which skills are used, how often, and by which agent (Claude, Codex, Droid, OpenCode, Pi) by counting real skill invocations in the agents' session logs. Use when asked "which skills do we use", "skill usage", "how often is X used", "which skills are unused / dead", "what should we prune", or to compare skill adoption across agents. Not for recovering a past session's content; use check-agent-logs for that.
+description: Report which skills are used, how often, and by which agent (Claude, Codex, Devin, Droid, OpenCode, Pi) by counting real skill invocations in the agents' session logs. Use when asked "which skills do we use", "skill usage", "how often is X used", "which skills are unused / dead", "what should we prune", or to compare skill adoption across agents. Not for recovering a past session's content; use check-agent-logs for that.
 ---
 
 # Skill Usage
@@ -15,11 +15,11 @@ skill merely *mentioned* (a file listing, an edit to `loadout/skills/`) never co
 ### 1. Run the report
 
 ```bash
-python3 .claude/skills/skill-usage/scripts/skill_usage.py [--days 30] [--claude] [--codex] [--droid] [--opencode] [--pi]
+python3 .claude/skills/skill-usage/scripts/skill_usage.py [--days 30] [--claude] [--codex] [--devin] [--droid] [--opencode] [--pi]
 ```
 
 - `--days N` sets the window (default 30); `--days 0` is all time.
-- No agent flag means all five. Scope defaults to every project; narrow it with
+- No agent flag means all six. Scope defaults to every project; narrow it with
   `--app NAME` (cwd substring) or `--scope current|siblings`.
 - `--format json` for anything that post-processes the numbers.
 - A full 30-day run over all agents takes about 25 seconds.
@@ -29,8 +29,8 @@ python3 .claude/skills/skill-usage/scripts/skill_usage.py [--days 30] [--claude]
 - **sessions** — distinct sessions that loaded the skill. Use this to rank skills; it
   is robust to a skill being re-read or re-selected within one session.
 - **invoked** — total loads. **user** / **model** split it: *user* is a typed
-  invocation (`/skill`, `$skill`, `/skill:name`, Droid skill selection), *model* is the
-  agent loading it on its own or another skill calling it.
+  invocation (`/skill`, `$skill`, `/skill:name`, Devin's `/devin:skill`, Droid skill
+  selection), *model* is the agent loading it on its own or another skill calling it.
 - Per-agent columns count **sessions**, not invocations.
 - **Unused in this window** lists skills in `loadout/skills/` and this repo's
   `.claude/skills/` with no load in the window. Global skills only; plugin skills
@@ -42,6 +42,7 @@ How each agent records a load, and therefore what is counted:
 |---|---|---|
 | Claude | "Base directory for this skill" record without a tool id | the same record with `sourceToolUseID` |
 | Codex | `<skill><name>…</name>` block from `$skill` | tool call naming an installed `…/skills/X/SKILL.md` |
+| Devin | typed `/skill` prompt that Devin expanded into the skill's text | `skill` tool call |
 | Droid | `<skill name="…">` block in a user message | `Skill` tool call |
 | Pi | `<skill name="…">` block from `/skill:name` | `read` of an installed `SKILL.md` |
 | OpenCode | — | `skill` tool call |
