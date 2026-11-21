@@ -16,7 +16,7 @@
 # research skills call it by that name.
 
 extends = "studio"
-remove = ["droid", "opencode"]
+remove = ["devin", "droid", "opencode"]
 
 # A child's [[source]] list replaces the parent's, so studio.toml's sources are
 # restated before the fleet's, all but ac-juggler: Juggler shows only Niels's
