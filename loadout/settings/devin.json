@@ -3,6 +3,11 @@
     "model": "fusion-claude-opus-5-5-high-sidekick-swe-2-high"
   },
   "read_config_from": {
-    "claude": false
+    "claude": false,
+    "codex": false,
+    "copilot": false,
+    "cursor": false,
+    "kiro": false,
+    "windsurf": false
   }
 }

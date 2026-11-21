@@ -2,3 +2,8 @@
 # loadout-owned-format: 2
 agent.model
 read_config_from.claude
+read_config_from.codex
+read_config_from.copilot
+read_config_from.cursor
+read_config_from.kiro
+read_config_from.windsurf
