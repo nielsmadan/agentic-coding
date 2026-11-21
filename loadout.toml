@@ -48,6 +48,9 @@ instructions = [
 settings = "cursor"
 hooks = ["cursor", "hooklinesinker-cursor"]
 
+[devin]
+settings = "devin"
+
 [droid]
 settings = "droid"
 
