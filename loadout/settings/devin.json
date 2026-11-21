@@ -1,4 +1,7 @@
 {
+  "agent": {
+    "model": "fusion-claude-opus-5-5-high-sidekick-swe-2-high"
+  },
   "read_config_from": {
     "claude": false
   }
