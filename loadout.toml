@@ -50,6 +50,7 @@ hooks = ["cursor", "hooklinesinker-cursor"]
 
 [devin]
 settings = "devin"
+hooks = ["devin", "hooklinesinker-devin"]
 
 [droid]
 settings = "droid"

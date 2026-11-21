@@ -46,6 +46,13 @@ class HookOutputTests(unittest.TestCase):
             json.loads(status.hook_output(env)), {"additional_context": status.status_note(env)}
         )
 
+    def test_devin_gets_the_note_as_session_start_context(self):
+        env = {"AGENT_HARNESS": "devin", "AGENT_SANDBOX": "1", "AGENT_SANDBOX_PROFILE": "devin-local"}
+        self.assertEqual(
+            json.loads(status.hook_output(env)),
+            {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": status.status_note(env)}},
+        )
+
     def test_other_harnesses_get_the_plain_note(self):
         env = {"AGENT_HARNESS": "claude", "AGENT_SANDBOX": "1"}
         self.assertEqual(status.hook_output(env), status.status_note(env))

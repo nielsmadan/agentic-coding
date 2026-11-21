@@ -34,9 +34,12 @@ def status_note(env: Mapping[str, str]) -> str:
 
 def hook_output(env: Mapping[str, str]) -> str:
     note = status_note(env)
-    # Cursor's sessionStart hook reads its context from JSON, not plain stdout.
-    if env.get("AGENT_HARNESS") == "cursor":
+    # Cursor's and Devin's SessionStart hooks read their context from JSON, not plain stdout.
+    harness = env.get("AGENT_HARNESS")
+    if harness == "cursor":
         return json.dumps({"additional_context": note})
+    if harness == "devin":
+        return json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": note}})
     return note
 
 

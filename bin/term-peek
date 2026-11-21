@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-AGENTS = {"claude", "codex", "opencode", "pi", "droid", "cursor-agent", "nono", "clor"}
+AGENTS = {"claude", "codex", "opencode", "pi", "droid", "cursor-agent", "devin", "nono", "clor"}
 SHELLS = {"zsh", "bash", "fish", "sh"}
 FIELD = "\x1f"
 RECORD = "\x1e"

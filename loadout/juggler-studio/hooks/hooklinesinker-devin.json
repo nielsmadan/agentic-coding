@@ -1,0 +1,90 @@
+{
+  "PermissionRequest": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event PermissionRequest",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "PostCompaction": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event PostCompaction",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event PostToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event PreToolUse",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event SessionEnd",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event SessionStart",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event Stop",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "command": "/opt/bin/hooklinesinker ingest --agent devin --event UserPromptSubmit",
+          "timeout": 5,
+          "type": "command"
+        }
+      ]
+    }
+  ]
+}

@@ -9,6 +9,11 @@
     "copilot": false,
     "cursor": false,
     "kiro": false,
-    "windsurf": false
-  }
+    "opencode": false,
+    "windsurf": false,
+    "zed": false
+  },
+  "attribution": false,
+  "auto_update": false,
+  "show_hints": false
 }
