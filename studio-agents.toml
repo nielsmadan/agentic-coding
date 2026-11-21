@@ -59,9 +59,6 @@ defaults    = ["codex", "codex-studio-agents"]
 hooks       = ["codex"]
 permissions = []
 
-[cursor]
-hooks       = ["cursor"]
-
 [skills.guide]
 agents = []
 
