@@ -106,7 +106,7 @@ class ModelTiersTest(unittest.TestCase):
                             command,
                             command,
                             *(
-                                ["-c", 'sandbox_mode="danger-full-access"']
+                                ["-s", "danger-full-access"]
                                 if command == "codex"
                                 else []
                             ),
@@ -146,7 +146,7 @@ _agent_iterm_run() {
                         command,
                         command,
                         *(
-                            ["-c", 'sandbox_mode="danger-full-access"']
+                            ["-s", "danger-full-access"]
                             if command == "codex"
                             else []
                         ),
