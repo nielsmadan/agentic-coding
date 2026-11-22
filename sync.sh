@@ -239,14 +239,16 @@ sync_agent_signing_unlock() {
   fi
 }
 
-# Machines that run unattended jobs need the agent browser up without anyone at the
-# screen, so it starts at each login. Interactive machines start it on demand.
 sync_agent_chromium_autostart() {
   local label="com.nielsmadan.agent-chromium"
   local dest="$HOME/Library/LaunchAgents/$label.plist"
   create_symlink "$SCRIPT_DIR/launchd/$label.plist" "$dest"
   if ! launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
-    launchctl bootstrap "gui/$(id -u)" "$dest" && echo "✓  Loaded $label"
+    if launchctl bootstrap "gui/$(id -u)" "$dest"; then
+      echo "✓  Loaded $label"
+    else
+      echo "!  Could not load $label. It will start at the next login." >&2
+    fi
   fi
 }
 
@@ -543,7 +545,7 @@ for entry in "${SYMLINKS[@]}"; do
   create_symlink "$source" "$dest"
 done
 echo ""
-if [[ "$PROFILE" != default && $HAS_AGENT_CHROMIUM == true ]]; then
+if [[ $HAS_AGENT_CHROMIUM == true ]]; then
   sync_agent_chromium_autostart
 fi
 if [[ $USES_NONO == true ]]; then

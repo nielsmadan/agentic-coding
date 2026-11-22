@@ -33,6 +33,9 @@ Use `./install.sh --autonomous` to install the broader **autonomous-dev profile*
 (permits `git push` and other unattended ops — for machines running headless
 agent tasks). Plain `./install.sh` installs the normal profile.
 
+On personal Macs, `sync.sh` installs a LaunchAgent that starts `agent-chromium`
+at login. Use `agent-browser --cdp 9222` to attach to that browser.
+
 Use `./sync.sh --profile unsandboxed` on a machine that should inherit the
 autonomous profile without nono or Mouthfeel plugins. Agent launchers read the
 selected profile and skip nono, including `clor`; Codex uses its native sandbox
