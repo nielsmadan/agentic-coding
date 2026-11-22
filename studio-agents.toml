@@ -51,7 +51,7 @@ substitute = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", "w
 settings    = ["claude", "claude-studio-agents"]
 hooks       = ["claude"]
 permissions = []
-plugins     = ["claude", "unsandboxed", "studio-agents"]
+plugins     = ["claude", "unsandboxed", "studio", "studio-agents"]
 substitute  = { secrets = "secrets.studio-agents", sandbox = "sandbox.studio", web-fetching = "web-fetching.studio", git-policy = "unattended.studio-agents", agent-dispatch = "agent-dispatch.autonomous" }
 
 [codex]
