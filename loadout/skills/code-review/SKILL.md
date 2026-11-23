@@ -226,7 +226,7 @@ Announce what got auto-included. In comprehensive mode, use messages such as `De
 
 ### 3b.6. Preflight cleanup
 
-::: claude codex opencode
+::: claude codex devin opencode
 Before launching any review agent, invoke `review-tidy --fix` exactly once against the resolved scope. It owns the `review-comments` invocation and runs formatting after all cleanup edits; do not invoke comment cleanup separately.
 :::
 ::: pi
@@ -253,10 +253,13 @@ Keep the file list resolved in Step 3b even if cleanup edits change git status. 
 ::: codex
 **Pass `model` and `reasoning_effort` on every `spawn_agent` call**, at the tiers your global instructions map: high for the quick-mode reviewer and for each comprehensive perspective, mid for the Steps 4–5 scorers. "Full review reasoning effort" below means the high tier's effort, not the session's.
 :::
+::: devin
+**Launch every reviewer on a profile your global instructions map, never a built-in one**: `readonly-high` for the quick-mode reviewer and for each comprehensive perspective, `readonly-mid` for the Steps 4–5 scorers.
+:::
 
 #### Quick mode (`--quick`)
 
-::: claude codex opencode
+::: claude codex devin opencode
 Do not load `references/agents.md`. Launch exactly **one read-only review agent** and give it the resolved scope or target. Use the same model and reasoning effort as a comprehensive reviewer; do not select a faster profile or lower effort for quick mode. It must not delegate to sub-skills or dispatch more agents.
 :::
 ::: pi
@@ -292,7 +295,7 @@ Launch the selected review perspectives in parallel, queuing successive batches 
 **Claude Code caps concurrent subagents** at `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`. Launch up to that many at once, then launch each remaining reviewer as soon as one returns. A launch refused with `Concurrent subagent limit reached` never ran: despite the message's "Do not retry", queue it and launch it when a slot frees, and never drop the aspect. The same limit applies to the scorer round.
 :::
 
-::: claude codex opencode
+::: claude codex devin opencode
 **Launch workers that return findings without editing files**, including temporary edits: a reviewer that mutates a file to test something and restores it still corrupts what the parallel reviewers read. Include the shared rules from `references/agents.md` in every brief. Disable delegation tools for ordinary reviewers where supported; read-only access alone does not prevent delegation. If a reviewer coordinates verification, name the checks, bound the descendants, and define when it should stop. Workers can read the relevant sub-skill directly when their harness has no Skill tool.
 :::
 ::: pi
@@ -318,13 +321,13 @@ Launch the selected review perspectives in parallel, queuing successive batches 
 
 Each agent should output a list of issues. For each issue, include: what the problem is, where it is (file + line), and why it matters, and tag safe fixes `autofix` as defined in `references/agents.md`. Do NOT assign verdicts or effort — scoring happens in a separate pass.
 
-::: claude codex opencode
+::: claude codex devin opencode
 **Sub-agent invocation pattern.** When a sub-agent delegates to a sub-skill, pass the resolved scope through directly:
 :::
 ::: pi
 **Sub-agent invocation pattern.** Name the sub-skill in the child's `task` and let it `read` that `SKILL.md` itself — delegation works, it just resolves through the filesystem rather than a Skill tool. What does *not* carry over is the scope flag: `reviewer` has no bash, so it cannot turn `--staged` into a file list. Pass the concrete list resolved in Step 3b instead. The table below is therefore read as scope→file-list on pi, not scope→flag.
 :::
-::: claude codex opencode
+::: claude codex devin opencode
 
 | Resolved scope | Argument passed to sub-skill |
 |---|---|
@@ -343,7 +346,7 @@ Inline agents (no delegation) work directly against the file list computed in st
 
 If `--multi` flag is present in $ARGUMENTS, also get external opinions:
 
-::: claude codex opencode
+::: claude codex devin opencode
 Use the **Skill tool** to invoke `second-opinion --quick`, which queries every external advisor it has configured, in parallel. (The advisor roster lives in the `second-opinion` skill — don't enumerate it here.) Phrase the prompt according to the resolved scope from step 3b:
 :::
 ::: pi

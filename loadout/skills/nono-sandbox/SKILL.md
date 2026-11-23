@@ -8,7 +8,7 @@ opencode:
   platforms: [macos, linux]
 ---
 
-::: claude codex pi
+::: claude codex devin pi
 # Working inside a nono sandbox
 
 Your granted workspace directory is read+write. Package caches, agent config and a few named files are granted.
@@ -28,7 +28,7 @@ line, and those are often harmless probes — tools walking up from the workdir 
 config. `No path denials were observed during this session.` means nothing was blocked and the
 failure is elsewhere.
 
-**Under Claude and OpenCode, nono runs with `--silent`: no banner and no exit diagnostic.** The
+**Under Claude, Devin and OpenCode, nono runs with `--silent`: no banner and no exit diagnostic.** The
 failing command's own `Operation not permitted` is then your only signal, and the absence of a
 nono denial line proves nothing. Codex and Pi print both.
 

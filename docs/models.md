@@ -28,6 +28,7 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 | `codex <tier>`, `pix <tier>` | ChatGPT subscription | low/mid/high/xhigh GPT-6.1 Sol (low/medium/xhigh/max), max GPT-6 Astra (max) | `.airc.d/07-model-tiers.zsh` |
 | Codex sub-agents | ChatGPT subscription | GPT-6.2 Sol: `haiku` low, `sonnet` medium, `opus` xhigh | `loadout/instructions/codex-subagent-models.md` |
 | `pix` | ChatGPT subscription | GPT-6 Astra (high) | `.airc.d/pi.zsh` |
+| Devin sub-agents | Devin subscription | `haiku`/`sonnet` Sonnet 5.5 (medium), `opus` Opus 5.5 (high), as the `readonly-` and `worker-` profiles | `loadout/agents/`, `loadout/instructions/devin-subagent-models.md` |
 | `pi` | Token Pass | DeepSeek V4.1 Flash (max) | `loadout/settings/pi.json` |
 | `pi` `/model` | Token Pass | DeepSeek V4.1 Flash, Kimi K3.1 Pro | `loadout/settings/pi.json` `enabledModels` |
 | `pi` `/model` | OpenRouter | GPT-6 Luna, Muse Ember, GPT-6.1 Sol | `loadout/settings/pi.json` `enabledModels` |

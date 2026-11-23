@@ -74,6 +74,9 @@ Launch each batch together as runtime capacity allows. Complete all selected per
 ::: codex
 **Pass `model` and `reasoning_effort` on each reviewer's `spawn_agent` call**: the high tier your global instructions map for Alternatives, Robustness and Adversarial.
 :::
+::: devin
+**Launch Alternatives, Robustness and Adversarial on the `readonly-high` profile** your global instructions map, never a built-in one.
+:::
 
 **The three reviewers return findings without editing files.** Disable delegation tools for these workers where supported; read-only access alone does not prevent delegation. A coordinating role requires named subtasks, a descendant limit, and a stopping condition.
 

@@ -8,8 +8,6 @@
 # call the deployed /opt/bin/hooklinesinker (bin/juggler-studio generates them).
 
 extends = "default"
-# Cursor is for a client project on the MacBook only.
-remove = ["cursor"]
 
 [[source]]
 name = "ac"
@@ -44,6 +42,14 @@ instructions = [
     "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
     "functional-style", "working-style",
     "codex-proactivity", "codex-subagent-models",
+]
+
+[devin]
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy",
+    "functional-style", "working-style",
+    "devin-subagent-models",
 ]
 
 [claude]

@@ -177,10 +177,9 @@ User says: "configure-agents devin"
 
 User says: "is cursor configured like the others?"
 
-Read `nono/cursor-local.json`, `.airc.d/cursor.zsh`, the `[cursor]` table,
-`loadout/settings/cursor.json` and `~/.cursor/cli-config.json`. Report the gaps,
-for example: `approvalMode` is set by hand rather than through loadout; there is
-no status line; no history retention is set. Wait for the user to pick which to
+Read `nono/cursor-local.json`, `.airc.d/cursor.zsh` and `~/.cursor/cli-config.json`,
+which is maintained by hand rather than through loadout. Report the gaps, for
+example: there is no status line; no history retention is set. Wait for the user to pick which to
 fix.
 
 ## Troubleshooting

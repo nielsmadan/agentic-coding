@@ -56,7 +56,7 @@ A skill whose text must differ per harness marks the differing parts inline. Two
 skills do today, for different reasons.
 
 `code-review` is the biggest case: dispatch and sub-agent instructions differ
-between the claude/codex/opencode family and pi, which fans out through a
+between the claude/codex/devin/opencode family and pi, which fans out through a
 `workflowScript` instead of repeated tool calls. `nono-sandbox` is the other
 shape: OpenCode carries a substantially longer version, so the two documents are
 wrapped whole. (`skill-creator` shows `:::` lines too, but only inside a fenced
@@ -72,6 +72,9 @@ Marked sections wrap whole blocks:
 - **Claude** runs non-interactively in print mode (`claude -p`).
 :::
 ```
+
+A harness named in none of a skill's alternative blocks gets none of them, silently: a
+new harness has to be added to every marker list, or its copy loses whole sections.
 
 A marker never sits *inside* a fenced code block — to vary a code example, mark the
 whole fence twice. Adjacent blocks must have no blank line between them, or that

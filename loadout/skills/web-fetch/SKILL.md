@@ -59,7 +59,7 @@ On the Kubernetes Deployment page it refused the question outright, reporting
 `[Content truncated due to length...]`, while `jina-fetch` answered it correctly from the full
 page.
 :::
-::: codex opencode pi
+::: codex devin opencode pi
 A fetch has failed when any of these happen:
 
 - refused by a deny-list or robots rule, never sent

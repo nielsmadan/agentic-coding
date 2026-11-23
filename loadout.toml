@@ -23,6 +23,8 @@ instructions = [
     "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy", "terminal",
     "functional-style", "working-style",
 ]
+# loadout/agents/ holds Devin's tier profiles; the other harnesses pass a model per dispatch.
+agents = false
 
 [claude]
 settings = ["claude", "claude-afk"]
@@ -44,13 +46,16 @@ instructions = [
     "codex-proactivity", "codex-subagent-models",
 ]
 
-[cursor]
-settings = "cursor"
-hooks = ["cursor", "hooklinesinker-cursor"]
-
 [devin]
 settings = "devin"
 hooks = ["devin", "hooklinesinker-devin"]
+agents = true
+instructions = [
+    "intro-shared", "web-fetching.shared", "video-content",
+    "secrets", "cloudflare", "sandbox", "containers", "processes", "agent-dispatch", "git-policy", "git-commit-policy", "terminal",
+    "functional-style", "working-style",
+    "devin-subagent-models",
+]
 
 [droid]
 settings = "droid"
