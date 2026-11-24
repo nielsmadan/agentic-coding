@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 import subprocess
 import tempfile
@@ -28,8 +29,52 @@ class ProfileLaunchersTest(unittest.TestCase):
             capture_output=True,
         )
 
+    def isolate_path(self, *tools):
+        bin_dir = Path(self.temporary.name) / "bin"
+        bin_dir.mkdir()
+        (bin_dir / "python3").symlink_to(sys.executable)
+        for tool in tools:
+            (bin_dir / tool).write_text("#!/bin/sh\n")
+            (bin_dir / tool).chmod(0o755)
+        self.environment["PATH"] = f"{bin_dir}:/usr/bin:/bin"
+
+    def run_codex(self, launcher):
+        return self.run_shell(f'''
+source .airc.d/05-sandbox.zsh
+source .airc.d/06-iterm-agent.zsh
+source .airc.d/codex.zsh
+_agent_raw_dir() {{ return 1; }}
+sops-exec() {{ printf '%s\\n' "$@"; }}
+{launcher} resume 'two words'
+''')
+
+    def test_codex_launchers_run_under_bellhop_when_installed(self):
+        self.isolate_path("bellhop")
+        expected = {
+            "codex": ["bellhop", "codex", "resume", "two words"],
+            "codex-raw": ["bellhop", "codex", "-s", "danger-full-access", "resume", "two words"],
+        }
+        for launcher, argv in expected.items():
+            with self.subTest(launcher=launcher):
+                result = self.run_codex(launcher)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.splitlines(), argv)
+
+    def test_codex_launchers_keep_their_own_server_without_bellhop(self):
+        self.isolate_path()
+        expected = {
+            "codex": ["codex", "--no-daemon", "resume", "two words"],
+            "codex-raw": ["codex", "--no-daemon", "-s", "danger-full-access", "resume", "two words"],
+        }
+        for launcher, argv in expected.items():
+            with self.subTest(launcher=launcher):
+                result = self.run_codex(launcher)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.splitlines(), argv)
+
     def test_launchers_keep_arguments_without_nono(self):
-        standalone = {"opencode": ["--standalone"]}
+        self.isolate_path()
+        standalone = {"codex": ["--no-daemon"], "opencode": ["--standalone"]}
         for agent in ("claude", "codex", "opencode", "pi"):
             with self.subTest(agent=agent):
                 result = self.run_shell(f'''

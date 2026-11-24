@@ -7,6 +7,9 @@ path=(${path:#${0:h}})
 if [[ -t 1 && -z $AGENT_SANDBOX ]]; then
   source ~/.airc
   $name "$@"
+elif [[ -t 1 && $name == codex ]]; then
+  (( $+commands[bellhop] )) && exec bellhop codex "$@"
+  exec codex --no-daemon "$@"
 else
   exec $name "$@"
 fi

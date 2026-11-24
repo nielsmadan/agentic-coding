@@ -32,6 +32,7 @@ The per-agent files hold only what one agent needs:
 | profile | extra grant | why |
 |---|---|---|
 | `claude-local` | read `~/.local/share/claude` | |
+| `codex-local` | read+write `~/.local/state/bellhop`, read `~/.config/bellhop` | `bellhop codex` starts each session's app server inside the sandbox; it keeps its server log and store there |
 | `opencode-local` | read-file `~/.claude/CLAUDE.md`, read `~/.claude/skills` | opencode falls back to Claude's global rules and skills |
 
 **droid has no vendor pack.** `nono search droid` and `nono search factory` both return nothing, so `droid-local` extends `default` rather than a `nolabs-ai/*` pack and spells out the groups itself. Its containment was measured rather than inherited: `~/wrksp` and `~/.factory` writable, `~/ac` read-only, `~/Documents`, `~/.ssh` and `login.keychain-db` denied — the same boundary the other four get.

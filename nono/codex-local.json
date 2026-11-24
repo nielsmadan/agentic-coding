@@ -38,9 +38,11 @@
     "allow": [
       "$HOME/.codex",
       "$HOME/.agents",
+      "$HOME/.local/state/bellhop",
       "$NONO_CONFIG/profile-drafts"
     ],
     "read": [
+      "$HOME/.config/bellhop",
       "$NONO_PACKAGES",
       "$NONO_CONFIG/profiles"
     ]

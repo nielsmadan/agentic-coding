@@ -79,10 +79,20 @@ class RlLaunchTest(unittest.TestCase):
             self.run_piped("codex", "exec", "two words"), "real codex exec two words"
         )
 
-    def test_terminal_launch_inside_a_sandbox_runs_the_real_binary(self):
+    def test_terminal_codex_launch_inside_a_sandbox_uses_the_inline_server(self):
         self.environment["AGENT_SANDBOX"] = "1"
         self.assertEqual(
-            self.run_on_terminal("codex", "resume", "id"), "real codex resume id"
+            self.run_on_terminal("codex", "resume", "id"),
+            "real codex --no-daemon resume id",
+        )
+
+    def test_terminal_codex_launch_inside_a_sandbox_prefers_bellhop(self):
+        self.environment["AGENT_SANDBOX"] = "1"
+        bellhop = Path(self.environment["HOME"]) / "bin" / "bellhop"
+        bellhop.write_text('#!/bin/sh\nprintf "%s\\n" "real bellhop $*"\n')
+        bellhop.chmod(0o755)
+        self.assertEqual(
+            self.run_on_terminal("codex", "resume", "id"), "real bellhop codex resume id"
         )
 
 

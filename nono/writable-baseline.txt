@@ -102,6 +102,7 @@ $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
 $HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
+$HOME/.local/state/bellhop	profile
 $HOME/.local/state/hooklinesinker	profile
 $HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
