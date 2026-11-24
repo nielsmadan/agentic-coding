@@ -46,6 +46,11 @@
 # output wholesale, exit summary included; the child's own denial errors are
 # unaffected.
 #
+# NONO_NO_SAVE_PROMPT turns off nono's post-exit "Review denied paths" screen,
+# where every entry starts as grant and Enter confirms. Saving re-serialises the
+# profile through a rename, replacing the symlink into $AC_DIR/nono with a regular
+# file that edits to the repo no longer reach. Grants go into nono/*.json instead.
+#
 # Working in these repos means writing outside ~/wrksp (loadout sync, these
 # wrappers themselves), which the sandbox exists to prevent — so claude and codex
 # route to their -raw variant here. AGENT_FORCE_SANDBOX=1 overrides. pi and
@@ -89,6 +94,7 @@ _agent_sandboxed() {
     AGENT_BROWSER_ARGS=--no-sandbox \
     VHS_NO_SANDBOX=true \
     DISABLE_AUTOUPDATER=1 \
+    NONO_NO_SAVE_PROMPT=1 \
     SSL_CERT_FILE=/etc/ssl/cert.pem \
       sops-exec nono run "${nono_options[@]}" -p "$profile" -- "$cmd" "$@"
   elif [[ -n $AGENT_REQUIRE_SANDBOX ]]; then

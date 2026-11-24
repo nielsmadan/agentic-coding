@@ -55,6 +55,18 @@ def bypass_shape_errors() -> list[str]:
     return found
 
 
+def profile_link_errors(installed: Path, sources: Path) -> list[str]:
+    if not installed.is_dir():
+        return []
+    return [
+        f"{entry} is not a symlink into {sources}; nono saved over it, so edits to the repo no longer reach it. "
+        f"Diff it against the repo, fold any grant you want into nono/{entry.name}, "
+        f"then run ./sync.sh, which backs it up and relinks it"
+        for entry in sorted(installed.glob("*.json"))
+        if not (entry.is_symlink() and entry.resolve() == (sources / entry.name).resolve())
+    ]
+
+
 def writable(profile: str) -> set[str]:
     result = subprocess.run(
         ["nono", "run", "-p", profile, "--dry-run", "-v", "--", "true"],
@@ -95,7 +107,7 @@ def main() -> int:
     group.add_argument("--update", action="store_true", help="rewrite the baseline")
     args = parser.parse_args()
 
-    shape = bypass_shape_errors()
+    shape = bypass_shape_errors() + profile_link_errors(HOME / ".config" / "nono" / "profiles", REPO_ROOT / "nono")
     if shape:
         for line in shape:
             print(f"nono-audit: {line}", file=sys.stderr)

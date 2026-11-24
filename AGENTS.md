@@ -134,6 +134,9 @@ Profile construction — the `extends` chains over vendor packs, `agent-private.
   packs in the same step.
 - After `nono update`, run `./sync.sh`, then `bin/nono-audit --check`, and confirm
   `login.keychain-db` stays unreadable under every profile.
+- nono's post-exit save prompt replaces a profile's symlink with a regular file, so the wrappers
+  set `NONO_NO_SAVE_PROMPT=1` and `bin/nono-audit --check` fails on any profile that is not a
+  link into `nono/`. Put grants in `nono/*.json`.
 
 The same applies to the skill: `loadout/skills/nono-sandbox/SKILL.md` overrides the pack's copy for all four agents, because `loadout sync --global` writes it into each harness's own skills directory. It carries a `::: opencode` section — OpenCode's version is substantially longer than the one the other three get. Re-run `loadout sync --global` after a pack update to restore it.
 
