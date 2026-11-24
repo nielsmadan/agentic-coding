@@ -1,4 +1,4 @@
-import { asChecks, asTopic, UNCHECKED } from '../core/checklist'
+import { asChecks, asNote, asTopic, UNCHECKED } from '../core/checklist'
 import type { DevState, DigestMessage, DigestToolUse } from '../core/checklist'
 
 export type PiEntry = { type: string; customType?: string; data?: unknown; message?: unknown }
@@ -143,7 +143,9 @@ const asState = (data: unknown): DevState | undefined => {
   if (topic === undefined) return undefined
   if (!('checks' in data)) return 'record' in data ? { checks: UNCHECKED, topic } : undefined
   const checks = asChecks(data.checks)
-  return checks === undefined ? undefined : { checks, topic }
+  if (checks === undefined) return undefined
+  const note = asNote(data.note)
+  return note === undefined ? { checks, topic } : { checks, topic, note }
 }
 
 const savedStates = (entries: readonly PiEntry[]): DevState[] =>

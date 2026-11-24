@@ -29,11 +29,11 @@ const timedOut: Reply = { stopReason: 'aborted', content: [] }
 
 const theme: BandTheme = { fg: (color, text) => text }
 
-const ALL = { 'code-review': true, 'findings-addressed': true, qa: true, 'qa-tour': true }
+const ALL = { 'code-review': true, 'fixes-made': true, qa: true, 'qa-tour': true }
 
-const CROSSED = '✗ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour'
+const CROSSED = '✗ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour'
 
-const TICKED = '✓ code-review  ✓ findings-addressed  ✓ qa  ✓ qa-tour'
+const TICKED = '✓ code-review  ✓ fixes-made  ✓ qa  ✓ qa-tour'
 
 const message = (value: Record<string, unknown>): PiEntry => ({ type: 'message', message: value })
 
@@ -197,7 +197,7 @@ describe('skills', () => {
     await s.start()
     await s.run(async () => {
       await s.skill('qa')
-      expect(s.band()).toBe('✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
+      expect(s.band()).toBe('✗ code-review  ✗ fixes-made  ✓ qa  ✗ qa-tour')
     })
     await s.advance(IDLE_MS)
     expect(s.prompts).toEqual([expect.stringContaining('Set now: qa.')])
@@ -218,14 +218,14 @@ describe('skills', () => {
     const s = session()
     await s.start()
     await s.run(() => s.tool('read', { path: '~/.pi/agent/skills/code-review/SKILL.md' }))
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour')
   })
 
   test('the model printing a skill file in the shell ticks its check', async () => {
     const s = session()
     await s.start()
     await s.run(() => s.tool('bash', { command: `cat ${QA_SKILL} | head -50` }))
-    expect(s.band()).toBe('✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✗ code-review  ✗ fixes-made  ✓ qa  ✗ qa-tour')
   })
 
   test('a failed read of a skill file ticks nothing', async () => {
@@ -251,7 +251,7 @@ describe('skills', () => {
     await s.run(() => s.tool('read', { path: PLAN_SKILL }))
     await s.advance(IDLE_MS)
     expect(s.prompts).toHaveLength(1)
-    expect(s.band()).toBe(CROSSED)
+    expect(s.band()).toBe('✗ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour  ↺ code-review, qa, qa-tour: changes since')
     expect(s.name()).toBe('login bug')
   })
 })
@@ -267,8 +267,31 @@ describe('edits and classification', () => {
     expect(s.prompts).toHaveLength(1)
     expect(s.prompts[0]).toContain('Set now: code-review, qa, qa-tour.')
     expect(s.prompts[0]).toContain('user: go on')
-    expect(s.band()).toBe('✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: changes since')
     expect(s.name()).toBe('CSV export')
+  })
+
+  test('a reset note shows after the band, is saved, and running the check again clears it', async () => {
+    const s = session({ branch: [decided], reply: () => said('FEATURE: CSV export\nSTALE: qa\nREASON: error-state rework') })
+    await s.start('resume')
+    await s.run(() => s.tool('edit', { path: '/u/w/a.ts' }))
+    await s.advance(IDLE_MS)
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: error-state rework')
+    expect(s.saved().at(-1)).toEqual({
+      checks: { ...ALL, qa: false },
+      topic: { name: 'CSV export', at: IDLE_MS, titled: 'CSV export' },
+      note: { checks: ['qa'], reason: 'error-state rework', at: IDLE_MS },
+    })
+    await s.run(() => s.skill('qa'))
+    expect(s.band()).toBe(TICKED)
+    expect(s.saved().at(-1)).toEqual({ checks: ALL, topic: { name: 'CSV export', at: IDLE_MS, titled: 'CSV export' } })
+  })
+
+  test('a note saved on the branch comes back on resume', async () => {
+    const note = { checks: ['code-review'], reason: 'moved to login bug', at: 1 }
+    const s = session({ branch: [savedEntry({ checks: { ...ALL, 'code-review': false }, topic: null, note })] })
+    await s.start('resume')
+    expect(s.band()).toBe('✗ code-review  ✓ fixes-made  ✓ qa  ✓ qa-tour  ↺ code-review: moved to login bug')
   })
 
   test('a check change asks the terminal to redraw', async () => {
@@ -369,7 +392,7 @@ describe('model replies', () => {
     await s.run(() => s.tool('edit', { path: '/u/w/a.ts' }))
     await s.advance(IDLE_MS)
     expect(s.prompts).toHaveLength(2)
-    expect(s.band()).toBe('✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: changes since')
   })
 
   test('a reply cut off by the token limit is still used', async () => {
@@ -399,10 +422,14 @@ describe('model replies', () => {
     await s.start('resume')
     await s.run(() => s.tool('edit', { path: '/u/w/a.ts' }))
     await s.advance(IDLE_MS)
-    expect(s.band()).toBe('✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: changes since')
     await s.run(() => s.tool('edit', { path: '/u/w/b.ts' }))
     await s.advance(IDLE_MS)
-    expect(s.saved().at(-1)).toEqual({ checks: { ...ALL, qa: false, 'qa-tour': false }, topic })
+    expect(s.saved().at(-1)).toEqual({
+      checks: { ...ALL, qa: false, 'qa-tour': false },
+      topic,
+      note: { checks: ['qa-tour'], reason: 'changes since', at: expect.any(Number) },
+    })
   })
 
   test('an unchanged verdict saves no new entry', async () => {
@@ -435,10 +462,14 @@ describe('model replies', () => {
     isIdle = false
     held.open()
     await flush()
-    expect(s.band()).toBe('✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: changes since')
     expect(s.saved()).toHaveLength(count)
     await s.emit('turn_end')
-    expect(s.saved().at(-1)).toEqual({ checks: { ...ALL, qa: false }, topic: null })
+    expect(s.saved().at(-1)).toEqual({
+      checks: { ...ALL, qa: false },
+      topic: null,
+      note: { checks: ['qa'], reason: 'changes since', at: expect.any(Number) },
+    })
   })
 
   test('a verdict overtaken by a checklist skill is dropped', async () => {
@@ -478,7 +509,7 @@ describe('model replies', () => {
     held.open()
     await flush()
     expect(s.prompts).toHaveLength(2)
-    expect(s.band()).toBe('✓ code-review  ✓ findings-addressed  ✗ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✓ fixes-made  ✗ qa  ✓ qa-tour  ↺ qa: changes since')
   })
 
   test('a queued question whose run was followed by another waits for that run', async () => {
@@ -525,11 +556,11 @@ describe('interrupted and held checks', () => {
       async () => {
         await s.skill('qa')
         await s.skill('code-review')
-        expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
+        expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✓ qa  ✗ qa-tour')
       },
       { stop: 'aborted', aborted: true },
     )
-    expect(s.band()).toBe('✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✗ code-review  ✗ fixes-made  ✓ qa  ✗ qa-tour')
     expect(s.saved().at(-1)).toEqual({ checks: { ...UNCHECKED, qa: true }, topic: null })
   })
 
@@ -545,16 +576,16 @@ describe('interrupted and held checks', () => {
     })
     await s.advance(IDLE_MS)
     expect(s.prompts).toHaveLength(1)
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour  ↺ qa: changes since')
   })
 })
 
-describe('findings-addressed', () => {
+describe('fixes-made', () => {
   test('a code-review run crosses it, and a verdict that the findings were addressed ticks it', async () => {
     const s = session({ branch: [decided], reply: () => said('FEATURE: x\nSTALE: none\nADDRESSED: yes') })
     await s.start('resume')
     await s.run(() => s.skill('code-review'))
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✓ qa  ✓ qa-tour')
     await s.advance(IDLE_MS)
     expect(s.prompts).toEqual([expect.stringContaining('ADDRESSED: <yes|no>')])
     expect(s.band()).toBe(TICKED)
@@ -567,7 +598,7 @@ describe('findings-addressed', () => {
     await s.run()
     await s.advance(IDLE_MS)
     expect(s.prompts).toHaveLength(1)
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour')
   })
 
   test('re-running a ticked check keeps it through its own run\'s verdict', async () => {
@@ -580,7 +611,7 @@ describe('findings-addressed', () => {
     })
     await s.advance(IDLE_MS)
     expect(s.prompts).toHaveLength(1)
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✓ qa  ✓ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✓ qa  ✓ qa-tour')
   })
 
   test('an aborted code-review puts back findings it had marked addressed', async () => {
@@ -613,7 +644,7 @@ describe('sessions and branches', () => {
       sessionName: 'login bug',
     })
     await s.start('resume')
-    expect(s.band()).toBe('✗ code-review  ✗ findings-addressed  ✓ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✗ code-review  ✗ fixes-made  ✓ qa  ✗ qa-tour')
     expect(s.prompts).toEqual([])
   })
 
@@ -677,7 +708,7 @@ describe('sessions and branches', () => {
       message({ role: 'user', content: 'hi' }),
       savedEntry({ checks: { ...UNCHECKED, 'code-review': true }, topic: null }),
     ])
-    expect(s.band()).toBe('✓ code-review  ✗ findings-addressed  ✗ qa  ✗ qa-tour')
+    expect(s.band()).toBe('✓ code-review  ✗ fixes-made  ✗ qa  ✗ qa-tour')
     await s.advance(IDLE_MS)
     expect(s.prompts).toEqual([])
   })

@@ -1,4 +1,4 @@
-import type { DevCheck, DevChecks, DevState, DevTopic } from '../types'
+import type { DevCheck, DevChecks, DevNote, DevState, DevTopic } from '../types'
 
 export type { DevState } from '../types'
 
@@ -6,11 +6,11 @@ export type DigestToolUse = { tool: string; input: Readonly<Record<string, unkno
 
 export type DigestMessage = { role: 'user' | 'assistant'; text: string; toolUses: readonly DigestToolUse[] }
 
-export const UNCHECKED: DevChecks = { 'code-review': false, 'findings-addressed': false, qa: false, 'qa-tour': false }
+export const UNCHECKED: DevChecks = { 'code-review': false, 'fixes-made': false, qa: false, 'qa-tour': false }
 
 export const CHECKS = Object.keys(UNCHECKED) as readonly DevCheck[]
 
-const ADDRESSED: DevCheck = 'findings-addressed'
+const ADDRESSED: DevCheck = 'fixes-made'
 
 const SKILL_CHECKS = CHECKS.filter(check => check !== ADDRESSED)
 
@@ -40,6 +40,37 @@ export const skillEffect = (skill: string): SkillEffect => {
   return { check, isDirtying: check !== undefined || NEW_WORK_SKILLS.has(bare) }
 }
 
+export const NOTE_MARK = '↺'
+
+const NOTE_MIN_WIDTH = 12
+
+const NOTE_GAP = 2
+
+const BAND_WIDTH = CHECKS.reduce((width, check) => width + check.length + 2, 0) + NOTE_GAP * (CHECKS.length - 1)
+
+export const noteText = (note: DevNote | null | undefined, width: number): string | undefined => {
+  if (note == null || width < NOTE_MIN_WIDTH) return undefined
+  const text = `${NOTE_MARK} ${note.checks.join(', ')}: ${note.reason}`
+  return text.length <= width ? text : `${text.slice(0, width - 1)}…`
+}
+
+export const noteSpace = (columns: number): number => columns - BAND_WIDTH - NOTE_GAP
+
+export const withoutNoted = (note: DevNote | null | undefined, check: DevCheck): DevNote | null => {
+  if (note == null) return null
+  if (!note.checks.includes(check)) return note
+  const left = note.checks.filter(name => name !== check)
+  return left.length === 0 ? null : { ...note, checks: left }
+}
+
+export const asNote = (value: unknown): DevNote | undefined => {
+  if (typeof value !== 'object' || value === null) return undefined
+  const { checks, reason, at } = value as Record<string, unknown>
+  if (typeof reason !== 'string' || typeof at !== 'number' || !Array.isArray(checks)) return undefined
+  const known = SKILL_CHECKS.filter(check => checks.includes(check))
+  return known.length === 0 ? undefined : { checks: known, reason, at }
+}
+
 export const withCheck = (checks: DevChecks, check: DevCheck): DevChecks =>
   check === 'code-review' ? { ...checks, [check]: true, [ADDRESSED]: false } : { ...checks, [check]: true }
 
@@ -55,7 +86,8 @@ export const sameChecks = (a: DevChecks, b: DevChecks): boolean => CHECKS.every(
 export const asChecks = (value: unknown): DevChecks | undefined => {
   if (typeof value !== 'object' || value === null) return undefined
   const fields = value as Record<string, unknown>
-  const field = (check: DevCheck) => (check === ADDRESSED ? (fields[check] ?? false) : fields[check])
+  // stored before the rename to fixes-made
+  const field = (check: DevCheck) => (check === ADDRESSED ? (fields[check] ?? fields['findings-addressed'] ?? false) : fields[check])
   return CHECKS.every(check => typeof field(check) === 'boolean')
     ? (Object.fromEntries(CHECKS.map(check => [check, field(check)])) as DevChecks)
     : undefined
@@ -95,7 +127,7 @@ export const isCheckpoint = (command: string): boolean => isGitCommit(command) |
 
 export const IDLE_MS = 30_000
 export const MODEL_TIMEOUT_MS = 20_000
-export const MAX_TOKENS = 80
+export const MAX_TOKENS = 100
 
 const CHECKS_PREFIX = 'session:'
 
@@ -105,8 +137,12 @@ const TOPIC_PREFIX = 'topic:'
 
 export const topicKey = (sessionId: string): string => `${TOPIC_PREFIX}${sessionId}`
 
+const NOTE_PREFIX = 'note:'
+
+export const noteKey = (sessionId: string): string => `${NOTE_PREFIX}${sessionId}`
+
 const sessionOfKey = (key: string): string | undefined =>
-  [CHECKS_PREFIX, TOPIC_PREFIX].filter(prefix => key.startsWith(prefix)).map(prefix => key.slice(prefix.length))[0]
+  [CHECKS_PREFIX, TOPIC_PREFIX, NOTE_PREFIX].filter(prefix => key.startsWith(prefix)).map(prefix => key.slice(prefix.length))[0]
 
 export const staleKeys = (keys: readonly string[], kept: number, currentSessionId: string): string[] => {
   const owned = keys.flatMap(key => {
@@ -153,9 +189,12 @@ export const verdictState = (
   const addressed = parseAddressed(text)
   if (stale === undefined && feature === undefined && addressed === undefined) return undefined
   const kept = stale === undefined ? current.checks : withoutChecks(current.checks, stale.filter(check => !held.includes(check)))
+  const reset = SKILL_CHECKS.filter(check => current.checks[check] && !kept[check])
+  const note = reset.length === 0 ? (current.note ?? undefined) : { checks: reset, reason: parseReason(text) ?? 'changes since', at }
   return {
     checks: addressed === true && kept['code-review'] ? { ...kept, [ADDRESSED]: true } : kept,
     topic: feature === undefined ? current.topic : nameTopic(current.topic, feature, at),
+    ...(note === undefined ? {} : { note }),
   }
 }
 
@@ -176,15 +215,19 @@ A set check no longer holds when the session has moved on to a different feature
 const ADDRESSED_GUIDE = `
 Addressed: whether every finding of the most recent code-review run has been dealt with: fixed, or rejected or deferred with a stated reason. A review that reported no findings counts as addressed. Findings still open, partly fixed, or waiting on the user's decision are not addressed. When unsure, answer no.`
 
+const REASON_FORMAT = 'REASON: <when STALE is not none, what made those checks stale in at most 5 words, such as "error-state rework" or "moved to login bug"; otherwise none>'
+
 const answerFormat = (checks: DevChecks): string =>
   awaitsAddressing(checks)
-    ? `Answer with exactly three lines and nothing else:
+    ? `Answer with exactly four lines and nothing else:
 FEATURE: <name|none>
 STALE: <comma-separated set checks that no longer hold|none>
+${REASON_FORMAT}
 ADDRESSED: <yes|no>`
-    : `Answer with exactly two lines and nothing else:
+    : `Answer with exactly three lines and nothing else:
 FEATURE: <name|none>
-STALE: <comma-separated set checks that no longer hold|none>`
+STALE: <comma-separated set checks that no longer hold|none>
+${REASON_FORMAT}`
 
 export const forkPrompt = (
   state: DevState,
@@ -297,6 +340,17 @@ export const unknownStale = (text: string): string[] =>
 export const parseAddressed = (text: string): boolean | undefined => {
   const answer = /^(yes|no)\b/.exec(normalise(answerLine(text, 'ADDRESSED') ?? ''))?.[1]
   return answer === undefined ? undefined : answer === 'yes'
+}
+
+const REASON_MAX = 40
+
+export const parseReason = (text: string): string | undefined => {
+  const reason = answerLine(text, 'REASON')
+    ?.trim()
+    .replace(/^["'`*]+|["'`.*]+$/g, '')
+    .trim()
+  if (reason === undefined || reason === '' || reason.toLowerCase() === 'none') return undefined
+  return reason.slice(0, REASON_MAX)
 }
 
 export const parseFeature = (text: string): string | null | undefined => {

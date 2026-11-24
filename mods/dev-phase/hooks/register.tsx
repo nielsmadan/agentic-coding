@@ -1,8 +1,9 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { DevCheck, DevChecks, DevState, DevTopic } from '../types'
+import type { DevCheck, DevChecks, DevNote, DevState, DevTopic } from '../types'
 import {
+  asNote,
   asStoredChecks,
   asTopic,
   awaitsAddressing,
@@ -16,6 +17,9 @@ import {
   isCheckpoint,
   MAX_TOKENS,
   MODEL_TIMEOUT_MS,
+  noteKey,
+  noteSpace,
+  noteText,
   recordBefore,
   restoreChecks,
   retitle,
@@ -27,6 +31,7 @@ import {
   unknownStale,
   verdictState,
   withCheck,
+  withoutNoted,
 } from '../core/checklist'
 
 type Dollar = EngineInterface
@@ -47,6 +52,7 @@ type Tracker = {
 
 const checksAtom = atom({ plugin: 'dev-phase', key: 'checks' } as const, UNCHECKED)
 const topicAtom = atom({ plugin: 'dev-phase', key: 'topic' } as const, null)
+const noteAtom = atom({ plugin: 'dev-phase', key: 'note' } as const, null)
 
 const KEPT_SESSIONS = 300
 
@@ -80,6 +86,12 @@ async function saveTopic($: Dollar, sessionId: string, topic: DevTopic | null): 
   if (await isCurrentSession($, sessionId)) await update($, topicAtom, () => topic)
 }
 
+async function saveNote($: Dollar, sessionId: string, note: DevNote | null): Promise<void> {
+  if (note === null) await $.store.delete(noteKey(sessionId))
+  else await put($, noteKey(sessionId), note)
+  if (await isCurrentSession($, sessionId)) await update($, noteAtom, () => note)
+}
+
 async function storedChecks($: Dollar, sessionId: string): Promise<DevChecks> {
   return asStoredChecks(await $.store.get(checksKey(sessionId))) ?? UNCHECKED
 }
@@ -89,7 +101,11 @@ async function storedTopic($: Dollar, sessionId: string): Promise<DevTopic | und
 }
 
 async function storedState($: Dollar, sessionId: string): Promise<DevState> {
-  return { checks: await storedChecks($, sessionId), topic: (await storedTopic($, sessionId)) ?? null }
+  return {
+    checks: await storedChecks($, sessionId),
+    topic: (await storedTopic($, sessionId)) ?? null,
+    note: asNote(await $.store.get(noteKey(sessionId))) ?? null,
+  }
 }
 
 async function prune($: Dollar, sessionId: string): Promise<void> {
@@ -106,6 +122,7 @@ async function applyVerdict($: Dollar, tracker: Tracker, ask: Ask, text: string)
   if (ask.generation !== tracker.generation) return
   await saveChecks($, ask.sessionId, next.checks)
   if (next.topic !== known.topic) await saveTopic($, ask.sessionId, next.topic)
+  if (next.note !== known.note) await saveNote($, ask.sessionId, next.note ?? null)
 }
 
 async function classifyFromLog($: Dollar, tracker: Tracker, ask: Ask): Promise<void> {
@@ -178,8 +195,10 @@ function classifyFromLogLater($: Dollar, tracker: Tracker, ask: Ask): void {
 async function hydrate($: Dollar, tracker: Tracker, sessionId: string, hasHistory: boolean): Promise<void> {
   const stored = await touch($, checksKey(sessionId))
   const topic = asTopic(await touch($, topicKey(sessionId)))
+  const note = asNote(await touch($, noteKey(sessionId)))
   await update($, checksAtom, () => asStoredChecks(stored) ?? UNCHECKED)
   await update($, topicAtom, () => topic ?? null)
+  await update($, noteAtom, () => note ?? null)
   if (stored !== undefined || !hasHistory || tracker.classifiedFromLog === sessionId) return
   tracker.classifiedFromLog = sessionId
   classifyFromLogLater($, tracker, { sessionId, generation: tracker.generation, serial: tracker.serial, held: [] })
@@ -234,7 +253,11 @@ export const register: Register = on => {
     const checks = await read($, checksAtom)
     const ticked = withCheck(checks, check)
     tracker.turnChecks = recordBefore(tracker.turnChecks, check, checks, ticked)
-    await saveChecks($, await $.session.id(), ticked)
+    const sessionId = await $.session.id()
+    await saveChecks($, sessionId, ticked)
+    const note = await read($, noteAtom)
+    const left = withoutNoted(note, check)
+    if (left !== note) await saveNote($, sessionId, left)
     return next(e)
   })
 
@@ -296,6 +319,7 @@ export const register: Register = on => {
         resetTurn(tracker)
         await update($, checksAtom, () => UNCHECKED)
         await update($, topicAtom, () => null)
+        await update($, noteAtom, () => null)
         break
       case 'resume':
         resetTurn(tracker)
@@ -313,6 +337,8 @@ export const register: Register = on => {
           await put($, topicKey(e.session_id), { name: inheritedTopic.name, at: inheritedTopic.at })
         }
         await put($, checksKey(e.session_id), inherited)
+        const inheritedNote = await read($, noteAtom)
+        if (inheritedNote !== null) await put($, noteKey(e.session_id), inheritedNote)
         break
       }
       case 'startup':
@@ -327,6 +353,7 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
     const { Box, Text } = $.ui.resolve(e)
+    const note = noteText(await read($, noteAtom), noteSpace(e.props.bodyColumns))
     return (
       <Box width={e.props.bodyColumns} gap={2}>
         {checkItems(await read($, checksAtom)).map(({ check, mark, color }) => (
@@ -335,6 +362,7 @@ export const register: Register = on => {
             <Text>{check}</Text>
           </Box>
         ))}
+        {note === undefined ? null : <Text dimColor>{note}</Text>}
       </Box>
     )
   })

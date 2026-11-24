@@ -1,4 +1,4 @@
-import type { DevCheck, DevChecks, DevState } from '../types'
+import type { DevCheck, DevChecks, DevNote, DevState } from '../types'
 import {
   awaitsAddressing,
   digest,
@@ -16,6 +16,7 @@ import {
   unknownStale,
   verdictState,
   withCheck,
+  withoutNoted,
 } from '../core/checklist'
 import { bandLine } from './band'
 import type { BandTheme } from './band'
@@ -111,6 +112,11 @@ const MODELS = [
 
 const EMPTY: DevState = { checks: UNCHECKED, topic: null }
 
+const withNote = (state: DevState, note: DevNote | null | undefined): DevState => {
+  const { note: _, ...rest } = state
+  return note == null ? rest : { ...rest, note }
+}
+
 const replyText = (reply: ModelReply): string =>
   reply.content
     .filter(block => block.type === 'text')
@@ -201,6 +207,10 @@ export const createDevPhase =
       const ticked = withCheck(state.checks, check)
       turnChecks = recordBefore(turnChecks, check, state.checks, ticked)
       setChecks(ticked)
+      const left = withoutNoted(state.note, check)
+      if (left === (state.note ?? null)) return
+      state = withNote(state, left)
+      changed()
     }
 
     const cancelIdle = (): void => {
@@ -242,7 +252,7 @@ export const createDevPhase =
       const unknown = unknownStale(text)
       if (unknown.length > 0) deps.debug(`unknown stale checks: ${unknown.join(', ')}`)
       if (ask.generation !== generation || isDisposed) return
-      state = { ...state, checks: next.checks, topic: next.topic }
+      state = withNote({ ...state, checks: next.checks, topic: next.topic }, next.note)
       changed()
       if (ctx?.isIdle() === true) commit()
     }
@@ -319,7 +329,7 @@ export const createDevPhase =
         (tui, theme) => {
           repaint = tui
           return {
-            render: width => [deps.truncate(bandLine(theme, state.checks), width)],
+            render: width => [deps.truncate(bandLine(theme, state.checks, state.note, width), width)],
             invalidate: () => undefined,
           }
         },

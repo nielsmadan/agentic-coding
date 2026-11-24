@@ -2,6 +2,7 @@ import { describe, expect, test } from 'claude-code/testing'
 
 import {
   asChecks,
+  asNote,
   asStoredChecks,
   awaitsAddressing,
   checkItems,
@@ -10,8 +11,11 @@ import {
   forkPrompt,
   isCheckRun,
   isGitCommit,
+  noteSpace,
+  noteText,
   parseAddressed,
   parseFeature,
+  parseReason,
   parseStale,
   recordBefore,
   redact,
@@ -24,11 +28,12 @@ import {
   verdictState,
   withCheck,
   withoutChecks,
+  withoutNoted,
 } from '../core/checklist'
 
-const ALL = { 'code-review': true, 'findings-addressed': true, qa: true, 'qa-tour': true }
+const ALL = { 'code-review': true, 'fixes-made': true, qa: true, 'qa-tour': true }
 const REVIEWED = { ...UNCHECKED, 'code-review': true }
-const ALL_REVIEW = { ...REVIEWED, 'findings-addressed': true }
+const ALL_REVIEW = { ...REVIEWED, 'fixes-made': true }
 
 describe('skillEffect', () => {
   test('the three checklist skills set their own check and dirty the turn, under a plugin prefix too', () => {
@@ -49,8 +54,8 @@ describe('skillEffect', () => {
     expect(skillEffect('commit')).toEqual({ check: undefined, isDirtying: false })
   })
 
-  test('findings-addressed is no skill, so a skill of that name sets nothing', () => {
-    expect(skillEffect('findings-addressed')).toEqual({ check: undefined, isDirtying: false })
+  test('fixes-made is no skill, so a skill of that name sets nothing', () => {
+    expect(skillEffect('fixes-made')).toEqual({ check: undefined, isDirtying: false })
   })
 })
 
@@ -58,7 +63,7 @@ describe('checks', () => {
   test('the band lists every check in order with its mark and colour', () => {
     expect(checkItems({ ...UNCHECKED, qa: true })).toEqual([
       { check: 'code-review', mark: '✗', color: 'error' },
-      { check: 'findings-addressed', mark: '✗', color: 'error' },
+      { check: 'fixes-made', mark: '✗', color: 'error' },
       { check: 'qa', mark: '✓', color: 'success' },
       { check: 'qa-tour', mark: '✗', color: 'error' },
     ])
@@ -68,8 +73,8 @@ describe('checks', () => {
     expect(withCheck({ ...ALL, qa: false }, 'qa')).toEqual(ALL)
   })
 
-  test('a code-review run brings new findings, so it crosses findings-addressed', () => {
-    expect(withCheck(ALL, 'code-review')).toEqual({ ...ALL, 'findings-addressed': false })
+  test('a code-review run brings new findings, so it crosses fixes-made', () => {
+    expect(withCheck(ALL, 'code-review')).toEqual({ ...ALL, 'fixes-made': false })
   })
 
   test('cleared checks are crossed and the rest kept', () => {
@@ -77,11 +82,11 @@ describe('checks', () => {
     expect(withoutChecks(UNCHECKED, [])).toEqual(UNCHECKED)
   })
 
-  test('findings-addressed is crossed with code-review', () => {
-    expect(withoutChecks(ALL, ['code-review'])).toEqual({ ...ALL, 'code-review': false, 'findings-addressed': false })
+  test('fixes-made is crossed with code-review', () => {
+    expect(withoutChecks(ALL, ['code-review'])).toEqual({ ...ALL, 'code-review': false, 'fixes-made': false })
   })
 
-  test('only a reviewed session with findings-addressed crossed awaits addressing', () => {
+  test('only a reviewed session with fixes-made crossed awaits addressing', () => {
     expect(awaitsAddressing(REVIEWED)).toBe(true)
     expect(awaitsAddressing(ALL)).toBe(false)
     expect(awaitsAddressing(UNCHECKED)).toBe(false)
@@ -92,8 +97,12 @@ describe('checks', () => {
     expect(asChecks({ 'code-review': true, qa: 'yes', 'qa-tour': false })).toBeUndefined()
   })
 
-  test('a record from before findings-addressed reads it as crossed', () => {
+  test('a record from before fixes-made reads it as crossed', () => {
     expect(asChecks({ 'code-review': true, qa: true, 'qa-tour': false })).toEqual({ ...REVIEWED, qa: true })
+  })
+
+  test('a record stored under the old name findings-addressed keeps its tick', () => {
+    expect(asChecks({ 'code-review': true, 'findings-addressed': true, qa: true, 'qa-tour': true })).toEqual(ALL)
   })
 
   test('a stored phase record from before the checklist reads as every check crossed', () => {
@@ -105,14 +114,14 @@ describe('checks', () => {
 
   test('a turn records each check its skills changed, as it was before the first change', () => {
     const first = recordBefore(new Map(), 'code-review', ALL, withCheck(ALL, 'code-review'))
-    expect([...first]).toEqual([['code-review', true], ['findings-addressed', true]])
-    const second = recordBefore(first, 'qa', { ...ALL, 'findings-addressed': false }, { ...ALL, 'findings-addressed': false, qa: false })
-    expect([...second]).toEqual([['code-review', true], ['findings-addressed', true], ['qa', true]])
+    expect([...first]).toEqual([['code-review', true], ['fixes-made', true]])
+    const second = recordBefore(first, 'qa', { ...ALL, 'fixes-made': false }, { ...ALL, 'fixes-made': false, qa: false })
+    expect([...second]).toEqual([['code-review', true], ['fixes-made', true], ['qa', true]])
   })
 
   test('a run that is not answered puts back what its skills changed', () => {
-    const before = new Map([['code-review', false], ['findings-addressed', true]] as const)
-    expect(restoreChecks({ ...ALL, 'findings-addressed': false }, before)).toEqual({ ...ALL, 'code-review': false })
+    const before = new Map([['code-review', false], ['fixes-made', true]] as const)
+    expect(restoreChecks({ ...ALL, 'fixes-made': false }, before)).toEqual({ ...ALL, 'code-review': false })
   })
 })
 
@@ -138,9 +147,9 @@ describe('parseStale', () => {
     expect(parseStale('STALE: qa\nSTALE: none')).toEqual([])
   })
 
-  test('findings-addressed is not a stale choice, and all means the skill checks', () => {
-    expect(parseStale('STALE: findings-addressed')).toEqual([])
-    expect(unknownStale('STALE: findings-addressed')).toEqual(['findings-addressed'])
+  test('fixes-made is not a stale choice, and all means the skill checks', () => {
+    expect(parseStale('STALE: fixes-made')).toEqual([])
+    expect(unknownStale('STALE: fixes-made')).toEqual(['fixes-made'])
     expect(parseStale('STALE: all')).toEqual(['code-review', 'qa', 'qa-tour'])
   })
 
@@ -176,14 +185,15 @@ describe('parseFeature', () => {
 describe('verdictState', () => {
   const current = { checks: ALL, topic: { name: 'csv export', at: 1 } }
 
-  test('a verdict crosses the stale checks and keeps an unchanged feature', () => {
-    expect(verdictState('FEATURE: csv export\nSTALE: qa', current, 9)).toEqual({
+  test('a verdict crosses the stale checks, keeps an unchanged feature and notes why', () => {
+    expect(verdictState('FEATURE: csv export\nSTALE: qa\nREASON: retry loop rewrite', current, 9)).toEqual({
       checks: { ...ALL, qa: false },
       topic: current.topic,
+      note: { checks: ['qa'], reason: 'retry loop rewrite', at: 9 },
     })
   })
 
-  test('addressed findings tick findings-addressed while code-review holds', () => {
+  test('addressed findings tick fixes-made while code-review holds', () => {
     const reviewed = { checks: REVIEWED, topic: null }
     expect(verdictState('STALE: none\nADDRESSED: yes', reviewed, 9)?.checks).toEqual(ALL_REVIEW)
     expect(verdictState('STALE: code-review\nADDRESSED: yes', reviewed, 9)?.checks).toEqual(UNCHECKED)
@@ -198,6 +208,7 @@ describe('verdictState', () => {
     expect(verdictState('FEATURE: login bug\nSTALE: code-review, qa, qa-tour', current, 9)).toEqual({
       checks: UNCHECKED,
       topic: { name: 'login bug', at: 9 },
+      note: { checks: ['code-review', 'qa', 'qa-tour'], reason: 'changes since', at: 9 },
     })
   })
 
@@ -245,9 +256,10 @@ describe('prompts', () => {
   })
 
   test('only a review whose findings are open asks whether they were addressed', () => {
-    expect(forkPrompt({ checks: REVIEWED, topic: null }, 'Done.')).toContain('STALE: <comma-separated set checks that no longer hold|none>\nADDRESSED: <yes|no>')
+    expect(forkPrompt({ checks: REVIEWED, topic: null }, 'Done.')).toContain('Answer with exactly four lines')
+    expect(forkPrompt({ checks: REVIEWED, topic: null }, 'Done.')).toContain('otherwise none>\nADDRESSED: <yes|no>')
     expect(digestPrompt({ checks: REVIEWED, topic: null }, 'user: hi')).toContain('Addressed: whether every finding')
-    expect(forkPrompt({ checks: ALL, topic: null }, 'Done.')).toContain('Answer with exactly two lines')
+    expect(forkPrompt({ checks: ALL, topic: null }, 'Done.')).toContain('Answer with exactly three lines')
   })
 
   test('the digest prompt says when no check is set', () => {
@@ -326,6 +338,60 @@ test('digest keeps the last message long enough to hold its hand-off', () => {
   expect(rows.split('\n')).toEqual([`assistant: ${'x'.repeat(300)}`, `assistant: ${long}`])
 })
 
+describe('note', () => {
+  const note = { checks: ['code-review', 'qa'] as const, reason: 'error-state rework', at: 9 }
+  const current = { checks: ALL, topic: null }
+
+  test('the note names the reset checks and why, cut to the space it gets', () => {
+    expect(noteText(note, 40)).toBe('↺ code-review, qa: error-state rework')
+    expect(noteText(note, 15)).toBe('↺ code-review,…')
+    expect(noteText(note, 11)).toBeUndefined()
+    expect(noteText(null, 40)).toBeUndefined()
+  })
+
+  test('the note gets the columns the band and its gap leave', () => {
+    expect(noteSpace(80)).toBe(34)
+  })
+
+  test('running a noted check again takes it out of the note, which goes once none is left', () => {
+    expect(withoutNoted(note, 'qa')).toEqual({ ...note, checks: ['code-review'] })
+    expect(withoutNoted({ ...note, checks: ['qa'] }, 'qa')).toBeNull()
+    expect(withoutNoted(note, 'qa-tour')).toBe(note)
+  })
+
+  test('a verdict that resets nothing keeps the last note, and one that resets replaces it', () => {
+    const noted = { ...current, note }
+    expect(verdictState('STALE: none', noted, 20)?.note).toBe(note)
+    expect(verdictState('STALE: qa-tour\nREASON: moved to login bug', noted, 20)?.note).toEqual({
+      checks: ['qa-tour'],
+      reason: 'moved to login bug',
+      at: 20,
+    })
+  })
+
+  test('the note lists only the checks the verdict actually crossed', () => {
+    expect(verdictState('STALE: code-review, qa\nREASON: retry rewrite', current, 9, ['code-review'])?.note).toEqual({
+      checks: ['qa'],
+      reason: 'retry rewrite',
+      at: 9,
+    })
+    expect(verdictState('STALE: qa\nREASON: x', { checks: UNCHECKED, topic: null }, 9)?.note).toBeUndefined()
+  })
+
+  test('parseReason trims markup, reads none as no reason and caps the length', () => {
+    expect(parseReason('STALE: qa\nREASON: **error-state rework**.')).toBe('error-state rework')
+    expect(parseReason('REASON: none')).toBeUndefined()
+    expect(parseReason('STALE: qa')).toBeUndefined()
+    expect(parseReason(`REASON: ${'x'.repeat(60)}`)).toBe('x'.repeat(40))
+  })
+
+  test('a stored note keeps only known checks', () => {
+    expect(asNote({ checks: ['qa', 'lint'], reason: 'r', at: 1 })).toEqual({ checks: ['qa'], reason: 'r', at: 1 })
+    expect(asNote({ checks: ['lint'], reason: 'r', at: 1 })).toBeUndefined()
+    expect(asNote({ checks: ['qa'], reason: 3, at: 1 })).toBeUndefined()
+  })
+})
+
 describe('staleKeys', () => {
   const keys = ['session:a', 'topic:a', 'session:b', 'session:c', 'topic:b', 'session:d']
 
@@ -335,5 +401,9 @@ describe('staleKeys', () => {
 
   test('keeps the current session past the limit', () => {
     expect(staleKeys(keys, 2, 'a')).toEqual(['session:c'])
+  })
+
+  test('drops the note of a pruned session with its checks', () => {
+    expect(staleKeys(['session:a', 'note:a', 'session:b'], 1, 'x')).toEqual(['session:a', 'note:a'])
   })
 })

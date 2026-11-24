@@ -58,7 +58,7 @@ harnesses, but through Pi's own mechanisms rather than the generated permission/
 
 - **dev-phase** — the `dev-phase` mod's pi extension (`mods/dev-phase/pi/`, loaded through the
   `extensions` key in `loadout/settings/pi.json`; see the Mods paragraph in
-  [skills-and-integration.md](skills-and-integration.md)) draws the `code-review` / `findings-addressed` /
+  [skills-and-integration.md](skills-and-integration.md)) draws the `code-review` / `fixes-made` /
   `qa` / `qa-tour` checklist above the editor, and names the session after the feature unless you named it. It runs
   in the terminal UI only, so subagents and `-p` runs neither draw nor classify. Classification
   sends a digest of the last 40 transcript rows, with secrets in shell commands masked, edited
