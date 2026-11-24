@@ -4,6 +4,7 @@ $HOME/.agent-device	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
 $HOME/.cache/claude	profile
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -11,6 +12,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
@@ -29,9 +31,11 @@ $HOME/.gradle/notifications	profile
 $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/claude/locks	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -69,6 +73,7 @@ $HOME/.agent-device	profile
 $HOME/.agents	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -76,6 +81,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
@@ -94,8 +100,10 @@ $HOME/.gradle/notifications	profile
 $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -131,6 +139,7 @@ $HOME/.agent-browser	profile
 $HOME/.agent-device	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -138,6 +147,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
 $HOME/.dart-tool	profile
@@ -155,8 +165,10 @@ $HOME/.gradle/notifications	profile
 $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -192,6 +204,7 @@ $HOME/.agent-browser	profile
 $HOME/.agent-device	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -200,6 +213,7 @@ $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/devin	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
 $HOME/.dart-tool	profile
@@ -229,8 +243,10 @@ $HOME/.local/share/devin/cli/trusted_workspaces.json	profile
 $HOME/.local/share/devin/mcp	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -266,6 +282,7 @@ $HOME/.agent-browser	profile
 $HOME/.agent-device	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -273,6 +290,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
 $HOME/.dart-tool	profile
@@ -290,8 +308,10 @@ $HOME/.gradle/notifications	profile
 $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -335,6 +355,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
@@ -356,6 +377,7 @@ $HOME/.local/share/opencode	profile
 $HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
@@ -391,6 +413,7 @@ $HOME/.agent-browser	profile
 $HOME/.agent-device	profile
 $HOME/.bun/install	profile
 $HOME/.cache	group:user_caches_macos
+$HOME/.cache/opencode	profile
 $HOME/.cargo/git	profile
 $HOME/.cargo/registry	profile
 $HOME/.claude	profile
@@ -398,6 +421,7 @@ $HOME/.cocoapods	profile
 $HOME/.codex	profile
 $HOME/.config/cadet	profile
 $HOME/.config/flutter	profile
+$HOME/.config/loadout/stealth-written	profile
 $HOME/.config/nono/profile-drafts	profile
 $HOME/.config/opencode	profile
 $HOME/.cursor	profile
@@ -416,8 +440,10 @@ $HOME/.gradle/notifications	profile
 $HOME/.gradle/wrapper	profile
 $HOME/.local/share/mise/migrations	profile
 $HOME/.local/share/opencode	profile
+$HOME/.local/share/opentui	profile
 $HOME/.local/share/ringleader	profile
 $HOME/.local/state/hooklinesinker	profile
+$HOME/.local/state/loadout/stealth-locks	profile
 $HOME/.local/state/mise/hints	profile
 $HOME/.local/state/mise/tracked-configs	profile
 $HOME/.local/state/mouthfeel	profile
