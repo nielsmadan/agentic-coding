@@ -11,7 +11,7 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 |---|---|---|
 | Claude Max subscription | Claude Code login | `claude`, its tiers, `advisor-claude`, `cmdgen-claude` |
 | Claude API credit from the Max plan | `ANTHROPIC_COUNT_TOKENS_KEY`, mapped to `ANTHROPIC_API_KEY` inside pi only | `picc` |
-| ChatGPT subscription | Codex login, pi's `openai` login | `codex`, its tiers, `pix`, `advisor-codex`, `cmdgen-codex` |
+| ChatGPT subscription | Codex login, pi's `openai` login, Devin's ChatGPT connection | `codex`, its tiers, `pix`, `advisor-codex`, `cmdgen-codex`, the GPT lead in `devinx` when ChatGPT billing is enabled |
 | OpenRouter balance | `OPENROUTER_API_KEY` | pi's OpenRouter extras, OpenCode, `clor`, `ocs`, `advisor-opencode`, `cmdgen-opencode`, `jina-fetch`, `distill`, dev-phase on pi |
 | Factory | `FACTORY_API_KEY` | `droid`, `advisor-droid` |
 | Cursor subscription | Cursor login | `cursor-agent` / `agent` |
@@ -29,6 +29,7 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 | Codex sub-agents | ChatGPT subscription | GPT-6.2 Sol: `haiku` low, `sonnet` medium, `opus` xhigh | `loadout/instructions/codex-subagent-models.md` |
 | `pix` | ChatGPT subscription | GPT-6.2 Sol (max) | `.airc.d/pi.zsh` |
 | `devin` | Devin subscription | `fusion-claude-opus-5-5-high-sidekick-swe-2-high` | `loadout/settings/devin.json` |
+| `devinx` | ChatGPT for the GPT lead when enabled, Devin for SWE-2 | `fusion-gpt-6-2-sol-max-sidekick-swe-2-high` | `.airc.d/devin.zsh` |
 | Devin sub-agents | Devin subscription | `haiku`/`sonnet` Sonnet 5.5 (medium), `opus` Opus 5.5 (high), as the `readonly-` and `worker-` profiles | `loadout/agents/`, `loadout/instructions/devin-subagent-models.md` |
 | `pi` | Token Pass | DeepSeek V4.1 Flash (max) | `loadout/settings/pi.json` |
 | `pi` `/model` | Token Pass | DeepSeek V4.1 Flash, Kimi K3.1 Pro | `loadout/settings/pi.json` `enabledModels` |
