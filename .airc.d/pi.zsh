@@ -1,6 +1,8 @@
 # No -raw variant: pi is never run outside the sandbox.
 pi() { AGENT_HARNESS=pi _agent_sandboxed pi-local pi "$@"; }
 
+_pix_default_preset() { print -r -- 'gpt-6.2-sol:max'; }
+
 # Subscription-backed Codex model; plain `pi` keeps the Token Pass default.
 # --provider stops a missing ChatGPT login from resolving the id on OpenRouter.
 pix() {
@@ -8,7 +10,7 @@ pix() {
   if preset=$(_agent_model_tier openai "${1:-}"); then
     shift
   else
-    preset=gpt-6.2-sol:max
+    preset=$(_pix_default_preset)
   fi
   pi --provider openai --model "$preset" "$@"
 }

@@ -1,20 +1,26 @@
 #!/bin/bash
 input=$(cat)
+hooks_dir=$(dirname "${BASH_SOURCE[0]}")
 
-eval "$(printf '%s' "$input" | jq -r '
+eval "$(printf '%s' "$input" | jq -L "$hooks_dir" -r '
+include "weekly-usage";
 def used: if . == null or .used_percentage == null then "" else (.used_percentage | round) end;
-def workday: ((. - (5 * 3600)) | strflocaltime("%Y-%m-%d") | . + "T00:00:00Z" | fromdateiso8601);
-def today_left: if . == null or .used_percentage == null or .resets_at == null then ""
-  else (((((now | workday) - ((.resets_at - 604800) | workday)) / 86400) | floor) + 1
-        | if . < 1 then 1 elif . > 7 then 7 else . end) as $day
-    | (($day * 100 / 7) - .used_percentage | round) end;
 def left: if . == null or .resets_at == null then ""
   else ((.resets_at - now) | if . < 0 then 0 else . end | floor) end;
 def cache_state: if . == null then ""
   elif .caching_observed != true then "unknown"
   elif .warm != true or (.expires_at != null and .expires_at <= now) then "cold"
   else "warm" end;
-@sh "current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_today=\(.rate_limits.seven_day | today_left) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left)"')"
+def usage_snapshot:
+  if .rate_limits.seven_day | (.used_percentage | type) == "number" and .used_percentage >= 0 and .used_percentage <= 100 and (.resets_at | type) == "number" and .resets_at > now
+  then {captured_at: (now | floor), rate_limits} | tojson
+  else "" end;
+@sh "current_dir=\(.workspace.current_dir // .cwd) model_name=\(.model.display_name // "Unknown Model") ctx_pct=\(.context_window.used_percentage // 0 | floor) effort=\(.effort.level // "") fast_mode=\(if .fast_mode then "1" else "" end) seven_d=\(.rate_limits.seven_day | used) seven_today=\(.rate_limits.seven_day | today_left(now)) seven_left=\(.rate_limits.seven_day | left) cache_state=\(.prompt_cache | cache_state) cache_left=\(.prompt_cache | {resets_at: .expires_at} | left) usage_snapshot=\(usage_snapshot)"')"
+
+if [ "${1:-}" = "--capture-usage" ] && [ -z "$ANTHROPIC_BASE_URL" ] && [ -n "$usage_snapshot" ]; then
+  printf '%s\n' "$usage_snapshot" | python3 "$hooks_dir/capture-usage.py" \
+    "${XDG_DATA_HOME:-$HOME/.local/share}/ringleader/claude-limits.json" 2>/dev/null
+fi
 
 E=$'\033'
 sep_str="${E}[2m │ ${E}[0m"

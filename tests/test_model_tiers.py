@@ -1,4 +1,6 @@
+import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,10 +21,15 @@ sops-exec() { printf '%s\0' "$AGENT_HARNESS" "$@"; }
 
 
 class ModelTiersTest(unittest.TestCase):
+    def setUp(self):
+        config_dir = self.enterContext(tempfile.TemporaryDirectory())
+        self.env = dict(os.environ, XDG_CONFIG_HOME=config_dir)
+
     def run_shell(self, *args, setup=""):
         result = subprocess.run(
             ["zsh", "-f", "-c", SETUP + setup + '\n"$@"', "test", *args],
             cwd=ROOT,
+            env=self.env,
             capture_output=True,
             timeout=10,
             check=False,
@@ -145,11 +152,7 @@ _agent_iterm_run() {
                         command + "-raw",
                         command,
                         command,
-                        *(
-                            ["-s", "danger-full-access"]
-                            if command == "codex"
-                            else []
-                        ),
+                        *(["-s", "danger-full-access"] if command == "codex" else []),
                         *args,
                         "hello",
                     ],

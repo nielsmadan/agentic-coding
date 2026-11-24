@@ -24,10 +24,11 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 | `claude` | Anthropic subscription | `opus` (high; Fable xhigh) | `loadout/settings/claude.json` |
 | `claude <tier>` | Anthropic subscription | low Haiku 5.5 (xhigh), mid Sonnet 5.5 (high), high Opus 5.5 (high), xhigh Fable 5.2 (medium), max Fable 5.2 (max) | `.airc.d/07-model-tiers.zsh` |
 | `clor` | OpenRouter, through Claude Code | `/model haiku` GPT-6 Luna, `sonnet` Muse Ember (start, subagents), `opus` GPT-6.1 Sol | `.airc.d/claude.zsh` |
-| `codex` | ChatGPT subscription | GPT-6 Astra (high) | `loadout/defaults/codex.json` |
-| `codex <tier>`, `pix <tier>` | ChatGPT subscription | low/mid/high/xhigh GPT-6.1 Sol (low/medium/xhigh/max), max GPT-6 Astra (max) | `.airc.d/07-model-tiers.zsh` |
+| `codex` | ChatGPT subscription | GPT-6.2 Sol (max) | `loadout/defaults/codex.json` |
+| `codex <tier>`, `pix <tier>` | ChatGPT subscription | low/mid/high GPT-6.2 Sol (low/medium/max), xhigh/max GPT-6.2 Astra (high/max) | `.airc.d/07-model-tiers.zsh` |
 | Codex sub-agents | ChatGPT subscription | GPT-6.2 Sol: `haiku` low, `sonnet` medium, `opus` xhigh | `loadout/instructions/codex-subagent-models.md` |
-| `pix` | ChatGPT subscription | GPT-6 Astra (high) | `.airc.d/pi.zsh` |
+| `pix` | ChatGPT subscription | GPT-6.2 Sol (max) | `.airc.d/pi.zsh` |
+| `devin` | Devin subscription | `fusion-claude-opus-5-5-high-sidekick-swe-2-high` | `loadout/settings/devin.json` |
 | Devin sub-agents | Devin subscription | `haiku`/`sonnet` Sonnet 5.5 (medium), `opus` Opus 5.5 (high), as the `readonly-` and `worker-` profiles | `loadout/agents/`, `loadout/instructions/devin-subagent-models.md` |
 | `pi` | Token Pass | DeepSeek V4.1 Flash (max) | `loadout/settings/pi.json` |
 | `pi` `/model` | Token Pass | DeepSeek V4.1 Flash, Kimi K3.1 Pro | `loadout/settings/pi.json` `enabledModels` |
@@ -43,8 +44,8 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 
 | Caller | Provider | Model (effort) | Source |
 |---|---|---|---|
-| `advisor-claude` (`/second-opinion`) | Anthropic subscription | Claude Code default (`opus`) | `pratfall/config.toml` |
-| `advisor-codex` | ChatGPT subscription | Codex default (GPT-6 Astra, high) | `pratfall/config.toml` |
+| `advisor-claude` (`/second-opinion`) | Anthropic subscription | Claude Code default (`opus`, high) | `pratfall/config.toml` |
+| `advisor-codex` | ChatGPT subscription | Codex default (GPT-6.2 Sol, max) | `pratfall/config.toml` |
 | `advisor-pi` | Token Pass | Kimi K3.1 Pro (max) | `pratfall/config.toml` |
 | `advisor-opencode` | OpenRouter | Tencent HY4 (high) | `pratfall/config.toml` |
 | `advisor-droid` | Factory | Gemini 4 Argon (high) | `pratfall/config.toml` |

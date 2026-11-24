@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+
+from agent_weekly_usage import weekly_usage_lines
+
+ROOT = Path(__file__).resolve().parents[1]
+Model = tuple[str | None, str | None]
+
+
+def settings(installed: Path, source: str | None = None) -> dict:
+    path = installed
+    try:
+        if not path.exists():
+            if source is None:
+                return {}
+            path = ROOT / "loadout" / source
+        parse = tomllib.loads if path.suffix == ".toml" else json.loads
+        data = parse(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise TypeError("expected a settings object")
+    except (OSError, TypeError, ValueError):
+        print(f"agents: could not read settings from {path}", file=sys.stderr)
+        return {}
+    return data
+
+
+def model_with_effort(model: str | None, effort: str | None) -> str:
+    model = model or "CLI default"
+    return f"{model} ({effort})" if effort else model
+
+
+def cursor_default_model(config: dict) -> Model:
+    selected = config.get("selectedModel")
+    if isinstance(selected, dict) and (model := selected.get("modelId")):
+        parameters = {
+            item.get("id"): item.get("value")
+            for item in selected.get("parameters") or []
+            if isinstance(item, dict)
+        }
+        effort = parameters.get("reasoning_effort")
+        if parameters.get("thinking") == "true":
+            effort = f"thinking {effort}" if effort else "thinking"
+        return model, effort
+
+    saved = config.get("model") if config.get("hasChangedDefaultModel") else None
+    if isinstance(saved, dict):
+        saved = saved.get("modelId")
+    return saved, None
+
+
+def defaults(pix: str, home: Path, environ: dict[str, str]) -> dict[str, Model]:
+    claude_dir = Path(environ.get("CLAUDE_CONFIG_DIR") or home / ".claude")
+    codex_dir = Path(environ.get("CODEX_HOME") or home / ".codex")
+    config_dir = Path(environ.get("XDG_CONFIG_HOME") or home / ".config")
+    cursor_dir = Path(
+        environ.get("CURSOR_CONFIG_DIR")
+        or (
+            config_dir / "cursor"
+            if environ.get("XDG_CONFIG_HOME")
+            else home / ".cursor"
+        )
+    )
+    claude = settings(claude_dir / "settings.json", "settings/claude.json")
+    codex = settings(codex_dir / "config.toml", "defaults/codex.json")
+    devin = settings(config_dir / "devin/config.json", "settings/devin.json")
+    cursor = settings(cursor_dir / "cli-config.json")
+    claude_env = claude.get("env") or {}
+    claude_model = (
+        environ.get("ANTHROPIC_MODEL")
+        or claude_env.get("ANTHROPIC_MODEL")
+        or claude.get("model")
+    )
+    model_settings = (claude.get("modelSettings") or {}).get(claude_model) or {}
+    claude_effort = (
+        environ.get("CLAUDE_CODE_EFFORT_LEVEL")
+        or claude_env.get("CLAUDE_CODE_EFFORT_LEVEL")
+        or model_settings.get("effortLevel")
+        or claude.get("effortLevel")
+    )
+    devin_model = environ.get("DEVIN_MODEL") or (devin.get("agent") or {}).get("model")
+    pix_model, pix_effort = pix.rsplit(":", 1)
+    return {
+        "claude": (claude_model, claude_effort),
+        "codex": (codex.get("model"), codex.get("model_reasoning_effort")),
+        "pix": (pix_model, pix_effort),
+        "devin": (devin_model, None),
+        "agent": cursor_default_model(cursor),
+    }
+
+
+def advisor_models(startup_models: dict[str, Model]) -> list[tuple[str, str]]:
+    try:
+        output = subprocess.check_output(
+            ["prat", "list", "profiles", "--json"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=5,
+        )
+        profiles = json.loads(output)["profiles"]
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+        return []
+
+    models = []
+    for profile in profiles:
+        name = profile["name"]
+        if not name.startswith("advisor-"):
+            continue
+        agent = profile["agent"]
+        model = profile["options"].get("model")
+        effort = profile["options"].get("effort")
+        if model is None:
+            default_model, default_effort = startup_models.get(agent, (None, None))
+            description = model_with_effort(default_model, effort or default_effort)
+            description += f" · inherits {agent} default"
+        else:
+            description = model_with_effort(model, effort)
+        models.append((name, description))
+    return models
+
+
+def presets() -> tuple[str, list[list[str]], list[list[str]]]:
+    output = subprocess.check_output(
+        [
+            "zsh",
+            "-f",
+            "-c",
+            r"""
+source "$1/07-model-tiers.zsh" && source "$1/pi.zsh" && source "$1/cursor.zsh" || exit
+_pix_default_preset
+for tier in low mid high xhigh max; do
+  claude=$(_agent_model_tier anthropic "$tier") || exit
+  openai=$(_agent_model_tier openai "$tier") || exit
+  printf '%s\t%s\t%s\n' "$tier" "$claude" "$openai"
+done
+print
+for tier in haiku sonnet opus; do
+  model=$(_cursor_model_preset "$tier") || exit
+  printf '%s\t%s\n' "$tier" "$model"
+done
+""",
+            "agents",
+            str(ROOT / ".airc.d"),
+        ],
+        text=True,
+        timeout=5,
+    )
+    main, cursor = output.split("\n\n", 1)
+    pix, *rows = main.splitlines()
+    return (
+        pix,
+        [row.split("\t") for row in rows],
+        [row.split("\t") for row in cursor.splitlines()],
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Show agent models, tiers, advisor models, and weekly usage."
+    )
+    parser.add_argument(
+        "--refresh", action="store_true", help="refresh quotas configured in Ringleader"
+    )
+    args = parser.parse_args()
+    try:
+        pix, tiers, cursor_tiers = presets()
+    except (OSError, ValueError, subprocess.SubprocessError):
+        parser.exit(1, "agents: could not read shell model presets\n")
+
+    startup_models = defaults(pix, Path.home(), dict(os.environ))
+    print("Default models")
+    for agent, model in startup_models.items():
+        print(f"  {agent:<7} {model_with_effort(*model)}")
+
+    print(f"\n  {'Tier':<6} {'claude':<30} codex / pix")
+    for tier, claude, openai in tiers:
+        claude_model = model_with_effort(*claude.rsplit(":", 1))
+        openai_model = model_with_effort(*openai.rsplit(":", 1))
+        print(f"  {tier:<6} {claude_model:<30} {openai_model}")
+    print("\nCursor shortcuts (agent / cursor-agent)")
+    for tier, model in cursor_tiers:
+        print(f"  {tier:<7} {model}")
+
+    print("\n/second-opinion models")
+    advisors = advisor_models(startup_models)
+    for name, model in advisors:
+        print(f"  {name:<16} {model}")
+    if not advisors:
+        print("  No advisor profiles available from Pratfall")
+
+    print("\nWeekly subscription usage", flush=True)
+    for line in weekly_usage_lines(
+        args.refresh, ROOT / "loadout/module-config/claude/hooks"
+    ):
+        print(line)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
