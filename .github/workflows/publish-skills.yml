@@ -1,0 +1,26 @@
+name: publish-skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "loadout/skills/**"
+      - "loadout/kits/skills/**"
+      - "publish/**"
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start the sync in nielsmadan/skills
+        env:
+          GH_TOKEN: ${{ secrets.SKILLS_SYNC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::SKILLS_SYNC_TOKEN is not set; the scheduled sync will publish this push"
+            exit 0
+          fi
+          gh workflow run sync.yml --repo nielsmadan/skills

@@ -28,7 +28,8 @@ installed from the skills collection; it does not hide a committed local source.
 ## Validate and publish
 
 ```sh
-python3 publish/sync.py --check-manifest --check-sources
+uv run --no-project --with-requirements publish/requirements.txt \
+  python3 publish/sync.py --check-manifest --check-sources --check-render
 python3 -m unittest publish.test_sync
 ```
 

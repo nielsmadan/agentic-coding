@@ -1,0 +1,2 @@
+# loadout v0.12.0 — the renderer for both the skills repo workflow and the pre-commit check
+loadout @ git+https://github.com/nielsmadan/loadout@d421ada88517ec4c6b766b602f97da7e4c537025

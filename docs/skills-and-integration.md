@@ -256,17 +256,29 @@ two, and no contest over who writes the key last.
 `publish`-classified skills from `loadout/skills/` and `loadout/kits/skills/`
 (a name in both is an error), preferring complete skill
 directories in `publish/overrides/<name>/` when present, into
-[nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code plugin
-marketplace and `npx skills` collection; a workflow in that repo runs it hourly.
+[nielsmadan/skills](https://github.com/nielsmadan/skills) — a Claude Code, Codex and
+Cursor plugin marketplace and `npx skills` collection. A workflow in that repo runs it on an
+hourly cron, which GitHub fires only a few times a day, so
+`.github/workflows/publish-skills.yml` here also starts it on every push to `main` that
+touches a skill or `publish/`. That dispatch needs the `SKILLS_SYNC_TOKEN` secret (a
+fine-grained token with Actions read and write on `nielsmadan/skills`); without it the
+workflow warns and the cron publishes.
 `publish/skills.toml` classifies every skill into a README group under `[groups]` (published), into `private` (in the repo but unpublished), or into `local` (gitignored — never pushed, this repo being public), fail-closed:
-the pre-commit hook runs `--check-manifest --check-sources` on every commit, so an
-unclassified skill or a personal string (`~/ac`, `/Users/nielsmadan`, …) in a
-publishable source rejects the commit — even one that seems unrelated. Run it as a
+the pre-commit hook runs `--check-manifest --check-sources --check-render` on every
+commit, so an unclassified skill, a personal string (`~/ac`, `/Users/nielsmadan`, …) in a
+publishable source, or a rendered skill that names an unpublished one rejects the commit —
+even one that seems unrelated. `--check-render` renders into a scratch directory with the
+same loadout the skills workflow installs: both read the pin from
+`publish/requirements.txt`, and the hook runs through `uv run --with-requirements`, so bump
+loadout there and nowhere else. Run it as a
 script path (`python3 publish/sync.py`), never `python3 -m publish.sync`: `-m` puts
 the repo root on `sys.path`, where the `loadout/` config directory shadows the
-installed `loadout` package. The `loadout` package is a `uv tool` install, not
-importable from system Python — only `--out` (render) needs it; the checks and the
-tests (`python3 -m unittest publish.test_sync`) run without it. Source checks scan
+installed `loadout` package. The `loadout` package is not importable from system
+Python — only `--out` and `--check-render` need it; the other checks and the tests
+(`python3 -m unittest publish.test_sync`) run without it. The Codex and Cursor manifests
+carry a version whose patch `build()` bumps whenever the rendered skills or README change,
+because Codex reinstalls a plugin only on a version change; raise `PLUGIN_VERSION` for a
+major or minor release. Source checks scan
 the selected public variant. Overrides must name a published skill and contain
 `SKILL.md`; invalid overrides fail rather than falling back. Supporting files come
 entirely from the selected directory. See

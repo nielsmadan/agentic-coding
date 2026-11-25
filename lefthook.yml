@@ -3,7 +3,7 @@ pre-commit:
     sync-global:
       run: loadout check --global --staged
     publish-manifest:
-      run: python3 publish/sync.py --check-manifest --check-sources
+      run: uv run --quiet --no-project --with-requirements publish/requirements.txt python3 publish/sync.py --check-manifest --check-sources --check-render
     juggler-studio:
       glob: "loadout/juggler/**"
       run: bin/juggler-studio --check

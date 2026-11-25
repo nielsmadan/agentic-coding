@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 import shutil
 import tempfile
@@ -571,6 +572,44 @@ class BuildTest(unittest.TestCase):
             readme = (out / "README.md").read_text(encoding="utf-8")
             self.assertLess(readme.index("`alpha`"), readme.index("`beta`"))
 
+    def _codex_version(self, out):
+        manifest = out / ".codex-plugin" / "plugin.json"
+        return json.loads(manifest.read_text(encoding="utf-8"))["version"]
+
+    def test_version_bumps_only_when_the_published_tree_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, skills_root, out = self._setup(tmp, ["alpha"], ["alpha"])
+
+            def render_with(body):
+                return sync.build(
+                    out,
+                    manifest_path=manifest,
+                    skills_roots=[skills_root],
+                    loader=self._loader(
+                        skills_root,
+                        ["alpha"],
+                        lambda skill, harness: _banner_render(skill, harness) + body,
+                    ),
+                )
+
+            self.assertEqual(render_with("one"), ([], []))
+            self.assertEqual(self._codex_version(out), sync.PLUGIN_VERSION)
+            render_with("one")
+            self.assertEqual(self._codex_version(out), sync.PLUGIN_VERSION)
+            render_with("two")
+            major, minor, patch = sync.PLUGIN_VERSION.split(".")
+            self.assertEqual(
+                self._codex_version(out), f"{major}.{minor}.{int(patch) + 1}"
+            )
+
+    def test_check_render_reports_errors_from_a_scratch_render(self):
+        with unittest.mock.patch.object(
+            sync, "build", return_value=(["alpha: broken"], [])
+        ) as build:
+            self.assertEqual(sync.check_render(), ["alpha: broken"])
+        rendered_into = build.call_args.args[0]
+        self.assertFalse(rendered_into.exists())
+
     def test_skill_missing_from_discover_is_an_error_not_a_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:
             manifest, skills_root, out = self._setup(
@@ -1115,6 +1154,38 @@ class MainTest(unittest.TestCase):
         code = self._run_main(["--check-sources", "--out", "somewhere"])
         self.assertEqual(code, 2)
 
+    def test_out_and_check_render_are_mutually_exclusive(self):
+        code = self._run_main(["--check-render", "--out", "somewhere"])
+        self.assertEqual(code, 2)
+
+    def test_check_render_failure_exits_1_and_reports_each_error_once(self):
+        stderr = io.StringIO()
+        with unittest.mock.patch.object(
+            sync, "check_render", return_value=["alpha: broken"]
+        ), unittest.mock.patch.object(
+            sync, "check_manifest", return_value=["alpha: broken"]
+        ), contextlib.redirect_stderr(stderr):
+            code = sync.main(["--check-manifest", "--check-render"])
+        self.assertEqual(code, 1)
+        self.assertEqual(stderr.getvalue(), "publish: alpha: broken\n")
+
+
+class VersionTest(unittest.TestCase):
+    def test_unchanged_tree_keeps_the_previous_version(self):
+        self.assertEqual(sync.next_version("1.0.7", changed=False), "1.0.7")
+
+    def test_changed_tree_bumps_the_patch(self):
+        self.assertEqual(sync.next_version("1.0.7", changed=True), "1.0.8")
+
+    def test_first_render_starts_at_the_floor(self):
+        self.assertEqual(sync.next_version(None, changed=True, floor="1.0.0"), "1.0.0")
+
+    def test_raised_floor_wins_over_an_older_version(self):
+        self.assertEqual(sync.next_version("1.0.7", changed=True, floor="2.0.0"), "2.0.0")
+
+    def test_unparseable_previous_version_falls_back_to_the_floor(self):
+        self.assertEqual(sync.next_version("v1", changed=False, floor="1.0.0"), "1.0.0")
+
 
 class ArtifactTest(unittest.TestCase):
     def test_marketplace_has_no_version_and_root_source(self):
@@ -1151,9 +1222,9 @@ class ArtifactTest(unittest.TestCase):
         self.assertIn("auto-update", readme.lower())
 
     def test_codex_plugin_carries_required_fields_and_a_version(self):
-        plugin = sync.build_codex_plugin()
+        plugin = sync.build_codex_plugin("1.2.3")
         self.assertEqual(plugin["name"], "nlsmdn")
-        self.assertEqual(plugin["version"], sync.PLUGIN_VERSION)
+        self.assertEqual(plugin["version"], "1.2.3")
         self.assertTrue(plugin["description"])
         self.assertEqual(plugin["skills"], "./skills/")
         self.assertEqual(
@@ -1163,9 +1234,9 @@ class ArtifactTest(unittest.TestCase):
         self.assertEqual(plugin["interface"]["category"], "Developer Tools")
 
     def test_cursor_plugin_carries_required_fields(self):
-        plugin = sync.build_cursor_plugin()
+        plugin = sync.build_cursor_plugin("1.2.3")
         self.assertEqual(plugin["name"], "nlsmdn")
-        self.assertEqual(plugin["version"], sync.PLUGIN_VERSION)
+        self.assertEqual(plugin["version"], "1.2.3")
         self.assertEqual(plugin["skills"], "./skills/")
         self.assertEqual(
             plugin["author"],
@@ -1198,7 +1269,7 @@ class ArtifactTest(unittest.TestCase):
     def test_write_artifacts_creates_all_four_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
-            sync.write_artifacts(out, [("Core", [("alpha", "Does alpha.")])])
+            sync.write_artifacts(out, [("Core", [("alpha", "Does alpha.")])], "1.0.0")
             for relative in (
                 ".claude-plugin/marketplace.json",
                 ".claude-plugin/plugin.json",

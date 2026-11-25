@@ -8,9 +8,11 @@ and imports successfully with `__file__` set to None.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
+import tempfile
 import tomllib
 from pathlib import Path
 from typing import Callable, Protocol, Sequence
@@ -360,9 +362,9 @@ def load_loadout() -> tuple[Callable, Callable]:
     # describes imports the namespace package fine and fails on the symbols.
     except ImportError:
         raise SystemExit(
-            "loadout is not importable. Install it with:\n"
-            "  pip install 'git+https://github.com/nielsmadan/loadout@<the SHA "
-            "pinned in the skills repo workflow>'\n"
+            "loadout is not importable. Run with the pinned renderer:\n"
+            "  uv run --no-project --with-requirements publish/requirements.txt "
+            "python3 publish/sync.py ...\n"
             "Note: run this file as a script path, not with -m, or the loadout/ "
             "config directory shadows the package."
         )
@@ -371,8 +373,9 @@ def load_loadout() -> tuple[Callable, Callable]:
 
 MARKETPLACE_NAME = "nlsmdn"
 PLUGIN_NAME = "nlsmdn"
-# Codex requires a version in its manifest; the Claude side stays version-less
-# (commit-SHA pinning). Bump manually for a release Codex/Cursor users should see.
+# Codex reinstalls a plugin only when its version changes, so build() bumps the
+# patch whenever the published tree changes; raise this floor for a major/minor.
+# The Claude side stays version-less (commit-SHA pinning).
 PLUGIN_VERSION = "1.0.0"
 OWNER = {"name": "Niels Madan", "url": "https://github.com/nielsmadan"}
 HOMEPAGE = "https://github.com/nielsmadan/skills"
@@ -380,12 +383,12 @@ SUMMARY = "Opinionated agent skills for code review, research, and daily workflo
 LONG_SUMMARY = (
     "Opinionated agent skills for the daily development loop, organized in "
     "groups: multi-perspective code review (an orchestrator plus dedicated "
-    "reviewers for architecture, security, performance, interfaces, tests, and "
-    "language-specific design, with cross-CLI second opinions), planning and "
+    "reviewers for architecture, security, performance, correctness, interfaces, "
+    "and language-specific design, with cross-CLI second opinions), planning and "
     "research workflows, testing and debugging, git and session history, docs "
     "and writing, web and mobile workflows (SEO, Flutter and React Native "
-    "upgrades), and small environment tools. Generated and synced hourly from "
-    "a single source repo."
+    "upgrades), and small environment tools. Generated from a single source "
+    "repo and republished when it changes."
 )
 KEYWORDS = ["agent-skills", "code-review", "planning", "testing", "workflow"]
 
@@ -432,10 +435,10 @@ def build_plugin() -> dict:
     }
 
 
-def build_codex_plugin() -> dict:
+def build_codex_plugin(version: str) -> dict:
     return {
         "name": PLUGIN_NAME,
-        "version": PLUGIN_VERSION,
+        "version": version,
         "description": SUMMARY,
         "author": dict(OWNER),
         "homepage": HOMEPAGE,
@@ -454,12 +457,12 @@ def build_codex_plugin() -> dict:
     }
 
 
-def build_cursor_plugin() -> dict:
+def build_cursor_plugin(version: str) -> dict:
     return {
         "name": PLUGIN_NAME,
         "displayName": PLUGIN_NAME,
         "description": SUMMARY,
-        "version": PLUGIN_VERSION,
+        "version": version,
         "author": dict(OWNER),
         "publisher": OWNER["name"],
         "homepage": HOMEPAGE,
@@ -519,7 +522,7 @@ codex plugin marketplace add nielsmadan/skills
 
 Then install `nlsmdn` from `/plugins` and start a new session.
 
-Any other agent (Codex, Cursor, OpenCode, Zed, Copilot CLI, Gemini CLI, Amp):
+Any other agent (Cursor, OpenCode, Zed, Copilot CLI, Gemini CLI, Amp):
 
 ```
 npx skills add nielsmadan/skills
@@ -529,11 +532,15 @@ Add `--skill <name>` to install one, or `--all` to cover every detected agent.
 
 ## Notes
 
-- Third-party marketplaces default to **auto-update off**. Enable it per
-  marketplace in `/plugin`, or run `claude plugin update nlsmdn` when you want
-  changes.
-- There is no `version` field: the version resolves to the source commit SHA, so
-  every push is available immediately to anyone who updates.
+- In Claude Code, third-party marketplaces default to **auto-update off**.
+  Enable it per marketplace in `/plugin`, or run `claude plugin update nlsmdn`
+  when you want changes.
+- The Claude Code plugin has no `version` field: the version resolves to the
+  source commit SHA, so every push is available immediately to anyone who
+  updates.
+- The Codex and Cursor manifests carry a version whose patch number goes up
+  whenever the published skills change; Codex refreshes an installed plugin
+  only when that version changes.
 - Codex budgets its initial skill list at 2% of the model's context window
   (8,000 characters only when the window is unknown) and shortens descriptions
   first when over it; only very large sets see skills omitted. `--skill <name>`
@@ -551,8 +558,41 @@ MIT
 """
 
 
+def published_digest(skills_dir: Path, readme: str) -> str:
+    digest = hashlib.sha256(readme.encode("utf-8"))
+    if skills_dir.is_dir():
+        for path in sorted(p for p in skills_dir.rglob("*") if p.is_file()):
+            digest.update(str(path.relative_to(skills_dir)).encode("utf-8") + b"\0")
+            digest.update(path.read_bytes() + b"\0")
+    return digest.hexdigest()
+
+
+def previous_version(out: Path) -> str | None:
+    manifest = out / ".codex-plugin" / "plugin.json"
+    try:
+        version = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return version if isinstance(version, str) else None
+
+
+def _version_tuple(version: str | None) -> tuple[int, ...] | None:
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version or "")
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+def next_version(previous: str | None, changed: bool, floor: str = PLUGIN_VERSION) -> str:
+    parsed = _version_tuple(previous)
+    if previous is None or parsed is None or parsed < (_version_tuple(floor) or ()):
+        return floor
+    if not changed:
+        return previous
+    major, minor, patch = parsed
+    return f"{major}.{minor}.{patch + 1}"
+
+
 def write_artifacts(
-    out: Path, grouped: list[tuple[str, list[tuple[str, str]]]]
+    out: Path, grouped: list[tuple[str, list[tuple[str, str]]]], version: str
 ) -> None:
     plugin_dir = out / ".claude-plugin"
     plugin_dir.mkdir(parents=True, exist_ok=True)
@@ -565,12 +605,12 @@ def write_artifacts(
     codex_dir = out / ".codex-plugin"
     codex_dir.mkdir(parents=True, exist_ok=True)
     (codex_dir / "plugin.json").write_text(
-        json.dumps(build_codex_plugin(), indent=2) + "\n", encoding="utf-8"
+        json.dumps(build_codex_plugin(version), indent=2) + "\n", encoding="utf-8"
     )
     cursor_dir = out / ".cursor-plugin"
     cursor_dir.mkdir(parents=True, exist_ok=True)
     (cursor_dir / "plugin.json").write_text(
-        json.dumps(build_cursor_plugin(), indent=2) + "\n", encoding="utf-8"
+        json.dumps(build_cursor_plugin(version), indent=2) + "\n", encoding="utf-8"
     )
     agents_dir = out / ".agents" / "plugins"
     agents_dir.mkdir(parents=True, exist_ok=True)
@@ -624,6 +664,12 @@ def build(
     if errors:
         return errors, []
     discover_skills, render_skill = loader()
+    readme_path = out / "README.md"
+    before = published_digest(
+        out / "skills",
+        readme_path.read_text(encoding="utf-8") if readme_path.is_file() else "",
+    )
+    previous = previous_version(out)
     skills = [
         skill
         for root in sorted({source.parent for source in sources.values()})
@@ -654,9 +700,16 @@ def build(
         (title, sorted((name, descriptions[name]) for name in names))
         for title, names in groups
     ]
-    write_artifacts(out, grouped)
+    after = published_digest(out / "skills", build_readme(grouped))
+    write_artifacts(out, grouped, next_version(previous, before != after))
     errors.extend(tree_guard_errors(out, unpublished))
     return errors, warnings
+
+
+def check_render(*, loader: Loader = load_loadout) -> list[str]:
+    with tempfile.TemporaryDirectory() as tmp:
+        errors, _ = build(Path(tmp), loader=loader)
+    return errors
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -681,21 +734,34 @@ def main(argv: list[str] | None = None) -> int:
         "personal string",
     )
     parser.add_argument(
+        "--check-render",
+        action="store_true",
+        help="exit 1 if rendering into a scratch directory fails any publish "
+        "check (needs loadout, see publish/requirements.txt)",
+    )
+    parser.add_argument(
         "--out",
         type=out_path,
         help="render the published tree into this directory: REPLACES "
-        "<dir>/skills/ and overwrites README.md, LICENSE and .claude-plugin/",
+        "<dir>/skills/ and overwrites README.md, LICENSE and the plugin and "
+        "marketplace manifests",
     )
     args = parser.parse_args(argv)
-    if args.out is not None and (args.check_manifest or args.check_sources):
-        parser.error("--out cannot be combined with --check-manifest/--check-sources")
-    if args.check_manifest or args.check_sources:
+    checks = args.check_manifest or args.check_sources or args.check_render
+    if args.out is not None and checks:
+        parser.error(
+            "--out cannot be combined with --check-manifest/--check-sources/"
+            "--check-render"
+        )
+    if checks:
         errors: list[str] = []
         if args.check_manifest:
             errors.extend(check_manifest())
         if args.check_sources:
             errors.extend(source_errors())
-        for error in errors:
+        if args.check_render:
+            errors.extend(check_render())
+        for error in dict.fromkeys(errors):
             print(f"publish: {error}", file=sys.stderr)
         return 1 if errors else 0
     if args.out is not None:
