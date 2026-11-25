@@ -382,6 +382,13 @@ colors on one row; other extension statuses fit inline, with lower-priority fiel
 dropped on narrow terminals. The npm `pi-statusline` plugin is disabled in
 `loadout/plugins/pi.json`. Reload an existing Pi session with `/reload`.
 
+`./sync.sh` registers `bin/codex-statusline` as a local MCP provider on Codex versions
+with custom status line support. The provider uses Claude's footer renderer for the
+nono indicator, model, effort, Fast mode, context bar, and weekly usage budget.
+Codex supplies cache token totals through the provider API. The live cache indicator
+requires a cache expiry timestamp. Open a new Codex session after installing and use
+`/statusline` to change the selected footer.
+
 ## Hooks
 
 Hook **scripts** live in `loadout/module-config/claude/hooks/`; their **wiring** is a separate slice, `loadout/hooks/claude.json`. Neither belongs in `~/.claude/settings.json`, which is generated in full and will discard the edit at the next `loadout sync`. When adding one:

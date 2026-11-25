@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import re
+import select
+import subprocess
+import sys
+import time
+import tomllib
+from functools import lru_cache
+from pathlib import Path
+
+SCRIPT = Path(__file__).resolve()
+CLAUDE_RENDERER = SCRIPT.parents[1] / "loadout/module-config/claude/hooks/statusline.sh"
+SERVER = "ac-statusline"
+URI = f"ui://{SERVER}/footer"
+FEATURE = "tui_extensions_statusline"
+STATE_KEY = "com.openai/codex-statusline-state"
+SEPARATOR = "\x1b[2m │ \x1b[0m"
+SGR = re.compile(r"\x1b\[([0-9;]+)m")
+RESOURCE = {"uri": URI, "mimeType": "application/json"}
+TOOL = {
+    "name": "statusline",
+    "title": "Claude-style status line",
+    "description": "Display the current Codex thread in the terminal footer.",
+    "inputSchema": {"type": "object"},
+    "_meta": {
+        "openai/ui": {"entrypoints": [{"type": "statusline", "resourceUri": URI}]}
+    },
+}
+COLORS = {
+    "2": "status-metadata",
+    "31": "red",
+    "32": "green",
+    "33": "yellow",
+    "35": "magenta",
+    "36": "cyan",
+    "37": "white",
+    "38;5;108": "#87af87",
+    "38;5;167": "#d75f5f",
+    "38;5;173": "#d7875f",
+    "38;5;179": "#d7af5f",
+}
+
+
+def claude_payload(state):
+    thread = state["thread"]
+    model = thread["model"]
+    limits = next(
+        (
+            sample
+            for sample in state["account"]["rate_limits"]
+            if sample["limit_id"] == "codex"
+        ),
+        {},
+    )
+    weekly = next(
+        (
+            window
+            for window in (limits.get("primary_limit"), limits.get("secondary_limit"))
+            if window and window.get("window_minutes") == 7 * 24 * 60
+        ),
+        {},
+    )
+    return {
+        "cwd": thread["workspace"]["cwd"],
+        "model": {"display_name": model.get("id") or model["display_name"]},
+        "effort": {"level": model.get("reasoning_level")},
+        "fast_mode": model.get("service_tier") == "fast",
+        "context_window": {
+            "used_percentage": thread["usage"]["context"].get("used_percentage")
+        },
+        "rate_limits": {
+            "seven_day": {
+                "used_percentage": weekly.get("used_percent"),
+                "resets_at": weekly.get("resets_at"),
+            }
+        },
+    }
+
+
+def styled_segment(segment):
+    plain, *spans = SGR.split(segment)
+    children = [plain] if plain else []
+    children.extend(
+        {"type": "text", "props": {"color": COLORS[code]}, "children": [value]}
+        if code in COLORS
+        else value
+        for code, value in zip(spans[::2], spans[1::2])
+        if value
+    )
+    return {"type": "text", "children": children}
+
+
+def render(state):
+    payload = claude_payload(state)
+    now = int(time.time())
+    resets_at = payload["rate_limits"]["seven_day"]["resets_at"]
+    minutes_left = max(0, resets_at - now) // 60 if resets_at is not None else None
+    return render_payload(json.dumps(payload), (now // 60, minutes_left))
+
+
+@lru_cache(maxsize=1)
+def render_payload(payload, _minute):
+    result = subprocess.run(
+        [str(CLAUDE_RENDERER)],
+        input=payload,
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        env={**os.environ, "COLUMNS": ""},
+        timeout=0.75,
+        check=True,
+    )
+    leading, *following = result.stdout.split(SEPARATOR)
+    return {
+        "type": "row",
+        "props": {"gap": 1, "wrap": "wrap"},
+        "children": [styled_segment(leading)]
+        + [styled_segment(f"\x1b[2m│ \x1b[0m{segment}") for segment in following],
+    }
+
+
+def respond(method, params):
+    match method:
+        case "initialize":
+            return {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {"tools": {}, "resources": {}},
+                "serverInfo": {"name": SERVER, "version": "1.0.0"},
+            }
+        case "ping":
+            return {}
+        case "tools/list":
+            return {"tools": [TOOL]}
+        case "tools/call" if params.get("name") == TOOL["name"]:
+            return {
+                "content": [{**RESOURCE, "type": "resource_link", "name": "footer"}]
+            }
+        case "resources/list":
+            return {"resources": [{**RESOURCE, "name": "footer"}]}
+        case "resources/templates/list":
+            return {"resourceTemplates": []}
+        case "resources/read" if params.get("uri") == URI:
+            state = (params.get("_meta") or {}).get(STATE_KEY)
+            tree = render(state) if state is not None else None
+            return {"contents": [{**RESOURCE, "text": json.dumps(tree)}]}
+        case "tools/call" | "resources/read":
+            raise ValueError(method)
+        case _:
+            raise NotImplementedError(method)
+
+
+def serve():
+    for line in sys.stdin.buffer:
+        reply = {"jsonrpc": "2.0", "id": None}
+        try:
+            request = json.loads(line)
+            if not isinstance(request, dict) or not isinstance(
+                request.get("method"), str
+            ):
+                reply["error"] = {"code": -32600, "message": "Invalid request"}
+            elif "id" not in request:
+                continue
+            else:
+                reply["id"] = request["id"]
+                reply["result"] = respond(request["method"], request.get("params", {}))
+        except json.JSONDecodeError:
+            reply["error"] = {"code": -32700, "message": "Parse error"}
+        except NotImplementedError:
+            reply["error"] = {"code": -32601, "message": "Method not found"}
+        except (KeyError, ValueError, TypeError, AttributeError):
+            reply["error"] = {"code": -32602, "message": "Invalid parameters"}
+        except (OSError, subprocess.SubprocessError):
+            reply["error"] = {
+                "code": -32603,
+                "message": "Claude status line failed to render",
+            }
+        print(json.dumps(reply), flush=True)
+
+
+def send(server, message):
+    server.stdin.write((json.dumps(message) + "\n").encode())
+
+
+def call(server, request_id, method, params):
+    send(server, {"id": request_id, "method": method, "params": params})
+    deadline = time.monotonic() + 10
+    while (remaining := deadline - time.monotonic()) > 0 and select.select(
+        [server.stdout], [], [], remaining
+    )[0]:
+        line = server.stdout.readline()
+        if not line:
+            break
+        response = json.loads(line)
+        if response.get("id") == request_id:
+            if "error" in response:
+                raise RuntimeError(
+                    f"Codex {method} failed: {response['error']['message']}"
+                )
+            return
+    raise RuntimeError(f"Codex app server did not answer {method}")
+
+
+def install():
+    home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+    path = home / "config.toml"
+    config = tomllib.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    server_config = {
+        "command": str(SCRIPT),
+        "env_vars": ["AGENT_SANDBOX"],
+        "omit_tools_from": ["direct", "deferred", "code_mode"],
+    }
+    settings = (
+        (
+            f"mcp_servers.{SERVER}",
+            config.get("mcp_servers", {}).get(SERVER),
+            server_config,
+        ),
+        (f"features.{FEATURE}", config.get("features", {}).get(FEATURE), True),
+        (
+            "tui.status_line_provider",
+            config.get("tui", {}).get("status_line_provider"),
+            {"server": SERVER, "tool": TOOL["name"]},
+        ),
+    )
+    edits = [
+        {"keyPath": key, "value": value, "mergeStrategy": "replace"}
+        for key, current, value in settings
+        if current is None or (key.startswith("mcp_servers.") and current != value)
+    ]
+    if not edits:
+        return
+
+    features = subprocess.run(
+        ["codex", "features", "list"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=True,
+    )
+    if not any(line.split()[:1] == [FEATURE] for line in features.stdout.splitlines()):
+        return
+
+    with subprocess.Popen(
+        ["codex", "app-server", "--stdio"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        bufsize=0,
+    ) as server:
+        try:
+            call(
+                server,
+                1,
+                "initialize",
+                {"clientInfo": {"name": SERVER, "version": "1"}},
+            )
+            send(server, {"method": "initialized"})
+            call(server, 2, "config/batchWrite", {"edits": edits})
+        finally:
+            server.kill()
+    print("Installed the Claude-style Codex status line.")
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["--install"]:
+        install()
+    elif len(sys.argv) == 1:
+        serve()
+    else:
+        sys.exit("Usage: codex-statusline [--install]")

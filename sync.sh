@@ -557,6 +557,9 @@ echo ""
 
 sync_claude_plugins
 sync_mods
+if command -v codex &>/dev/null && command -v python3 &>/dev/null; then
+  "$SCRIPT_DIR/bin/codex-statusline" --install
+fi
 
 echo ""
 echo "✓  Sync complete (${PROFILE} profile)."
