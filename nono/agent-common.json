@@ -58,6 +58,8 @@
       "$HOME/.local/state/splashdown",
       "$HOME/.config/loadout/stealth-written",
       "$HOME/.local/state/loadout/stealth-locks",
+      "$HOME/.local/state/bellhop",
+      "$HOME/.local/share/callboard",
       "$HOME/.local/state/watchman",
       "$HOME/.factory",
       "$HOME/.cursor"
@@ -66,6 +68,8 @@
       "/AppleInternal",
       "$HOME/.config/loadout/written",
       "$HOME/.opencode",
+      "$HOME/.config/bellhop",
+      "$HOME/.config/callboard",
       "$HOME/Library/Developer/Xcode",
       "$HOME/Library/Application Support/CleanShot/media",
       "$HOME/Library/Fonts",

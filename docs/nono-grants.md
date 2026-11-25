@@ -27,12 +27,12 @@ cross-agent session tools. `~/.factory` is there read+write for every agent, bec
 droid under the caller's profile and droid reads and writes all over that tree; only
 `auth.v2.loginkeychain`, droid's stored login, is denied.
 `~/.cursor` is there read+write for the same cross-agent reason, minus `~/.cursor/extensions`: that directory belongs to the Cursor IDE, which runs its extensions unsandboxed, and the CLI never reads it.
+Every agent also gets read+write on `~/.local/state/bellhop` and `~/.local/share/callboard` and read on their `~/.config` directories, so sandboxed sessions can message each other through callboard and run `bellhop codex`; that lets any of them put text into any session bellhop reaches and read every stored message.
 The per-agent files hold only what one agent needs:
 
 | profile | extra grant | why |
 |---|---|---|
 | `claude-local` | read `~/.local/share/claude` | |
-| `codex-local` | read+write `~/.local/state/bellhop`, read `~/.config/bellhop` | `bellhop codex` starts each session's app server inside the sandbox; it keeps its server log and store there |
 | `opencode-local` | read-file `~/.claude/CLAUDE.md`, read `~/.claude/skills` | opencode falls back to Claude's global rules and skills |
 
 **droid has no vendor pack.** `nono search droid` and `nono search factory` both return nothing, so `droid-local` extends `default` rather than a `nolabs-ai/*` pack and spells out the groups itself. Its containment was measured rather than inherited: `~/wrksp` and `~/.factory` writable, `~/ac` read-only, `~/Documents`, `~/.ssh` and `login.keychain-db` denied — the same boundary the other four get.
