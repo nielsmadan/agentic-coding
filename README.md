@@ -239,18 +239,16 @@ The mappings live in `.airc.d/07-model-tiers.zsh`; a normal `agent-models` run
 refreshes them alongside the other models using Artificial Analysis intelligence
 versus cost per task.
 Bare commands retain their existing defaults. Use `--` before a literal prompt
-that is exactly a tier name. Cursor keeps its `agent haiku|sonnet|opus` shortcuts,
-and plain `pi` keeps its own configuration.
+that is exactly a tier name. Plain `pi` keeps its own configuration.
 
-Run `agents` to see the default models for Claude Code, Codex, pix, Devin, and
-Cursor (`agent`), alongside the tier shortcuts, `/second-opinion` models from
+Run `agents` to see the default models for Claude Code, Codex, pix and Devin,
+alongside the tier shortcuts, `/second-opinion` models from
 Pratfall, and weekly usage.
 Claude and Codex usage come from the latest available Ringleader snapshots.
 The signed number shows how many percentage points of today's allowance remain,
 with another seventh of the weekly allowance added at 5 a.m. local time.
 `agents --refresh` asks Ringleader to refresh quotas using its configured
-sign-ins. Devin shows its weekly quota in `/usage`. Cursor shows plan usage in
-its account dashboard.
+sign-ins. Devin shows its weekly quota in `/usage`.
 
 ## Further reading
 

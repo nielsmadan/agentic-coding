@@ -39,7 +39,6 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 | `opencode`, `oc` | OpenRouter | Muse Ember; GPT-6.1 Sol selectable | `loadout/settings/opencode.json` |
 | `ocs` | OpenRouter | Kimi K3.1 Pro | `.airc.d/opencode.zsh` |
 | `droid` | Factory | Gemini 4 Argon; favourites Opus 5.5, GPT-6.1 Sol | `loadout/settings/droid.json` |
-| `cursor-agent haiku\|sonnet\|opus` | Cursor | Haiku 5.5 (thinking high), Sonnet 5.5 (medium), Opus 5.5 (high) | `.airc.d/cursor.zsh` |
 
 ## Headless calls
 

@@ -120,8 +120,8 @@ appear in unrelated projects. Verified against codex-cli 0.147.0.
 
 - **`agent-models`** — every normal run refreshes the low / mid / high / xhigh / max
   session shortcuts for Claude, Codex and pix in `.airc.d/07-model-tiers.zsh`,
-  using Anthropic and OpenAI model/effort pairs and cost per task. Cursor and
-  plain Pi are outside that selection. It also picks the low / mid / high-main / high-fallback OpenRouter
+  using Anthropic and OpenAI model/effort pairs and cost per task. Plain Pi
+  is outside that selection. It also picks the low / mid / high-main / high-fallback OpenRouter
   models and writes them into every file that pins a model id (the OpenRouter entries in `loadout/settings/pi.json`,
   `loadout/settings/opencode.json`, `clor` in `.airc.d/claude.zsh`, the `ocs`
   alias, the `occli` backend, and the two `second-opinion` advisors). Ranks

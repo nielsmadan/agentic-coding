@@ -18,7 +18,6 @@ either way, and loadout's deny rules (`git push`) still apply in bypass.
 | Codex | `approval_policy: "on-request"`, `approvals_reviewer: "auto_review"` | `loadout/defaults/codex.json` |
 | Droid | `sessionDefaultSettings.autonomyLevel: "high"` | `loadout/settings/droid.json` |
 | Devin | `permission_mode: "dangerous"` (the user's choice on 2026-11-21; `smart` is its reviewed mode) | `loadout/settings/devin.json` |
-| Cursor | `approvalMode: "unrestricted"` | `~/.cursor/cli-config.json`, not loadout-owned |
 | OpenCode, Pi | — | |
 
 An `Exec(*)`-style catch-all allow is not a substitute: in Devin it covered
@@ -43,7 +42,7 @@ and Pi's `loadout/module-config/pi/extensions/statusline/index.ts`:
 | Droid | command `~/.factory/statusline.sh` (→ `statusline.py`, fetches Factory limits) |
 | Pi | `statusline` extension |
 | Devin | none: the CLI has no custom status line (3000.14) |
-| Cursor, OpenCode | — |
+| OpenCode | — |
 
 ## Everything else
 

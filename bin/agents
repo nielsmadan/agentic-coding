@@ -35,41 +35,13 @@ def model_with_effort(model: str | None, effort: str | None) -> str:
     return f"{model} ({effort})" if effort else model
 
 
-def cursor_default_model(config: dict) -> Model:
-    selected = config.get("selectedModel")
-    if isinstance(selected, dict) and (model := selected.get("modelId")):
-        parameters = {
-            item.get("id"): item.get("value")
-            for item in selected.get("parameters") or []
-            if isinstance(item, dict)
-        }
-        effort = parameters.get("reasoning_effort")
-        if parameters.get("thinking") == "true":
-            effort = f"thinking {effort}" if effort else "thinking"
-        return model, effort
-
-    saved = config.get("model") if config.get("hasChangedDefaultModel") else None
-    if isinstance(saved, dict):
-        saved = saved.get("modelId")
-    return saved, None
-
-
 def defaults(pix: str, home: Path, environ: dict[str, str]) -> dict[str, Model]:
     claude_dir = Path(environ.get("CLAUDE_CONFIG_DIR") or home / ".claude")
     codex_dir = Path(environ.get("CODEX_HOME") or home / ".codex")
     config_dir = Path(environ.get("XDG_CONFIG_HOME") or home / ".config")
-    cursor_dir = Path(
-        environ.get("CURSOR_CONFIG_DIR")
-        or (
-            config_dir / "cursor"
-            if environ.get("XDG_CONFIG_HOME")
-            else home / ".cursor"
-        )
-    )
     claude = settings(claude_dir / "settings.json", "settings/claude.json")
     codex = settings(codex_dir / "config.toml", "defaults/codex.json")
     devin = settings(config_dir / "devin/config.json", "settings/devin.json")
-    cursor = settings(cursor_dir / "cli-config.json")
     claude_env = claude.get("env") or {}
     claude_model = (
         environ.get("ANTHROPIC_MODEL")
@@ -90,7 +62,6 @@ def defaults(pix: str, home: Path, environ: dict[str, str]) -> dict[str, Model]:
         "codex": (codex.get("model"), codex.get("model_reasoning_effort")),
         "pix": (pix_model, pix_effort),
         "devin": (devin_model, None),
-        "agent": cursor_default_model(cursor),
     }
 
 
@@ -124,24 +95,19 @@ def advisor_models(startup_models: dict[str, Model]) -> list[tuple[str, str]]:
     return models
 
 
-def presets() -> tuple[str, list[list[str]], list[list[str]]]:
+def presets() -> tuple[str, list[list[str]]]:
     output = subprocess.check_output(
         [
             "zsh",
             "-f",
             "-c",
             r"""
-source "$1/07-model-tiers.zsh" && source "$1/pi.zsh" && source "$1/cursor.zsh" || exit
+source "$1/07-model-tiers.zsh" && source "$1/pi.zsh" || exit
 _pix_default_preset
 for tier in low mid high xhigh max; do
   claude=$(_agent_model_tier anthropic "$tier") || exit
   openai=$(_agent_model_tier openai "$tier") || exit
   printf '%s\t%s\t%s\n' "$tier" "$claude" "$openai"
-done
-print
-for tier in haiku sonnet opus; do
-  model=$(_cursor_model_preset "$tier") || exit
-  printf '%s\t%s\n' "$tier" "$model"
 done
 """,
             "agents",
@@ -150,13 +116,8 @@ done
         text=True,
         timeout=5,
     )
-    main, cursor = output.split("\n\n", 1)
-    pix, *rows = main.splitlines()
-    return (
-        pix,
-        [row.split("\t") for row in rows],
-        [row.split("\t") for row in cursor.splitlines()],
-    )
+    pix, *rows = output.splitlines()
+    return pix, [row.split("\t") for row in rows]
 
 
 def main() -> int:
@@ -168,7 +129,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        pix, tiers, cursor_tiers = presets()
+        pix, tiers = presets()
     except (OSError, ValueError, subprocess.SubprocessError):
         parser.exit(1, "agents: could not read shell model presets\n")
 
@@ -182,9 +143,6 @@ def main() -> int:
         claude_model = model_with_effort(*claude.rsplit(":", 1))
         openai_model = model_with_effort(*openai.rsplit(":", 1))
         print(f"  {tier:<6} {claude_model:<30} {openai_model}")
-    print("\nCursor shortcuts (agent / cursor-agent)")
-    for tier, model in cursor_tiers:
-        print(f"  {tier:<7} {model}")
 
     print("\n/second-opinion models")
     advisors = advisor_models(startup_models)

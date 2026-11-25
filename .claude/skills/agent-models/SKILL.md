@@ -1,6 +1,6 @@
 ---
 name: agent-models
-description: Refresh model tiers for claude, codex and pix session shortcuts, the OpenRouter coding models for Pi, OpenCode and clor, or the extraction models for distill and jina-fetch. Uses Artificial Analysis intelligence versus cost per task for coding and measured benchmarks for extraction. Use for "pick models", "update the models", "refresh model tiers", "update session presets", "refresh extraction models", or questions about current model bindings. Cursor agent shortcuts are outside this skill's targets.
+description: Refresh model tiers for claude, codex and pix session shortcuts, the OpenRouter coding models for Pi, OpenCode and clor, or the extraction models for distill and jina-fetch. Uses Artificial Analysis intelligence versus cost per task for coding and measured benchmarks for extraction. Use for "pick models", "update the models", "refresh model tiers", "update session presets", "refresh extraction models", or questions about current model bindings.
 ---
 
 # Agent Models

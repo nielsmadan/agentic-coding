@@ -15,8 +15,7 @@ The single source of model/effort pairs is `.airc.d/07-model-tiers.zsh`:
 | `anthropic` | `claude` | `--model <id> --effort <effort>` |
 | `openai` | `codex`, `pix` | Codex: `--model <id> -c 'model_reasoning_effort="<effort>"'`; pix: `--provider openai --model <id>:<effort>` |
 
-Only Anthropic and OpenAI are eligible here. This scope does not update Cursor
-(`agent` / `cursor-agent`), plain `pi`, `picc`, `clor`, OpenCode, advisor profiles,
+Only Anthropic and OpenAI are eligible here. This scope does not update plain `pi`, `picc`, `clor`, OpenCode, advisor profiles,
 extraction models, or global model defaults. Preserve no-tier invocation behavior,
 authentication, sandbox routing and iTerm tracking. Codex and pix share a table;
 report that shared binding when only one is named in a refresh request.

@@ -128,5 +128,4 @@ def weekly_usage_lines(refresh: bool, jq_dir: Path) -> list[str]:
             summary = "  ·  ".join(details)
         lines.append(f"  {label:<10} {summary}")
     lines.append(f"  {'Devin':<10} Open /usage in Devin")
-    lines.append(f"  {'Cursor':<10} See the account usage dashboard")
     return lines

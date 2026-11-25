@@ -12,7 +12,6 @@ source .airc.d/07-model-tiers.zsh
 source .airc.d/claude.zsh
 source .airc.d/codex.zsh
 source .airc.d/pi.zsh
-source .airc.d/cursor.zsh
 _agent_raw_dir() { return 1; }
 _agent_unsandboxed_profile() { return 1; }
 _agent_sandboxed() { printf '%s\0' "$AGENT_HARNESS" "$@"; }
@@ -175,25 +174,10 @@ _agent_iterm_run() {
                     ],
                 )
 
-    def test_plain_pi_and_cursor_keep_their_own_argument_handling(self):
+    def test_plain_pi_keeps_its_own_argument_handling(self):
         self.assertEqual(
             self.run_shell("pi", "low", "hello"),
             ["pi", "pi-local", "pi", "low", "hello"],
-        )
-        self.assertEqual(
-            self.run_shell("agent", "low", "hello"),
-            ["cursor", "cursor-local", "cursor-agent", "low", "hello"],
-        )
-        self.assertEqual(
-            self.run_shell("agent", "haiku", "hello"),
-            [
-                "cursor",
-                "cursor-local",
-                "cursor-agent",
-                "--model",
-                "claude-haiku-5-5-thinking-high",
-                "hello",
-            ],
         )
 
     def test_resourcing_preserves_presets(self):

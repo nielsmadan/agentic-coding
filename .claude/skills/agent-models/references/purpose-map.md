@@ -78,5 +78,3 @@ the public skill carries its own ids.
 `jina-fetch` and `distill` → `DEFAULT_MODEL` / `FALLBACK_MODEL` in `bin/extraction.py`;
 the pi dev-phase classifier → `MODELS` in `mods/dev-phase/pi/extension.ts`. Note when
 the two disagree.
-
-Cursor (`agent` / `cursor-agent`) is outside this skill; omit it.
