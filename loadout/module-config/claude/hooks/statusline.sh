@@ -74,11 +74,13 @@ window() {
 segs=(); widths=(); prios=()
 add_seg() { prios+=("$1"); widths+=("$2"); segs+=("$3"); }
 
+label_prefix=${STATUSLINE_LABEL:+$STATUSLINE_LABEL }
 if [ -n "$AGENT_SANDBOX" ]; then
-  add_seg 100 2 "${E}[32m🔒${E}[0m"
+  sandbox_icon="${E}[32m🔒${E}[0m"
 else
-  add_seg 100 2 "${E}[31m🥩${E}[0m"
+  sandbox_icon="${E}[31m🥩${E}[0m"
 fi
+add_seg 100 "$((${#label_prefix} + 2))" "$label_prefix$sandbox_icon"
 
 if [ -f "$current_dir/pubspec.yaml" ]; then
   if grep -q "flutter:" "$current_dir/pubspec.yaml" 2>/dev/null; then

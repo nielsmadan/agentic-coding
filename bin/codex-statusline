@@ -108,7 +108,7 @@ def render_payload(payload, _minute):
         input=payload,
         stdout=subprocess.PIPE,
         encoding="utf-8",
-        env={**os.environ, "COLUMNS": ""},
+        env={**os.environ, "COLUMNS": "", "STATUSLINE_LABEL": "CX"},
         timeout=0.75,
         check=True,
     )

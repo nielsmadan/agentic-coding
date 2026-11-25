@@ -41,7 +41,7 @@ export function renderFooter(width: number, state: FooterState): string[] {
   const segments = [
     {
       priority: 100,
-      text: color(state.sandboxed ? "32" : "31", state.sandboxed ? "🔒" : "🥩"),
+      text: `PI ${color(state.sandboxed ? "32" : "31", state.sandboxed ? "🔒" : "🥩")}`,
     },
     {
       priority: 60,

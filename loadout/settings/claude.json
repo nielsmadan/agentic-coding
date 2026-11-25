@@ -20,7 +20,7 @@
   "model": "opus",
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/hooks/statusline.sh --capture-usage",
+    "command": "STATUSLINE_LABEL=CC ~/.claude/hooks/statusline.sh --capture-usage",
     "refreshInterval": 60
   },
   "sandbox": {

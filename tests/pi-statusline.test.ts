@@ -10,9 +10,9 @@ const state = {
   statuses: new Map([["nono", "nono sandbox"]]),
 };
 
-test("matches Claude's icons, field order and context bar on one line", () => {
+test("shows the Pi label, sandbox icon, model and context on one line", () => {
   expect(renderFooter(100, state).map(stripTerminalSequences)).toEqual([
-    "🔒 │ 🤖 gpt-6-astra high │ 🧠 ░░░░░░░░░░ 5%",
+    "PI 🔒 │ 🤖 gpt-6-astra high │ 🧠 ░░░░░░░░░░ 5%",
   ]);
 });
 
@@ -24,7 +24,7 @@ test("shows raw mode and keeps other extension statuses inline", () => {
       statuses: new Map([["plan-mode", "📝 planning\nstep 2"]]),
     }).map(stripTerminalSequences),
   ).toEqual([
-    "🥩 │ 🤖 gpt-6-astra high │ 🧠 ░░░░░░░░░░ 5% │ 📝 planning step 2",
+    "PI 🥩 │ 🤖 gpt-6-astra high │ 🧠 ░░░░░░░░░░ 5% │ 📝 planning step 2",
   ]);
 });
 
@@ -33,19 +33,20 @@ test("unknown context stays unknown and full context fills the bar", () => {
     renderFooter(100, { ...state, contextPercent: null }).map(
       stripTerminalSequences,
     ),
-  ).toEqual(["🔒 │ 🤖 gpt-6-astra high │ 🧠 ?"]);
+  ).toEqual(["PI 🔒 │ 🤖 gpt-6-astra high │ 🧠 ?"]);
   expect(
     renderFooter(100, { ...state, contextPercent: 100 }).map(
       stripTerminalSequences,
     ),
-  ).toEqual(["🔒 │ 🤖 gpt-6-astra high │ 🧠 ▓▓▓▓▓▓▓▓▓▓ 100%"]);
+  ).toEqual(["PI 🔒 │ 🤖 gpt-6-astra high │ 🧠 ▓▓▓▓▓▓▓▓▓▓ 100%"]);
 });
 
-test("narrow terminals retain sandbox and context before the model", () => {
-  expect(renderFooter(23, state).map(stripTerminalSequences)).toEqual([
-    "🔒 │ 🧠 ░░░░░░░░░░ 5%",
+test("narrow terminals retain the label, sandbox and context before the model", () => {
+  expect(renderFooter(26, state).map(stripTerminalSequences)).toEqual([
+    "PI 🔒 │ 🧠 ░░░░░░░░░░ 5%",
   ]);
-  expect(renderFooter(2, state).map(stripTerminalSequences)).toEqual(["🔒"]);
+  expect(renderFooter(5, state).map(stripTerminalSequences)).toEqual(["PI 🔒"]);
+  expect(renderFooter(2, state).map(stripTerminalSequences)).toEqual(["PI"]);
   expect(renderFooter(0, state)).toEqual([]);
   for (let width = 1; width <= 120; width++) {
     const lines = renderFooter(width, {
