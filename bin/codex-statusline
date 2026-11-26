@@ -6,9 +6,9 @@ import re
 import select
 import subprocess
 import sys
+import threading
 import time
 import tomllib
-from functools import lru_cache
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve()
@@ -19,6 +19,8 @@ FEATURE = "tui_extensions_statusline"
 STATE_KEY = "com.openai/codex-statusline-state"
 SEPARATOR = "\x1b[2m │ \x1b[0m"
 SGR = re.compile(r"\x1b\[([0-9;]+)m")
+FIRST_RENDER_WAIT = 0.5
+RENDER_TIMEOUT = 5
 RESOURCE = {"uri": URI, "mimeType": "application/json"}
 TOOL = {
     "name": "statusline",
@@ -93,15 +95,13 @@ def styled_segment(segment):
     return {"type": "text", "children": children}
 
 
-def render(state):
+def render_key(state, now):
     payload = claude_payload(state)
-    now = int(time.time())
     resets_at = payload["rate_limits"]["seven_day"]["resets_at"]
     minutes_left = max(0, resets_at - now) // 60 if resets_at is not None else None
-    return render_payload(json.dumps(payload), (now // 60, minutes_left))
+    return json.dumps(payload), (now // 60, minutes_left)
 
 
-@lru_cache(maxsize=1)
 def render_payload(payload, _minute):
     result = subprocess.run(
         [str(CLAUDE_RENDERER)],
@@ -109,7 +109,7 @@ def render_payload(payload, _minute):
         stdout=subprocess.PIPE,
         encoding="utf-8",
         env={**os.environ, "COLUMNS": "", "STATUSLINE_LABEL": "CX"},
-        timeout=0.75,
+        timeout=RENDER_TIMEOUT,
         check=True,
     )
     leading, *following = result.stdout.split(SEPARATOR)
@@ -121,7 +121,51 @@ def render_payload(payload, _minute):
     }
 
 
-def respond(method, params):
+# Codex drops the provider after one read slower than 1 s, so reads never wait on a render.
+class Footers:
+    def __init__(self, render):
+        self._render = render
+        self._changed = threading.Condition()
+        self._wanted = {}
+        self._attempted = {}
+        self._trees = {}
+        threading.Thread(target=self._work, daemon=True).start()
+
+    def read(self, thread, key, wait):
+        with self._changed:
+            self._wanted[thread] = key
+            self._changed.notify_all()
+            self._changed.wait_for(lambda: thread in self._trees, timeout=wait)
+            return self._trees.get(thread)
+
+    def _next(self):
+        return next(
+            (
+                (thread, key)
+                for thread, key in self._wanted.items()
+                if self._attempted.get(thread) != key
+            ),
+            None,
+        )
+
+    def _work(self):
+        while True:
+            with self._changed:
+                thread, key = self._changed.wait_for(self._next)
+                self._attempted[thread] = key
+            try:
+                tree = self._render(*key)
+            except (OSError, ValueError, subprocess.SubprocessError) as error:
+                print(
+                    f"{SERVER}: render failed: {error!r}", file=sys.stderr, flush=True
+                )
+                continue
+            with self._changed:
+                self._trees[thread] = tree
+                self._changed.notify_all()
+
+
+def respond(method, params, footers):
     match method:
         case "initialize":
             return {
@@ -143,7 +187,15 @@ def respond(method, params):
             return {"resourceTemplates": []}
         case "resources/read" if params.get("uri") == URI:
             state = (params.get("_meta") or {}).get(STATE_KEY)
-            tree = render(state) if state is not None else None
+            tree = (
+                footers.read(
+                    state["thread"]["id"],
+                    render_key(state, int(time.time())),
+                    FIRST_RENDER_WAIT,
+                )
+                if state is not None
+                else None
+            )
             return {"contents": [{**RESOURCE, "text": json.dumps(tree)}]}
         case "tools/call" | "resources/read":
             raise ValueError(method)
@@ -152,6 +204,7 @@ def respond(method, params):
 
 
 def serve():
+    footers = Footers(render_payload)
     for line in sys.stdin.buffer:
         reply = {"jsonrpc": "2.0", "id": None}
         try:
@@ -164,7 +217,9 @@ def serve():
                 continue
             else:
                 reply["id"] = request["id"]
-                reply["result"] = respond(request["method"], request.get("params", {}))
+                reply["result"] = respond(
+                    request["method"], request.get("params", {}), footers
+                )
         except json.JSONDecodeError:
             reply["error"] = {"code": -32700, "message": "Parse error"}
         except NotImplementedError:

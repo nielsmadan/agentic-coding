@@ -398,8 +398,10 @@ dropped on narrow terminals. The npm `pi-statusline` plugin is disabled in
 with custom status line support. The provider uses Claude's footer renderer for the
 nono indicator, model, effort, Fast mode, context bar, and weekly usage budget.
 Codex supplies cache token totals through the provider API. The live cache indicator
-requires a cache expiry timestamp. Open a new Codex session after installing and use
-`/statusline` to change the selected footer.
+requires a cache expiry timestamp. Codex polls the provider every second and drops
+it for the rest of the thread after a single read slower than one second, so the
+provider answers from each thread's last footer and renders on a worker thread. Open a
+new Codex session after installing and use `/statusline` to change the selected footer.
 
 ## Hooks
 
