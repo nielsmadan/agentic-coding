@@ -99,7 +99,7 @@ The script's `fetch()` caches those pages under `$TMPDIR/agent-models/`.
 | OpenAI | mid | gpt-6.2-sol | medium | 52.68 | 0.406 |
 | OpenAI | high | gpt-6.2-sol | max | 57.3 | 1.014 |
 | OpenAI | xhigh | gpt-6.2-astra | high | 60.1 | 2.074 |
-| OpenAI | max | gpt-6.2-astra | max | 62.1 | 3.998 |
+| OpenAI | max | gpt-6.2-astra | xhigh | 61.8 | 2.521 |
 
 The Anthropic ladder follows the user's explicit choices. Opus high is dominated
 by Fable low (53.92 at $3.097); flag that alternative on the next refresh.
@@ -110,7 +110,8 @@ $0.406) is 7.4 above Terra xhigh at nearly the same cost. High and xhigh are the
 user's choices (2026-11-20): high is Sol max rather than Sol xhigh (55.7, $0.648),
 1.6 points for $0.366 more, past the flagged cliff. xhigh is the user-requested
 Astra tier; Astra high was chosen because Astra medium (57.0, $1.618) is dominated
-by Sol max and Astra xhigh (61.6, $2.521) sits 0.5 points under max. Astra high
-costs $1.06 more than Sol max for 2.8 points. Astra max is 1.93× Astra high's cost
-for 2.0 more points; Fable max is 6.98× Fable medium's cost for 8.16 more points.
-These are intentional premiums, not value-tier recommendations.
+by Sol max. Astra high costs $1.06 more than Sol max for 2.8 points. On 2026-11-26
+the user moved max from Astra max to Astra xhigh (61.8, $2.521, measured that day):
+Astra max (62.2, $3.998) bought 0.4 points for $1.48 more, $3.46 per point. Fable
+max is 6.98× Fable medium's cost for 8.16 more points. These are intentional
+premiums, not value-tier recommendations.

@@ -25,11 +25,11 @@ extraction pair (see `.claude/skills/agent-models/references/`).
 | `claude <tier>` | Anthropic subscription | low Haiku 5.5 (xhigh), mid Sonnet 5.5 (high), high Opus 5.5 (high), xhigh Fable 5.2 (medium), max Fable 5.2 (max) | `.airc.d/07-model-tiers.zsh` |
 | `clor` | OpenRouter, through Claude Code | `/model haiku` GPT-6 Luna, `sonnet` Muse Ember (start, subagents), `opus` GPT-6.1 Sol | `.airc.d/claude.zsh` |
 | `codex` | ChatGPT subscription | GPT-6.2 Sol (max) | `loadout/defaults/codex.json` |
-| `codex <tier>`, `pix <tier>` | ChatGPT subscription | low/mid/high GPT-6.2 Sol (low/medium/max), xhigh/max GPT-6.2 Astra (high/max) | `.airc.d/07-model-tiers.zsh` |
+| `codex <tier>`, `pix <tier>` | ChatGPT subscription | low/mid/high GPT-6.2 Sol (low/medium/max), xhigh/max GPT-6.2 Astra (high/xhigh) | `.airc.d/07-model-tiers.zsh` |
 | Codex sub-agents | ChatGPT subscription | GPT-6.2 Sol: `haiku` low, `sonnet` medium, `opus` xhigh | `loadout/instructions/codex-subagent-models.md` |
 | `pix` | ChatGPT subscription | GPT-6.2 Sol (max) | `.airc.d/pi.zsh` |
-| `devin` | Devin subscription | `fusion-claude-opus-5-5-high-sidekick-swe-2-high` | `loadout/settings/devin.json` |
-| `devinx` | ChatGPT for the GPT lead when enabled, Devin for SWE-2 | `fusion-gpt-6-2-sol-max-sidekick-swe-2-high` | `.airc.d/devin.zsh` |
+| `devin` | Devin subscription | `fusion-claude-opus-5-5-high-sidekick-swe-2-1-medium` | `loadout/settings/devin.json` |
+| `devinx` | ChatGPT for the GPT lead when enabled, Devin for SWE-2.1 | `fusion-gpt-6-2-sol-max-sidekick-swe-2-1-medium` | `.airc.d/devin.zsh` |
 | Devin sub-agents | Devin subscription | `haiku`/`sonnet` Sonnet 5.5 (medium), `opus` Opus 5.5 (high), as the `readonly-` and `worker-` profiles | `loadout/agents/`, `loadout/instructions/devin-subagent-models.md` |
 | `pi` | Token Pass | DeepSeek V4.1 Flash (max) | `loadout/settings/pi.json` |
 | `pi` `/model` | Token Pass | DeepSeek V4.1 Flash, Kimi K3.1 Pro | `loadout/settings/pi.json` `enabledModels` |

@@ -17,7 +17,7 @@ _agent_model_tier() {
         mid gpt-6.2-sol:medium
         high gpt-6.2-sol:max
         xhigh gpt-6.2-astra:high
-        max gpt-6.2-astra:max
+        max gpt-6.2-astra:xhigh
       )
       ;;
     *) return 1 ;;
