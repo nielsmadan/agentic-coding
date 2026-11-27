@@ -78,6 +78,10 @@ case "$PROFILE" in
   studio|studio-agents) HAS_AGENT_CHROMIUM=false ;;
   *) HAS_AGENT_CHROMIUM=true ;;
 esac
+case "$PROFILE" in
+  studio|studio-agents) LINKS_GH=true ;;
+  *) LINKS_GH=false ;;
+esac
 
 # --- Locally-developed Claude plugins: "name:built-marketplace-path" ---
 # Only the marketplace registration lives here. `~/.claude/plugins/known_marketplaces.json`
@@ -120,6 +124,9 @@ SYMLINKS=(
   # The hooks and plugins that report the sandbox status call it from here.
   "$SCRIPT_DIR/bin/agent-sandbox-status:$HOME/.local/bin/agent-sandbox-status"
   "$SCRIPT_DIR/bin/agent-device-daemon:$HOME/.local/bin/agent-device-daemon"
+  # On the Studio, shells that skip ~/.airc (Codex runs a fresh login shell) would
+  # otherwise find mise's gh, which ignores the per-owner tokens.
+  "$SCRIPT_DIR/bin/gh:$HOME/.local/bin/gh"
   # pratfall. The advisor-* and cmdgen-* profiles back /second-opinion and the
   # llmcli.zsh command generators.
   "$SCRIPT_DIR/pratfall/config.toml:${XDG_CONFIG_HOME:-$HOME/.config}/pratfall/config.toml"
@@ -536,6 +543,9 @@ for entry in "${SYMLINKS[@]}"; do
     continue
   fi
   if [[ $HAS_AGENT_CHROMIUM == false && "$source" == "$SCRIPT_DIR/bin/agent-chromium" ]]; then
+    continue
+  fi
+  if [[ $LINKS_GH == false && "$source" == "$SCRIPT_DIR/bin/gh" ]]; then
     continue
   fi
   if [[ "$PROFILE" != default && "$source" == "$SCRIPT_DIR/pratfall/config.toml" ]]; then
