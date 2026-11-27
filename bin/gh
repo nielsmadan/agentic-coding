@@ -10,6 +10,9 @@ cover both a personal account and an organisation. This picks `GH_TOKEN_<OWNER>`
 given, otherwise from the origin remote of the working directory. Falls back to
 whatever `GH_TOKEN` already holds.
 
+With `GH_AS=review` it acts as the fleet's review account instead: it picks
+`GH_TOKEN_REVIEW_<OWNER>`, then `GH_TOKEN_REVIEW`, and fails if neither is set.
+
 Set the per-owner variables in the sops store, never here.
 """
 
@@ -20,12 +23,14 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 SELF = Path(__file__).resolve()
 REMOTE = re.compile(r"github\.com[:/]([^/]+)/")
 
 
+ACCOUNT_VAR = "GH_AS"
 DEPTH_VAR = "AC_GH_WRAPPER_DEPTH"
 MAX_DEPTH = 5
 
@@ -107,6 +112,22 @@ def owner_from_cwd() -> str | None:
     return match.group(1) if match else None
 
 
+def token_for(owner: str | None, environ: Mapping[str, str]) -> str | None:
+    """The token to run gh with, or None to keep the inherited `GH_TOKEN`."""
+    account = environ.get(ACCOUNT_VAR, "")
+    if account not in ("", "review"):
+        raise ValueError(f"{ACCOUNT_VAR}={account!r}; the only account is 'review'")
+    prefix = "GH_TOKEN_REVIEW" if account else "GH_TOKEN"
+    keys = [f"{prefix}_{re.sub(r'[^A-Za-z0-9]', '_', owner).upper()}"] if owner else []
+    if account:
+        keys.append(prefix)
+    token = next((environ[key] for key in keys if environ.get(key)), None)
+    # Never fall back to the inherited token: that would act as the dev account.
+    if account and not token:
+        raise ValueError(f"{ACCOUNT_VAR}=review but none of {', '.join(keys)} is set")
+    return token
+
+
 def main() -> int:
     depth = int(os.environ.get(DEPTH_VAR, "0") or 0)
     if depth >= MAX_DEPTH:
@@ -115,11 +136,12 @@ def main() -> int:
     owner = owner_from_args(argv) or owner_from_cwd()
 
     environment = dict(os.environ)
-    if owner:
-        key = "GH_TOKEN_" + re.sub(r"[^A-Za-z0-9]", "_", owner).upper()
-        token = os.environ.get(key)
-        if token:
-            environment["GH_TOKEN"] = token
+    try:
+        token = token_for(owner, os.environ)
+    except ValueError as error:
+        sys.exit(f"gh: {error}")
+    if token:
+        environment["GH_TOKEN"] = token
 
     target = real_gh(os.environ.get("PATH", ""))
     if not target:

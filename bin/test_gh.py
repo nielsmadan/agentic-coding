@@ -71,5 +71,46 @@ class RealGhTests(unittest.TestCase):
         self.assertIn("refusing to loop", result.stderr)
 
 
+class TokenForTests(unittest.TestCase):
+    TOKENS = {
+        "GH_TOKEN": "dev-classic",
+        "GH_TOKEN_QUANTUMCRAFTIO": "dev-org",
+        "GH_TOKEN_REVIEW": "review-classic",
+        "GH_TOKEN_REVIEW_QUANTUMCRAFTIO": "review-org",
+    }
+
+    def test_uses_the_owner_token_by_default(self):
+        self.assertEqual(gh.token_for("quantumcraftio", self.TOKENS), "dev-org")
+
+    def test_keeps_the_inherited_token_for_an_owner_without_one(self):
+        self.assertIsNone(gh.token_for("nielsmadan", self.TOKENS))
+
+    def test_review_uses_the_review_owner_token(self):
+        environ = dict(self.TOKENS, GH_AS="review")
+        self.assertEqual(gh.token_for("quantumcraftio", environ), "review-org")
+
+    def test_review_falls_back_to_the_review_classic_token(self):
+        environ = dict(self.TOKENS, GH_AS="review")
+        self.assertEqual(gh.token_for("nielsmadan", environ), "review-classic")
+
+    def test_review_without_a_review_token_fails_instead_of_acting_as_dev(self):
+        environ = {"GH_TOKEN": "dev-classic", "GH_AS": "review"}
+        with self.assertRaisesRegex(ValueError, "GH_TOKEN_REVIEW_NIELSMADAN, GH_TOKEN_REVIEW"):
+            gh.token_for("nielsmadan", environ)
+
+    def test_rejects_an_unknown_account(self):
+        with self.assertRaisesRegex(ValueError, "GH_AS='reveiw'"):
+            gh.token_for("nielsmadan", dict(self.TOKENS, GH_AS="reveiw"))
+
+    def test_exits_with_the_error_before_running_gh(self):
+        environment = {"PATH": os.environ["PATH"], "GH_AS": "review", "GH_TOKEN": "dev-classic"}
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "api", "repos/nielsmadan/slimemold"],
+            capture_output=True, text=True, env=environment, timeout=10,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("GH_AS=review but none of", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
